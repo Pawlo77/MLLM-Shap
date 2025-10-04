@@ -32,4 +32,4 @@ jobs:
         uses: pre-commit/action@v3.0.0
 
       - name: Run pre-commit hooks
-        run: pre-commit run --all-files
+        run: make pre-commit
