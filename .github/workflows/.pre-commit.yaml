@@ -25,11 +25,5 @@ jobs:
       - name: Install dependencies
         run: make install
 
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Set up pre-commit Cache
-        uses: pre-commit/action@v3.0.0
-
       - name: Run pre-commit hooks
         run: make pre-commit
