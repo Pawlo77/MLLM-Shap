@@ -1,0 +1,35 @@
+name: Pre-commit Checks
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Set up pre-commit Cache
+        uses: pre-commit/action@v3.0.0
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files

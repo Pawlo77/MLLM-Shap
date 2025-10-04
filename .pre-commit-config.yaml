@@ -1,0 +1,123 @@
+default_language_version:
+  python: python3.12
+
+repos:
+  # check yaml configs
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-xml
+
+  # check toml configs
+  - repo: https://github.com/python-poetry/poetry
+    rev: 2.2.1
+    hooks:
+    -   id: poetry-check
+
+  # formatting for python code with auto-flake related fixes
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: poetry run ruff check --fix
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: flake8
+        name: flake8
+        entry: poetry run flake8  --max-line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: isort
+        name: isort
+        entry: poetry run isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: autoflake
+        name: autoflake
+        entry: poetry run autoflake  --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: pylint
+        name: pylint
+        entry: poetry run pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: bandit
+        name: bandit
+        entry: poetry run bandit
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy --follow-untyped-imports --strict
+        language: system
+        types: [python]
+        files: ^(audio_shap/src|experiments)/
+
+  - repo: local
+    hooks:
+      - id: ruff-nbqa
+        name: ruff-nbqa
+        entry: poetry run nbqa ruff --fix
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: flake8-nbqa
+        name: flake8-nbqa
+        entry: poetry run nbqa flake8 --max-line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: isort-nbqa
+        name: isort-nbqa
+        entry: poetry run nbqa isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: autoflake-nbqa
+        name: autoflake-nbqa
+        entry: poetry run nbqa autoflake --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: pylint-nbqa
+        name: pylint-nbqa
+        entry: poetry run nbqa pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: bandit-nbqa
+        name: bandit-nbqa
+        entry: poetry run nbqa bandit
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+      - id: mypy-nbqa
+        name: mypy-nbqa
+        entry: poetry run nbqa mypy --follow-untyped-imports --strict
+        language: system
+        types: [file, python]
+        files: ^(audio_shap/src|experiments)/
+
+  # format for macros definitions
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: v0.26.0
+    hooks:
+      - id: sqlfmt
+        language_version: python
+        additional_dependencies: [".[jinjafmt]"]
+        files: ^.*/macros/.*\.sql$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: fix-byte-order-marker

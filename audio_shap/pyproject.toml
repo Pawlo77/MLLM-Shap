@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "audio-shap"
+version = "0.1.0"
+description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
+authors = ["Paweł Pozorski <pozorski.paul@gmail.com>"]
+readme = "README.md"
+packages = [{include = "audio_shap", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+jupyter = ">=1.1.1,<2.0.0"
+ipywidgets = ">=8.1.7,<9.0.0"
+transformers = ">=4.57.0,<5.0.0"
+torch = ">=2.8.0,<3.0.0"
+torchcodec = ">=0.7.0,<0.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
