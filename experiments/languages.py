@@ -32,6 +32,18 @@ class LanguageClassifier:
             )
         return self._lang_detector
 
+    def is_language(self, text: str, label: str) -> bool:
+        """
+        Check if the given text is in the specified language with a confidence above the threshold.
+
+        Args:
+            text: The text to check.
+            label: The language label to check against (e.g., "en" for English).
+        Returns:
+            True if the text is in the specified language, False otherwise.
+        """
+        return self.classify_language(text) == label
+
     def is_english(self, text: str, label: str = "en") -> bool:
         """
         Check if the given text is in English with a confidence above the threshold.
@@ -46,7 +58,7 @@ class LanguageClassifier:
         if self.english_detector.detect_language_of(text):
             return True
         # Fallback to transformer-based detector
-        return self.classify_language(text) == label
+        return self.is_language(text, label)
 
     def is_spanish(self, text: str, label: str = "es") -> bool:
         """
@@ -58,9 +70,7 @@ class LanguageClassifier:
         Returns:
             True if the text is in Spanish, False otherwise.
         """
-        if self.classify_language(text) != label:
-            return False
-        return True
+        return self.is_language(text, label)
 
     def is_french(self, text: str, label: str = "fr") -> bool:
         """
@@ -72,9 +82,7 @@ class LanguageClassifier:
         Returns:
             True if the text is in French, False otherwise.
         """
-        if self.classify_language(text) != label:
-            return False
-        return True
+        return self.is_language(text, label)
 
     def classify_language(self, text: str) -> str:
         """
@@ -86,14 +94,3 @@ class LanguageClassifier:
             The language label of the text.
         """
         return str(sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0]["label"])
-
-
-if __name__ == "__main__":
-    # test the language classifier
-    classifier = LanguageClassifier()
-    print(classifier.is_english("This is a test sentence."))
-    print(classifier.is_english("C'est une phrase de test."))
-    print(classifier.is_spanish("Esta es una frase de prueba."))
-    print(classifier.is_spanish("This is a test sentence."))
-    print(classifier.is_french("C'est une phrase de test."))
-    print(classifier.is_french("This is a test sentence."))
