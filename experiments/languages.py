@@ -43,11 +43,10 @@ class LanguageClassifier:
             True if the text is in English, False otherwise.
         """
         # Fast check with Lingua
-        if not self.english_detector.detect_language_of(text):
-            # Fallback to transformer-based detector
-            if self.classify_language(text) != label:
-                return False
-        return True
+        if self.english_detector.detect_language_of(text):
+            return True
+        # Fallback to transformer-based detector
+        return self.classify_language(text) == label
 
     def is_spanish(self, text: str, label: str = "es") -> bool:
         """
