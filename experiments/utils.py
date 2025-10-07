@@ -31,7 +31,7 @@ def load_dataset(hugging_face__config__name: str, config: "DatasetConfig") -> Da
     Raises:
         ValueError: If the provided revision is not a valid 40-character hexadecimal string.
     """
-    if not re.fullmatch(r"[0-9a-f]{40}", config.revision or ""):
+    if not re.fullmatch(r"[0-9a-f]{40}", config.revision or "", re.IGNORECASE):
         raise ValueError(f"Unsafe Hugging Face revision: {config.revision!r}. Use a specific commit hash.")
 
     return cast(
