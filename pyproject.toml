@@ -33,6 +33,10 @@ types-colorama = "^0.4.15.20250801"
 types-decorator = "^5.2.0.20250324"
 types-jsonschema = "^4.25.1.20250822"
 types-pexpect = "^4.9.0.20250916"
+semhash = "^0.3.2"
+pandas = "^2.3.3"
+tqdm = "^4.67.1"
+sentence-transformers = "^5.1.1"
 
 [build-system]
 requires = ["poetry-core"]

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import nltk
+import pandas as pd
 from datasets import DatasetDict
 from datasets import load_dataset as src_load_dataset
 
@@ -70,6 +71,66 @@ def count_sentences(text: str) -> int:
         The number of sentences in the text.
     """
     return len(split_into_sentences(text))
+
+
+def save_json(df: pd.DataFrame, path: Path | str) -> None:
+    """
+    Save a DataFrame to a JSON file.
+
+    Args:
+        df: The DataFrame to save.
+        path: The file path to save the JSON file.
+    """
+    df.to_json(
+        str(path),
+        index=False,
+        orient="records",
+        indent=4,
+        force_ascii=False,
+    )
+
+
+def save_parquet(df: pd.DataFrame, path: Path | str) -> None:
+    """
+    Save a DataFrame to a Parquet file.
+
+    Args:
+        df: The DataFrame to save. Must not be empty.
+        path: The file path to save the Parquet file.
+    """
+    if df.empty:
+        raise ValueError("DataFrame is empty. Cannot save to Parquet.")
+    df.to_parquet(str(path), index=False)
+
+
+def get_final_stats(df: pd.DataFrame, prompt_key: str = "prompt") -> pd.DataFrame:
+    """
+    Get final statistics for the entire dataframe.
+
+    Args:
+        df: The DataFrame to analyze.
+        prompt_key: The column name containing the text prompts.
+    Returns:
+        A DataFrame containing the final statistics.
+    """
+
+    unique_entries = df.drop_duplicates(subset=[prompt_key]).shape[0]
+    sentences_count = df[prompt_key].apply(count_sentences)
+    prompt_lengths = df[prompt_key].apply(len)
+
+    return pd.DataFrame(
+        [
+            {
+                "num_rows": df.shape[0],
+                "total_characters": prompt_lengths.sum(),
+                "avg_num_characters": prompt_lengths.mean(),
+                "total_sentences": sentences_count.sum(),
+                "avg_num_sentences": sentences_count.mean(),
+                "unique_entries": unique_entries,
+                "pct_unique_entries": unique_entries / df.shape[0] * 100,
+            }
+        ]
+    )
 
 
 if __name__ == "__main__":

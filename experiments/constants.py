@@ -19,6 +19,7 @@ class DatasetConfig(BaseModel):
     cache_dir: Path
     revision: str
     configs: dict[str, str]
+    languages: set[str]
 
 
 VOICE_BENCH__CONFIG = DatasetConfig(
@@ -40,12 +41,14 @@ VOICE_BENCH__CONFIG = DatasetConfig(
         "SD-QA": "sd-qa",
         "WildVoice": "wildvoice",
     },
+    languages={"en"},
 )
 
 INFINITY_INSTRUCT__CONFIG = DatasetConfig(
     dataset_name="BAAI/Infinity-Instruct",
     data_dir=ensure_dir(DATA_DIR / "infinity_instruct"),
     cache_dir=ensure_dir(DATA_DIR / "infinity_instruct" / ".cache"),
-    revision="main",
-    configs={"660k": "0625"},
+    revision="6e9534fbd3a6c98302755753f0b5fa3d3554a006",
+    configs={"3.46M": "3M", "660k": "0625"},
+    languages={"en", "fr", "es"},
 )
