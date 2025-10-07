@@ -37,6 +37,7 @@ semhash = "^0.3.2"
 pandas = "^2.3.3"
 tqdm = "^4.67.1"
 sentence-transformers = "^5.1.1"
+seaborn = "^0.13.2"
 
 [build-system]
 requires = ["poetry-core"]
