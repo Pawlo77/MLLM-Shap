@@ -44,13 +44,12 @@ class LanguageClassifier:
         """
         return self.classify_language(text) == label
 
-    def is_english(self, text: str, label: str = "en") -> bool:
+    def is_english(self, text: str) -> bool:
         """
         Check if the given text is in English with a confidence above the threshold.
 
         Args:
             text: The text to check.
-            label: The language label to check against (default is "en" for English).
         Returns:
             True if the text is in English, False otherwise.
         """
@@ -58,31 +57,29 @@ class LanguageClassifier:
         if self.english_detector.detect_language_of(text):
             return True
         # Fallback to transformer-based detector
-        return self.is_language(text, label)
+        return self.is_language(text, "en")
 
-    def is_spanish(self, text: str, label: str = "es") -> bool:
+    def is_spanish(self, text: str) -> bool:
         """
         Check if the given text is in Spanish with a confidence above the threshold.
 
         Args:
             text: The text to check.
-            label: The language label to check against (default is "es" for Spanish).
         Returns:
             True if the text is in Spanish, False otherwise.
         """
-        return self.is_language(text, label)
+        return self.is_language(text, "es")
 
-    def is_french(self, text: str, label: str = "fr") -> bool:
+    def is_french(self, text: str) -> bool:
         """
         Check if the given text is in French with a confidence above the threshold.
 
         Args:
             text: The text to check.
-            label: The language label to check against (default is "fr" for French).
         Returns:
             True if the text is in French, False otherwise.
         """
-        return self.is_language(text, label)
+        return self.is_language(text, "fr")
 
     def classify_language(self, text: str) -> str:
         """

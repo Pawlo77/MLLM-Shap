@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from .utils import ensure_dir
+from .io import ensure_dir
 
 EXPERIMENTS_ROOT_DIR: Path = ensure_dir(Path(__file__).resolve().parent)
 DATA_DIR: Path = ensure_dir(EXPERIMENTS_ROOT_DIR / "data")
