@@ -38,6 +38,7 @@ pandas = "^2.3.3"
 tqdm = "^4.67.1"
 sentence-transformers = "^5.1.1"
 seaborn = "^0.13.2"
+googletrans = "^4.0.2"
 
 [build-system]
 requires = ["poetry-core"]
