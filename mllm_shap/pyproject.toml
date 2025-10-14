@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "audio-shap"
+name = "mllm-shap"
 version = "0.1.0"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 authors = ["Paweł Pozorski <pozorski.paul@gmail.com>"]
 readme = "README.md"
-packages = [{include = "audio_shap", from = "src"}]
+packages = [{include = "mllm_shap", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"

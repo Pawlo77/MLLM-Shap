@@ -23,43 +23,43 @@ repos:
         entry: ruff check --fix
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: flake8
         name: flake8
         entry: flake8  --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: isort
         name: isort
         entry: isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: autoflake
         name: autoflake
         entry: autoflake  --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: pylint
         name: pylint
         entry: pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: bandit
         name: bandit
         entry: bandit
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: mypy
         name: mypy
         entry: mypy --follow-untyped-imports --strict
         language: system
         types: [python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
 
   - repo: local
     hooks:
@@ -68,43 +68,43 @@ repos:
         entry: nbqa ruff --fix
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: flake8-nbqa
         name: flake8-nbqa
         entry: nbqa flake8 --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: isort-nbqa
         name: isort-nbqa
         entry: nbqa isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: autoflake-nbqa
         name: autoflake-nbqa
         entry: nbqa autoflake --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: pylint-nbqa
         name: pylint-nbqa
         entry: nbqa pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: bandit-nbqa
         name: bandit-nbqa
         entry: nbqa bandit
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
       - id: mypy-nbqa
         name: mypy-nbqa
         entry: nbqa mypy --follow-untyped-imports --strict
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(mllm_shap/src|experiments)/
 
   # format for macros definitions
   - repo: https://github.com/tconbeer/sqlfmt

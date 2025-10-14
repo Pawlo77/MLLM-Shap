@@ -4,7 +4,7 @@ install:
 		conda activate bachelor && \
 		which poetry >/dev/null || (conda run -n bachelor pip install poetry && \
 		export PATH="$$HOME/.local/bin:$$PATH") && \
-		cd ./audio_shap && poetry install && \
+		cd ./mllm_shap && poetry install && \
 		cd ./../ && poetry install --no-root && \
 		pre-commit install
 
@@ -16,7 +16,7 @@ update:
 
 clean:
 	rm -rf .venv/
-	rm -rf audio_shap/poetry.lock
+	rm -rf mllm_shap/poetry.lock
 	rm -f poetry.lock
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	conda env remove -n bachelor -y
