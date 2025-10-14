@@ -1,5 +1,5 @@
 [project]
-name = "audio-shap"
+name = "mllm-shap"
 version = "0.1.0"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 readme = "README.md"
