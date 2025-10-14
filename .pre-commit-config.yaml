@@ -18,93 +18,149 @@ repos:
   # formatting for python code with auto-flake related fixes
   - repo: local
     hooks:
-      - id: ruff
-        name: ruff
-        entry: ruff check --fix
-        language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
-      - id: flake8
-        name: flake8
-        entry: flake8  --max-line-length=120
-        language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
       - id: isort
         name: isort
-        entry: isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
+        entry: |
+          isort
+            --profile=black
+            --multi-line=3
+            --trailing-comma
+            --force-grid-wrap=0
+            --use-parentheses
+            --ensure-newline-before-comments
+            --line-length=120
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.py$.*\.py$
       - id: autoflake
         name: autoflake
-        entry: autoflake  --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
+        entry: |
+          autoflake
+            --in-place
+            --remove-all-unused-imports
+            --remove-unused-variables
+            --exclude=__init__.py
+            --expand-star-imports
+            --ignore-init-module-imports
+        language: system
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.py$
+      - id: black
+        name: black
+        entry: |
+          black
+            --line-length=120
+        language: system
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.py$
+      - id: flake8
+        name: flake8
+        entry: |
+          flake8
+            --max-line-length=120
+            --exclude E402
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: pylint
         name: pylint
-        entry: pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
+        entry: |
+          pylint
+            --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value
+            --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: bandit
         name: bandit
         entry: bandit
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: mypy
         name: mypy
-        entry: mypy --follow-untyped-imports --strict
+        entry: |
+          mypy
+            --strict
+            --install-types
+            --ignore-missing-imports
         language: system
         types: [python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
 
   - repo: local
     hooks:
-      - id: ruff-nbqa
-        name: ruff-nbqa
-        entry: nbqa ruff --fix
-        language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
-      - id: flake8-nbqa
-        name: flake8-nbqa
-        entry: nbqa flake8 --max-line-length=120
-        language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
       - id: isort-nbqa
         name: isort-nbqa
-        entry: nbqa isort --profile=black --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --ensure-newline-before-comments --line-length=120
+        entry: |
+          nbqa isort
+            --profile=black
+            --multi-line=3
+            --trailing-comma
+            --force-grid-wrap=0
+            --use-parentheses
+            --ensure-newline-before-comments
+            --line-length=120
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: autoflake-nbqa
         name: autoflake-nbqa
-        entry: nbqa autoflake --in-place --remove-all-unused-imports --remove-unused-variables --exclude=__init__.py --expand-star-imports --ignore-init-module-imports
+        entry: |
+          nbqa autoflake
+            --in-place
+            --remove-all-unused-imports
+            --remove-unused-variables
+            --exclude=__init__.py
+            --expand-star-imports
+            --ignore-init-module-imports
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
+      - id: black-nbqa
+        name: black-nbqa
+        entry: |
+          nbqa black
+            --line-length=120
+        language: system
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
+      - id: flake8-nbqa
+        name: flake8-nbqa
+        entry: |
+          nbqa flake8
+            --max-line-length=120
+            --ignore=E402
+        language: system
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: pylint-nbqa
         name: pylint-nbqa
-        entry: nbqa pylint --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value --max-line-length=120
+        entry: |
+          nbqa pylint
+            --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value
+            --max-line-length=120
+            --disable=missing-module-docstring,wrong-import-position
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: bandit-nbqa
         name: bandit-nbqa
         entry: nbqa bandit
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: mypy-nbqa
         name: mypy-nbqa
-        entry: nbqa mypy --follow-untyped-imports --strict
+        entry: |
+          nbqa mypy
+            --strict
+            --install-types
+            --ignore-missing-imports
+            --disable-error-code=no-redef
         language: system
-        types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        types: [file]
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
 
   # format for macros definitions
   - repo: https://github.com/tconbeer/sqlfmt
