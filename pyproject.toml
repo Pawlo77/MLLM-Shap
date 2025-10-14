@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "audio-shap-bachelor"
+name = "mllm-shap"
 version = "0.1.0"
 description = "Bachelor work code"
 authors = ["Paweł Pozorski <pozorski.paul@gmail.com>"]
