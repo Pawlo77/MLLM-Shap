@@ -2,8 +2,10 @@
 
 from typing import cast
 
+import pandas as pd
 from googletrans import Translator
 from lingua import Language, LanguageDetector, LanguageDetectorBuilder  # pylint: disable=no-name-in-module
+from tqdm.asyncio import tqdm_asyncio
 from transformers import pipeline
 from transformers.pipelines.text_classification import TextClassificationPipeline
 
@@ -143,3 +145,21 @@ class LanguageTranslator:
             The translated text in French.
         """
         return await self.translate(text, target_language="fr")
+
+    async def translate_df(
+        self, df: pd.DataFrame, target_language: str, column_to_translate: str = "conversation__joined"
+    ) -> pd.DataFrame:
+        """
+        Translate the specified column of the DataFrame to the target language.
+
+        Args:
+            df: The DataFrame to translate with a specified column.
+            target_language: The target language code (e.g., 'en' for English).
+            column_to_translate: The column to translate (default is 'conversation__joined').
+        Returns:
+            The DataFrame with the translated specified column.
+        """
+        tasks = [self.translate(x, target_language=target_language) for x in df[column_to_translate]]
+        results = await tqdm_asyncio.gather(*tasks)
+        df[column_to_translate] = results
+        return df

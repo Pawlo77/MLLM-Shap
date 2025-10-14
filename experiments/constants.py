@@ -2,6 +2,9 @@
 
 from pathlib import Path
 
+from google.cloud.texttospeech import (
+    SsmlVoiceGender,
+)
 from pydantic import BaseModel
 
 from .io import ensure_dir
@@ -20,6 +23,14 @@ class DatasetConfig(BaseModel):
     revision: str
     configs: dict[str, str]
     languages: set[str]
+
+
+class TTSConfig(BaseModel):
+    """Configuration for TTS."""
+
+    language_code: str
+    gender: int
+    voice_name: str | None = None
 
 
 VOICE_BENCH__CONFIG = DatasetConfig(
@@ -52,3 +63,19 @@ INFINITY_INSTRUCT__CONFIG = DatasetConfig(
     configs={"3.46M": "3M", "660k": "0625"},
     languages={"en", "fr", "es"},
 )
+
+
+TTS_CONFIGS: dict[str, dict[str, TTSConfig]] = {
+    "fr": {
+        "male": TTSConfig(language_code="fr-FR", gender=SsmlVoiceGender.MALE),
+        "female": TTSConfig(language_code="fr-FR", gender=SsmlVoiceGender.FEMALE),
+    },
+    "en": {
+        "male": TTSConfig(language_code="en-GB", gender=SsmlVoiceGender.MALE),
+        "female": TTSConfig(language_code="en-GB", gender=SsmlVoiceGender.FEMALE),
+    },
+    "es": {
+        "male": TTSConfig(language_code="es-ES", gender=SsmlVoiceGender.MALE),
+        "female": TTSConfig(language_code="es-ES", gender=SsmlVoiceGender.FEMALE),
+    },
+}

@@ -5,7 +5,7 @@ install:
 		which poetry >/dev/null || (conda run -n bachelor pip install poetry && \
 		export PATH="$$HOME/.local/bin:$$PATH") && \
 		cd ./audio_shap && poetry install && \
-		cd ./../ && poetry install --no-root && \
+		cd ./../ && poetry install --no-root --with dev && \
 		pre-commit install
 
 update:

@@ -31,7 +31,7 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$.*\.py$
       - id: autoflake
         name: autoflake
         entry: |
@@ -44,7 +44,7 @@ repos:
             --ignore-init-module-imports
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: black
         name: black
         entry: |
@@ -52,7 +52,7 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: flake8
         name: flake8
         entry: |
@@ -61,7 +61,7 @@ repos:
             --exclude E402
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: pylint
         name: pylint
         entry: |
@@ -70,13 +70,13 @@ repos:
             --max-line-length=120
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: bandit
         name: bandit
         entry: bandit
         language: system
         types: [file, python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
       - id: mypy
         name: mypy
         entry: |
@@ -86,7 +86,7 @@ repos:
             --ignore-missing-imports
         language: system
         types: [python]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.py$
 
   - repo: local
     hooks:
@@ -103,7 +103,7 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: autoflake-nbqa
         name: autoflake-nbqa
         entry: |
@@ -116,7 +116,7 @@ repos:
             --ignore-init-module-imports
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: black-nbqa
         name: black-nbqa
         entry: |
@@ -124,7 +124,7 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: flake8-nbqa
         name: flake8-nbqa
         entry: |
@@ -133,7 +133,7 @@ repos:
             --ignore=E402
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: pylint-nbqa
         name: pylint-nbqa
         entry: |
@@ -143,13 +143,13 @@ repos:
             --disable=missing-module-docstring,wrong-import-position
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: bandit-nbqa
         name: bandit-nbqa
         entry: nbqa bandit
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
       - id: mypy-nbqa
         name: mypy-nbqa
         entry: |
@@ -160,7 +160,7 @@ repos:
             --disable-error-code=no-redef
         language: system
         types: [file]
-        files: ^(audio_shap/src|experiments)/
+        files: ^(audio_shap/src|experiments)/.*\.ipynb$
 
   # format for macros definitions
   - repo: https://github.com/tconbeer/sqlfmt
