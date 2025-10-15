@@ -28,8 +28,8 @@ make pre-commit-all    # all files
 
 ```
 MLLM-Shap/
-├─ audio_shap/            # library (editable)
-│  ├─ src/audio_shap/…
+├─ mllm_shap/            # library (editable)
+│  ├─ src/mllm_shap/…
 │  └─ pyproject.toml
 ├─ experiments/           # notebooks / scripts
 ├─ pyproject.toml         # root deps + uv workspace (not a package)
@@ -37,7 +37,7 @@ MLLM-Shap/
 └─ Makefile               # convenience targets
 ```
 
-The root is **not** a package; the `audio_shap` package is installed **editable** via the uv workspace.
+The root is **not** a package; the `mllm_shap` package is installed **editable** via the uv workspace.
 
 ## Daily commands
 
@@ -63,7 +63,7 @@ Examples:
 
 ```bash
 uv run python -V
-uv run python -c "import audio_shap; print(audio_shap.__file__)"
+uv run python -c "import mllm_shap; print(mllm_shap.__file__)"
 uv run jupyter lab
 uv run black --version
 ```
