@@ -23,7 +23,9 @@ maintainers = [
   { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
   { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
 ]
-dependencies = []
+dependencies = [
+    "liquid-audio>=1.0.0",
+]
 keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
 
 [project.urls]
