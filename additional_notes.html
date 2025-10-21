@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>&lt;no title&gt; &#8212; mllm-shap  documentation</title>
+    <title>Additional Notes &#8212; mllm-shap  documentation</title>
   
   
   
@@ -42,7 +42,7 @@
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'addidional_notes';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'additional_notes';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -255,7 +255,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">&lt;no title&gt;</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Additional Notes</span></li>
   </ul>
 </nav>
 </div>
@@ -272,13 +272,16 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p>System messages include not only system turns defined on input, but also any predefined prompts used to initialize the model and any steering tokens or instructions added by the model itself.</p>
+  <section id="additional-notes">
+<h1>Additional Notes<a class="headerlink" href="#additional-notes" title="Link to this heading">#</a></h1>
+<p>System messages include not only system turns defined on input, but also any predefined prompts used to initialize the model and any steering tokens or instructions added by the model itself.</p>
 <p>Package during explaination stores each result combined embedding (after processing with normalizer, refer to <cite>mmlm_shap.shap.normalizers</cite> module) and mask of tokens to exclude from SHAP calculation. All other data is discarded to save memory (if using <cite>verbose=False</cite>). Yet it still might be memory-intensive for long conversations or large models, so monitor your memory usage accordingly and consider using less accurate approximations like Monte Carlo SHAP with limited number of samples for larger workloads.</p>
 <p>If you’d like to compare different models behaviour on same inputs, consider calculation of SHAP values using 3rd party model’s embeddings - refer to <cite>mllm_shap.shap.embeddings</cite> implementations for that. Note that for memory efficiency reasons, call to embedding calculation is done after each step of generation, (no batching). All operations are sequential, therefore embedding model speed affects overall explaination time directly.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Some features are experimental and may change in future releases. Always check the <cite>examples/</cite> folder for updated usage patterns.</p>
 </div>
+</section>
 
 
                 </article>
@@ -302,22 +305,10 @@
 
 
   <div class="sidebar-secondary-item">
-<div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="simple visible nav section-nav flex-column">
-</ul>
-
-  </nav></div>
-
-  <div class="sidebar-secondary-item">
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/addidional_notes.rst.txt"
+      <li><a href="_sources/additional_notes.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

@@ -250,22 +250,48 @@
                   
   <section id="welcome-to-mllm-shap">
 <h1>Welcome to MLLM-SHAP<a class="headerlink" href="#welcome-to-mllm-shap" title="Link to this heading">#</a></h1>
-<p>MLLM-SHAP is a Python package designed to <strong>interpret the predictions of large language models (LLMs) using SHAP (SHapley Additive exPlanations) values</strong>.
+<p><strong>MLLM-SHAP</strong> is a Python package designed to <strong>interpret the predictions of large language models (LLMs)</strong> using <strong>SHAP (SHapley Additive exPlanations)</strong> values.
 It helps you understand the contribution of input features to model outputs, enabling <strong>transparent and explainable AI workflows</strong>.</p>
-<p>Key features:</p>
+<hr class="docutils" />
+<section id="key-features">
+<h2>✨ Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Integration with <strong>audio and text models</strong>, supporting multi-modal inputs and outputs.</p></li>
-<li><p>Flexible aggregation strategies: mean, sum, max, min, etc.</p></li>
-<li><p>Multiple similarity metrics (cosine, euclidean, etc.) for embedding analysis.</p></li>
-<li><p>Customizable SHAP calculation algorithms: exact, Monte Carlo approximations, and more.</p></li>
-<li><p>Examples showcasing common explainability pipelines in <cite>examples/</cite> on official GitHub repository.</p></li>
+<li><p>Flexible aggregation strategies: <em>mean</em>, <em>sum</em>, <em>max</em>, <em>min</em>, etc.</p></li>
+<li><p>Multiple similarity metrics (<em>cosine</em>, <em>euclidean</em>, etc.) for embedding analysis.</p></li>
+<li><p>Customizable SHAP calculation algorithms: <em>exact</em>, <em>Monte Carlo approximations</em>, and more.</p></li>
+<li><p>Examples showcasing common explainability pipelines in <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/examples"><code class="docutils literal notranslate"><span class="pre">examples/</span></code></a> on the official GitHub repository.</p></li>
 </ul>
-<p>If you are interested with gui visualization of SHAP values, please check <a class="reference external" href="#id1">Extension - GUI Visualization</a>. For more advanced cli usages, refer to <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/examples">official Github repository examples</a> or more advanced pipelines developed as part of exemplary <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments">research projects</a>.</p>
-<p>Supported LLM integrations:</p>
+</section>
+<hr class="docutils" />
+<section id="visualization-examples">
+<h2>📊 Visualization &amp; Examples<a class="headerlink" href="#visualization-examples" title="Link to this heading">#</a></h2>
+<p>If you’re interested in GUI visualization of SHAP values, check out the section  <strong>Extension - GUI Visualization</strong> in the docs.</p>
+<p>For more advanced CLI usages, refer to:</p>
+<ul class="simple">
+<li><p>The <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/examples">official GitHub repository examples</a></p></li>
+<li><p>Or explore more advanced pipelines from exemplary <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments">research projects</a></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="supported-llm-integrations">
+<h2>🤖 Supported LLM Integrations<a class="headerlink" href="#supported-llm-integrations" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/Liquid4All/liquid-audio/">Liquid-Audio</a></p></li>
 </ul>
 </section>
+</section>
+<hr class="docutils" />
+<section id="important-links">
+<h1>Important Links<a class="headerlink" href="#important-links" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="release_notes.html"><span class="doc">Release Notes</span></a></p></li>
+<li><p><a class="reference internal" href="additional_notes.html"><span class="doc">Additional Notes</span></a></p></li>
+<li><p><a class="reference internal" href="references.html"><span class="doc">References</span></a></p></li>
+<li><p><a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a></p></li>
+</ul>
+</section>
+<hr class="docutils" />
 <section id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
 <section id="installation">
@@ -428,33 +454,12 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
 <p>Note that each row corresponds to one audio token, therefore recording lengths are very short and might not make much sense individually, as many models decode single tokens different to sequence of the same tokens decoded together. Still, SHAP values indicate contribution of each token to the final model output.</p>
 </section>
 </section>
-<section id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h1>
-</section>
-<section id="release-notes">
-<h1>Release Notes<a class="headerlink" href="#release-notes" title="Link to this heading">#</a></h1>
-</section>
-<section id="additional-notes">
-<h1>Additional Notes<a class="headerlink" href="#additional-notes" title="Link to this heading">#</a></h1>
-<p>System messages include not only system turns defined on input, but also any predefined prompts used to initialize the model and any steering tokens or instructions added by the model itself.</p>
-<p>Package during explaination stores each result combined embedding (after processing with normalizer, refer to <cite>mmlm_shap.shap.normalizers</cite> module) and mask of tokens to exclude from SHAP calculation. All other data is discarded to save memory (if using <cite>verbose=False</cite>). Yet it still might be memory-intensive for long conversations or large models, so monitor your memory usage accordingly and consider using less accurate approximations like Monte Carlo SHAP with limited number of samples for larger workloads.</p>
-<p>If you’d like to compare different models behaviour on same inputs, consider calculation of SHAP values using 3rd party model’s embeddings - refer to <cite>mllm_shap.shap.embeddings</cite> implementations for that. Note that for memory efficiency reasons, call to embedding calculation is done after each step of generation, (no batching). All operations are sequential, therefore embedding model speed affects overall explaination time directly.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Some features are experimental and may change in future releases. Always check the <cite>examples/</cite> folder for updated usage patterns.</p>
-</div>
-</section>
-<section id="references">
-<h1>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h1>
-<p>MLLM-SHAP is used for research purposes on behaviour of large language models (LLMs) and their
-explainability using SHAP values. Research paper and report is available at <a class="reference external" href="https://arxiv.org/im_not_exist_yet">arXiv</a>. All code is publicly available at <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments">official Github repository</a> and can be used as further example on how to use package and how to interpret its results.</p>
-<p>Package is fully tested, including analysis of correctness on different approximations algorithms of SHAP values, available <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/mllm_shap/tests/approximations">here</a>. Following image shows comparison of different SHAP approximations on same input and model - Liquid Audio LLM.</p>
-<p># TODO: add image</p>
-</section>
-<section id="id1">
-<h1>Extension - GUI Visualization<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
+<hr class="docutils" />
+<section id="extension-gui-visualization">
+<h1>Extension - GUI Visualization<a class="headerlink" href="#extension-gui-visualization" title="Link to this heading">#</a></h1>
 <p># TODO</p>
 </section>
+<hr class="docutils" />
 <section id="indices-and-tables">
 <h1>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">#</a></h1>
 <ul class="simple">
@@ -493,18 +498,20 @@ explainability using SHAP values. Research paper and report is available at <a c
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to MLLM-SHAP</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to MLLM-SHAP</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">✨ Key Features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization-examples">📊 Visualization &amp; Examples</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-llm-integrations">🤖 Supported LLM Integrations</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#important-links">Important Links</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-text-usage">Basic Text Usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-audio">Working with Audio</a></li>
 </ul>
 </li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#release-notes">Release Notes</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#additional-notes">Additional Notes</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Extension - GUI Visualization</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-gui-visualization">Extension - GUI Visualization</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
 
