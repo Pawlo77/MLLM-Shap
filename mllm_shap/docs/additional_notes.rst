@@ -1,3 +1,6 @@
+Additional Notes
+================
+
 System messages include not only system turns defined on input, but also any predefined prompts used to initialize the model and any steering tokens or instructions added by the model itself.
 
 Package during explaination stores each result combined embedding (after processing with normalizer, refer to `mmlm_shap.shap.normalizers` module) and mask of tokens to exclude from SHAP calculation. All other data is discarded to save memory (if using `verbose=False`). Yet it still might be memory-intensive for long conversations or large models, so monitor your memory usage accordingly and consider using less accurate approximations like Monte Carlo SHAP with limited number of samples for larger workloads.
