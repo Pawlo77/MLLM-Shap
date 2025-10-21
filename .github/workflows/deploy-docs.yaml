@@ -1,0 +1,50 @@
+name: Docs2Pages
+on:
+  push:
+    branches:
+      - main
+      - feature/auto-package-docs # for development testing
+permissions:
+  contents: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Sync dependencies with uv
+        working-directory: mllm_shap
+        run: uv sync --locked --all-extras
+
+      - name: Build documentation
+        working-directory: mllm_shap
+        run: |
+          mkdir -p gh-pages
+          touch gh-pages/.nojekyll
+          uv run make -C docs clean
+          uv run make -C docs html
+          cp -r docs/_build/html/* gh-pages/
+
+      - name: Deploy documentation
+        if: ${{ github.event_name == 'push' }}
+        uses: JamesIves/github-pages-deploy-action@v4.7.3
+        with:
+          branch: gh-pages
+          folder: mllm_shap/gh-pages/
+          token: ${{ secrets.GITHUB_TOKEN }}

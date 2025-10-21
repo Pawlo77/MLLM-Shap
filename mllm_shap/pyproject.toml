@@ -39,6 +39,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "myst-parser>=4.0.1",
     "pydata-sphinx-theme>=0.16.1",
     "sphinx>=8.2.3",
 ]
