@@ -4,6 +4,8 @@ on:
     branches:
       - main
       - feature/auto-package-docs # for development testing
+permissions:
+  contents: write
 
 jobs:
   build-docs:
@@ -45,3 +47,4 @@ jobs:
         with:
           branch: gh-pages
           folder: mllm_shap/gh-pages/
+          token: ${{ secrets.GITHUB_TOKEN }}
