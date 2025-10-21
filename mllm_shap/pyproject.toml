@@ -17,11 +17,11 @@ classifiers = [
 license = {text = "MIT License"}
 authors = [
   { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
-  { name = "Jakub Muszyński", email = "muszynski.jakub@gmail.com" },
+  { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
 ]
 maintainers = [
   { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
-  { name = "Jakub Muszyński", email = "muszynski.jakub@gmail.com" },
+  { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
 ]
 dependencies = []
 keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
