@@ -4,7 +4,24 @@ version = "0.1.0"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
+homepage = "https://github.com/Pawlo77/MLLM-Shap.git"
+repository = "https://github.com/Pawlo77/MLLM-Shap.git"
+documentation = "https://pawlo77.github.io/MLLM-Shap/"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+authors = [
+  { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
+  { name = "Jakub Muszyński", email = "muszynski.jakub@gmail.com" },
+]
 
 [build-system]
 requires = ["uv_build>=0.9.2,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pydata-sphinx-theme>=0.16.1",
+    "sphinx>=8.2.3",
+]
