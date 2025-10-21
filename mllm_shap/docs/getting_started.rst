@@ -14,17 +14,17 @@ Following example demonstrates how to use MLLM-SHAP to explain text generation f
 
    import torch
 
-   from audio_shap.connectors import LiquidAudio, ModelConfig
-   from audio_shap.connectors.enums import Role, SystemRolesSetup, ModelHistoryTrackingMode
-   from audio_shap.connectors.filters import ExcludePunctuationTokensFilter
+   from mllm_shap.connectors import LiquidAudio, ModelConfig
+   from mllm_shap.connectors.enums import Role, SystemRolesSetup, ModelHistoryTrackingMode
+   from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 
-   from audio_shap.shap import Explainer, MCSHAPExplainer
-   from audio_shap.shap.enums import Mode
-   from audio_shap.shap.embeddings import MeanReducer
-   from audio_shap.shap.similarity import CosineSimilarity
-   from audio_shap.shap.normalizers import PowerShiftNormalizer
+   from mllm_shap.shap import Explainer, MCSHAPExplainer
+   from mllm_shap.shap.enums import Mode
+   from mllm_shap.shap.embeddings import MeanReducer
+   from mllm_shap.shap.similarity import CosineSimilarity
+   from mllm_shap.shap.normalizers import PowerShiftNormalizer
 
-   from audio_shap.utils.jupyter import display_shap_colors_df
+   from mllm_shap.utils.jupyter import display_shap_colors_df
 
    # set device and generation parameters
    device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu") # use GPU if available
@@ -119,8 +119,8 @@ Please refer to `the notebook <https://github.com/Pawlo77/MLLM-Shap/tree/main/ex
 
 .. code-block:: Python
 
-   from audio_shap.utils.audio import display_audio
-   from audio_shap.utils.jupyter import display_shap_colors_df_audio
+   from mllm_shap.utils.audio import display_audio
+   from mllm_shap.utils.jupyter import display_shap_colors_df_audio
 
    # load audio file
    model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.AUDIO) # track and generate only audio history

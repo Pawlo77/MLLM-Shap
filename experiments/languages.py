@@ -1,7 +1,5 @@
 """Utility functions for language detection and filtering."""
 
-from typing import cast
-
 import pandas as pd
 from googletrans import Translator
 from lingua import Language, LanguageDetector, LanguageDetectorBuilder  # pylint: disable=no-name-in-module
@@ -29,10 +27,7 @@ class LanguageClassifier:
     def lang_detector(self) -> TextClassificationPipeline:
         """Lazy load and return the transformer-based language detector."""
         if self._lang_detector is None:
-            self._lang_detector = cast(
-                TextClassificationPipeline,
-                pipeline("text-classification", model="papluca/xlm-roberta-base-language-detection"),
-            )
+            self._lang_detector = pipeline("text-classification", model="papluca/xlm-roberta-base-language-detection")
         return self._lang_detector
 
     def is_language(self, text: str, label: str) -> bool:
@@ -93,7 +88,11 @@ class LanguageClassifier:
         Returns:
             The language label of the text.
         """
-        return str(sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0]["label"])
+        return str(
+            sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0][  # pylint: disable=not-callable
+                "label"
+            ]
+        )
 
 
 class LanguageTranslator:
