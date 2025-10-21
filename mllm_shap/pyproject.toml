@@ -1,10 +1,44 @@
 [project]
 name = "mllm-shap"
-version = "0.1.0"
+version = "0.1.1b1"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
+classifiers = [
+    # change when ready
+    "Development Status :: 4 - Beta",
+
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+]
+license = {text = "MIT License"}
+authors = [
+  { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
+  { name = "Jakub Muszyński", email = "muszynski.jakub@gmail.com" },
+]
+maintainers = [
+  { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
+  { name = "Jakub Muszyński", email = "muszynski.jakub@gmail.com" },
+]
+dependencies = []
+keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
+
+[project.urls]
+Homepage = "https://github.com/Pawlo77/MLLM-Shap.git"
+Repository = "https://github.com/Pawlo77/MLLM-Shap.git"
+Documentation = "https://pawlo77.github.io/MLLM-Shap/"
+Issues = "https://github.com/Pawlo77/MLLM-Shap/issues"
+Changelog = "https://pawlo77.github.io/MLLM-Shap/"
 
 [build-system]
 requires = ["uv_build>=0.9.2,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pydata-sphinx-theme>=0.16.1",
+    "sphinx>=8.2.3",
+]
