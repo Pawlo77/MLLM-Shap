@@ -1468,7 +1468,7 @@ wheels = [
 
 [[package]]
 name = "mllm-shap"
-version = "0.1.1b1"
+version = "0.1.1b2"
 source = { editable = "mllm_shap" }
 
 [package.dev-dependencies]
