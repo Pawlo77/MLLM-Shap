@@ -35,7 +35,6 @@ jobs:
         run: |
           mkdir -p gh-pages
           touch gh-pages/.nojekyll
-          uv run sphinx-apidoc -o docs mllm_shap --force
           uv run make -C docs clean
           uv run make -C docs html
           cp -r docs/_build/html/* gh-pages/
