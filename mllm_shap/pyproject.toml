@@ -46,5 +46,6 @@ build-backend = "uv_build"
 dev = [
     "myst-parser>=4.0.1",
     "pydata-sphinx-theme>=0.16.1",
+    "pytest>=8.4.2",
     "sphinx>=8.2.3",
 ]
