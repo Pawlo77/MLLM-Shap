@@ -1,29 +1,40 @@
 """Conversation entry data structure for audio and text modalities."""
 
-from logging import Logger
 from typing import cast
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 from ...utils.audio import display_audio
-from ...utils.logger import get_logger
 from ..enums import ModalityFlag, Role
-
-logger: Logger = get_logger(__name__)
 
 
 class ChatEntry(BaseModel):
     """Conversation entry data structure."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    """Configuration for pydantic model."""
 
     content_type: int
+    """Modality of the content (e.g., text or audio), refer to :class:`ModalityFlag`."""
     roles: list[int]
+    """List of roles associated with this entry, refer to :class:`Role`."""
     content: list[str | bytes]
+    """Content of the entry, can be text (str) or audio bytes (bytes)."""
     shap_values: list[float | None] | None
+    """SHAP values associated with the content tokens, if one have been computed for this entry."""
 
     def display(self) -> None:
-        """Display the ChatEntry content."""
+        """
+        Display the ChatEntry content.
+
+        Example:
+        ::
+            BY: USER, SYSTEM
+            TEXT CONTENT:
+                <|im_start|> user
+                Who  are  you ? <|im_end|>
+        """
         from IPython.display import display  # pylint: disable=import-outside-toplevel
 
         roles = sorted(set(self.roles))

@@ -5,7 +5,7 @@ from itertools import product
 import torch
 from torch import Tensor
 
-from ._base.explainer import BaseSHAPExplainer
+from .base.explainer import BaseShapExplainer
 
 
 def generate_all_masks(n: int, device: torch.device) -> Tensor:
@@ -29,7 +29,7 @@ def generate_all_masks(n: int, device: torch.device) -> Tensor:
 
 
 # pylint: disable=too-few-public-methods
-class PreciseSHAPExplainer(BaseSHAPExplainer):
+class PreciseShapExplainer(BaseShapExplainer):
     """Precise SHAP implementation generating all possible masks."""
 
     def _generate_masks(self, n: int, device: torch.device, existing_masks: Tensor | None = None) -> Tensor:

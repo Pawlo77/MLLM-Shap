@@ -55,7 +55,7 @@ repos:
         entry: |
           flake8
             --max-line-length=120
-            --exclude E402
+            --ignore E402,W291,W503
         language: system
         types: [file, python]
         files: ^(mllm_shap/src|experiments)/.*\.py$
@@ -128,7 +128,7 @@ repos:
         entry: |
           nbqa flake8
             --max-line-length=120
-            --ignore=E402
+            --ignore=E402,W291,W503
         language: system
         types: [file]
         files: ^(mllm_shap/src|experiments)/.*\.ipynb$

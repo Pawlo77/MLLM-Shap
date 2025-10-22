@@ -12,28 +12,26 @@ from ...utils.other import raise_connector_error
 from ..config import HuggingFaceModelConfig, ModelConfig
 from ..enums import ModelHistoryTrackingMode
 from ._validators import BaseModelConfig, BaseModelGenerateConfig
-from .chat import BaseChat
+from .chat import BaseMllmChat
 
 logger: Logger = get_logger(__name__)
 
 
-class BaseModel(ABC):
-    """
-    Base class for model connectors.
-
-    Fields:
-        config: The model configuration.
-        device: The device to run the model on.
-        processor: The model processor.
-        model: The model instance.
-        history_tracking_mode: The mode for tracking chat history.
-    """
+class BaseMllmModel(ABC):
+    """Base class for model connectors."""
 
     config: HuggingFaceModelConfig
+    """The model configuration."""
     device: torch.device
+    """The device to run the model on."""
 
     processor: Any
+    """The model processor (tokenizer)."""
     model: Any
+    """The model instance."""
+
+    history_tracking_mode: ModelHistoryTrackingMode
+    """The mode for tracking chat history."""
 
     # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __init__(
@@ -70,17 +68,17 @@ class BaseModel(ABC):
         self.history_tracking_mode = __config.history_tracking_mode
 
     @abstractmethod
-    def get_new_chat(self) -> BaseChat:
+    def get_new_chat(self) -> BaseMllmChat:
         """Get a new chat state for the model."""
 
     @abstractmethod
     def generate(  # type: ignore[return]
         self,
-        chat: BaseChat,
+        chat: BaseMllmChat,
         max_new_tokens: int = 128,
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
-    ) -> tuple[BaseChat, BaseChat] | BaseChat:
+    ) -> tuple[BaseMllmChat, BaseMllmChat] | BaseMllmChat:
         """
         Generate audio based on the current chat state.
 
@@ -103,7 +101,7 @@ class BaseModel(ABC):
         )
 
     @abstractmethod
-    def get_static_embeddings(self, chat: BaseChat) -> Tensor:  # type: ignore[return]
+    def get_static_embeddings(self, chat: BaseMllmChat) -> Tensor:  # type: ignore[return]
         """
         Get static embeddings for the current chat state.
 
@@ -112,11 +110,11 @@ class BaseModel(ABC):
         Returns:
             The static embeddings for the text and audio tokens.
         Raises:
-            ValueError: If chat is not an instance of BaseChat.
+            ValueError: If chat is not an instance of BaseMllmChat.
         """
         logger.debug("Getting static embeddings.")
-        if not isinstance(chat, BaseChat):
-            raise ValueError(f"chat must be an instance of BaseChat, got {type(chat)}")
+        if not isinstance(chat, BaseMllmChat):
+            raise ValueError(f"chat must be an instance of BaseMllmChat, got {type(chat)}")
 
     def get_contextual_embeddings(self, *args: Any, static_embeddings: Tensor | None = None, **kwargs: Any) -> Tensor:
         """
@@ -124,9 +122,9 @@ class BaseModel(ABC):
 
         Args:
             static_embeddings: Precomputed static embeddings (if any).
-            *args: Additional positional arguments for `get_static_embeddings`.
+            *args: Additional positional arguments for :func:`get_static_embeddings`.
                 Used if static_embeddings is None.
-            **kwargs: Additional keyword arguments for `get_static_embeddings`.
+            **kwargs: Additional keyword arguments for :func:`get_static_embeddings`.
                 Used if static_embeddings is None.
         Returns:
             The context embeddings for the text and audio tokens.
@@ -154,7 +152,7 @@ class BaseModel(ABC):
 
     def _set_chat_history(
         self,
-        chat: BaseChat,
+        chat: BaseMllmChat,
         text_tokens: Tensor,
         audio_tokens: Tensor,
         modality_flag: Tensor,

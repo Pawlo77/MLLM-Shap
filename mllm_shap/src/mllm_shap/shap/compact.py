@@ -4,20 +4,21 @@ from logging import Logger
 from time import time
 from typing import Any
 
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel
 from pydantic import ConfigDict
 from torch import Tensor
 
-from ..connectors._base.chat import BaseChat
-from ..connectors._base.model import BaseModel
+from ..connectors.base.chat import BaseMllmChat
+from ..connectors.base.model import BaseMllmModel
 from ..utils.logger import get_logger
-from ._base.explainer import BaseSHAPExplainer
-from .precise import PreciseSHAPExplainer
+from .base.explainer import BaseShapExplainer
+from .precise import PreciseShapExplainer
 
 logger: Logger = get_logger(__name__)
 
 
-class _ExplainerConfig(PydanticBaseModel):
+# pylint: disable=too-few-public-methods
+class _ExplainerConfig(BaseModel):
     """
     Configuration model for Explainer.
     Used just for validation and type checking.
@@ -25,49 +26,50 @@ class _ExplainerConfig(PydanticBaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    shap_explainer: BaseSHAPExplainer
-    model: BaseModel
+    shap_explainer: BaseShapExplainer
+    model: BaseMllmModel
 
 
-class ExplainerResult(PydanticBaseModel):
-    """
-    Result model for Explainer.
-
-    Fields:
-        full_chat: The full chat instance after generation (entire conversation).
-            It will be set with SHAP values and cache.
-        response_chat: The response chat instance after generation (last model response).
-        source_chat: Chat to get explained (without base response).
-        history: The history of chats and masks used during explanation (if applicable,
-            that is if explainer was called with verbose=True).
-    """
+# pylint: disable=too-few-public-methods
+class ExplainerResult(BaseModel):
+    """Result model for Explainer."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    """Configuration for pydantic model."""
 
-    full_chat: BaseChat
-    response_chat: BaseChat
-    source_chat: BaseChat
+    full_chat: BaseMllmChat
+    """The full chat instance after generation (entire conversation). It will be set with SHAP values and cache."""
 
-    history: list[tuple[Tensor, BaseChat, BaseChat, BaseChat, Tensor] | None] | None
+    response_chat: BaseMllmChat
+    """The response chat instance after generation (last model response)."""
+
+    source_chat: BaseMllmChat
+    """Chat to get explained (without base response)."""
+
+    history: list[tuple[Tensor, BaseMllmChat, BaseMllmChat, BaseMllmChat, Tensor] | None] | None
+    """
+    The history of chats and masks used during explanation
+    (if applicable, that is if explainer was called with `verbose=True`).
+    Each entry is a tuple of (mask, source_chat, response_chat, full_chat, reduced_embeddings)
+    or None if corresponding mask was not computed (extracted from explainer cache, invalid or
+    for full mask).
+    """
 
 
 # pylint: disable=too-few-public-methods
 class Explainer:
-    """
-    SHAP explainer for audio models.
+    """SHAP explainer for audio models."""
 
-    Fields:
-        shap_explainer: The SHAP explainer instance.
-        model: The model connector instance.
-    """
+    shap_explainer: BaseShapExplainer
+    """The SHAP explainer instance."""
 
-    shap_explainer: BaseSHAPExplainer
-    model: BaseModel
+    model: BaseMllmModel
+    """The model connector instance."""
 
     def __init__(
         self,
-        model: BaseModel,
-        shap_explainer: BaseSHAPExplainer | None = None,
+        model: BaseMllmModel,
+        shap_explainer: BaseShapExplainer | None = None,
     ) -> None:
         """
         Initialize the explainer.
@@ -78,7 +80,7 @@ class Explainer:
         """
         # validation
         __config = _ExplainerConfig(
-            shap_explainer=shap_explainer or PreciseSHAPExplainer(),
+            shap_explainer=shap_explainer or PreciseShapExplainer(),
             model=model,
         )
 
@@ -89,12 +91,13 @@ class Explainer:
     def __call__(
         self,
         *_: Any,
-        chat: BaseChat,
+        chat: BaseMllmChat,
         generation_kwargs: dict[str, Any] | None = None,
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
         """
-        Call the explainer. Will overwrite internal state.
+        Call the explainer - generate full response from :attr:`chat`
+        using :attr:`model`, and then explain it using :attr:`shap_explainer`.
 
         Args:
             chat: The chat instance.
