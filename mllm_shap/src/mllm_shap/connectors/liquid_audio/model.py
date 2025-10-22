@@ -79,11 +79,11 @@ class LiquidAudio(BaseMllmModel):
         # it is a patch to set device properly
         self.processor.device = str(device)  # type: ignore
 
-    def get_new_chat(self, *args: Any, liquid_kwargs: dict[str, Any] | None = None, **kwargs: Any) -> LiquidAudioChat:
-        liquid_kwargs = liquid_kwargs or {}
-        liquid_kwargs["processor"] = self.processor
+    def get_new_chat(self, *args: Any, **kwargs: Any) -> LiquidAudioChat:
+        kwargs = kwargs or {}
+        kwargs["processor"] = self.processor
 
-        return LiquidAudioChat(*args, liquid_kwargs=liquid_kwargs, device=self.device, **kwargs)  # type: ignore[misc]
+        return LiquidAudioChat(*args, device=self.device, **kwargs)  # type: ignore[misc]
 
     def generate(
         self,
