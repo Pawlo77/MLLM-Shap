@@ -9,7 +9,10 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+cur_path: str = os.path.abspath(os.path.dirname(__file__))
+
+sys.path.insert(0, cur_path)
+sys.path.insert(0, os.path.join(cur_path, "..", "src"))
 
 project = 'mllm-shap'
 copyright = '2025, Paweł Pozorski, Jakub Muszyński'
@@ -29,6 +32,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.napoleon",
     "myst_parser",
+    "extensions.custom_skip",
 ]
 
 templates_path = ['_templates']
@@ -36,6 +40,22 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # Prefix each section label with the document name to avoid duplicates
 autosectionlabel_prefix_document = True
+autodoc_inherit_docstrings = True
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "special-members": "__init__,__call__",
+    "inherited-members": True,
+    "show-inheritance": True,
+    "exclude-members": "_deprecated",
+    "private-members": True,
+}
+
+# suppress all docutils-related warnings, as we use slightly non-standard syntax in some places
+suppress_warnings = [
+    "docutils",
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

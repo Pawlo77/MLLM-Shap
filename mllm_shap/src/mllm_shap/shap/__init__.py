@@ -1,7 +1,7 @@
 """SHAP explainers module."""
 
 from .compact import Explainer
-from .monte_carlo import MCSHAPExplainer
-from .precise import PreciseSHAPExplainer
+from .monte_carlo import McShapExplainer
+from .precise import PreciseShapExplainer
 
-__all__ = ["PreciseSHAPExplainer", "Explainer", "MCSHAPExplainer"]
+__all__ = ["PreciseShapExplainer", "Explainer", "McShapExplainer"]

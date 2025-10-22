@@ -10,9 +10,9 @@ import torch
 from torch import Tensor
 from tqdm.auto import tqdm
 
-from ...connectors._base.chat import AllTextTokensFilteredOutError, BaseChat
-from ...connectors._base.explainer_cache import ExplainerCache
-from ...connectors._base.model import BaseModel
+from ...connectors.base.chat import AllTextTokensFilteredOutError, BaseMllmChat
+from ...connectors.base.explainer_cache import ExplainerCache
+from ...connectors.base.model import BaseMllmModel
 from ...utils.logger import get_logger
 from ..embeddings import MeanReducer
 from ..enums import Mode
@@ -35,25 +35,23 @@ class NotEnoughTokensToExplainError(Exception):
 
 
 # pylint: disable=too-few-public-methods
-class BaseSHAPExplainer(ABC):
-    """
-    Base class for SHAP-based explanations.
-
-    Fields:
-        mode: The SHAP mode, either STATIC or CONTEXTUAL.
-            Used if no embedding_model is provided.
-        embedding_model: The external embedding model to use.
-            If provided, overrides mode.
-        embedding_reducer: The embedding reduction strategy to use.
-        similarity_measure: The embedding similarity measure to use.
-        normalizer: The SHAP value normalizer to use.
-    """
+class BaseShapExplainer(ABC):
+    """Base class for SHAP-based explanations."""
 
     mode: Mode
+    """The SHAP mode, either `STATIC` or `CONTEXTUAL`. Used if no :attr:`embedding_model` is provided."""
+
     embedding_model: BaseExternalEmbedding | None
+    """The external embedding model to use. If provided, overrides :attr:`mode`."""
+
     embedding_reducer: BaseEmbeddingReducer
+    """The embedding reduction strategy to use."""
+
     similarity_measure: BaseEmbeddingSimilarity
+    """The embedding similarity measure to use."""
+
     normalizer: BaseNormalizer
+    """The SHAP value normalizer to use."""
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
@@ -118,7 +116,7 @@ class BaseSHAPExplainer(ABC):
 
         Args:
             masks (Tensor): 2D boolean tensor [num_masks, num_tokens],
-                            each row indicates which tokens are included in that mask.
+                each row indicates which tokens are included in that mask.
             similarities (Tensor): 1D tensor [num_masks], similarity score for each mask.
             device: The device to create the SHAP values on.
 
@@ -126,9 +124,9 @@ class BaseSHAPExplainer(ABC):
             Tensor: 1D tensor [num_tokens] with SHAP values (NaN where base_mask=False).
         """
 
-    def __get_masks(self, source_chat: BaseChat) -> Tensor:
+    def __get_masks(self, source_chat: BaseMllmChat) -> Tensor:
         """
-        Generate masks of `tokens` using the True positions in `mask`.
+        Generate masks of :attr:`input_tokens` using the True positions in :attr:`shap_values_mask`.
 
         Args:
             source_chat: The current chat state (without base response).
@@ -207,7 +205,7 @@ class BaseSHAPExplainer(ABC):
         final_masks.sort(dim=0)
         return final_masks
 
-    def __get_embeddings(self, chat: BaseChat, model: BaseModel) -> Tensor:
+    def __get_embeddings(self, chat: BaseMllmChat, model: BaseMllmModel) -> Tensor:
         """
         Get embeddings for the given chat state.
 
@@ -224,7 +222,9 @@ class BaseSHAPExplainer(ABC):
             return model.get_static_embeddings(chat=chat)
         return model.get_contextual_embeddings(chat=chat)
 
-    def __prepare_reduced_embeddings_tensor(self, base_size: int, response_chat: BaseChat, model: BaseModel) -> Tensor:
+    def __prepare_reduced_embeddings_tensor(
+        self, base_size: int, response_chat: BaseMllmChat, model: BaseMllmModel
+    ) -> Tensor:
         """
         Prepare the reduced embeddings tensor.
 
@@ -253,7 +253,7 @@ class BaseSHAPExplainer(ABC):
         return reduced_embeddings
 
     def __read_cache(
-        self, masks: Tensor, reduced_embeddings: Tensor, full_chat: BaseChat
+        self, masks: Tensor, reduced_embeddings: Tensor, full_chat: BaseMllmChat
     ) -> tuple[Tensor, Tensor, int]:
         """
         Get or set the SHAP explainer cache in the full chat.
@@ -330,8 +330,8 @@ class BaseSHAPExplainer(ABC):
         self,
         masks: Tensor,
         reduced_embeddings: Tensor,
-        source_chat: BaseChat,
-        full_chat: BaseChat,
+        source_chat: BaseMllmChat,
+        full_chat: BaseMllmChat,
     ) -> tuple[Tensor, Tensor]:
         """
         Get SHAP values for the given mask.
@@ -376,7 +376,7 @@ class BaseSHAPExplainer(ABC):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __save_to_cache(
         self,
-        full_chat: BaseChat,
+        full_chat: BaseMllmChat,
         masks: Tensor,
         reduced_embeddings: Tensor,
         shap_values: Tensor,
@@ -453,14 +453,14 @@ class BaseSHAPExplainer(ABC):
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def __call__(
         self,
-        model: BaseModel,
-        source_chat: BaseChat,
-        response_chat: BaseChat,
-        full_chat: BaseChat,
+        model: BaseMllmModel,
+        source_chat: BaseMllmChat,
+        response_chat: BaseMllmChat,
+        full_chat: BaseMllmChat,
         progress_bar: bool = True,
         verbose: bool = False,
         **generate_kwargs: Any,
-    ) -> list[tuple[Tensor, BaseChat, BaseChat, BaseChat, Tensor] | None] | None:
+    ) -> list[tuple[Tensor, BaseMllmChat, BaseMllmChat, BaseMllmChat, Tensor] | None] | None:
         """
         Generate splits of the input tokens in the chat state.
 
@@ -517,10 +517,10 @@ class BaseSHAPExplainer(ABC):
         )
 
         # pre-allocate all variables
-        masked_response_chat: BaseChat
-        masked_full_chat: BaseChat | None = None
+        masked_response_chat: BaseMllmChat
+        masked_full_chat: BaseMllmChat | None = None
         chats_skipped_indices: list[int] = []
-        history: list[tuple[Tensor, BaseChat, BaseChat, BaseChat, Tensor] | None] | None = (
+        history: list[tuple[Tensor, BaseMllmChat, BaseMllmChat, BaseMllmChat, Tensor] | None] | None = (
             None if not verbose else [None] * len(masks)
         )
 
@@ -564,7 +564,7 @@ class BaseSHAPExplainer(ABC):
                     mask,
                     masked_chat,
                     masked_response_chat,
-                    cast(BaseChat, masked_full_chat),
+                    cast(BaseMllmChat, masked_full_chat),
                     reduced_embedding,
                 )
             else:

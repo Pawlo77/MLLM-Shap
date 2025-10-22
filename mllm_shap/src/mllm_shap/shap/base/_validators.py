@@ -1,10 +1,10 @@
 """Validators for SHAP base modules."""
 
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel
 from pydantic import ConfigDict
 
-from ...connectors._base.chat import BaseChat
-from ...connectors._base.model import BaseModel
+from ...connectors.base.chat import BaseMllmChat
+from ...connectors.base.model import BaseMllmModel
 from ..enums import Mode
 from .embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 from .normalizers import BaseNormalizer
@@ -12,8 +12,8 @@ from .similarity import BaseEmbeddingSimilarity
 
 
 # duplicates with shap/_explainers/explainer.py
-# pylint: disable=duplicate-code
-class BaseShapConfig(PydanticBaseModel):
+# pylint: disable=duplicate-code,too-few-public-methods
+class BaseShapConfig(BaseModel):
     """
     Configuration model for BaseShap.
     Used just for validation and type checking.
@@ -28,7 +28,8 @@ class BaseShapConfig(PydanticBaseModel):
     normalizer: BaseNormalizer
 
 
-class BaseShapCallConfig(PydanticBaseModel):
+# pylint: disable=too-few-public-methods
+class BaseShapCallConfig(BaseModel):
     """
     Configuration model for BaseShap.__call__ method.
     Used just for validation and type checking.
@@ -36,9 +37,9 @@ class BaseShapCallConfig(PydanticBaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    model: BaseModel
-    source_chat: BaseChat
-    response_chat: BaseChat
-    full_chat: BaseChat
+    model: BaseMllmModel
+    source_chat: BaseMllmChat
+    response_chat: BaseMllmChat
+    full_chat: BaseMllmChat
     progress_bar: bool
     verbose: bool

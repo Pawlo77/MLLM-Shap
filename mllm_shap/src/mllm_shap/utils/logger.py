@@ -11,7 +11,6 @@ def get_logger(name: str) -> logging.Logger:
 
     Args:
         name: The name of the logger.
-
     Returns:
         A configured logger instance.
     """

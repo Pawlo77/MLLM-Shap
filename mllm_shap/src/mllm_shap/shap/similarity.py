@@ -1,13 +1,11 @@
 # pylint: disable=too-few-public-methods
-
 """Embedding similarity calculations for SHAP explanations."""
-
 
 from typing import cast
 
 from torch import Tensor
 
-from ._base.similarity import BaseEmbeddingSimilarity
+from .base.similarity import BaseEmbeddingSimilarity
 
 
 class CosineSimilarity(BaseEmbeddingSimilarity):
