@@ -3,31 +3,29 @@
 from pydantic import BaseModel
 
 
+# pylint: disable=too-few-public-methods
 class HuggingFaceModelConfig(BaseModel):
-    """
-    Configuration for Hugging Face models.
-
-    Fields:
-        repo_id: The repository ID of the model on Hugging Face.
-        revision: The specific revision or version of the model.
-    """
+    """Holds the necessary information to load a model from the Hugging Face Hub."""
 
     repo_id: str
+    """The repository ID of the model on Hugging Face."""
+
     revision: str
+    """The specific revision or branch of the model to use."""
 
 
+# pylint: disable=too-few-public-methods
 class ModelConfig(BaseModel):
-    """
-    Base configuration for models.
-
-    Fields:
-        text_temperature: The temperature to use for text generation.
-        text_top_k: The top-k sampling parameter for text generation.
-        audio_temperature: The temperature to use for audio generation.
-        audio_top_k: The top-k sampling parameter for audio generation.
-    """
+    """Defines settings for controlling text and audio generation behavior."""
 
     text_temperature: float | None = 0.0
+    """Controls the randomness in text generation."""
+
     text_top_k: int | None = 1
+    """Restricts text sampling to the top-k most probable tokens."""
+
     audio_temperature: float | None = 0.0
+    """Controls the randomness in audio generation."""
+
     audio_top_k: int | None = 1
+    """Restricts audio sampling to the top-k most probable tokens."""

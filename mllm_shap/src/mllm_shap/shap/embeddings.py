@@ -4,8 +4,8 @@
 
 from torch import Tensor
 
-from ..connectors._base.chat import BaseChat
-from ._base.embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
+from ..connectors.base.chat import BaseMllmChat
+from .base.embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 
 
 class ZeroReducer(BaseEmbeddingReducer):
@@ -52,7 +52,7 @@ class FirstReducer(BaseEmbeddingReducer):
     """
     Reducer that selects the first embedding.
 
-    `n` parameter is ignored in this reducer.
+    :attr:`n` parameter is ignored in this reducer.
     """
 
     def __call__(self, embeddings: Tensor) -> Tensor:
@@ -60,12 +60,10 @@ class FirstReducer(BaseEmbeddingReducer):
 
 
 class OpenAiEmbedding(BaseExternalEmbedding):
-    """
-    OpenAI embedding class.
-    """
+    """OpenAI embedding class."""
 
     # TODO
-    def __call__(self, chat: BaseChat) -> Tensor:
+    def __call__(self, chat: BaseMllmChat) -> Tensor:
         """
         Get the external embeddings for the given chat.
 

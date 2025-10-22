@@ -12,7 +12,7 @@ from .filters import TokenFilter
 
 class BaseChatConfig(BaseModel):
     """
-    Configuration model for BaseChat.
+    Configuration model for BaseMllmChat.
     Used just for validation and type checking.
     """
 
@@ -27,7 +27,7 @@ class BaseChatConfig(BaseModel):
 
 class BaseModelConfig(BaseModel):
     """
-    Configuration model for BaseModel.
+    Configuration model for BaseMllmModel.
     Used just for validation and type checking.
     """
 

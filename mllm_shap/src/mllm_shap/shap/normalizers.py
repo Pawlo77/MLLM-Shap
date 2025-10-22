@@ -4,7 +4,7 @@
 
 from torch import Tensor
 
-from ._base.normalizers import BaseNormalizer
+from .base.normalizers import BaseNormalizer
 
 
 class IdentityNormalizer(BaseNormalizer):
@@ -25,14 +25,10 @@ class AbsSumNormalizer(BaseNormalizer):
 
 
 class PowerShiftNormalizer(BaseNormalizer):
-    """
-    Normalizer that applies power shift normalization to SHAP values.
-
-    Fields:
-        power: The power to which SHAP values are raised.
-    """
+    """Normalizer that applies power shift normalization to SHAP values."""
 
     power: float
+    """The power to which SHAP values are raised."""
 
     def __init__(self, power: float = 1.0):
         """

@@ -5,26 +5,22 @@ from abc import ABC, abstractmethod
 import torch
 from torch import Tensor
 
-from ...connectors._base.chat import BaseChat
+from ...connectors.base.chat import BaseMllmChat
 
 
 # pylint: disable=too-few-public-methods
 class BaseEmbeddingReducer(ABC):
-    """
-    Base class for embedding reduction strategies.
-
-    Fields:
-        n: Optional parameter to for sampling.
-    """
+    """Base class for embedding reduction strategies."""
 
     n: int | None
+    """Maximum number of embeddings to sample before reduction. None means no sampling."""
 
     def __init__(self, n: int | None = None):
         """
         Initialize the BaseEmbeddingReducer.
 
         Args:
-            n: Optional parameter to for sampling.
+            n: Maximum number of embeddings to sample before reduction. None means no sampling.
         Raises:
             ValueError: If n is not None or a positive integer.
         """
@@ -50,12 +46,10 @@ class BaseEmbeddingReducer(ABC):
 
 
 class BaseExternalEmbedding(ABC):
-    """
-    Base class for external embeddings.
-    """
+    """Base class for external embeddings."""
 
     @abstractmethod
-    def __call__(self, chat: BaseChat) -> Tensor:
+    def __call__(self, chat: BaseMllmChat) -> Tensor:
         """
         Get the external embeddings for the given chat.
 
