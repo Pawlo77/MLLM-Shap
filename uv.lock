@@ -1521,6 +1521,9 @@ version = "0.1.1b4"
 source = { editable = "mllm_shap" }
 dependencies = [
     { name = "liquid-audio" },
+    { name = "torch" },
+    { name = "torchaudio" },
+    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -1531,7 +1534,12 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "liquid-audio", specifier = ">=1.0.0" }]
+requires-dist = [
+    { name = "liquid-audio", specifier = ">=1.0.0" },
+    { name = "torch", specifier = ">=2.9.0" },
+    { name = "torchaudio", specifier = ">=2.9.0" },
+    { name = "tqdm", specifier = ">=4.67.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [

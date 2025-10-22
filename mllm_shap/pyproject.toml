@@ -25,6 +25,9 @@ maintainers = [
 ]
 dependencies = [
     "liquid-audio>=1.0.0",
+    "torch>=2.9.0",
+    "torchaudio>=2.9.0",
+    "tqdm>=4.67.1",
 ]
 keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
 

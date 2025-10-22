@@ -58,8 +58,8 @@ def safe_mask_unsqueeze(tensor: Tensor, mask: Tensor) -> Tensor:
     """
     masked = tensor[0][mask]
     if masked.numel() == 0:
-        feature_dim = tensor.shape[-1]
-        masked = torch.empty((tensor.shape[0], feature_dim), device=tensor.device, dtype=tensor.dtype)
+        target_shape = (tensor.shape[0], 0) if len(tensor.shape) > 1 else (tensor.shape[0],)
+        masked = torch.empty(target_shape, device=tensor.device, dtype=tensor.dtype)
     else:
         masked = masked.unsqueeze(0)
     return masked
