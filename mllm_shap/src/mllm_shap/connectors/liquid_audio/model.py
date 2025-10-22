@@ -8,8 +8,8 @@ import torch
 from liquid_audio import ChatState, LFM2AudioModel, LFM2AudioProcessor, LFMModality
 from torch import Tensor
 
-from .._base.chat import BaseChat
-from .._base.model import BaseModel
+from ..base.chat import BaseMllmChat
+from ..base.model import BaseMllmModel
 from ..config import ModelConfig
 from ..enums import ModelHistoryTrackingMode, Role
 from .chat import LiquidAudioChat
@@ -43,7 +43,7 @@ class _PatchedLFM2AudioProcessor(LFM2AudioProcessor):
         self.__device = value
 
 
-class LiquidAudio(BaseModel):
+class LiquidAudio(BaseMllmModel):
     """
     Connector for LiquidAudio model.
 
@@ -79,19 +79,19 @@ class LiquidAudio(BaseModel):
         # it is a patch to set device properly
         self.processor.device = str(device)  # type: ignore
 
-    def get_new_chat(self, *args: Any, liquid_kwargs: dict[str, Any] | None = None, **kwargs: Any) -> LiquidAudioChat:
-        liquid_kwargs = liquid_kwargs or {}
-        liquid_kwargs["processor"] = self.processor
+    def get_new_chat(self, *args: Any, **kwargs: Any) -> LiquidAudioChat:
+        kwargs = kwargs or {}
+        kwargs["processor"] = self.processor
 
-        return LiquidAudioChat(*args, liquid_kwargs=liquid_kwargs, device=self.device, **kwargs)
+        return LiquidAudioChat(*args, device=self.device, **kwargs)  # type: ignore[misc]
 
     def generate(
         self,
-        chat: BaseChat,
+        chat: BaseMllmChat,
         max_new_tokens: int = 128,
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
-    ) -> tuple[BaseChat, BaseChat] | BaseChat:
+    ) -> tuple[BaseMllmChat, BaseMllmChat] | BaseMllmChat:
         super().generate(
             chat=chat,
             max_new_tokens=max_new_tokens,
@@ -160,7 +160,7 @@ class LiquidAudio(BaseModel):
             return chat, new_chat
         return new_chat
 
-    def get_static_embeddings(self, chat: BaseChat) -> Tensor:
+    def get_static_embeddings(self, chat: BaseMllmChat) -> Tensor:
         super().get_static_embeddings(chat=chat)
         # pylint: disable=protected-access # type: ignore[arg-type]
         return self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0)

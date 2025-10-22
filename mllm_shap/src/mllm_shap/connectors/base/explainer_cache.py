@@ -7,29 +7,25 @@ from pydantic import BaseModel, ConfigDict, PrivateAttr
 from torch import Tensor
 
 if TYPE_CHECKING:
-    from .chat import BaseChat
+    from .chat import BaseMllmChat
 
 
 class ExplainerCache(BaseModel):
     """
-    Cache for explainer computations.
-
-    Fields:
-        chat: The chat instance the cache is for.
-        calculated_by: Hash of the explainer that calculated the SHAP values.
-        values: The SHAP values.
-        n: Index of last token used for SHAP calculation.
-        reduced_embeddings: The reduced embeddings used during SHAP calculation.
-        normalized_values: The normalized SHAP values.
-        masks: The generated masks used during SHAP calculation.
+    Cache for explainer computations associated with a chat.
+    Saves and validates calculated SHAP values, masks, and reduced embeddings.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    chat: "BaseChat"
+    chat: "BaseMllmChat"
+    """The chat instance the cache is for."""
     calculated_by: int
+    """Hash of the explainer that calculated the SHAP values."""
     n: int | None = None
+    """Index of last token used for SHAP calculation."""
     reduced_embeddings: Tensor | None = None
+    """The reduced embeddings used during SHAP calculation."""
 
     _values: Tensor | None = PrivateAttr(default=None)
     _normalized_values: Tensor | None = PrivateAttr(default=None)
@@ -38,10 +34,8 @@ class ExplainerCache(BaseModel):
     @property
     def normalized_values(self) -> Tensor:
         """
-        Get the SHAP values.
+        Normalized SHAP values.
 
-        Returns:
-            The normalized SHAP values.
         Raises:
             ValueError: If SHAP values are no longer valid or have not been computed yet.
         """
@@ -53,22 +47,20 @@ class ExplainerCache(BaseModel):
     @normalized_values.setter
     def normalized_values(self, values: Tensor) -> None:
         """
-        Set the SHAP values.
+        Set the normalized SHAP values.
 
         Args:
-            values: The SHAP values to set.
+            values: The normalized SHAP values to set.
         Raises:
-            ValueError: If SHAP values are not valid.
+            ValueError: If normalized SHAP values are not valid.
         """
         self.__values_setter("_normalized_values", values)
 
     @property
     def values(self) -> Tensor:
         """
-        Get the SHAP values.
+        SHAP values.
 
-        Returns:
-            The SHAP values.
         Raises:
             ValueError: If SHAP values are no longer valid or have not been computed yet.
         """
@@ -92,10 +84,8 @@ class ExplainerCache(BaseModel):
     @property
     def masks(self) -> Tensor:
         """
-        Get the generated masks.
+        Generated masks.
 
-        Returns:
-            The generated masks.
         Raises:
             ValueError: If masks have not been generated yet.
         """

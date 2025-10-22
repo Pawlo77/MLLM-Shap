@@ -5,25 +5,25 @@ from typing import Any
 import torch
 from torch import Tensor
 
-from ._base.explainer import BaseSHAPExplainer
+from .base.explainer import BaseShapExplainer
 
 
 # pylint: disable=too-few-public-methods
-class MCSHAPExplainer(BaseSHAPExplainer):
-    """
-    Monte Carlo SHAP implementation.
-
-    Fields:
-        num_samples: Number of random masks to generate. If None, uses fraction. -1 stands for minimal.
-        fraction: Fraction of total possible masks to generate if num_samples is None.
-    """
+class McShapExplainer(BaseShapExplainer):
+    """Monte Carlo SHAP implementation."""
 
     num_samples: int | None
+    """
+    Number of random masks to generate. If None, uses fraction.
+    -1 stands for minimal number of samples (only single-feature masks and empty mask).
+    """
+
     fraction: float | None
+    """Fraction of total possible masks to generate if num_samples is None."""
 
     def __init__(self, *args: Any, num_samples: int | None = None, fraction: float = 0.6, **kwargs: Any) -> None:
         """
-        Initialize the MCSHAPExplainer.
+        Initialize the McShapExplainer.
 
         Args:
             num_samples: Number of random masks to generate. If None, uses fraction.
@@ -68,13 +68,13 @@ class MCSHAPExplainer(BaseSHAPExplainer):
 
         # include all-zeros mask
         zero_mask = torch.zeros(n, dtype=torch.bool, device=device)
-        mask_list = MCSHAPExplainer.__update_masks_if_not_present(zero_mask, mask_list, seen)
+        mask_list = McShapExplainer.__update_masks_if_not_present(zero_mask, mask_list, seen)
 
         # include all single-feature masks
         for i in range(n):
             mask = torch.zeros(n, dtype=torch.bool, device=device)
             mask[i] = True
-            mask_list = MCSHAPExplainer.__update_masks_if_not_present(mask, mask_list, seen)
+            mask_list = McShapExplainer.__update_masks_if_not_present(mask, mask_list, seen)
 
         # generate random unique multi-feature masks
         remaining_masks_needed = num_masks - len(seen)
@@ -85,7 +85,7 @@ class MCSHAPExplainer(BaseSHAPExplainer):
             if mask.sum() <= 1:
                 continue
 
-            mask_list = MCSHAPExplainer.__update_masks_if_not_present(mask, mask_list, seen)
+            mask_list = McShapExplainer.__update_masks_if_not_present(mask, mask_list, seen)
 
         if not mask_list:
             return torch.empty((0, n), dtype=torch.bool, device=device)

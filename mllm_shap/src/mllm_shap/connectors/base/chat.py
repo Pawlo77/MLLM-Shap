@@ -28,45 +28,41 @@ class AllTextTokensFilteredOutError(ValueError):
 
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
-class BaseChat(ABC):
-    """
-    Base class for chat state management.
-
-    Fields:
-        token_filter: The token filtering strategy.
-        added_vocab_tokens: A set of tokens that were added to the tokenizer's vocabulary.
-        torch_device: The device on which tensors are stored.
-        system_roles: A set of roles that are considered system roles. If Role.ASSISTANT
-            is added, multi-turn assistant messages will also be marked as system and therefore
-            excluded from shapley value calculations.
-
-        speaker: The role of the current speaker in the chat.
-        turn_number: The current turn number in the chat.
-        token_turns: A tensor indicating the turn structure of the chat.
-        token_roles: A tensor indicating the role of each token in the chat.
-
-        empty_turn_sequence: A tensor indicating the empty turn sequence.
-        text_tokens_no_system_mask: A boolean tensor indicating which text tokens are user-generated.
-        audio_tokens_no_system_mask: A boolean tensor indicating which audio tokens are user-generated.
-        token_sequences_to_exclude: A list of token IDs to exclude from processing.
-    """
+class BaseMllmChat(ABC):
+    """Base class for chat state management."""
 
     token_filter: TokenFilter
+    """The token filtering strategy."""
     added_vocab_tokens: set[int]
+    """A set of tokens that were added to the tokenizer's vocabulary."""
     # renamed from device not to conflict with MRO
     # as some chats can have device property/method
     torch_device: torch.device
+    """The device on which tensors are stored."""
     system_roles_setup: SystemRolesSetup
+    """
+    A set of roles that are considered system roles. If Role.ASSISTANT
+    is added, multi-turn assistant messages will also be marked as system and therefore
+    excluded from shapley value calculations.
+    """
 
     speaker: Role | None = None
+    """The role of the current speaker in the chat."""
     turn_number: int
+    """The current turn number in the chat."""
     token_turns: Tensor
+    """A tensor indicating the turn structure of the chat."""
     token_roles: Tensor
+    """A tensor indicating the role of each token in the chat."""
 
     empty_turn_sequences: list[Tensor]
+    """A tensor indicating the empty turn sequence."""
     text_tokens_no_system_mask: Tensor
+    """A boolean tensor indicating which text tokens are user-generated."""
     audio_tokens_no_system_mask: Tensor
+    """A boolean tensor indicating which audio tokens are user-generated."""
     token_sequences_to_exclude: list[Tensor]
+    """A list of token IDs to exclude from processing."""
 
     _system_roles: set[Role]
     __shap: ExplainerCache | None = None
@@ -119,15 +115,15 @@ class BaseChat(ABC):
         self.token_turns = torch.zeros(0, dtype=torch.int16, device=device)
         self.token_roles = torch.zeros(0, dtype=torch.int8, device=device)
 
-        self.token_sequences_to_exclude = self._get_tokens_sequences_to_exclude(self.token_filter.phrased_to_exclude)
+        self.token_sequences_to_exclude = self._get_tokens_sequences_to_exclude(self.token_filter.phrases_to_exclude)
         self.empty_turn_sequences = self._get_tokens_sequences_to_exclude(__config.empty_turn_sequences)
 
     @classmethod
     def from_chat(
         cls,
         mask: Tensor,
-        chat: "BaseChat",
-    ) -> "BaseChat":
+        chat: "BaseMllmChat",
+    ) -> "BaseMllmChat":
         """
         Create a new chat instance from an existing chat and a mask.
 
@@ -135,7 +131,7 @@ class BaseChat(ABC):
             mask: A boolean tensor indicating which messages to include.
             chat: The existing chat instance to copy.
         Returns:
-            An instance of BaseChat.
+            An instance of BaseMllmChat.
         Raises:
             ValueError: If the mask size does not match the number of tokens in the chat.
         """
@@ -189,12 +185,7 @@ class BaseChat(ABC):
 
     @property
     def shap(self) -> ExplainerCache | None:
-        """
-        Get the explainer cache.
-
-        Returns:
-            The ExplainerCache instance.
-        """
+        """Access for the explainer cache if set."""
         return self.__shap
 
     @shap.setter
@@ -213,77 +204,52 @@ class BaseChat(ABC):
 
     @shap.deleter
     def shap(self) -> None:
-        """
-        Delete the explainer cache.
-        """
+        """Delete the explainer cache."""
         if self.__shap is not None:
             del self.__shap
             self.__shap = None
 
     @property
     def input_tokens_num(self) -> int:
-        """Get the total number of input tokens (text + audio)."""
+        """Total number of input tokens (text + audio)."""
         return len(self.input_tokens)
 
     @cached_property
     @abstractmethod
     def input_tokens(self) -> list[Tensor]:
-        """
-        Get the combined input tensor (text + audio).
-
-        Returns:
-            The combined input tokens as a list.
-        """
+        """Combined input tensor (text + audio)."""
 
     @cached_property
     @abstractmethod
     def tokens_modality_flag(self) -> Tensor:
-        """
-        Get the modality flag tensor indicating token types.
-
-        Returns:
-            The modality flag tensor with values from ModalityFlag enum.
-        """
+        """The modality flag tensor indicating token types according to :class:`ModalityFlag` enum."""
 
     @cached_property
     def text_tokens_mask(self) -> Tensor:
-        """
-        Get a boolean mask indicating positions of text tokens in the input.
-
-        Returns:
-            A boolean tensor where True indicates text token positions.
-        """
+        """Boolean mask indicating positions of text tokens in the input (:attr:`input_tokens` tensor)."""
         return self.tokens_modality_flag == ModalityFlag.TEXT
 
     @cached_property
     def audio_tokens_mask(self) -> Tensor:
-        """
-        Get a boolean mask indicating positions of audio tokens in the input.
-
-        Returns:
-            A boolean tensor where True indicates audio token positions.
-        """
+        """Boolean mask indicating positions of audio tokens in the input (:attr:`input_tokens` tensor)."""
         return ~self.text_tokens_mask
 
     @cached_property
     @abstractmethod
     def text_tokens(self) -> Tensor:
-        """Get the input text tensor (tokens)."""
+        """Input text tensor (tokens)."""
 
     @cached_property
     @abstractmethod
     def audio_tokens(self) -> Tensor:
-        """Get the input audio tensor (tokens) in shape (T, K)"""
+        """Input audio tensor (tokens) in shape (T, K)"""
 
     @cached_property
     def text_tokens_no_system_mask_filtered(self) -> Tensor:
         """
-        Get a boolean mask indicating which text tokens are not system
+        Boolean mask indicating which text tokens are not system
         generated, after filtering out specified sequences.
-        Relative to `text_tokens_mask`.
-
-        Returns:
-            A boolean tensor where True indicates user-generated text tokens.
+        Relative to :attr:`text_tokens_mask`.
         """
         mask = self.text_tokens_no_system_mask.clone()
 
@@ -296,22 +262,16 @@ class BaseChat(ABC):
     @property
     def audio_tokens_no_system_mask_filtered(self) -> Tensor:
         """
-        Get a boolean mask indicating which audio tokens are not system
-        generated. Relative to `audio_tokens_mask`.
-
-        Returns:
-            A boolean tensor where True indicates user-generated audio tokens.
+        Boolean mask indicating which audio tokens are not system
+        generated. Relative to :attr:`audio_tokens_mask`.
         """
         return self.audio_tokens_no_system_mask  # no filtering
 
     @cached_property
     def shap_values_mask(self) -> Tensor:
         """
-        Get a boolean mask indicating which tokens should be considered
+        Boolean mask indicating which tokens should be considered
         for SHAP value calculations (i.e., non-system text tokens).
-
-        Returns:
-            A boolean tensor where True indicates tokens to consider for SHAP values.
         """
         mask = torch.zeros(self.input_tokens_num, dtype=torch.bool, device=self.torch_device)
 
@@ -327,10 +287,23 @@ class BaseChat(ABC):
 
     def refresh(self, full: bool = False) -> None:
         """
-        Refresh cached properties.
+        Refresh cached properties, that is:
+
+        - input_tokens
+        - tokens_modality_flag
+        - text_tokens_mask
+        - text_tokens
+        - audio_tokens_mask
+        - audio_tokens
+
+        If `full` is True, also refresh:
+
+        - audio_tokens_no_system_mask_filtered
+        - text_tokens_no_system_mask_filtered
+        - shap_values_mask
 
         Args:
-            full: If True, refreshes filtered masks as well.
+            full: If True, refreshes all cached properties.
         """
         logger.debug("Refreshing cached properties (full=%s).", full)
 
@@ -351,13 +324,14 @@ class BaseChat(ABC):
         """
         Start a new turn in the chat state.
 
-        Assumes cached property refresh is handled in _new_turn or
-        by calling add_text/add_audio methods.
-
+        Warning:
+            `For Developers:` This method assumes cached property refresh is handled in :func:`_new_turn` or
+            by calling add_text/add_audio methods.
         Args:
             speaker: The role of the speaker for the new turn.
         Raises:
             ValueError: If a turn is already active.
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if self.speaker is not None:
             raise ValueError("Cannot start a new turn while another turn is active. Please end the current turn first.")
@@ -374,11 +348,12 @@ class BaseChat(ABC):
         """
         End the current turn in the chat state.
 
-        Assumes cached property refresh is handled in _new_turn or
-        by calling add_text/add_audio methods.
-
+        Warning:
+            `For Developers:` This method assumes cached property refresh is handled in :func:`_new_turn` or
+            by calling add_text/add_audio methods.
         Raises:
             ValueError: If no turn is active.
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if self.speaker is None:
             raise ValueError("No active turn to end. Please start a turn first.")
@@ -399,6 +374,7 @@ class BaseChat(ABC):
             text: The text to add.
         Raises:
             ValueError: If text is not a non-empty string.
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if not isinstance(text, str) or not text:
             raise ValueError(f"text must be a non-empty string, got {type(text)}")
@@ -426,6 +402,7 @@ class BaseChat(ABC):
             audio_format: The format of the audio content (default is "mp3").
         Raises:
             ValueError: If audio_content is not non-empty bytes.
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if not isinstance(audio_content, bytes) or not audio_content:
             raise ValueError(f"audio_content must be non-empty bytes, got {type(audio_content)}")
@@ -455,11 +432,12 @@ class BaseChat(ABC):
             This method does not validate input data.
         Args:
             text: The text tokens to append.
-            audio_out: The audio tokens to append.
+            audio_out: The audio tokens to append (intended for model's output).
             modality_flag: The modality flags corresponding to the tokens.
             history_tracking_mode: The mode for tracking chat history.
         Raises:
             ValueError: If length mismatch occurs after appending.
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         text_tokens_added, audio_tokens_added = raise_connector_error(
             self._append,
@@ -491,6 +469,8 @@ class BaseChat(ABC):
             text_tokens: The generated text tokens.
         Returns:
             The decoded text.
+        Raises:
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if text_tokens is None:
             text_tokens = self.text_tokens
@@ -517,7 +497,9 @@ class BaseChat(ABC):
             sample_rate: The sample rate for the decoded audio (default is 24,000 Hz).
             audio_format: The desired output audio format (default is "mp3").
         Returns:
-            The decoded audio content in bytes.
+            The decoded audio content in bytes. Empty bytes if decoding is not available.
+        Raises:
+            RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if audio_tokens is None:
             audio_tokens = self.audio_tokens
@@ -537,7 +519,29 @@ class BaseChat(ABC):
         Serialize the chat state to a JSON-compatible dictionary.
 
         Returns:
-            A list of turns, where each turn is a list of ChatEntry objects.
+            A list of turns, where each turn is a list of ChatEntry objects. `shap_values=None`
+                indicates that SHAP values are not yet available.
+        Example:
+        ::
+
+            [
+                [
+                    ChatEntry(
+                        content_type=0,
+                        roles=[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+                        content='<|im_start|>, system, \\n, You, are, a helpful assistant that answers questions briefly...', # noqa: E501 # pylint: disable=line-too-long
+                        shap_values=None
+                    )
+                ],
+                [
+                    ChatEntry(
+                        content_type=0,
+                        roles=[2, 2, 2, 0, 0, 0, 0, 2, 2],
+                        content='<|im_start|>, user, \\n, Who, are, you, ?, <|im_end|>, \\n',
+                        shap_values=None
+                    )
+                ]
+            ]
         """
         conversation: list[list[ChatEntry]] = []
 
@@ -614,12 +618,12 @@ class BaseChat(ABC):
     @classmethod
     @abstractmethod
     def _set_new_instance(
-        cls: type["BaseChat"],
+        cls: type["BaseMllmChat"],
         full_mask: Tensor,
         text_mask_relative: Tensor,
         audio_mask_relative: Tensor,
-        chat: "BaseChat",
-    ) -> "BaseChat":
+        chat: "BaseMllmChat",
+    ) -> "BaseMllmChat":
         """
         Create a new chat instance from an existing chat and a mask.
 
@@ -629,17 +633,12 @@ class BaseChat(ABC):
             audio_mask_relative: A boolean tensor indicating which audio tokens to keep.
             chat: The existing chat instance to copy.
         Returns:
-            An instance of BaseChat.
+            An instance of BaseMllmChat.
         """
 
     @property
     def is_system_turn(self) -> bool:
-        """
-        Check if the current turn is a system turn.
-
-        Returns:
-            True if the current speaker is a system role, False otherwise.
-        """
+        """Flag indicating whether the current turn is a system turn."""
         return self.speaker in self._system_roles
 
     @abstractmethod
@@ -908,10 +907,10 @@ class BaseChat(ABC):
             f"last_speaker={self.speaker})"
         )
 
-    def __deepcopy__(self, memo: Any) -> "BaseChat":
+    def __deepcopy__(self, memo: Any) -> "BaseMllmChat":
         """
         Create a deep copy of the chat instance.
-        with updated reference to copied chat within `shap`.
+        with updated reference to copied chat within :attr:`shap`.
         """
         cls = self.__class__
         result = cls.__new__(cls)
@@ -931,5 +930,5 @@ class BaseChat(ABC):
         return result
 
 
-# rebuild model after definition of BaseSHAPExplainer
+# rebuild model after definition of BaseShapExplainer
 ExplainerCache.model_rebuild()

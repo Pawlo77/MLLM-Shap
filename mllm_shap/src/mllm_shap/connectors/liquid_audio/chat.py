@@ -6,83 +6,101 @@ from logging import Logger
 from typing import Any, Literal, cast
 
 import torch
-from liquid_audio import ChatState, LFMModality
+from liquid_audio import ChatState as _ChatState
+from liquid_audio import LFMModality
 from torch import Tensor
 
 from ...utils.logger import get_logger
 from ...utils.other import safe_mask
-from .._base.chat import BaseChat
-from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role
+from ..base.chat import BaseMllmChat
+from ..base.filters import TokenFilter
+from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role, SystemRolesSetup
 
 logger: Logger = get_logger(__name__)
 
 
-class LiquidAudioChat(BaseChat, ChatState):  # type: ignore[misc]
-    """
-    Chat state for LiquidAudio model.
+class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
+    """Represents the chat state for a LiquidAudio model.
 
-    Fields:
-        audio_empty_value: Value representing empty audio token.
-        validate_from_chat: Whether to validate chat state when creating new instances.
-
-        START_MARK: Token marking the start of text.
-        EMPTY_SYSTEM_TURN: Token sequence for empty system turn.
-        EMPTY_ASSISTANT_TURN: Token sequence for empty assistant turn.
-        EMPTY_USER_TURN: Token sequence for empty user turn.
-        AUDIO_IN_SHAPE: Number of audio in tokens.
-        AUDIO_OUT_SHAPE: Number of audio out tokens.
+    Handles text and audio token sequences, speaker roles, and special turn markers.
+    Includes configuration for audio input/output shapes and empty token handling.
     """
 
     audio_empty_value: float = torch.finfo(torch.float32).min
+    """Represents a placeholder value for empty audio tokens."""
+
     validate_from_chat: bool
+    """Determines whether to validate the chat state when creating new instances."""
 
     START_MARK: str = "<|startoftext|>"
+    """Marker indicating the start of a text sequence."""
     EMPTY_SYSTEM_TURN: str = "<|im_start|>Role.SYSTEM\n<|im_end|>\n"
+    """Marker representing an empty system turn."""
     EMPTY_ASSISTANT_TURN: str = "<|im_start|>Role.ASSISTANT\n<|im_end|>\n"
+    """Marker representing an empty assistant turn."""
     EMPTY_USER_TURN: str = "<|im_start|>user\n<|im_end|>\n"
+    """Marker representing an empty user turn."""
 
     AUDIO_IN_SHAPE: int = 128
+    """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
+    """Number of audio codebooks used for audio output tokens."""
 
     # for each element x in _audio_map:
     #     x > 0 -> index in audio_out + 1
     #     x < 0 -> -(index in audio_in + 1)
     _audio_map: Tensor
-
     # relies on ChatState.text, ChatState.audio_in, ChatState.audio_out, ChatState.modality_flag
     # both audio are in  (K, T) format
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
-        *args: Any,
         device: torch.device,
-        liquid_kwargs: dict[str, Any] | None = None,
-        validate_from_chat: bool = False,  # for testing purposes
-        **kwargs: Any,
+        validate_from_chat: bool = False,
+        added_vocab_tokens: set[int] | None = None,
+        empty_turn_sequences: set[str] | None = None,
+        token_filter: TokenFilter | None = None,
+        system_roles_setup: SystemRolesSetup | None = None,
+        **liquid_kwargs: Any,
     ) -> None:
-        ChatState.__init__(self, **(liquid_kwargs or {}))
+        """
+        Initialize LiquidAudioChat.
 
-        empty_turn_sequences = {
+        Args:
+            device: The device to use for tensors.
+            validate_from_chat: Whether to validate chat state when creating new instances.
+            added_vocab_tokens: Additional vocabulary tokens to consider.
+            empty_turn_sequences: String sequences representing empty turns to consider.
+            token_filter: Token filtering strategy to apply.
+            system_roles_setup: Configuration for system role handling.
+            liquid_kwargs: Additional keyword arguments for ChatState.
+        """
+        _ChatState.__init__(self, **liquid_kwargs)
+
+        _additional_empty_turn_sequences = {
             LiquidAudioChat.EMPTY_SYSTEM_TURN,
             LiquidAudioChat.EMPTY_ASSISTANT_TURN,
             LiquidAudioChat.EMPTY_USER_TURN,
         }
+        empty_turn_sequences = empty_turn_sequences or set()
         # Consider empty turns with start mark as well
         for e in empty_turn_sequences.copy():
-            empty_turn_sequences.add(LiquidAudioChat.START_MARK + e)
+            _additional_empty_turn_sequences.add(LiquidAudioChat.START_MARK + e)
+        empty_turn_sequences = empty_turn_sequences or set()
+        empty_turn_sequences = empty_turn_sequences.union(_additional_empty_turn_sequences)
 
-        added_vocab_tokens = set(self.proc.text.get_added_vocab().values())
+        added_vocab_tokens = added_vocab_tokens or set()
+        added_vocab_tokens = added_vocab_tokens.union(set(self.proc.text.get_added_vocab().values()))
 
-        added_vocab_tokens = added_vocab_tokens.union(kwargs.pop("added_vocab_tokens", set()))
-        empty_turn_sequences = empty_turn_sequences.union(kwargs.pop("empty_turn_sequences", set()))
-        BaseChat.__init__(
+        BaseMllmChat.__init__(
             self,
-            *args,
-            added_vocab_tokens=added_vocab_tokens,
             device=device,
+            added_vocab_tokens=added_vocab_tokens,
             empty_turn_sequences=empty_turn_sequences,
-            **kwargs,
-        )  # type: ignore[misc]
+            token_filter=token_filter,
+            system_roles_setup=system_roles_setup,
+        )
 
         # mark starting tokens as system
         self.speaker = Role.SYSTEM
@@ -92,7 +110,7 @@ class LiquidAudioChat(BaseChat, ChatState):  # type: ignore[misc]
         self.validate_from_chat = validate_from_chat
         self._audio_map = torch.empty((0,), dtype=torch.long, device=self.torch_device)
 
-    # assume `_{}` are protected methods from BaseChat
+    # assume `_{}` are protected methods from BaseMllmChat
     # pylint: disable=too-many-locals,protected-access
     @classmethod
     def _set_new_instance(
@@ -255,12 +273,12 @@ class LiquidAudioChat(BaseChat, ChatState):  # type: ignore[misc]
 
     def _add_text(self, text: str) -> int:
         starting_tokens_num = self.text.shape[1]
-        ChatState.add_text(self, text)
+        _ChatState.add_text(self, text)
         return int(self.text.shape[1] - starting_tokens_num)
 
     def _add_audio(self, waveform: Tensor, sample_rate: int) -> int:
         starting_tokens_num = self.audio_in.shape[1]
-        ChatState.add_audio(self, waveform, sample_rate)
+        _ChatState.add_audio(self, waveform, sample_rate)
         # LiquidAudioChat.AUDIO_OUT_SHAPE codebooks
         added_tokens_num = int(self.audio_in.shape[1] - starting_tokens_num) // LiquidAudioChat.AUDIO_OUT_SHAPE
 
@@ -301,7 +319,7 @@ class LiquidAudioChat(BaseChat, ChatState):  # type: ignore[misc]
             modality_flag = modality_flag[modality_flag != LFMModality.TEXT].unsqueeze(0)
 
         # else: keep both text and audio_out as is
-        ChatState.append(self, text, audio_out, modality_flag)
+        _ChatState.append(self, text, audio_out, modality_flag)
 
         # update audio map
         self._audio_map = torch.cat(
@@ -331,10 +349,10 @@ class LiquidAudioChat(BaseChat, ChatState):  # type: ignore[misc]
             role = "user"
         else:  # Role.ASSISTANT
             role = "assistant"
-        ChatState.new_turn(self, role)
+        _ChatState.new_turn(self, role)
 
     def _end_turn(self) -> None:
-        ChatState.end_turn(self)
+        _ChatState.end_turn(self)
 
     def _get_tokens_sequences_to_exclude(self, phrases_to_exclude: set[str]) -> list[Tensor]:
         token_sequences_to_exclude: list[Tensor] = []
