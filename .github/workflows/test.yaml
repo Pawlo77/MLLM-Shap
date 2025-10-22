@@ -26,6 +26,6 @@ jobs:
       - name: Sync deps
         run: uv sync --locked --all-groups
 
-      - name: Run pre-commit hooks
+      - name: Run Pytest
         working-directory: mllm_shap/tests
         run: uv run pytest
