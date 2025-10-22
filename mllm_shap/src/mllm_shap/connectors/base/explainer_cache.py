@@ -148,7 +148,12 @@ class ExplainerCache(BaseModel):
         Args:
             name: The name of the SHAP values attribute to set.
             values: The SHAP values to set.
+        Raises:
+            ValueError: If SHAP values size is larger than the number of tokens in the chat
         """
+        if self.chat.input_tokens_num < values.shape[0]:
+            raise ValueError("Values size is larger than the number of tokens in the chat.")
+
         values = self.extend_values(
             values,
             shape=torch.Size((self.chat.input_tokens_num - values.shape[0],)),

@@ -4,8 +4,7 @@ from logging import Logger
 from time import time
 from typing import Any
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 from torch import Tensor
 
 from ..connectors.base.chat import BaseMllmChat
