@@ -8,6 +8,8 @@ from typing import Any, Dict, Optional, Tuple, TypeVar
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
 from mllm_shap.connectors import LiquidAudio
 from mllm_shap.connectors.enums import (
@@ -20,10 +22,6 @@ from mllm_shap.connectors.filters import KeepAllTokens
 from mllm_shap.shap import Explainer, McShapExplainer
 from mllm_shap.shap.enums import Mode
 
-
-# -----------------------------------------------------------------------------
-# Constants
-# -----------------------------------------------------------------------------
 # Column / key names used in dataset rows
 SENTENCES_COL = "sentences"
 PROMPT_COL = "prompt"
@@ -43,9 +41,6 @@ MULTI_TURN_FILE = "multi_turn.parquet"
 CUDA_DEVICE_TYPE = "cuda"
 
 
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
 T = TypeVar("T")
 
 
@@ -61,9 +56,6 @@ def _ensure_not_none(val: Optional[T], name: str) -> T:
     return val
 
 
-# -----------------------------------------------------------------------------
-# Public API
-# -----------------------------------------------------------------------------
 def load_sample_from_parquet(data_dir: str, filename: str = "single_sentence.parquet") -> Tuple[str, bytes, str]:
     """Load a random row from the parquet file and extract text + audio bytes.
 
@@ -84,7 +76,7 @@ def load_sample_from_parquet(data_dir: str, filename: str = "single_sentence.par
     if not os.path.exists(sample_file_path):
         raise FileNotFoundError(f"Sample file not found: {sample_file_path}. " "Please check the DATA_DIR path.")
 
-    print(f"Loading sample data from: {sample_file_path}")
+    # print(f"Loading sample data from: {sample_file_path}")
 
     try:
         df = pd.read_parquet(sample_file_path, engine="pyarrow")
@@ -122,6 +114,53 @@ def load_sample_from_parquet(data_dir: str, filename: str = "single_sentence.par
     gc.collect()
 
     return sample_text, sample_audio_bytes, audio_col_used
+
+
+def load_datasets(data_dir: str, file_names: list[str], print_info: bool = False) -> pd.DataFrame:
+    """Load multiple parquet datasets from ``data_dir`` and concatenate.
+
+    Args:
+        data_dir: Directory containing parquet files.
+        file_names: List of parquet filenames to load. If None, loads all known files.
+        print_info: Whether to print dataset info after loading.
+    Returns:
+        Concatenated DataFrame of all loaded datasets.
+    """
+    all_dfs = []
+    loaded_files_count = 0
+    total_rows = 0
+
+    for fname in file_names:
+        file_path = os.path.join(data_dir, fname)
+        if os.path.exists(file_path):
+            print(f"  Loading {fname}...")
+            try:
+                df_part = pd.read_parquet(file_path, engine="pyarrow")
+                df_part["source_file"] = fname  # track origin
+                all_dfs.append(df_part)
+                print(f"    Loaded {len(df_part)} rows.")
+                total_rows += len(df_part)
+                loaded_files_count += 1
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                print(f"    ERROR loading {fname}: {exc}")
+        else:
+            print(f"  WARNING: File not found - {fname}")
+
+    if not all_dfs:
+        raise FileNotFoundError(
+            f"No dataset files could be loaded from {data_dir}. " "Please check the paths and file names."
+        )
+
+    # Concatenate all loaded dataframes
+    full_dataset_df = pd.concat(all_dfs, ignore_index=True)
+    if print_info:
+        print(f"\nSuccessfully loaded {loaded_files_count} files.")
+        print("Total rows in combined dataset: " f"{len(full_dataset_df)} (counted {total_rows} rows during load)")
+        print("\nDataset structure (first 5 rows):")
+        print(full_dataset_df.head())
+        print("\nDataset Info:")
+        print(full_dataset_df.info())
+    return full_dataset_df
 
 
 def run_test_on_device(
@@ -516,10 +555,9 @@ def count_tokens_for_row(
         text_tokens_added = 0
         audio_tokens_added = 0
     finally:
-        # Explicitly delete the chat object
         if chat is not None:
             del chat
-            # gc.collect()  # optional
+            # gc.collect()
 
     # Basic sanity check: counts should not be negative
     text_tokens_added = max(text_tokens_added, 0)
@@ -631,3 +669,97 @@ def time_shap_on_gpu(
         "audio_tokens": audio_tokens,  # Return pre-calculated tokens
         "error": error_msg,
     }
+
+
+def generate_timing_plots(
+    successful_times_df: pd.DataFrame, avg_time_text: float, avg_time_audio: float, avg_total_time_overall: float
+) -> None:
+    """Generates bar plot comparing CPU vs GPU timing results.
+
+    Args:
+        successful_times_df: DataFrame with timing results for successful runs.
+        avg_time_text: Average time per text token (M2).
+        avg_time_audio: Average time per audio token (M2).
+        avg_total_time_overall: Average time per total token (M2).
+    """
+    try:
+        # Add total tokens column for easier plotting
+        successful_times_df["total_tokens"] = successful_times_df["text_tokens"] + successful_times_df["audio_tokens"]
+
+        # --- Plot 1: Time vs Total Tokens ---
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(
+            data=successful_times_df,
+            x="total_tokens",
+            y="time_seconds",
+            alpha=0.6,
+        )
+        # Add a regression line to see the trend
+        sns.regplot(
+            data=successful_times_df,
+            x="total_tokens",
+            y="time_seconds",
+            scatter=False,
+            color="red",
+            line_kws={"label": (f"y ≈ {avg_total_time_overall:.4f}x + intercept")},
+        )
+        plt.title("SHAP Computation Time vs. Total Tokens per Sample")
+        plt.xlabel("Total Tokens (Text + Audio)")
+        plt.ylabel("Time (seconds)")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("timing_dist_v2")
+
+        # --- Plot 2: Distribution of Time per Token ---
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        # Filter out infinite values that might occur if tokens were 0
+        time_per_text = (
+            successful_times_df[successful_times_df["text_tokens"] > 0]["time_per_text_token"]
+            .replace([np.inf, -np.inf], np.nan)
+            .dropna()
+        )
+        if not time_per_text.empty:
+            sns.histplot(time_per_text, kde=True, bins=20)
+            plt.title("Distribution of Time per Text Token")
+            plt.xlabel("Seconds / Text Token")
+            plt.axvline(
+                avg_time_text,
+                color="r",
+                linestyle="--",
+                label=f"Avg (M2): {avg_time_text:.4f}",
+            )
+            plt.legend()
+        else:
+            plt.title("No Text Token Timing Data")
+
+        plt.subplot(1, 2, 2)
+        time_per_audio = (
+            successful_times_df[successful_times_df["audio_tokens"] > 0]["time_per_audio_token"]
+            .replace([np.inf, -np.inf], np.nan)
+            .dropna()
+        )
+        if not time_per_audio.empty:
+            sns.histplot(
+                time_per_audio,
+                kde=True,
+                bins=20,
+                color="orange",
+            )
+            plt.title("Distribution of Time per Audio Token")
+            plt.xlabel("Seconds / Audio Token")
+            plt.axvline(
+                avg_time_audio,
+                color="r",
+                linestyle="--",
+                label=f"Avg (M2): {avg_time_audio:.4f}",
+            )
+            plt.legend()
+        else:
+            plt.title("No Audio Token Timing Data")
+
+        plt.tight_layout()
+        plt.savefig("timing_dist")
+    except NameError:
+        print("No successful timing data to visualize.")
