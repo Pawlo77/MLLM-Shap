@@ -17,6 +17,7 @@ from .chat import BaseMllmChat
 logger: Logger = get_logger(__name__)
 
 
+# pylint: disable=duplicate-code
 class BaseMllmModel(ABC):
     """Base class for model connectors."""
 

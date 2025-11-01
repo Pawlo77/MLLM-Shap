@@ -25,6 +25,7 @@ class BaseChatConfig(BaseModel):
     empty_turn_sequences: set[str]
 
 
+# pylint: disable=duplicate-code
 class BaseModelConfig(BaseModel):
     """
     Configuration model for BaseMllmModel.
