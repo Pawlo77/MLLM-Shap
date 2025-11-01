@@ -54,6 +54,7 @@ dev = [
   "types-requests==2.32.4.20250913",
   "types-pyyaml==6.0.12.20250915",
   "types-simplejson==3.20.0.20250822",
+  "types-tabulate>=0.9.0.20241207",
 ]
 
 [tool.uv]
