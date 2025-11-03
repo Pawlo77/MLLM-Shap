@@ -1,0 +1,390 @@
+{
+  "row_index": 7,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 23.981435775756836,
+  "prompt_text": "What's the sine of ninety degrees?",
+  "attr_summary": {
+    "abs_sum_text": 0.17529296875,
+    "abs_sum_audio": 0.8284912109375,
+    "frac_text": 0.17463212939316552,
+    "frac_audio": 0.8253678706068345,
+    "count_text_tokens": 8,
+    "count_audio_segments": 29
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "<|im_start|>",
+          "user",
+          "\n",
+          "What",
+          "'s",
+          " the",
+          " sine",
+          " of",
+          " nin",
+          "ety",
+          " degrees",
+          "?"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          0.0260009765625,
+          0.0181884765625,
+          0.017333984375,
+          0.025146484375,
+          0.0208740234375,
+          0.0208740234375,
+          0.0242919921875,
+          0.0225830078125,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          }
+        ],
+        "shap_values": [
+          0.0286865234375,
+          0.0286865234375,
+          0.02783203125,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.029541015625,
+          0.0286865234375,
+          0.0286865234375,
+          0.02783203125,
+          0.0286865234375,
+          0.02783203125,
+          0.02783203125,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375,
+          0.02783203125,
+          0.0286865234375,
+          0.0286865234375,
+          0.0286865234375
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          }
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}
