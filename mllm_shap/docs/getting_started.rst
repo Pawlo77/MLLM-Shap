@@ -76,7 +76,7 @@ This will produce an output similar to the following:
 
 .. image:: _static/example_text_result.png
    :alt: Simple Text Example Result
-   :width: 300px
+   :width: 30%
    :align: center
    :class: padded-image
 
@@ -179,7 +179,7 @@ This will render pandas dataframe with audio players for each token, similar to:
 
 .. image:: _static/example_audio_result.png
    :alt: Simple Text Example Result
-   :width: 500px
+   :width: 50%
    :align: center
    :class: padded-image
 
@@ -198,6 +198,6 @@ This will produce a histogram similar to the following:
 
 .. image:: _static/example_shap_dist.png
    :alt: SHAP Values Distribution
-   :width: 600px
+   :width: 40%
    :align: center
    :class: padded-image
