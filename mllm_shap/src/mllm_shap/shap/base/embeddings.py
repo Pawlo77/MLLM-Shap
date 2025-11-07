@@ -41,6 +41,7 @@ class BaseEmbeddingReducer(ABC):
         Raises:
             ValueError: If any embedding is not a Tensor.
         """
+        print("DA")
         for i, emb in enumerate(embeddings):
             if not isinstance(emb, Tensor):
                 raise ValueError(f"Embedding at index {i} is not a Tensor.")
