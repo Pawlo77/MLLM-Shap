@@ -1,10 +1,11 @@
 """Utility functions for audio processing and display."""
 
-from io import BytesIO
 from typing import TYPE_CHECKING
-
+from io import BytesIO
+import soundfile as sf
+import torch
 from torch import Tensor
-from torchaudio import load, save
+from torchaudio import save
 
 if TYPE_CHECKING:
     from IPython.display import Audio
@@ -32,16 +33,26 @@ class TorchAudioHandler:
         Prepare audio content for processing.
 
         Args:
-            audio_content: The audio content in bytes.
             audio_format: The format of the audio content (default is "mp3").
+            audio_content: The audio content in bytes.
 
         Returns:
             A tuple containing the audio tensor and the sample rate.
         """
 
-        waveform, sample_rate = load(BytesIO(audio_content), format=audio_format)
+        try:
+            waveform_np, sample_rate = sf.read(BytesIO(audio_content))
+            waveform = torch.from_numpy(waveform_np).float()
 
-        # Convert to mono if needed
+            if waveform.dim() == 1:
+                waveform = waveform.unsqueeze(0)
+            else:
+                waveform = waveform.T
+
+        except Exception as e:
+            print(f"Error loading with soundfile: {e}, for format: {audio_format}.")
+            raise e
+
         if waveform.shape[0] > 1:
             waveform = waveform.mean(dim=0, keepdim=True)
 
