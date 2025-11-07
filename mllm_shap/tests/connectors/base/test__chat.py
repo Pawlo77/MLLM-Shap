@@ -1,12 +1,13 @@
 """Unit tests for the BaseMllmChat connector and its methods."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 import torch
-from unittest.mock import patch, MagicMock
-
-from mllm_shap.connectors.base.chat import Role
-from mllm_shap.connectors.enums import ModalityFlag
+from mllm_shap.connectors.base.chat import BaseMllmChat, Role
 from mllm_shap.connectors.base.chat_entry import ChatEntry
+from mllm_shap.connectors.enums import ModalityFlag
+
 from ...dummy import DummyChat
 
 
@@ -15,11 +16,11 @@ class TestDummyChat:
 
     @staticmethod
     @pytest.fixture
-    def chat() -> DummyChat:
+    def chat() -> BaseMllmChat:
         """Fixture for DummyChat instance."""
         return DummyChat(num_tokens=5)
 
-    def test_initialization(self, chat: DummyChat) -> None:
+    def test_initialization(self, chat: BaseMllmChat) -> None:
         """Test initialization of DummyChat."""
         assert isinstance(chat.torch_device, torch.device)
         assert chat.turn_number == 0
@@ -28,7 +29,7 @@ class TestDummyChat:
         assert chat.text_tokens.shape[0] == 5
         assert chat.audio_tokens.shape[0] == 5
 
-    def test_input_tokens_and_masks(self, chat: DummyChat) -> None:
+    def test_input_tokens_and_masks(self, chat: BaseMllmChat) -> None:
         """Test input_tokens and various masks."""
         assert torch.all(chat.input_tokens == torch.arange(5))
         assert torch.all(chat.tokens_modality_flag == ModalityFlag.TEXT)
@@ -41,23 +42,23 @@ class TestDummyChat:
         assert mask.shape[0] == chat.input_tokens_num
         assert mask.dtype == torch.bool
 
-    def test_shap_setter_getter_deleter(self, chat: DummyChat) -> None:
+    def test_shap_setter_getter_deleter(self, chat: BaseMllmChat) -> None:
         """Test shap property setter, getter, and deleter."""
         dummy_cache = MagicMock()
         dummy_cache.chat = chat
         # set
-        chat.shap = dummy_cache
-        assert chat.shap == dummy_cache
+        chat.cache = dummy_cache
+        assert chat.cache == dummy_cache
         # changing to different chat should raise
         dummy_cache2 = MagicMock()
         dummy_cache2.chat = DummyChat(1)
         with pytest.raises(ValueError):
-            chat.shap = dummy_cache2
+            chat.cache = dummy_cache2
         # deleter
-        del chat.shap
-        assert chat.shap is None
+        del chat.cache
+        assert chat.cache is None
 
-    def test_extend_and_after_add(self, chat: DummyChat) -> None:
+    def test_extend_and_after_add(self, chat: BaseMllmChat) -> None:
         """Test _extend_token_roles and _after_add methods."""
         # speaker must be set for _extend_token_roles
         chat.speaker = Role.USER
@@ -67,7 +68,7 @@ class TestDummyChat:
         assert chat.token_roles.shape[0] >= 2
         assert chat.text_tokens_no_system_mask.shape[0] >= 2
 
-    def test_new_turn_and_end_turn(self, chat: DummyChat) -> None:
+    def test_new_turn_and_end_turn(self, chat: BaseMllmChat) -> None:
         """Test new_turn and end_turn methods."""
         chat.turn_number = 0
         chat.speaker = None
@@ -78,7 +79,7 @@ class TestDummyChat:
             chat.end_turn()
             assert chat.speaker is None
 
-    def test_add_text_and_add_audio(self, chat: DummyChat) -> None:
+    def test_add_text_and_add_audio(self, chat: BaseMllmChat) -> None:
         """Test add_text and add_audio methods."""
         chat.speaker = Role.USER
         # add text
@@ -91,7 +92,7 @@ class TestDummyChat:
             chat.add_audio(b"abcd", audio_format="mp3")
         assert chat.input_tokens_num > initial_tokens
 
-    def test_append_method(self, chat: DummyChat) -> None:
+    def test_append_method(self, chat: BaseMllmChat) -> None:
         """Test append method."""
         chat.speaker = Role.USER
         text_tensor = torch.arange(2)
@@ -103,7 +104,7 @@ class TestDummyChat:
         assert chat.text_tokens_no_system_mask.shape[0] >= 2
         assert chat.audio_tokens_no_system_mask.shape[0] >= 2
 
-    def test_detect_sequence(self, chat: DummyChat) -> None:
+    def test_detect_sequence(self, chat: BaseMllmChat) -> None:
         """Test _detect method for sequence detection."""
         tokens = torch.tensor([1, 2, 3, 1, 2, 3])
         seq_tensor = torch.tensor([1, 2])
@@ -149,7 +150,7 @@ class TestGetConversation:
         chat.text_tokens_mask = torch.ones(4, dtype=torch.bool)
         return chat
 
-    def test_single_turn_text(self, chat: DummyChat) -> None:
+    def test_single_turn_text(self, chat: BaseMllmChat) -> None:
         """Test get_conversation for single turn with text modality."""
         chat.turn_number = 1
         chat.token_turns = torch.tensor([1, 1, 1], dtype=torch.int16)
@@ -172,7 +173,7 @@ class TestGetConversation:
         for entry in turn_entries:
             assert entry.roles == [Role.USER.value] * 3
 
-    def test_multi_turn_text(self, chat: DummyChat) -> None:
+    def test_multi_turn_text(self, chat: BaseMllmChat) -> None:
         """Test get_conversation for multi-turn with text modality."""
         with patch.object(
             chat,
@@ -232,7 +233,7 @@ class TestGetConversation:
         # Mock SHAP
         shap_mock = MagicMock()
         shap_mock.normalized_values = torch.tensor([0.1, 0.2, 0.3])
-        chat.shap = shap_mock
+        chat.cache = shap_mock
 
         with patch.object(
             chat,

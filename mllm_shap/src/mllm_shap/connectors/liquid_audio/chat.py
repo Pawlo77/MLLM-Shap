@@ -58,7 +58,6 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         self,
         device: torch.device,
         validate_from_chat: bool = False,
-        added_vocab_tokens: set[int] | None = None,
         empty_turn_sequences: set[str] | None = None,
         token_filter: TokenFilter | None = None,
         system_roles_setup: SystemRolesSetup | None = None,
@@ -70,7 +69,6 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         Args:
             device: The device to use for tensors.
             validate_from_chat: Whether to validate chat state when creating new instances.
-            added_vocab_tokens: Additional vocabulary tokens to consider.
             empty_turn_sequences: String sequences representing empty turns to consider.
             token_filter: Token filtering strategy to apply.
             system_roles_setup: Configuration for system role handling.
@@ -83,20 +81,15 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             LiquidAudioChat.EMPTY_ASSISTANT_TURN,
             LiquidAudioChat.EMPTY_USER_TURN,
         }
-        empty_turn_sequences = empty_turn_sequences or set()
         # Consider empty turns with start mark as well
-        for e in empty_turn_sequences.copy():
+        for e in _additional_empty_turn_sequences.copy():
             _additional_empty_turn_sequences.add(LiquidAudioChat.START_MARK + e)
         empty_turn_sequences = empty_turn_sequences or set()
         empty_turn_sequences = empty_turn_sequences.union(_additional_empty_turn_sequences)
 
-        added_vocab_tokens = added_vocab_tokens or set()
-        added_vocab_tokens = added_vocab_tokens.union(set(self.proc.text.get_added_vocab().values()))
-
         BaseMllmChat.__init__(
             self,
             device=device,
-            added_vocab_tokens=added_vocab_tokens,
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,

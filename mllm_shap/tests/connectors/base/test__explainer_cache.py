@@ -1,141 +1,164 @@
-"""Tests for ExplainerCache class."""
+"""Unit tests for ExplainerCache class (new implementation)."""
+
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 import torch
-from unittest.mock import patch, PropertyMock, MagicMock
 from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.explainer_cache import ExplainerCache
+from mllm_shap.connectors.base.model_response import ModelResponse
+
 from ...dummy import DummyChat
 
 
 class TestExplainerCache:
-    """Tests for ExplainerCache methods and validation."""
+    """Tests for the new ExplainerCache implementation."""
 
     @staticmethod
     @pytest.fixture
-    def chat() -> DummyChat:
+    def chat() -> BaseMllmChat:
         """Fixture for DummyChat instance."""
-        return DummyChat()
+        return DummyChat(num_tokens=5)
 
     @staticmethod
     @pytest.fixture
-    def cache(chat: DummyChat) -> ExplainerCache:
-        """Fixture for ExplainerCache instance."""
-        return ExplainerCache(chat=chat, calculated_by=123)
+    def base_responses() -> list[ModelResponse]:
+        """Fixture with dummy responses."""
+        return [
+            ModelResponse(
+                chat=None,
+                generated_audio_tokens=torch.zeros(1, 2),
+                generated_modality_flag=torch.zeros(1, 2),
+                generated_text_tokens=torch.zeros(1, 2),
+            )
+            for _ in range(2)
+        ]
 
-    def test_extend_values_adds_padding(self, cache: ExplainerCache, chat: DummyChat) -> None:
+    @staticmethod
+    @pytest.fixture
+    def cache(chat: BaseMllmChat, base_responses: list[ModelResponse]) -> ExplainerCache:
+        """Fixture for ExplainerCache instance."""
+        masks = torch.ones(2, 3, dtype=torch.bool)
+        return ExplainerCache(
+            chat=chat,
+            calculated_by=111,
+            n=3,
+            responses=base_responses,
+            masks=masks,
+        )
+
+    def test_init_extends_masks(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+        """Test that masks are extended to match chat length."""
+        masks = torch.ones(2, 3, dtype=torch.bool)
+        cache = ExplainerCache(
+            chat=chat,
+            calculated_by=123,
+            n=3,
+            responses=base_responses,
+            masks=masks,
+        )
+        assert cache.masks.shape == (2, chat.input_tokens_num)
+        assert torch.all(cache.masks[:, :3])
+        assert torch.all(~cache.masks[:, 3:])  # padded False
+
+    def test_init_raises_if_masks_larger_than_chat(
+        self, chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> None:
+        """Raise if mask has more tokens than chat."""
+        masks = torch.ones(2, chat.input_tokens_num + 1, dtype=torch.bool)
+        with pytest.raises(ValueError, match="Masks size is larger than the number of tokens"):
+            ExplainerCache(
+                chat=chat,
+                calculated_by=1,
+                n=5,
+                responses=base_responses,
+                masks=masks,
+            )
+
+    def test_extend_values_adds_padding(self, chat: BaseMllmChat) -> None:
         """Test extend_values correctly appends fill values."""
         base = torch.tensor([[1.0, 2.0]])
-        extended = cache.extend_values(base, shape=(1, 3), dim=1, fill_value=0.0)
+        extended = ExplainerCache.extend_values(
+            values=base, shape=(1, 3), dim=1, fill_value=0.0, device=chat.torch_device
+        )
         expected = torch.tensor([[1.0, 2.0, 0.0, 0.0, 0.0]])
         assert torch.equal(extended, expected)
         assert extended.device == chat.torch_device
 
-    @patch.object(BaseMllmChat, "input_tokens_num", new_callable=PropertyMock)
-    def test_masks_setter_and_getter(self, mock_input_tokens_num: MagicMock, cache: ExplainerCache) -> None:
-        """Test masks setter extends and validates correctly."""
-        mock_input_tokens_num.return_value = 10
-        cache.reduced_embeddings = torch.randn(3, 128)
-        values = torch.tensor([[True, False, True], [True, False, True], [True, False, True]])
-        cache.masks = values
-        out = cache.masks
-        assert out.shape == (3, 10)
-        assert torch.equal(out[:, :3], values)
-
-    def test_masks_setter_raises_if_no_embeddings(self, cache: ExplainerCache) -> None:
-        """Should raise if reduced_embeddings is missing."""
-        values = torch.tensor([[True, False, True]])
-        with pytest.raises(ValueError, match="Masks size does not match"):
-            cache.masks = values
-
-    @patch.object(BaseMllmChat, "input_tokens_num", new_callable=PropertyMock)
-    def test_masks_setter_raises_if_size_mismatch(
-        self, mock_input_tokens_num: MagicMock, cache: ExplainerCache
-    ) -> None:
-        """Should raise if reduced_embeddings and mask lengths differ."""
-        mock_input_tokens_num.return_value = 5
-        cache.reduced_embeddings = torch.randn(3, 3)
-        values = torch.tensor([[True, False]])
-        with pytest.raises(ValueError, match="Masks size does not match"):
-            cache.masks = values
-
-    @patch.object(BaseMllmChat, "input_tokens_num", new_callable=PropertyMock)
-    def test_values_getter_and_setter_valid(self, mock_input_tokens_num: MagicMock, cache: ExplainerCache) -> None:
-        """Test values setter and getter with valid data."""
-        mock_input_tokens_num.return_value = 3
-
-        cache.n = 2
-        valid_values = torch.tensor([1.0, 2.0])
-        cache.values = valid_values
-
+    @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
+    def test_values_setter_valid(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
+        """Test values setter correctly validates and extends."""
+        mock_shap_mask.return_value = torch.tensor([True, True, True, False, False])
+        values = torch.tensor([1.0, 2.0, 3.0])
+        cache.values = values
         out = cache.values
-        assert out.shape == torch.Size([3])
-        assert torch.equal(out[:2], valid_values)
-        assert torch.isnan(out[2:]).all()
+        assert torch.allclose(out[:3], values)
+        assert torch.isnan(out[3:]).all()
 
-    def test_values_getter_raises_if_unset(self, cache: ExplainerCache) -> None:
-        """Getter should raise if values not computed."""
-        with pytest.raises(ValueError, match="SHAP values have not been computed yet"):
-            _ = cache.values
-
-    def test_values_getter_shape_mismatch(self, cache: ExplainerCache) -> None:
-        """Getter should raise if tensor shape mismatches chat length."""
-        cache._values = torch.randn(7)
-        with pytest.raises(ValueError, match="SHAP values size does not match"):
-            _ = cache.values
-
-    def test_values_setter_invalid_shape(self, cache: ExplainerCache) -> None:
-        """Setter should raise if shape does not match chat input tokens."""
-        cache.n = 3
-        wrong_shape = torch.randn(10)
-        with pytest.raises(ValueError, match="Values size is larger than the number"):
-            cache.values = wrong_shape
-
-    def test_values_setter_nan_in_text_tokens(self, cache: ExplainerCache, chat: DummyChat) -> None:
-        """Raise if NaNs appear where text tokens exist."""
-        cache.n = 3
-        values = torch.full((chat.input_tokens_num,), float("nan"))
+    @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
+    def test_values_setter_raises_nan_in_text(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
+        """Raise if NaNs appear in positions where mask=True."""
+        mock_shap_mask.return_value = torch.tensor([True, True, False, False, False])
+        values = torch.tensor([float("nan"), 1.0, float("nan")])
         with pytest.raises(ValueError, match="contain NaN values for text tokens"):
             cache.values = values
 
     @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
-    def test_values_setter_non_nan_in_non_text_tokens(
-        self, mock_shap_values_mask: MagicMock, cache: ExplainerCache
-    ) -> None:
+    def test_values_setter_raises_non_nan_in_non_text(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
         """Raise if non-NaN values exist where mask=False."""
-        mock_shap_values_mask.return_value = torch.tensor([True, True, False])
-        cache.n = 3
+        mock_shap_mask.return_value = torch.tensor([True, True, False, False, False])
         values = torch.tensor([1.0, 2.0, 3.0])
-        with pytest.raises(ValueError, match="contain non-NaN values for text tokens they should not explain"):
+        with pytest.raises(
+            ValueError,
+            match="contain non-NaN values for text tokens they should not explain",
+        ):
             cache.values = values
 
-    def test_normalized_values_setter_and_getter(self, cache: ExplainerCache, chat: DummyChat) -> None:
-        """Test normalized SHAP values set/get cycle."""
-        cache.n = 3
-        valid = torch.arange(chat.input_tokens_num, dtype=torch.float)
-        cache._normalized_values = valid
-        assert torch.equal(cache.normalized_values, valid)
+    def test_values_getter_unset(self, cache: ExplainerCache) -> None:
+        """Raise if SHAP values not yet computed."""
+        with pytest.raises(ValueError, match="have not been computed yet"):
+            _ = cache.values
 
-    def test_normalized_values_getter_unset(self, cache: ExplainerCache) -> None:
-        """Raise if normalized values not computed yet."""
-        with pytest.raises(ValueError, match="Normalized SHAP values have not been computed yet"):
-            _ = cache.normalized_values
-
-    def test_normalized_values_shape_mismatch(self, cache: ExplainerCache) -> None:
-        """Raise if normalized values shape does not match."""
-        cache._normalized_values = torch.randn(2)
+    def test_values_getter_shape_mismatch(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+        """Raise if SHAP values shape mismatch."""
+        cache._values = torch.randn(chat.input_tokens_num - 1)
         with pytest.raises(ValueError, match="size does not match"):
+            _ = cache.values
+
+    def test_normalized_values_cycle(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+        """Test setting/getting normalized values."""
+        values = torch.arange(chat.input_tokens_num, dtype=torch.float)
+        cache._normalized_values = values
+        out = cache.normalized_values
+        assert torch.equal(out, values)
+
+    def test_normalized_values_unset(self, cache: ExplainerCache) -> None:
+        """Raise if normalized values not computed."""
+        with pytest.raises(ValueError, match="have not been computed yet"):
             _ = cache.normalized_values
 
-    def test_del_resets_all_references(self, cache: ExplainerCache) -> None:
-        """Test __del__ correctly nullifies internal attributes."""
-        cache.reduced_embeddings = torch.randn(2, 3)
-        cache._values = torch.randn(5)
-        cache._normalized_values = torch.randn(5)
-        cache._masks = torch.ones(5, dtype=torch.bool)
+    def test_create_classmethod(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+        """Test ExplainerCache.create sets fields correctly."""
+        masks = torch.ones(2, 3, dtype=torch.bool)
+        values = torch.tensor([1.0, 2.0, 3.0, float("nan"), float("nan")])
+        normalized = values.clone()
+        cache = ExplainerCache.create(
+            chat=chat,
+            explainer_hash=999,
+            responses=base_responses,
+            masks=masks,
+            values=values[:3],
+            normalized_values=normalized[:3],
+        )
+        assert cache.calculated_by == 999
+        assert torch.allclose(cache.values, values, equal_nan=True)
+        assert torch.allclose(cache.normalized_values, normalized, equal_nan=True)
+
+    def test_del_resets_references(self, cache: ExplainerCache) -> None:
+        """Test that __del__ sets all internal refs to None."""
         cache.__del__()
         assert cache.chat is None
-        assert cache.reduced_embeddings is None
+        assert cache.responses is None
+        assert cache.masks is None
         assert cache._values is None
         assert cache._normalized_values is None
-        assert cache._masks is None

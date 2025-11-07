@@ -14,6 +14,7 @@ from ..config import ModelConfig
 from ..enums import ModelHistoryTrackingMode, Role
 from .chat import LiquidAudioChat
 from .config import CONFIG
+from ..base.model_response import ModelResponse
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
 
@@ -91,7 +92,7 @@ class LiquidAudio(BaseMllmModel):
         max_new_tokens: int = 128,
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
-    ) -> tuple[BaseMllmChat, BaseMllmChat] | BaseMllmChat:
+    ) -> ModelResponse:
         super().generate(
             chat=chat,
             max_new_tokens=max_new_tokens,
@@ -148,30 +149,57 @@ class LiquidAudio(BaseMllmModel):
             audio_tokens_tensor = torch.stack(audio_tokens, 1)
         else:
             audio_tokens_tensor = torch.empty(
-                (cast(ChatState, chat).codebooks, 0), dtype=torch.long, device=self.device
+                (cast(ChatState, chat).codebooks, 0),
+                dtype=torch.long,
+                device=self.device,
             )
         del audio_tokens
 
         modality_flag = torch.tensor(modality_out, device=self.device)
 
-        self._set_chat_history(new_chat, text_tokens_tensor, audio_tokens_tensor, modality_flag)
         if keep_history:
             self._set_chat_history(chat, text_tokens_tensor, audio_tokens_tensor, modality_flag)
-            return chat, new_chat
-        return new_chat
-
-    def get_static_embeddings(self, chat: BaseMllmChat) -> Tensor:
-        super().get_static_embeddings(chat=chat)
-        # pylint: disable=protected-access # type: ignore[arg-type]
-        return self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0)
-
-    def _get_contextual_embeddings(self, static_embeddings: Tensor) -> Tensor:
-        if len(static_embeddings.shape) == 2:  # pylint: disable=magic-value-comparison
-            static_embeddings = static_embeddings.unsqueeze(0)
-        output = self.model.lfm(
-            inputs_embeds=static_embeddings,
-            past_key_values=None,
-            use_cache=False,
+        return ModelResponse(
+            chat=chat if keep_history else None,
+            generated_text_tokens=text_tokens_tensor.squeeze(0),  # shape: [seq_len]
+            generated_audio_tokens=audio_tokens_tensor.T,  # shape: [seq_len, codebooks]
+            generated_modality_flag=modality_flag,  # shape: [seq_len]
         )
-        # Last hidden states: [seq_len, hidden_dim]
-        return cast(Tensor, output.last_hidden_state.squeeze(0))
+
+    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:
+        super().get_static_embeddings(responses=responses)
+
+        static_embeddings: list[Tensor] = []
+        for response in responses:
+            chat = self.get_new_chat()
+            chat.new_turn(Role.ASSISTANT)
+            self._set_chat_history(
+                chat,
+                response.generated_text_tokens.unsqueeze(0),
+                response.generated_audio_tokens.T,
+                response.generated_modality_flag,
+            )
+            # pylint: disable=protected-access # type: ignore[arg-type]
+            static_embeddings.append(self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0))
+
+        return static_embeddings
+
+    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+        contextual_embeddings = []
+
+        for emb in static_embeddings:
+            if len(emb.shape) == 2:  # pylint: disable=magic-value-comparison
+                emb = emb.unsqueeze(0)
+            # Last hidden states: [seq_len, hidden_dim]
+            contextual_embeddings.append(
+                cast(
+                    Tensor,
+                    self.model.lfm(
+                        inputs_embeds=emb,
+                        past_key_values=None,
+                        use_cache=False,
+                    ).last_hidden_state.squeeze(0),
+                )
+            )
+
+        return contextual_embeddings

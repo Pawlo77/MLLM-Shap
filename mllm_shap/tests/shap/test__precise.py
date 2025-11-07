@@ -1,118 +1,114 @@
 """Tests for the PreciseShapExplainer class in precise.py."""
 
+from itertools import product
+
 import pytest
 import torch
-from mllm_shap.shap.precise import generate_all_masks, PreciseShapExplainer
-
-
-class TestGenerateAllMasks:
-    """Tests for the generate_all_masks helper function."""
-
-    @pytest.mark.parametrize("n", [1, 2, 3])
-    def test_excludes_all_ones_and_has_correct_shape(self, n: int) -> None:
-        """Test that all-ones mask is excluded and shape is correct."""
-        device = torch.device("cpu")
-        masks = generate_all_masks(n, device)
-        # There should be (2^n - 1) masks total
-        expected_rows = 2**n - 1
-        assert masks.shape == (expected_rows, n)
-        # Verify all-ones mask is excluded
-        assert not any(mask.all() for mask in masks)
-        # Verify boolean dtype
-        assert masks.dtype == torch.bool
-
-    def test_content_for_n2(self) -> None:
-        """Test that the generated masks for n=2 are correct."""
-        masks = generate_all_masks(2, torch.device("cpu"))
-        expected = torch.tensor(
-            [
-                [0, 0],
-                [0, 1],
-                [1, 0],
-            ],
-            dtype=torch.bool,
-        )
-        assert torch.equal(masks, expected)
+from mllm_shap.shap.precise import PreciseShapExplainer
 
 
 class TestPreciseShapExplainer:
     """Tests for the PreciseShapExplainer class."""
 
-    def test_generate_masks_without_existing(self) -> None:
-        """Test mask generation without existing masks."""
+    def test_get_num_splits_returns_correct_value(self) -> None:
+        """Test that _get_num_splits returns 2**n - 1 for given target length."""
         explainer = PreciseShapExplainer()
         n = 3
-        masks = explainer._generate_masks(n=n, device=torch.device("cpu"))
-        # Should produce all masks except all-ones
-        expected = generate_all_masks(n, torch.device("cpu"))
-        assert torch.equal(masks, expected)
+        result = explainer._get_num_splits(n)
+        assert result == 2**n - 1
 
-    def test_generate_masks_with_existing_masks(self) -> None:
-        """Test mask generation with existing masks provided."""
+    def test_get_next_split_generates_all_masks(self) -> None:
+        """Test that _get_next_split generates all possible masks except all-ones."""
         explainer = PreciseShapExplainer()
         n = 3
-        all_masks = generate_all_masks(n, torch.device("cpu"))
-        existing_masks = all_masks[:2]
-        unseen_masks = explainer._generate_masks(
-            n=n,
-            device=torch.device("cpu"),
-            existing_masks=existing_masks,
-        )
-        # Ensure unseen masks are the difference
-        expected = torch.stack(
-            [m for m in all_masks if tuple(m.tolist()) not in {tuple(x.tolist()) for x in existing_masks}]
-        )
-        assert torch.equal(unseen_masks, expected)
+        device = torch.device("cpu")
 
-    def test_generate_masks_with_all_existing_masks_returns_empty(self) -> None:
-        """Test that providing all possible masks returns an empty tensor."""
+        generated = []
+        mask = explainer._get_next_split(n, device, 0)
+        generated.append(mask)
+        i = 1
+        while True:
+            mask = explainer._get_next_split(n, device, i)
+            if mask is None:
+                break
+            generated.append(mask)
+            i += 1
+
+        generated = torch.stack(generated)
+        expected = torch.tensor(
+            [split for split in product([0, 1], repeat=n) if sum(split) != n],
+            dtype=torch.bool,
+            device=device,
+        )
+
+        assert torch.equal(
+            torch.sort(generated.float(), dim=0)[0],
+            torch.sort(expected.float(), dim=0)[0],
+        )
+
+    def test_get_next_split_raises_if_generator_missing(self) -> None:
+        """Test that calling _get_next_split without initialization raises an error."""
+        explainer = PreciseShapExplainer()
+        with pytest.raises(RuntimeError, match="Splits generator is not present."):
+            explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks=1)
+
+    def test_get_next_split_returns_none_after_completion(self) -> None:
+        """Test that _get_next_split returns None after all masks have been generated."""
         explainer = PreciseShapExplainer()
         n = 2
-        existing_masks = generate_all_masks(n, torch.device("cpu"))
-        result = explainer._generate_masks(n=n, device=torch.device("cpu"), existing_masks=existing_masks)
-        assert result.shape == (0, n)
-        assert result.dtype == torch.bool
+        device = torch.device("cpu")
+
+        # Exhaust generator
+        for i in range(explainer._get_num_splits(n) + 1):
+            mask = explainer._get_next_split(n, device, i)
+        assert mask is None
 
     def test_calculate_shap_values_correctness(self) -> None:
         """
-        Test correctness of SHAP value calculation for a known function.
+        Test correctness of SHAP value calculation for a known additive function.
 
-        Simple additive function f(x1, x2) = x1 + 2*x2
-        SHAP values should approximately equal the feature contributions.
+        Simple additive function f(x1, x2) = x1 + 2*x2.
+        SHAP values should match the coefficients [1.0, 2.0].
         """
         explainer = PreciseShapExplainer()
         device = torch.device("cpu")
-
         n = 2
-        masks = generate_all_masks(n, device)
-        masks = torch.cat([masks, torch.ones((1, n), dtype=torch.bool, device=device)], dim=0)  # add all-ones mask
-        # Compute f(S): for each mask, sum of weights where feature=1
+
+        # Generate all possible masks including all-ones for f(S)
+        masks = torch.tensor(
+            [split for split in product([0, 1], repeat=n)],
+            dtype=torch.bool,
+            device=device,
+        )
         weights = torch.tensor([1.0, 2.0], device=device)
         similarities = (masks.float() * weights).sum(dim=1)
 
         shap_values = explainer._calculate_shap_values(masks, similarities, device)
 
-        # Expected SHAP values for linear additive functions are their coefficients
         torch.testing.assert_close(shap_values, weights, rtol=1e-5, atol=1e-5)
 
     def test_calculate_shap_values_handles_single_feature(self) -> None:
-        """Test SHAP value calculation with a single feature."""
+        """Test SHAP value computation for single-feature case."""
         explainer = PreciseShapExplainer()
         device = torch.device("cpu")
 
-        masks = generate_all_masks(1, device)
-        similarities = torch.tensor([0.5])
+        masks = torch.tensor([[False], [True]], dtype=torch.bool, device=device)
+        similarities = torch.tensor([0.0, 1.0], device=device)
         shap_values = explainer._calculate_shap_values(masks, similarities, device)
 
         assert shap_values.shape == (1,)
         assert torch.isfinite(shap_values).all()
 
     def test_calculate_shap_values_device_consistency(self) -> None:
-        """Test that SHAP values are computed on the correct device and dtype."""
+        """Test that SHAP values are computed on the same device and dtype as inputs."""
         explainer = PreciseShapExplainer()
         device = torch.device("cpu")
 
-        masks = generate_all_masks(2, device)
+        masks = torch.tensor(
+            [[False, False], [True, False], [False, True]],
+            dtype=torch.bool,
+            device=device,
+        )
         similarities = torch.tensor([0.1, 0.5, 0.7], device=device)
         shap_values = explainer._calculate_shap_values(masks, similarities, device)
 
