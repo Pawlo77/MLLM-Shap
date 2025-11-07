@@ -18,7 +18,6 @@ class BaseChatConfig(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    added_vocab_tokens: set[int]
     device: torch.device
     token_filter: TokenFilter
     system_roles_setup: SystemRolesSetup

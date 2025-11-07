@@ -14,11 +14,12 @@ from mllm_shap.utils.audio import TorchAudioHandler
 from ...utils.logger import get_logger
 from ...utils.other import raise_connector_error
 from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role, SystemRolesSetup
-from ..filters import ExcludePunctuationTokensFilter
+from ..filters import KeepAllTokens
 from ._validators import BaseChatConfig
 from .chat_entry import ChatEntry
 from .explainer_cache import ExplainerCache
 from .filters import TokenFilter
+from .model_response import ModelResponse
 
 logger: Logger = get_logger(__name__)
 
@@ -33,8 +34,6 @@ class BaseMllmChat(ABC):
 
     token_filter: TokenFilter
     """The token filtering strategy."""
-    added_vocab_tokens: set[int]
-    """A set of tokens that were added to the tokenizer's vocabulary."""
     # renamed from device not to conflict with MRO
     # as some chats can have device property/method
     torch_device: torch.device
@@ -70,7 +69,6 @@ class BaseMllmChat(ABC):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
-        added_vocab_tokens: set[int],
         device: torch.device,
         empty_turn_sequences: set[str],
         token_filter: TokenFilter | None = None,
@@ -80,7 +78,6 @@ class BaseMllmChat(ABC):
         Initialize the chat state.
 
         Args:
-            added_vocab_tokens: A set of tokens that were added to the tokenizer's vocabulary.
             device: The device on which tensors are stored.
             empty_turn_sequences: A list of empty turn sequences (their text representations).
             token_filter: The token filtering class.
@@ -89,14 +86,12 @@ class BaseMllmChat(ABC):
         """
         # validation
         __config = BaseChatConfig(
-            added_vocab_tokens=added_vocab_tokens,
             device=device,
-            token_filter=token_filter if token_filter is not None else ExcludePunctuationTokensFilter(),
+            token_filter=token_filter if token_filter is not None else KeepAllTokens(),
             system_roles_setup=system_roles_setup if system_roles_setup is not None else SystemRolesSetup.SYSTEM,
             empty_turn_sequences=empty_turn_sequences,
         )
 
-        self.added_vocab_tokens = __config.added_vocab_tokens
         self.torch_device = __config.device
         self.token_filter = __config.token_filter
         self.system_roles_setup = __config.system_roles_setup
@@ -184,12 +179,12 @@ class BaseMllmChat(ABC):
         return new_instance
 
     @property
-    def shap(self) -> ExplainerCache | None:
+    def cache(self) -> ExplainerCache | None:
         """Access for the explainer cache if set."""
         return self.__shap
 
-    @shap.setter
-    def shap(self, value: ExplainerCache) -> None:
+    @cache.setter
+    def cache(self, value: ExplainerCache | None) -> None:
         """
         Set the explainer cache.
 
@@ -198,12 +193,12 @@ class BaseMllmChat(ABC):
         Raises:
             ValueError: If the explainer cache is for a different chat instance.
         """
-        if self.__shap is not None and self.__shap.chat != value.chat:
+        if self.__shap is not None and value is not None and self.__shap.chat != value.chat:
             raise ValueError("Cannot set explainer cache for a different chat instance.")
         self.__shap = value
 
-    @shap.deleter
-    def shap(self) -> None:
+    @cache.deleter
+    def cache(self) -> None:
         """Delete the explainer cache."""
         if self.__shap is not None:
             del self.__shap
@@ -560,7 +555,7 @@ class BaseMllmChat(ABC):
             # input_tokens is list, turns are contiguous
             turn_tokens = self.input_tokens[min_ : max_ + 1]  # noqa: E203
             turn_roles = self.token_roles[turn_mask]
-            shap_values_normalized: Tensor | None = self.shap.normalized_values[turn_mask] if self.shap else None
+            shap_values_normalized: Tensor | None = self.cache.normalized_values[turn_mask] if self.cache else None
 
             decoded: str | bytes
             last_modality: int | None = None
@@ -918,7 +913,7 @@ class BaseMllmChat(ABC):
 
         for k, v in self.__dict__.items():
             if k == "_BaseChat__shap":  # pylint: disable=magic-value-comparison
-                shap = self.shap
+                shap = self.cache
                 if shap is not None:
                     # mock chat for deepcopy
                     shap.chat = None  # type: ignore[assignment]
@@ -932,3 +927,4 @@ class BaseMllmChat(ABC):
 
 # rebuild model after definition of BaseShapExplainer
 ExplainerCache.model_rebuild()
+ModelResponse.model_rebuild()

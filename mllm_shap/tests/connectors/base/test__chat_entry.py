@@ -1,8 +1,8 @@
 """Unit tests for the ChatEntry data model."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from mllm_shap.connectors.base.chat_entry import ChatEntry
 from mllm_shap.connectors.enums import ModalityFlag, Role
 
