@@ -27,6 +27,7 @@ dependencies = [
   "google-cloud-texttospeech>=2.31.0,<3.0.0",
   "python-dotenv>=1.1.1,<2.0.0",
   "pydub>=0.25.1,<0.26.0",
+  "semhash>=0.3.3",
 ]
 
 [tool.uv.sources]

@@ -10,7 +10,7 @@ class DummyReducer(BaseEmbeddingReducer):
     """Concrete subclass for testing BaseEmbeddingReducer."""
 
     def __call__(self, embeddings: list[Tensor]) -> Tensor:  # type: ignore[override]
-        return super().__call__(embeddings)
+        return self._prepare(embeddings)
 
 
 class TestBaseEmbeddingReducer:
