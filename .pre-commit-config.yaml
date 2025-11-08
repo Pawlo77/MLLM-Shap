@@ -28,7 +28,7 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(mllm_shap/src|experiments)/.*\.py$.*\.py$
+        files: ^(mllm_shap/src|experiments|mllm_shap/tests)/.*\.py$.*\.py$
       - id: autoflake
         name: autoflake
         entry: |
@@ -41,7 +41,7 @@ repos:
             --ignore-init-module-imports
         language: system
         types: [file]
-        files: ^(mllm_shap/src|experiments)/.*\.py$
+        files: ^(mllm_shap/src|experiments|mllm_shap/tests)/.*\.py$
       - id: black
         name: black
         entry: |
@@ -49,22 +49,23 @@ repos:
             --line-length=120
         language: system
         types: [file]
-        files: ^(mllm_shap/src|experiments)/.*\.py$
+        files: ^(mllm_shap/src|experiments|mllm_shap/tests)/.*\.py$
       - id: flake8
         name: flake8
         entry: |
           flake8
             --max-line-length=120
-            --exclude E402
+            --ignore E402,W291,W503
         language: system
         types: [file, python]
-        files: ^(mllm_shap/src|experiments)/.*\.py$
+        files: ^(mllm_shap/src|experiments|mllm_shap/tests)/.*\.py$
       - id: pylint
         name: pylint
         entry: |
           pylint
             --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value
             --max-line-length=120
+            --disable=fixme
         language: system
         types: [file, python]
         files: ^(mllm_shap/src|experiments)/.*\.py$
@@ -127,7 +128,7 @@ repos:
         entry: |
           nbqa flake8
             --max-line-length=120
-            --ignore=E402
+            --ignore=E402,W291,W503
         language: system
         types: [file]
         files: ^(mllm_shap/src|experiments)/.*\.ipynb$
