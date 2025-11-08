@@ -11,9 +11,13 @@ Monte Carlo methods by always including minimal masks (one-versus-all).
 - :class:`StandardMcShapExplainer` implements the standard Monte Carlo
     sampling approach, allowing for repeated masks as per true Monte Carlo
     sampling methodology.
+- :func:`approximate_budget` is a utility function to estimate the number
+    of samples required to achieve a desired error bound with a specified
+    confidence level using Hoeffding's inequality.
 """
 
 from .limited import LimitedMcShapExplainer
 from .standard import StandardMcShapExplainer
+from .utils import approximate_budget
 
-__all__ = ["LimitedMcShapExplainer", "StandardMcShapExplainer"]
+__all__ = ["LimitedMcShapExplainer", "StandardMcShapExplainer", "approximate_budget"]

@@ -57,7 +57,7 @@ class TestBaseMcShapExplainer:
         masks = explainer._BaseMcShapExplainer__generate_minimal_splits(target_length=3, device=device)
         assert masks.shape == (4, 3)
         assert masks[0].sum() == 0  # empty mask
-        assert torch.equal(masks[1:], torch.eye(3, dtype=torch.bool))  # one-hot rows
+        assert torch.equal(masks[1:], ~torch.eye(3, dtype=torch.bool))
 
     def test_get_next_split_returns_minimal_masks_then_random(self, explainer: BaseMcShapExplainer) -> None:
         """Should yield minimal masks first, then random masks up to budget."""

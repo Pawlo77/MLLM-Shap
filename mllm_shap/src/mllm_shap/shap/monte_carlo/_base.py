@@ -34,7 +34,7 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
             if self.num_samples < target_length:
                 raise ValueError("num_samples must be at least equal to the number of features.")
             if self.num_samples > (2**target_length - 1):
-                return int(2**target_length - 1)  # maximum possible masks excluding all-zeros
+                return int(2**target_length - 1)  # maximum possible masks excluding all-ones mask
             return self.num_samples
 
         total_masks = 2**target_length - 1  # exclude all-ones mask
@@ -74,6 +74,7 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
         Generate a minimal set of boolean masks as a batched tensor.
         Shape: (target_length + 1, target_length)
         """
-        masks = torch.zeros((target_length + 1, target_length), dtype=torch.bool, device=device)
-        masks[torch.arange(1, target_length + 1), torch.arange(target_length)] = True
+        masks = torch.ones((target_length + 1, target_length), dtype=torch.bool, device=device)
+        masks[0, :] = False
+        masks[torch.arange(1, target_length + 1), torch.arange(target_length)] = False
         return masks
