@@ -1,0 +1,109 @@
+"""Unit tests for MasksManager class."""
+
+import pytest
+import torch
+from mllm_shap.connectors.base.chat import BaseMllmChat
+from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
+
+from ...dummy import DummyChat
+
+
+class TestMasksManager:
+    """Unit tests for MasksManager methods and validation."""
+
+    @pytest.fixture
+    def chat(self) -> BaseMllmChat:
+        """Fixture for a dummy chat with valid mask."""
+        return DummyChat(
+            shap_values_mask=torch.tensor([True, False, True, False, False]),
+            num_tokens=5,
+        )
+
+    @pytest.fixture
+    def manager(self, chat: BaseMllmChat) -> MasksManager:
+        """Fixture for initialized MasksManager."""
+        return MasksManager(chat=chat)
+
+    def test_init_with_no_tokens_raises(self) -> None:
+        """Should raise NoTokensToExplainError if no tokens to explain."""
+        chat = DummyChat(shap_values_mask=torch.zeros(5, dtype=torch.bool), num_tokens=5)
+        with pytest.raises(NoTokensToExplainError, match="no tokens to explain"):
+            _ = MasksManager(chat)
+
+    def test_init_sets_correct_attributes(self, manager: MasksManager, chat: BaseMllmChat) -> None:
+        """Should correctly initialize attributes."""
+        assert torch.equal(manager.shap_values_mask, chat.shap_values_mask)
+        assert manager.target_length == chat.input_tokens_num
+        assert manager.n == int(chat.shap_values_mask.sum().item())
+        assert isinstance(manager._seen_masks, set)
+        assert manager._seen_masks == set()
+
+    def test_max_masks_number_computation(self, manager: MasksManager) -> None:
+        """Should correctly compute max_masks_number."""
+        expected = int(2**manager.n - 1)
+        assert manager.max_masks_number == expected
+
+    def test_mark_seen_and_seen_methods(self, manager: MasksManager) -> None:
+        """Should correctly mark and detect seen masks."""
+        mask = torch.tensor([True, False, True, False, False])
+        mask_hash = manager.get_hash(mask)
+        assert not manager.seen(mask_hash=mask_hash)
+        manager.mark_seen(mask_hash=mask_hash)
+        assert manager.seen(mask_hash=mask_hash)
+
+    def test_get_initial_mask_creates_all_true_mask(self, manager: MasksManager) -> None:
+        """get_initial_mask() should return a full mask and mark it seen."""
+        device = torch.device("cpu")
+        mask = manager.get_initial_mask(device=device)
+        assert mask.dtype == torch.bool
+        assert mask.shape == (manager.target_length,)
+        assert mask.any()
+        # must be registered as seen
+        h = manager.get_hash(mask)
+        assert h in manager._seen_masks
+
+    def test_prepare_mask_returns_correct_tensor(self, manager: MasksManager) -> None:
+        """prepare_mask() should correctly expand split to full-length mask."""
+        device = torch.device("cpu")
+        split = torch.tensor([[True, False]], dtype=torch.bool)
+        result = manager.prepare_mask(split=split, device=device)
+        assert result.shape == (manager.target_length,)
+        # original masked positions updated
+        assert result[manager.shap_values_mask].tolist() == [True, False]
+        # unmasked positions remain True
+        assert result[~manager.shap_values_mask].all()
+
+    def test_prepare_mask_returns_none_if_all_false(self, manager: MasksManager) -> None:
+        """Should return None if resulting mask has no True values."""
+        device = torch.device("cpu")
+        manager.shap_values_mask = torch.ones(manager.target_length, dtype=torch.bool)
+        split = torch.zeros(manager.target_length, dtype=torch.bool)
+        result = manager.prepare_mask(split=split, device=device)
+        assert result is None
+
+    def test_get_hash_with_1d_and_2d_input(self, manager: MasksManager) -> None:
+        """get_hash() should accept both 1D and 2D single-row tensors."""
+        mask_1d = torch.tensor([True, False, True])
+        mask_2d = mask_1d.unsqueeze(0)
+        h1 = manager.get_hash(mask_1d)
+        h2 = manager.get_hash(mask_2d)
+        assert isinstance(h1, int)
+        assert h1 == h2
+
+    def test_get_hash_raises_if_multiple_rows(self, manager: MasksManager) -> None:
+        """get_hash() should raise if 2D mask has more than one row."""
+        mask = torch.tensor([[True, False], [False, True]])
+        with pytest.raises(ValueError, match="1D tensor or a 2D tensor with a single row"):
+            _ = manager.get_hash(mask)
+
+    def test_get_mask_hash_from_mask_or_hash(self, manager: MasksManager) -> None:
+        """__get_mask_hash() should compute from either mask or hash."""
+        mask = torch.tensor([True, False, True, False, False])
+        h1 = manager._MasksManager__get_mask_hash(mask=mask)
+        h2 = manager._MasksManager__get_mask_hash(mask_hash=h1)
+        assert h1 == h2
+
+    def test_get_mask_hash_raises_if_missing_both(self, manager: MasksManager) -> None:
+        """Should raise ValueError if both mask and mask_hash are None."""
+        with pytest.raises(ValueError, match="Either mask or mask_hash must be provided"):
+            _ = manager._MasksManager__get_mask_hash()
