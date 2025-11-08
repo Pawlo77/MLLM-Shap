@@ -1,0 +1,1713 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mllm_shap.shap package &#8212; mllm-shap  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=67c8c9bf" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'mllm_shap.shap';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">mllm-shap  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="mllm_shap.connectors.html">mllm_shap.connectors package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.base.html">mllm_shap.connectors.base package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.liquid_audio.html">mllm_shap.connectors.liquid_audio package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">mllm_shap.shap package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html">mllm_shap.shap.base package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="mllm_shap.utils.html">mllm_shap.utils package</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap package</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-mllm_shap.shap">
+<span id="mllm-shap-shap-package"></span><h1>mllm_shap.shap package<a class="headerlink" href="#module-mllm_shap.shap" title="Link to this heading">#</a></h1>
+<p>SHAP explainers module.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.PreciseShapExplainer" title="mllm_shap.shap.PreciseShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreciseShapExplainer</span></code></a> implements the precise SHAP value computation</dt><dd><p>using the original SHAP algorithm.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.Explainer" title="mllm_shap.shap.Explainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Explainer</span></code></a> implements the compact SHAP explainer that optimizes</dt><dd><p>the computation of SHAP values for large models and datasets.</p>
+</dd>
+</dl>
+</li>
+<li><p><a class="reference internal" href="#mllm_shap.shap.McShapExplainer" title="mllm_shap.shap.McShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">McShapExplainer</span></code></a> is an alias for the limited Monte Carlo SHAP explainer.</p></li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.ComplementaryShapExplainer" title="mllm_shap.shap.ComplementaryShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComplementaryShapExplainer</span></code></a> implements the complementary SHAP explainer</dt><dd><p>that focuses on explaining the complementary contributions of features.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer" title="mllm_shap.shap.ComplementaryNeymanShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer</span></code></a> implements the complementary SHAP</dt><dd><p>explainer using Neyman allocation for improved sample efficiency.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">ComplementaryNeymanShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/neyman.html#ComplementaryNeymanShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapApproximation</span></code></p>
+<p>Base Complementary Neyman SHAP implementation class</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode" title="mllm_shap.shap.ComplementaryNeymanShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction">
+<span class="sig-name descname"><span class="pre">fraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction" title="Link to this definition">#</a></dt>
+<dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model" title="mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples">
+<span class="sig-name descname"><span class="pre">num_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples" title="Link to this definition">#</a></dt>
+<dd><p>Number of random masks to generate. If None, uses fraction.
+-1 stands for minimal number of samples (only single-feature masks and empty mask).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">ComplementaryShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.CONTEXTUAL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_reducer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarity_measure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mask_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/complementary.html#ComplementaryShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapExplainer</span></code></a></p>
+<p>Complementary SHAP implementation generating all possible masks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.ComplementaryShapExplainer.mode" title="mllm_shap.shap.ComplementaryShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_model" title="mllm_shap.shap.ComplementaryShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.Explainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">Explainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/compact.html#Explainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.Explainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SHAP explainer for audio models.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.Explainer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></em><a class="headerlink" href="#mllm_shap.shap.Explainer.model" title="Link to this definition">#</a></dt>
+<dd><p>The model connector instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.Explainer.shap_explainer">
+<span class="sig-name descname"><span class="pre">shap_explainer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a></em><a class="headerlink" href="#mllm_shap.shap.Explainer.shap_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.McShapExplainer">
+<span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">McShapExplainer</span></span><a class="headerlink" href="#mllm_shap.shap.McShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>alias of <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.limited.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">PreciseShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.CONTEXTUAL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_reducer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarity_measure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mask_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/precise.html#PreciseShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapExplainer</span></code></a></p>
+<p>Precise SHAP implementation generating all possible masks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.PreciseShapExplainer.mode" title="mllm_shap.shap.PreciseShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.PreciseShapExplainer.embedding_model" title="mllm_shap.shap.PreciseShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.PreciseShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.PreciseShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mllm_shap.shap.base.html">mllm_shap.shap.base package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.embeddings">mllm_shap.shap.base.embeddings module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer.n"><code class="docutils literal notranslate"><span class="pre">BaseEmbeddingReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><code class="docutils literal notranslate"><span class="pre">BaseExternalEmbedding</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.explainer">mllm_shap.shap.base.explainer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.embedding_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.normalizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.NotEnoughTokensToExplainError"><code class="docutils literal notranslate"><span class="pre">NotEnoughTokensToExplainError</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.NotEnoughTokensToExplainError.add_note"><code class="docutils literal notranslate"><span class="pre">NotEnoughTokensToExplainError.add_note()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.NotEnoughTokensToExplainError.args"><code class="docutils literal notranslate"><span class="pre">NotEnoughTokensToExplainError.args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.NotEnoughTokensToExplainError.with_traceback"><code class="docutils literal notranslate"><span class="pre">NotEnoughTokensToExplainError.with_traceback()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.normalizers">mllm_shap.shap.base.normalizers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.similarity">mllm_shap.shap.base.similarity module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><code class="docutils literal notranslate"><span class="pre">BaseEmbeddingSimilarity</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity.operates_on_embeddings"><code class="docutils literal notranslate"><span class="pre">BaseEmbeddingSimilarity.operates_on_embeddings</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-mllm_shap.shap.compact">
+<span id="mllm-shap-shap-compact-module"></span><h2>mllm_shap.shap.compact module<a class="headerlink" href="#module-mllm_shap.shap.compact" title="Link to this heading">#</a></h2>
+<p>Compact SHAP explainer implementation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.Explainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.compact.</span></span><span class="sig-name descname"><span class="pre">Explainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/compact.html#Explainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.compact.Explainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SHAP explainer for audio models.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.Explainer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></em><a class="headerlink" href="#mllm_shap.shap.compact.Explainer.model" title="Link to this definition">#</a></dt>
+<dd><p>The model connector instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.Explainer.shap_explainer">
+<span class="sig-name descname"><span class="pre">shap_explainer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a></em><a class="headerlink" href="#mllm_shap.shap.compact.Explainer.shap_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.ExplainerResult">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.compact.</span></span><span class="sig-name descname"><span class="pre">ExplainerResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/compact.html#ExplainerResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.compact.ExplainerResult" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Result model for Explainer.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.ExplainerResult.full_chat">
+<span class="sig-name descname"><span class="pre">full_chat</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></em><a class="headerlink" href="#mllm_shap.shap.compact.ExplainerResult.full_chat" title="Link to this definition">#</a></dt>
+<dd><p>The full chat instance after generation (entire conversation). It will be set with SHAP values and cache.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.ExplainerResult.history">
+<span class="sig-name descname"><span class="pre">history</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.compact.ExplainerResult.history" title="Link to this definition">#</a></dt>
+<dd><p>The history of chats and masks used during explanation
+(if applicable, that is if explainer was called with <cite>verbose=True</cite>).
+Each entry is a tuple of  (mask, mask_hash, masked_chat, model_response)
+If cache was used, masked_chat will be None.).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.ExplainerResult.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></em><a class="headerlink" href="#mllm_shap.shap.compact.ExplainerResult.model_config" title="Link to this definition">#</a></dt>
+<dd><p>Configuration for pydantic model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.ExplainerResult.source_chat">
+<span class="sig-name descname"><span class="pre">source_chat</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></em><a class="headerlink" href="#mllm_shap.shap.compact.ExplainerResult.source_chat" title="Link to this definition">#</a></dt>
+<dd><p>Chat to get explained (without base response).</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.embeddings">
+<span id="mllm-shap-shap-embeddings-module"></span><h2>mllm_shap.shap.embeddings module<a class="headerlink" href="#module-mllm_shap.shap.embeddings" title="Link to this heading">#</a></h2>
+<p>Embedding calculation and reduction strategies for SHAP explanations.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.FirstReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">FirstReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#FirstReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.FirstReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Reducer that selects the first embedding.</p>
+<p><a class="reference internal" href="#mllm_shap.shap.embeddings.FirstReducer.n" title="mllm_shap.shap.embeddings.FirstReducer.n"><code class="xref py py-attr docutils literal notranslate"><span class="pre">n</span></code></a> parameter is ignored in this reducer.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.FirstReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.FirstReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MaxReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">MaxReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#MaxReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.MaxReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Reducer that computes the max of embeddings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MaxReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.MaxReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MeanReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">MeanReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#MeanReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.MeanReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Reducer that computes the mean of embeddings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MeanReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.MeanReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MinReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">MinReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#MinReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.MinReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Reducer that computes the min of embeddings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.MinReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.MinReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.OpenAiEmbedding">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">OpenAiEmbedding</span></span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#OpenAiEmbedding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.OpenAiEmbedding" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseExternalEmbedding</span></code></a></p>
+<p>OpenAI embedding class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.SumReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">SumReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#SumReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.SumReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Reducer that computes the sum of embeddings.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.SumReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.SumReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.ZeroReducer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.embeddings.</span></span><span class="sig-name descname"><span class="pre">ZeroReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/embeddings.html#ZeroReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.embeddings.ZeroReducer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingReducer</span></code></a></p>
+<p>Dummy reducer that returns embeddings unchanged.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.embeddings.ZeroReducer.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.embeddings.ZeroReducer.n" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of embeddings to sample before reduction. None means no sampling.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.enums">
+<span id="mllm-shap-shap-enums-module"></span><h2>mllm_shap.shap.enums module<a class="headerlink" href="#module-mllm_shap.shap.enums" title="Link to this heading">#</a></h2>
+<p>Configuration for SHAP.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.enums.</span></span><span class="sig-name descname"><span class="pre">Mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/enums.html#Mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.enums.Mode" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Possible modes.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.CONTEXTUAL">
+<span class="sig-name descname"><span class="pre">CONTEXTUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'contextual'</span></em><a class="headerlink" href="#mllm_shap.shap.enums.Mode.CONTEXTUAL" title="Link to this definition">#</a></dt>
+<dd><p>Contextual mode - embeddings are computed using model
+internal states, therefore they carry contextual information.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.STATIC">
+<span class="sig-name descname"><span class="pre">STATIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'static'</span></em><a class="headerlink" href="#mllm_shap.shap.enums.Mode.STATIC" title="Link to this definition">#</a></dt>
+<dd><p>Static mode - embeddings are computed using final model response
+tokens only, therefore they do not carry contextual information.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.capitalize">
+<span class="sig-name descname"><span class="pre">capitalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.capitalize" title="Link to this definition">#</a></dt>
+<dd><p>Return a capitalized version of the string.</p>
+<p>More specifically, make the first character have upper case and the rest lower
+case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.casefold">
+<span class="sig-name descname"><span class="pre">casefold</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.casefold" title="Link to this definition">#</a></dt>
+<dd><p>Return a version of the string suitable for caseless comparisons.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.center">
+<span class="sig-name descname"><span class="pre">center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillchar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.center" title="Link to this definition">#</a></dt>
+<dd><p>Return a centered string of length width.</p>
+<p>Padding is done using the specified fill character (default is a space).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.count">
+<span class="sig-name descname"><span class="pre">count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.count" title="Link to this definition">#</a></dt>
+<dd><p>Return the number of non-overlapping occurrences of substring sub in
+string S[start:end].  Optional arguments start and end are
+interpreted as in slice notation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.encode">
+<span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'utf-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'strict'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.encode" title="Link to this definition">#</a></dt>
+<dd><p>Encode the string using the codec registered for encoding.</p>
+<dl class="simple">
+<dt>encoding</dt><dd><p>The encoding in which to encode the string.</p>
+</dd>
+<dt>errors</dt><dd><p>The error handling scheme to use for encoding errors.
+The default is ‘strict’ meaning that encoding errors raise a
+UnicodeEncodeError.  Other possible values are ‘ignore’, ‘replace’ and
+‘xmlcharrefreplace’ as well as any other name registered with
+codecs.register_error that can handle UnicodeEncodeErrors.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.endswith">
+<span class="sig-name descname"><span class="pre">endswith</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.endswith" title="Link to this definition">#</a></dt>
+<dd><p>Return True if S ends with the specified suffix, False otherwise.
+With optional start, test S beginning at that position.
+With optional end, stop comparing S at that position.
+suffix can also be a tuple of strings to try.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.expandtabs">
+<span class="sig-name descname"><span class="pre">expandtabs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.expandtabs" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy where all tab characters are expanded using spaces.</p>
+<p>If tabsize is not given, a tab size of 8 characters is assumed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.find" title="Link to this definition">#</a></dt>
+<dd><p>Return the lowest index in S where substring sub is found,
+such that sub is contained within S[start:end].  Optional
+arguments start and end are interpreted as in slice notation.</p>
+<p>Return -1 on failure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.format">
+<span class="sig-name descname"><span class="pre">format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.format" title="Link to this definition">#</a></dt>
+<dd><p>Return a formatted version of S, using substitutions from args and kwargs.
+The substitutions are identified by braces (‘{’ and ‘}’).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.format_map">
+<span class="sig-name descname"><span class="pre">format_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.format_map" title="Link to this definition">#</a></dt>
+<dd><p>Return a formatted version of S, using substitutions from mapping.
+The substitutions are identified by braces (‘{’ and ‘}’).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.index">
+<span class="sig-name descname"><span class="pre">index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.index" title="Link to this definition">#</a></dt>
+<dd><p>Return the lowest index in S where substring sub is found,
+such that sub is contained within S[start:end].  Optional
+arguments start and end are interpreted as in slice notation.</p>
+<p>Raises ValueError when the substring is not found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isalnum">
+<span class="sig-name descname"><span class="pre">isalnum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isalnum" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is an alpha-numeric string, False otherwise.</p>
+<p>A string is alpha-numeric if all characters in the string are alpha-numeric and
+there is at least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isalpha">
+<span class="sig-name descname"><span class="pre">isalpha</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isalpha" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is an alphabetic string, False otherwise.</p>
+<p>A string is alphabetic if all characters in the string are alphabetic and there
+is at least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isascii">
+<span class="sig-name descname"><span class="pre">isascii</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isascii" title="Link to this definition">#</a></dt>
+<dd><p>Return True if all characters in the string are ASCII, False otherwise.</p>
+<p>ASCII characters have code points in the range U+0000-U+007F.
+Empty string is ASCII too.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isdecimal">
+<span class="sig-name descname"><span class="pre">isdecimal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isdecimal" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a decimal string, False otherwise.</p>
+<p>A string is a decimal string if all characters in the string are decimal and
+there is at least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isdigit">
+<span class="sig-name descname"><span class="pre">isdigit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isdigit" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a digit string, False otherwise.</p>
+<p>A string is a digit string if all characters in the string are digits and there
+is at least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isidentifier">
+<span class="sig-name descname"><span class="pre">isidentifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isidentifier" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a valid Python identifier, False otherwise.</p>
+<p>Call keyword.iskeyword(s) to test whether string s is a reserved identifier,
+such as “def” or “class”.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.islower">
+<span class="sig-name descname"><span class="pre">islower</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.islower" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a lowercase string, False otherwise.</p>
+<p>A string is lowercase if all cased characters in the string are lowercase and
+there is at least one cased character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isnumeric">
+<span class="sig-name descname"><span class="pre">isnumeric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isnumeric" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a numeric string, False otherwise.</p>
+<p>A string is numeric if all characters in the string are numeric and there is at
+least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isprintable">
+<span class="sig-name descname"><span class="pre">isprintable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isprintable" title="Link to this definition">#</a></dt>
+<dd><p>Return True if all characters in the string are printable, False otherwise.</p>
+<p>A character is printable if repr() may use it in its output.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isspace">
+<span class="sig-name descname"><span class="pre">isspace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isspace" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a whitespace string, False otherwise.</p>
+<p>A string is whitespace if all characters in the string are whitespace and there
+is at least one character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.istitle">
+<span class="sig-name descname"><span class="pre">istitle</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.istitle" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is a title-cased string, False otherwise.</p>
+<p>In a title-cased string, upper- and title-case characters may only
+follow uncased characters and lowercase characters only cased ones.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.isupper">
+<span class="sig-name descname"><span class="pre">isupper</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.isupper" title="Link to this definition">#</a></dt>
+<dd><p>Return True if the string is an uppercase string, False otherwise.</p>
+<p>A string is uppercase if all cased characters in the string are uppercase and
+there is at least one cased character in the string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.join">
+<span class="sig-name descname"><span class="pre">join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.join" title="Link to this definition">#</a></dt>
+<dd><p>Concatenate any number of strings.</p>
+<p>The string whose method is called is inserted in between each given string.
+The result is returned as a new string.</p>
+<p>Example: ‘.’.join([‘ab’, ‘pq’, ‘rs’]) -&gt; ‘ab.pq.rs’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.ljust">
+<span class="sig-name descname"><span class="pre">ljust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillchar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.ljust" title="Link to this definition">#</a></dt>
+<dd><p>Return a left-justified string of length width.</p>
+<p>Padding is done using the specified fill character (default is a space).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.lower">
+<span class="sig-name descname"><span class="pre">lower</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.lower" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy of the string converted to lowercase.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.lstrip">
+<span class="sig-name descname"><span class="pre">lstrip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.lstrip" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy of the string with leading whitespace removed.</p>
+<p>If chars is given and not None, remove characters in chars instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.maketrans">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">maketrans</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.maketrans" title="Link to this definition">#</a></dt>
+<dd><p>Return a translation table usable for str.translate().</p>
+<p>If there is only one argument, it must be a dictionary mapping Unicode
+ordinals (integers) or characters to Unicode ordinals, strings or None.
+Character keys will be then converted to ordinals.
+If there are two arguments, they must be strings of equal length, and
+in the resulting dictionary, each character in x will be mapped to the
+character at the same position in y. If there is a third argument, it
+must be a string, whose characters will be mapped to None in the result.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.partition">
+<span class="sig-name descname"><span class="pre">partition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.partition" title="Link to this definition">#</a></dt>
+<dd><p>Partition the string into three parts using the given separator.</p>
+<p>This will search for the separator in the string.  If the separator is found,
+returns a 3-tuple containing the part before the separator, the separator
+itself, and the part after it.</p>
+<p>If the separator is not found, returns a 3-tuple containing the original string
+and two empty strings.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.removeprefix">
+<span class="sig-name descname"><span class="pre">removeprefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.removeprefix" title="Link to this definition">#</a></dt>
+<dd><p>Return a str with the given prefix string removed if present.</p>
+<p>If the string starts with the prefix string, return string[len(prefix):].
+Otherwise, return a copy of the original string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.removesuffix">
+<span class="sig-name descname"><span class="pre">removesuffix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.removesuffix" title="Link to this definition">#</a></dt>
+<dd><p>Return a str with the given suffix string removed if present.</p>
+<p>If the string ends with the suffix string and that suffix is not empty,
+return string[:-len(suffix)]. Otherwise, return a copy of the original
+string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.replace">
+<span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.replace" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy with all occurrences of substring old replaced by new.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>count</dt><dd><p>Maximum number of occurrences to replace.
+-1 (the default value) means replace all occurrences.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>If the optional argument count is given, only the first count occurrences are
+replaced.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rfind">
+<span class="sig-name descname"><span class="pre">rfind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rfind" title="Link to this definition">#</a></dt>
+<dd><p>Return the highest index in S where substring sub is found,
+such that sub is contained within S[start:end].  Optional
+arguments start and end are interpreted as in slice notation.</p>
+<p>Return -1 on failure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rindex">
+<span class="sig-name descname"><span class="pre">rindex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rindex" title="Link to this definition">#</a></dt>
+<dd><p>Return the highest index in S where substring sub is found,
+such that sub is contained within S[start:end].  Optional
+arguments start and end are interpreted as in slice notation.</p>
+<p>Raises ValueError when the substring is not found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rjust">
+<span class="sig-name descname"><span class="pre">rjust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillchar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rjust" title="Link to this definition">#</a></dt>
+<dd><p>Return a right-justified string of length width.</p>
+<p>Padding is done using the specified fill character (default is a space).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rpartition">
+<span class="sig-name descname"><span class="pre">rpartition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rpartition" title="Link to this definition">#</a></dt>
+<dd><p>Partition the string into three parts using the given separator.</p>
+<p>This will search for the separator in the string, starting at the end. If
+the separator is found, returns a 3-tuple containing the part before the
+separator, the separator itself, and the part after it.</p>
+<p>If the separator is not found, returns a 3-tuple containing two empty strings
+and the original string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rsplit">
+<span class="sig-name descname"><span class="pre">rsplit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsplit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rsplit" title="Link to this definition">#</a></dt>
+<dd><p>Return a list of the substrings in the string, using sep as the separator string.</p>
+<blockquote>
+<div><dl>
+<dt>sep</dt><dd><p>The separator used to split the string.</p>
+<p>When set to None (the default value), will split on any whitespace
+character (including n r t f and spaces) and will discard
+empty strings from the result.</p>
+</dd>
+<dt>maxsplit</dt><dd><p>Maximum number of splits.
+-1 (the default value) means no limit.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Splitting starts at the end of the string and works to the front.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.rstrip">
+<span class="sig-name descname"><span class="pre">rstrip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.rstrip" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy of the string with trailing whitespace removed.</p>
+<p>If chars is given and not None, remove characters in chars instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.split">
+<span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxsplit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.split" title="Link to this definition">#</a></dt>
+<dd><p>Return a list of the substrings in the string, using sep as the separator string.</p>
+<blockquote>
+<div><dl>
+<dt>sep</dt><dd><p>The separator used to split the string.</p>
+<p>When set to None (the default value), will split on any whitespace
+character (including n r t f and spaces) and will discard
+empty strings from the result.</p>
+</dd>
+<dt>maxsplit</dt><dd><p>Maximum number of splits.
+-1 (the default value) means no limit.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Splitting starts at the front of the string and works to the end.</p>
+<p>Note, str.split() is mainly useful for data that has been intentionally
+delimited.  With natural text that includes punctuation, consider using
+the regular expression module.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.splitlines">
+<span class="sig-name descname"><span class="pre">splitlines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keepends</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.splitlines" title="Link to this definition">#</a></dt>
+<dd><p>Return a list of the lines in the string, breaking at line boundaries.</p>
+<p>Line breaks are not included in the resulting list unless keepends is given and
+true.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.startswith">
+<span class="sig-name descname"><span class="pre">startswith</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="optional">[</span>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.startswith" title="Link to this definition">#</a></dt>
+<dd><p>Return True if S starts with the specified prefix, False otherwise.
+With optional start, test S beginning at that position.
+With optional end, stop comparing S at that position.
+prefix can also be a tuple of strings to try.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.strip">
+<span class="sig-name descname"><span class="pre">strip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.strip" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy of the string with leading and trailing whitespace removed.</p>
+<p>If chars is given and not None, remove characters in chars instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.swapcase">
+<span class="sig-name descname"><span class="pre">swapcase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.swapcase" title="Link to this definition">#</a></dt>
+<dd><p>Convert uppercase characters to lowercase and lowercase characters to uppercase.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.title">
+<span class="sig-name descname"><span class="pre">title</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.title" title="Link to this definition">#</a></dt>
+<dd><p>Return a version of the string where each word is titlecased.</p>
+<p>More specifically, words start with uppercased characters and all remaining
+cased characters have lower case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.translate">
+<span class="sig-name descname"><span class="pre">translate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.translate" title="Link to this definition">#</a></dt>
+<dd><p>Replace each character in the string using the given translation table.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>table</dt><dd><p>Translation table, which must be a mapping of Unicode ordinals to
+Unicode ordinals, strings, or None.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>The table must implement lookup/indexing via __getitem__, for instance a
+dictionary or list.  If this operation raises LookupError, the character is
+left untouched.  Characters mapped to None are deleted.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.upper">
+<span class="sig-name descname"><span class="pre">upper</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.upper" title="Link to this definition">#</a></dt>
+<dd><p>Return a copy of the string converted to uppercase.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.enums.Mode.zfill">
+<span class="sig-name descname"><span class="pre">zfill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.enums.Mode.zfill" title="Link to this definition">#</a></dt>
+<dd><p>Pad a numeric string with zeros on the left, to fill a field of the given width.</p>
+<p>The string is never truncated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.monte_carlo">
+<span id="mllm-shap-shap-monte-carlo-module"></span><h2>mllm_shap.shap.monte_carlo module<a class="headerlink" href="#module-mllm_shap.shap.monte_carlo" title="Link to this heading">#</a></h2>
+<p>Monte Carlo SHAP explainers.</p>
+<p>All Monte Carlo SHAP explainers are based on approximating SHAP values
+using Monte Carlo sampling techniques. They differ from standard
+Monte Carlo methods by always including minimal masks (one-versus-all).</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a> implements a limited Monte Carlo sampling</dt><dd><p>approach that avoids drawing the same mask more than once, which helps
+to better cover the feature space within a limited number of samples.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">StandardMcShapExplainer</span></code></a> implements the standard Monte Carlo</dt><dd><p>sampling approach, allowing for repeated masks as per true Monte Carlo
+sampling methodology.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.approximate_budget" title="mllm_shap.shap.monte_carlo.approximate_budget"><code class="xref py py-func docutils literal notranslate"><span class="pre">approximate_budget()</span></code></a> is a utility function to estimate the number</dt><dd><p>of samples required to achieve a desired error bound with a specified
+confidence level using Hoeffding’s inequality.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">LimitedMcShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/monte_carlo/limited.html#LimitedMcShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMcShapExplainer</span></code></p>
+<p>Limited Monte Carlo SHAP implementation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.fraction">
+<span class="sig-name descname"><span class="pre">fraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.fraction" title="Link to this definition">#</a></dt>
+<dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks">
+<span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include minimal masks (single-feature and empty masks) in the sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.num_samples">
+<span class="sig-name descname"><span class="pre">num_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.num_samples" title="Link to this definition">#</a></dt>
+<dd><p>Number of random masks to generate. If None, uses fraction.
+-1 stands for minimal number of samples (only single-feature masks and empty mask).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">StandardMcShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/monte_carlo/standard.html#StandardMcShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseMcShapExplainer</span></code></p>
+<p>Standard Monte Carlo SHAP Explainer.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.fraction">
+<span class="sig-name descname"><span class="pre">fraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.fraction" title="Link to this definition">#</a></dt>
+<dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks">
+<span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include minimal masks (single-feature and empty masks) in the sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.num_samples">
+<span class="sig-name descname"><span class="pre">num_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.num_samples" title="Link to this definition">#</a></dt>
+<dd><p>Number of random masks to generate. If None, uses fraction.
+-1 stands for minimal number of samples (only single-feature masks and empty mask).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.approximate_budget">
+<span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">approximate_budget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/mllm_shap/shap/monte_carlo/utils.html#approximate_budget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.monte_carlo.approximate_budget" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the approximate number of samples needed to achieve a desired error bound
+with a specified confidence level using Hoeffding’s inequality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>error_bound</strong> (<em>float</em>) – The maximum allowable error.</p></li>
+<li><p><strong>confidence</strong> (<em>float</em>) – The desired confidence level (between 0 and 1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The calculated number of samples needed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.normalizers">
+<span id="mllm-shap-shap-normalizers-module"></span><h2>mllm_shap.shap.normalizers module<a class="headerlink" href="#module-mllm_shap.shap.normalizers" title="Link to this heading">#</a></h2>
+<p>Normalizers for SHAP values.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.normalizers.AbsSumNormalizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.normalizers.</span></span><span class="sig-name descname"><span class="pre">AbsSumNormalizer</span></span><a class="reference internal" href="_modules/mllm_shap/shap/normalizers.html#AbsSumNormalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.normalizers.AbsSumNormalizer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></p>
+<p>Normalizer that scales SHAP values by the sum of their absolute values.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.normalizers.IdentityNormalizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.normalizers.</span></span><span class="sig-name descname"><span class="pre">IdentityNormalizer</span></span><a class="reference internal" href="_modules/mllm_shap/shap/normalizers.html#IdentityNormalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.normalizers.IdentityNormalizer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></p>
+<p>Normalizer that returns SHAP values unchanged.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.normalizers.PowerShiftNormalizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.normalizers.</span></span><span class="sig-name descname"><span class="pre">PowerShiftNormalizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">power</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/normalizers.html#PowerShiftNormalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></p>
+<p>Normalizer that applies power shift normalization to SHAP values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.normalizers.PowerShiftNormalizer.power">
+<span class="sig-name descname"><span class="pre">power</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer.power" title="Link to this definition">#</a></dt>
+<dd><p>The power to which SHAP values are raised.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.precise">
+<span id="mllm-shap-shap-precise-module"></span><h2>mllm_shap.shap.precise module<a class="headerlink" href="#module-mllm_shap.shap.precise" title="Link to this heading">#</a></h2>
+<p>Precise SHAP explainer implementation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.precise.</span></span><span class="sig-name descname"><span class="pre">PreciseShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.CONTEXTUAL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_reducer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarity_measure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mask_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/precise.html#PreciseShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapExplainer</span></code></a></p>
+<p>Precise SHAP implementation generating all possible masks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether to allow duplicate masks during generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.embedding_model">
+<span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.precise.PreciseShapExplainer.mode" title="mllm_shap.shap.precise.PreciseShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.embedding_reducer">
+<span class="sig-name descname"><span class="pre">embedding_reducer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseEmbeddingReducer" title="mllm_shap.shap.base.embeddings.BaseEmbeddingReducer"><span class="pre">BaseEmbeddingReducer</span></a></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.embedding_reducer" title="Link to this definition">#</a></dt>
+<dd><p>The embedding reduction strategy to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.precise.PreciseShapExplainer.embedding_model" title="mllm_shap.shap.precise.PreciseShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.normalizer">
+<span class="sig-name descname"><span class="pre">normalizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><span class="pre">BaseNormalizer</span></a></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.normalizer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP value normalizer to use.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.precise.PreciseShapExplainer.similarity_measure">
+<span class="sig-name descname"><span class="pre">similarity_measure</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><span class="pre">BaseEmbeddingSimilarity</span></a></em><a class="headerlink" href="#mllm_shap.shap.precise.PreciseShapExplainer.similarity_measure" title="Link to this definition">#</a></dt>
+<dd><p>The embedding similarity measure to use.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.similarity">
+<span id="mllm-shap-shap-similarity-module"></span><h2>mllm_shap.shap.similarity module<a class="headerlink" href="#module-mllm_shap.shap.similarity" title="Link to this heading">#</a></h2>
+<p>Embedding similarity calculations for SHAP explanations.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.similarity.CosineSimilarity">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.similarity.</span></span><span class="sig-name descname"><span class="pre">CosineSimilarity</span></span><a class="reference internal" href="_modules/mllm_shap/shap/similarity.html#CosineSimilarity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.similarity.CosineSimilarity" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingSimilarity</span></code></a></p>
+<p>Cosine similarity calculation,
+used in implementation of U1 and U2 utility functions from the paper.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.similarity.CosineSimilarity.operates_on_embeddings">
+<span class="sig-name descname"><span class="pre">operates_on_embeddings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#mllm_shap.shap.similarity.CosineSimilarity.operates_on_embeddings" title="Link to this definition">#</a></dt>
+<dd><p>Indicates that the similarity operates on embeddings.
+If False, it operates on raw tokens.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.similarity.TfIdfCosineSimilarity">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.similarity.</span></span><span class="sig-name descname"><span class="pre">TfIdfCosineSimilarity</span></span><a class="reference internal" href="_modules/mllm_shap/shap/similarity.html#TfIdfCosineSimilarity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.similarity.TfIdfCosineSimilarity" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity" title="mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEmbeddingSimilarity</span></code></a></p>
+<p>TF-IDF weighted Cosine similarity calculation,
+used in implementation of U3 utility function from the paper.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.similarity.TfIdfCosineSimilarity.operates_on_embeddings">
+<span class="sig-name descname"><span class="pre">operates_on_embeddings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#mllm_shap.shap.similarity.TfIdfCosineSimilarity.operates_on_embeddings" title="Link to this definition">#</a></dt>
+<dd><p>Indicates that the similarity operates on embeddings.
+If False, it operates on raw tokens.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.fraction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.mode</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.num_samples</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.mode</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.McShapExplainer"><code class="docutils literal notranslate"><span class="pre">McShapExplainer</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.mode</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.PreciseShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.compact">mllm_shap.shap.compact module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.ExplainerResult"><code class="docutils literal notranslate"><span class="pre">ExplainerResult</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.ExplainerResult.full_chat"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.full_chat</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.ExplainerResult.history"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.history</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.ExplainerResult.model_config"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.model_config</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.ExplainerResult.source_chat"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.source_chat</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.embeddings">mllm_shap.shap.embeddings module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.FirstReducer"><code class="docutils literal notranslate"><span class="pre">FirstReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.FirstReducer.n"><code class="docutils literal notranslate"><span class="pre">FirstReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MaxReducer"><code class="docutils literal notranslate"><span class="pre">MaxReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MaxReducer.n"><code class="docutils literal notranslate"><span class="pre">MaxReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MeanReducer"><code class="docutils literal notranslate"><span class="pre">MeanReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MeanReducer.n"><code class="docutils literal notranslate"><span class="pre">MeanReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MinReducer"><code class="docutils literal notranslate"><span class="pre">MinReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.MinReducer.n"><code class="docutils literal notranslate"><span class="pre">MinReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.OpenAiEmbedding"><code class="docutils literal notranslate"><span class="pre">OpenAiEmbedding</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.SumReducer"><code class="docutils literal notranslate"><span class="pre">SumReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.SumReducer.n"><code class="docutils literal notranslate"><span class="pre">SumReducer.n</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.ZeroReducer"><code class="docutils literal notranslate"><span class="pre">ZeroReducer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.embeddings.ZeroReducer.n"><code class="docutils literal notranslate"><span class="pre">ZeroReducer.n</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.enums">mllm_shap.shap.enums module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode"><code class="docutils literal notranslate"><span class="pre">Mode</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.CONTEXTUAL"><code class="docutils literal notranslate"><span class="pre">Mode.CONTEXTUAL</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.STATIC"><code class="docutils literal notranslate"><span class="pre">Mode.STATIC</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.capitalize"><code class="docutils literal notranslate"><span class="pre">Mode.capitalize()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.casefold"><code class="docutils literal notranslate"><span class="pre">Mode.casefold()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.center"><code class="docutils literal notranslate"><span class="pre">Mode.center()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.count"><code class="docutils literal notranslate"><span class="pre">Mode.count()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.encode"><code class="docutils literal notranslate"><span class="pre">Mode.encode()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.endswith"><code class="docutils literal notranslate"><span class="pre">Mode.endswith()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.expandtabs"><code class="docutils literal notranslate"><span class="pre">Mode.expandtabs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.find"><code class="docutils literal notranslate"><span class="pre">Mode.find()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.format"><code class="docutils literal notranslate"><span class="pre">Mode.format()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.format_map"><code class="docutils literal notranslate"><span class="pre">Mode.format_map()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.index"><code class="docutils literal notranslate"><span class="pre">Mode.index()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isalnum"><code class="docutils literal notranslate"><span class="pre">Mode.isalnum()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isalpha"><code class="docutils literal notranslate"><span class="pre">Mode.isalpha()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isascii"><code class="docutils literal notranslate"><span class="pre">Mode.isascii()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isdecimal"><code class="docutils literal notranslate"><span class="pre">Mode.isdecimal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isdigit"><code class="docutils literal notranslate"><span class="pre">Mode.isdigit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isidentifier"><code class="docutils literal notranslate"><span class="pre">Mode.isidentifier()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.islower"><code class="docutils literal notranslate"><span class="pre">Mode.islower()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isnumeric"><code class="docutils literal notranslate"><span class="pre">Mode.isnumeric()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isprintable"><code class="docutils literal notranslate"><span class="pre">Mode.isprintable()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isspace"><code class="docutils literal notranslate"><span class="pre">Mode.isspace()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.istitle"><code class="docutils literal notranslate"><span class="pre">Mode.istitle()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.isupper"><code class="docutils literal notranslate"><span class="pre">Mode.isupper()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.join"><code class="docutils literal notranslate"><span class="pre">Mode.join()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.ljust"><code class="docutils literal notranslate"><span class="pre">Mode.ljust()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.lower"><code class="docutils literal notranslate"><span class="pre">Mode.lower()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.lstrip"><code class="docutils literal notranslate"><span class="pre">Mode.lstrip()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.maketrans"><code class="docutils literal notranslate"><span class="pre">Mode.maketrans()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.partition"><code class="docutils literal notranslate"><span class="pre">Mode.partition()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.removeprefix"><code class="docutils literal notranslate"><span class="pre">Mode.removeprefix()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.removesuffix"><code class="docutils literal notranslate"><span class="pre">Mode.removesuffix()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.replace"><code class="docutils literal notranslate"><span class="pre">Mode.replace()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rfind"><code class="docutils literal notranslate"><span class="pre">Mode.rfind()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rindex"><code class="docutils literal notranslate"><span class="pre">Mode.rindex()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rjust"><code class="docutils literal notranslate"><span class="pre">Mode.rjust()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rpartition"><code class="docutils literal notranslate"><span class="pre">Mode.rpartition()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rsplit"><code class="docutils literal notranslate"><span class="pre">Mode.rsplit()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.rstrip"><code class="docutils literal notranslate"><span class="pre">Mode.rstrip()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.split"><code class="docutils literal notranslate"><span class="pre">Mode.split()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.splitlines"><code class="docutils literal notranslate"><span class="pre">Mode.splitlines()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.startswith"><code class="docutils literal notranslate"><span class="pre">Mode.startswith()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.strip"><code class="docutils literal notranslate"><span class="pre">Mode.strip()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.swapcase"><code class="docutils literal notranslate"><span class="pre">Mode.swapcase()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.title"><code class="docutils literal notranslate"><span class="pre">Mode.title()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.translate"><code class="docutils literal notranslate"><span class="pre">Mode.translate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.upper"><code class="docutils literal notranslate"><span class="pre">Mode.upper()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.enums.Mode.zfill"><code class="docutils literal notranslate"><span class="pre">Mode.zfill()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.monte_carlo">mllm_shap.shap.monte_carlo module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.fraction</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.include_minimal_masks</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.num_samples</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.fraction</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.include_minimal_masks</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.num_samples</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.approximate_budget"><code class="docutils literal notranslate"><span class="pre">approximate_budget()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.normalizers">mllm_shap.shap.normalizers module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.AbsSumNormalizer"><code class="docutils literal notranslate"><span class="pre">AbsSumNormalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.IdentityNormalizer"><code class="docutils literal notranslate"><span class="pre">IdentityNormalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer"><code class="docutils literal notranslate"><span class="pre">PowerShiftNormalizer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer.power"><code class="docutils literal notranslate"><span class="pre">PowerShiftNormalizer.power</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.precise">mllm_shap.shap.precise module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.normalizer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.precise.PreciseShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.similarity_measure</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.similarity">mllm_shap.shap.similarity module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.similarity.CosineSimilarity"><code class="docutils literal notranslate"><span class="pre">CosineSimilarity</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.similarity.CosineSimilarity.operates_on_embeddings"><code class="docutils literal notranslate"><span class="pre">CosineSimilarity.operates_on_embeddings</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.similarity.TfIdfCosineSimilarity"><code class="docutils literal notranslate"><span class="pre">TfIdfCosineSimilarity</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.similarity.TfIdfCosineSimilarity.operates_on_embeddings"><code class="docutils literal notranslate"><span class="pre">TfIdfCosineSimilarity.operates_on_embeddings</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mllm_shap.shap.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Paweł Pozorski, Jakub Muszyński.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
