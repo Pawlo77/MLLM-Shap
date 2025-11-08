@@ -7,6 +7,7 @@ from typing import Any, Generator, cast
 
 import torch
 from torch import Tensor
+from pydantic import BaseModel, ConfigDict
 
 from ...connectors.base.explainer_cache import ExplainerCache
 from ...connectors.base.model import BaseMllmModel
@@ -17,6 +18,7 @@ from ..embeddings import MeanReducer
 from ..enums import Mode
 from ..normalizers import PowerShiftNormalizer
 from ..similarity import CosineSimilarity
+from ..explainer_result import ExplainerResult
 from ._validators import BaseShapCallConfig, BaseShapConfig
 from .embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 from .normalizers import BaseNormalizer
@@ -436,3 +438,76 @@ class BaseShapExplainer(ABC):
                 self.normalizer,
             )
         )
+
+
+# pylint: disable=too-few-public-methods
+class _ExplainerConfig(BaseModel):
+    """
+    Configuration model for Explainer.
+    Used just for validation and type checking.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    shap_explainer: BaseShapExplainer
+    model: BaseMllmModel
+
+
+class BaseExplainer(ABC):
+    """Convenience  base client for SHAP explainers."""
+
+    shap_explainer: BaseShapExplainer
+    """The SHAP explainer instance."""
+
+    model: BaseMllmModel
+    """The model connector instance."""
+
+    def __init__(
+        self,
+        model: BaseMllmModel,
+        shap_explainer: BaseShapExplainer,
+    ) -> None:
+        """
+        Initialize the explainer.
+
+        Args:
+            model: The model connector instance.
+            shap_explainer: The SHAP explainer instance.
+        """
+        # validation
+        __config = _ExplainerConfig(
+            shap_explainer=shap_explainer,
+            model=model,
+        )
+
+        self.shap_explainer = __config.shap_explainer
+        self.model = __config.model
+
+    # pylint: disable=magic-value-comparison
+    @abstractmethod
+    def __call__(  # type: ignore[return]
+        self,
+        *_: Any,
+        chat: BaseMllmChat,
+        generation_kwargs: dict[str, Any] | None = None,
+        **explanation_kwargs: Any,
+    ) -> ExplainerResult:
+        """
+        Call the explainer - generate full response from :attr:`chat`
+        using :attr:`model`, and then explain it using :attr:`shap_explainer`.
+
+        Args:
+            chat: The chat instance.
+            generation_kwargs: The generation kwargs for the model.generate method.
+            explanation_kwargs: The explanation kwargs for the SHAP explainer. Shoul not contain
+                duplicate keys with generation_kwargs.
+        Returns:
+            The ExplainerResult instance.
+        Raises:
+            ValueError: If generation_kwargs or explanation_kwargs contain invalid keys.
+        """
+        generation_kwargs = generation_kwargs or {}
+        if "chat" in generation_kwargs or "keep_history" in generation_kwargs:
+            raise ValueError("generation_kwargs should not contain 'chat' or 'keep_history' keys.")
+        if "chat" in explanation_kwargs or "base_chat" in explanation_kwargs or "model" in explanation_kwargs:
+            raise ValueError("explanation_kwargs should not contain 'chat', 'base_chat' or 'model' keys.")
