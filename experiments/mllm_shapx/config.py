@@ -26,6 +26,7 @@ from .constants import (
     DEFAULT_SPLIT,
     DEFAULT_SUBSET,
     ExplainerType,
+    ModelKind
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class SelectionConfig:
     max_samples: Optional[int] = None
     shuffle_seed: Optional[int] = 0
     start_index: int = 0
+    max_prompt_tokens: Optional[int] = None
 
 
 @dataclass
@@ -102,6 +104,7 @@ class ExperimentSet:
     experiment_set_id: str
     output_root: str = "experiments_output"
     device: Optional[str] = None  # "cuda"|"cpu"|None (auto)
+    model_kind: str = ModelKind.LIQUID_AUDIO.value
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     selection: SelectionConfig = field(default_factory=SelectionConfig)
     wandb: WandBConfig = field(default_factory=WandBConfig)
@@ -170,6 +173,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
         experiment_set_id=raw["experiment_set_id"],
         output_root=raw.get("output_root", "experiments_output"),
         device=raw.get("device"),
+        model_kind=raw.get("model_kind", ModelKind.LIQUID_AUDIO.value),
         dataset=DatasetConfig(
             subset=ds.get("subset", DEFAULT_SUBSET),
             split=ds.get("split", DEFAULT_SPLIT),
@@ -180,6 +184,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             max_samples=sel.get("max_samples"),
             shuffle_seed=sel.get("shuffle_seed", 0),
             start_index=sel.get("start_index", 0),
+            max_prompt_tokens=sel.get("max_prompt_tokens"),
         ),
         wandb=WandBConfig(
             enabled=wb.get("enabled", True),
@@ -218,6 +223,8 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
             errs.append("selection.max_samples must be positive or null.")
         if cfg.selection.start_index < 0:
             errs.append("selection.start_index must be >= 0.")
+        if cfg.selection.max_prompt_tokens is not None and cfg.selection.max_prompt_tokens <= 0:
+            errs.append("selection.max_prompt_tokens must be positive if provided.")
 
     def _validate_wandb() -> None:
         if cfg.wandb.mode is not None and cfg.wandb.mode not in ("online", "offline", "disabled"):
@@ -237,6 +244,9 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
         if not cfg.experiments:
             errs.append("experiments must contain at least one variant.")
             return
+        if cfg.model_kind not in (mk.value for mk in ModelKind):
+            kinds = ", ".join(mk.value for mk in ModelKind)
+            errs.append(f"model_kind must be one of: {kinds}.")
         for i, exp in enumerate(cfg.experiments):
             t = exp.explainer_type.lower()
             if t not in (ExplainerType.EXACT.value, ExplainerType.MC.value):
