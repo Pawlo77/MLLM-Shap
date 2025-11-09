@@ -139,6 +139,8 @@ class BaseShapExplainer(ABC):
         Args:
             masks (Tensor): 2D boolean tensor [num_masks, num_tokens],
                 each row indicates which tokens are included in that mask.
+                The first mask (index 0) represents the base mask with all tokens included
+                (all True values).
             similarities (Tensor): 1D tensor [num_masks], similarity score for each mask.
             device: The device to create the SHAP values on.
 
