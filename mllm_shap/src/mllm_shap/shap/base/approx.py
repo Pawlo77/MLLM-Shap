@@ -121,9 +121,6 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
         - empty mask
         - single-feature masks
 
-        Therefore, _calculate_shap_values can expect masks
-        to be interleaved when computing SHAP values.
-
         Args:
             target_length: Length of the masks
             device: Torch device to create the tensor on
