@@ -155,6 +155,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     spec = {
         "experiment_set_id": cfg.experiment_set_id,
         "run_slug": run.run_slug,
+        "model_kind": cfg.model_kind,
         "variant": {
             "explainer_type": run.variant.explainer_type,
             "num_samples": run.num_samples,
