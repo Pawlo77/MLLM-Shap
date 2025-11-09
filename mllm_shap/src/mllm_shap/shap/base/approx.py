@@ -105,7 +105,7 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
                 )
 
             if generated_masks < self._base_masks.shape[0]:
-                if self._base_calls_num != generated_masks + self._zero_mask_skipped:
+                if self._base_calls_num != generated_masks + int(self._zero_mask_skipped):
                     raise RuntimeError("Multiple base masks were rejected.")
 
                 self._base_calls_num += 1
@@ -115,11 +115,11 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
     def _generate_minimal_splits(self, target_length: int, device: torch.device) -> torch.Tensor:
         """
         Generate a minimal set of boolean masks as a batched tensor.
-        Shape: (2 * target_length + 1, target_length).
+        Shape: (target_length + 1, target_length).
 
         It ensures that masks are in following order:
         - empty mask
-        - single-feature masks and their negations interleaved
+        - single-feature masks
 
         Therefore, _calculate_shap_values can expect masks
         to be interleaved when computing SHAP values.
