@@ -35,6 +35,12 @@ class ExplainerCache(BaseModel):
     masks: Tensor
     """The masks used for SHAP calculations."""
 
+    shap_values_mask: Tensor
+    """The mask indicating which SHAP values are relevant."""
+
+    had_different_masks: bool = False
+    """Whether the masks used for SHAP calculations differed from chat's masks."""
+
     _values: Tensor | None = None
     """The SHAP values calculated."""
 
@@ -46,6 +52,7 @@ class ExplainerCache(BaseModel):
         chat: "BaseMllmChat",
         responses: list[ModelResponse],
         masks: Tensor,
+        shap_values_mask: Tensor,
         **kwargs: Any,
     ) -> None:
         """
@@ -54,10 +61,12 @@ class ExplainerCache(BaseModel):
         Args:
             data: The data to initialize the instance with.
         """
-        super().__init__(chat=chat, masks=masks, responses=responses, **kwargs)
+        super().__init__(chat=chat, masks=masks, responses=responses, shap_values_mask=shap_values_mask, **kwargs)
 
         if masks.shape[0] != len(responses):
             raise ValueError("Masks size does not match the number of responses in the chat.")
+
+        self.shap_values_mask = shap_values_mask
 
         if chat is not None:
             if chat.input_tokens_num < masks.shape[1]:
@@ -81,6 +90,11 @@ class ExplainerCache(BaseModel):
                 raise ValueError("Masks size does not match the number of tokens in the chat.")
             self.masks = masks
 
+            if torch.any(chat.shap_values_mask != shap_values_mask):
+                self.had_different_masks = True
+        else:
+            self.had_different_masks = False
+
     # pylint: disable=too-many-positional-arguments,too-many-arguments
     @classmethod
     def create(
@@ -91,6 +105,7 @@ class ExplainerCache(BaseModel):
         masks: Tensor,
         values: Tensor,
         normalized_values: Tensor,
+        shap_values_mask: Tensor,
     ) -> "ExplainerCache":
         """
         Create a new ExplainerCache instance.
@@ -102,6 +117,7 @@ class ExplainerCache(BaseModel):
             masks: The masks used for SHAP calculations.
             values: The SHAP values calculated.
             normalized_values: The normalized SHAP values calculated.
+            shap_values_mask: The mask indicating which SHAP values are relevant.
         Returns:
             A new ExplainerCache instance.
         """
@@ -111,6 +127,7 @@ class ExplainerCache(BaseModel):
             n=masks.shape[1],
             responses=responses,
             masks=masks,
+            shap_values_mask=shap_values_mask,
         )
         instance.values = values
         instance.normalized_values = normalized_values
@@ -141,9 +158,9 @@ class ExplainerCache(BaseModel):
         self.__values_setter("_normalized_values", values)
 
     @property
-    def values(self) -> Tensor:
+    def values(self) -> Tensor | None:
         """
-        SHAP values.
+        SHAP values. Can be none if :class:`HierarchicalExplainer` is used.
 
         Raises:
             ValueError: If SHAP values are no longer valid or have not been computed yet.
@@ -152,7 +169,7 @@ class ExplainerCache(BaseModel):
         return cast(Tensor, self._values)
 
     @values.setter
-    def values(self, values: Tensor) -> None:
+    def values(self, values: Tensor | None) -> None:
         """
         Set the SHAP values.
 
@@ -161,6 +178,9 @@ class ExplainerCache(BaseModel):
         Raises:
             ValueError: If SHAP values are not valid.
         """
+        if values is None:
+            self._values = None
+            return
         self.__values_setter("_values", values)
 
     def extend_masks(self) -> None:
@@ -202,7 +222,7 @@ class ExplainerCache(BaseModel):
         if values.shape[0] != self.chat.input_tokens_num:
             raise ValueError("SHAP values size does not match the number of tokens in the chat.")
 
-        mask = self.chat.shap_values_mask.clone()
+        mask = self.shap_values_mask.clone()
         # only validate up to n
         mask[self.n :] = False  # noqa: E203
 

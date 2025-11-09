@@ -12,6 +12,27 @@ from ..connectors.base.model_response import ModelResponse
 from .base.similarity import BaseEmbeddingSimilarity
 
 
+class EuclideanSimilarity(BaseEmbeddingSimilarity):
+    """
+    Euclidean similarity calculation,
+    used in implementation of U4 utility function from the paper.
+    """
+
+    def __call__(self, base: Tensor, other: Tensor) -> Tensor:
+        """
+        Calculate the Euclidean similarity between the base embedding and other embeddings.
+
+        Args:
+            base: The base embedding tensor, shape [embedding_dim].
+            other: The other embeddings tensor to compare against, shape [num_embeddings, embedding_dim].
+        """
+        # calculate euclidean distances
+        distances = torch.norm(other - base.unsqueeze(0), dim=-1)
+        # convert distances to similarities
+        similarities = 1 / (1 + distances)
+        return cast(Tensor, similarities)
+
+
 class CosineSimilarity(BaseEmbeddingSimilarity):
     """
     Cosine similarity calculation,
@@ -50,8 +71,21 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
         self.__vectorizer = TfidfVectorizer(analyzer=lambda x: x)
 
     def __call__(self, base: ModelResponse, other: list[ModelResponse]) -> Tensor:
+        """
+        Calculate the TF-IDF weighted Cosine similarity between the base response and other responses.
+
+        Args:
+            base: The base model response.
+            other: The list of other model responses to compare against.
+        Returns:
+            A tensor containing the TF-IDF weighted Cosine similarities.
+        """
+
         # check if other[0] == base
-        if not base == other[0]:
+        if not (
+            torch.equal(base.generated_text_tokens, other[0].generated_text_tokens)
+            and torch.equal(base.generated_audio_tokens, other[0].generated_audio_tokens)
+        ):
             raise ValueError("The first element of 'other' must be equal to 'base' tensor.")
 
         generated_text_tokens_hashes = [self.__tokenize(tensor=o.generated_text_tokens) for o in other]
