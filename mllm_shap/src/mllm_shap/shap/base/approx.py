@@ -109,7 +109,7 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
                     raise RuntimeError("Multiple base masks were rejected.")
 
                 self._base_calls_num += 1
-                return self._base_masks[generated_masks, ...].squeeze(0)
+                return self._base_masks[generated_masks, ...]
         return None
 
     def _generate_minimal_splits(self, target_length: int, device: torch.device) -> torch.Tensor:
