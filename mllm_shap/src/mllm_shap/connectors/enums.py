@@ -6,6 +6,12 @@ from enum import Enum
 class ModalityFlag(int, Enum):
     """Defines supported input/output modalities."""
 
+    IGNORE = -1
+    """
+    Ignore this token for modality-specific operations.
+    For internal calculations references.
+    """
+
     TEXT = 0
     """Represents text inputs or outputs."""
 
