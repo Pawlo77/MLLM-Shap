@@ -3,13 +3,12 @@
 import pytest
 import torch
 from mllm_shap.shap.embeddings import (
-    ZeroReducer,
-    MeanReducer,
+    FirstReducer,
     MaxReducer,
+    MeanReducer,
     MinReducer,
     SumReducer,
-    FirstReducer,
-    OpenAiEmbedding,
+    ZeroReducer,
 )
 
 
@@ -18,57 +17,64 @@ class TestEmbeddingReducers:
 
     @staticmethod
     @pytest.fixture
-    def embeddings() -> torch.Tensor:
-        """Fixture for sample embeddings tensor."""
-        return torch.tensor([[1.0, 2.0], [3.0, 0.0], [0.0, 4.0]])
+    def embeddings() -> list[torch.Tensor]:
+        """Fixture providing example embeddings of shape (d, k)."""
+        return [
+            torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),  # (2, 3)
+            torch.tensor([[2.0, 0.0, 1.0], [3.0, 3.0, 3.0]]),  # (2, 3)
+        ]
 
-    def test_zero_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test ZeroReducer returns the original embeddings."""
+    def test_zero_reducer_returns_unchanged(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that ZeroReducer returns stacked embeddings unchanged."""
         reducer = ZeroReducer()
-        out = reducer(embeddings)
-        assert torch.equal(out, embeddings)
+        result = reducer(embeddings)
+        expected = torch.stack(embeddings, dim=0)
+        torch.testing.assert_close(result, expected)
 
-    def test_mean_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test MeanReducer computes the mean correctly."""
+    def test_zero_reducer_raises_on_size_mismatch(self) -> None:
+        """Test that ZeroReducer raises an error if embeddings have mismatched sizes."""
+        reducer = ZeroReducer()
+        bad_embeddings = [torch.randn(2, 4), torch.randn(3, 4)]
+        with pytest.raises(ValueError, match="All embeddings must have the same shape"):
+            reducer(bad_embeddings)
+
+    def test_mean_reducer_computes_correct_mean(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that MeanReducer computes mean across the first dimension (dim=0)."""
         reducer = MeanReducer()
-        out = reducer(embeddings)
-        expected = embeddings.mean(dim=0)
-        assert torch.allclose(out, expected)
+        expected = torch.stack([emb.mean(dim=0) for emb in embeddings], dim=0)
+        result = reducer(embeddings)
+        torch.testing.assert_close(result, expected)
 
-    def test_max_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test MaxReducer computes the max correctly."""
+    def test_max_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that MaxReducer computes the elementwise max along the first dimension (dim=0)."""
         reducer = MaxReducer()
-        out = reducer(embeddings)
-        expected = embeddings.max(dim=0).values
-        assert torch.allclose(out, expected)
+        expected = torch.stack([emb.max(dim=0).values for emb in embeddings], dim=0)
+        result = reducer(embeddings)
+        torch.testing.assert_close(result, expected)
 
-    def test_min_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test MinReducer computes the min correctly."""
+    def test_min_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that MinReducer computes the elementwise min along the first dimension (dim=0)."""
         reducer = MinReducer()
-        out = reducer(embeddings)
-        expected = embeddings.min(dim=0).values
-        assert torch.allclose(out, expected)
+        expected = torch.stack([emb.min(dim=0).values for emb in embeddings], dim=0)
+        result = reducer(embeddings)
+        torch.testing.assert_close(result, expected)
 
-    def test_sum_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test SumReducer computes the sum correctly."""
+    def test_sum_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that SumReducer computes the elementwise sum along the first dimension (dim=0)."""
         reducer = SumReducer()
-        out = reducer(embeddings)
-        expected = embeddings.sum(dim=0)
-        assert torch.allclose(out, expected)
+        expected = torch.stack([emb.sum(dim=0) for emb in embeddings], dim=0)
+        result = reducer(embeddings)
+        torch.testing.assert_close(result, expected)
 
-    def test_first_reducer(self, embeddings: torch.Tensor) -> None:
-        """Test FirstReducer returns the first embedding."""
+    def test_first_reducer_selects_first_column(self, embeddings: list[torch.Tensor]) -> None:
+        """Test that FirstReducer selects the first row (dim index 0)."""
         reducer = FirstReducer()
-        out = reducer(embeddings)
-        expected = embeddings[0]
-        assert torch.allclose(out, expected)
+        expected = torch.stack([emb[0] for emb in embeddings], dim=0)
+        result = reducer(embeddings)
+        torch.testing.assert_close(result, expected)
 
 
 class TestExternalEmbeddings:
     """Tests for external embedding classes."""
 
-    def test_openai_embedding_not_implemented(self) -> None:
-        """Test that OpenAiEmbedding raises NotImplementedError when called."""
-        embedding = OpenAiEmbedding()
-        with pytest.raises(NotImplementedError):
-            embedding(chat=None)  # chat is required but we can pass None for test
+    # TODO

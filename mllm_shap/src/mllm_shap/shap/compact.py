@@ -9,6 +9,7 @@ from torch import Tensor
 
 from ..connectors.base.chat import BaseMllmChat
 from ..connectors.base.model import BaseMllmModel
+from ..connectors.base.model_response import ModelResponse
 from ..utils.logger import get_logger
 from .base.explainer import BaseShapExplainer
 from .precise import PreciseShapExplainer
@@ -39,19 +40,15 @@ class ExplainerResult(BaseModel):
     full_chat: BaseMllmChat
     """The full chat instance after generation (entire conversation). It will be set with SHAP values and cache."""
 
-    response_chat: BaseMllmChat
-    """The response chat instance after generation (last model response)."""
-
     source_chat: BaseMllmChat
     """Chat to get explained (without base response)."""
 
-    history: list[tuple[Tensor, BaseMllmChat, BaseMllmChat, BaseMllmChat, Tensor] | None] | None
+    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
     """
     The history of chats and masks used during explanation
     (if applicable, that is if explainer was called with `verbose=True`).
-    Each entry is a tuple of (mask, source_chat, response_chat, full_chat, reduced_embeddings)
-    or None if corresponding mask was not computed (extracted from explainer cache, invalid or
-    for full mask).
+    Each entry is a tuple of  (mask, mask_hash, masked_chat, model_response)
+    If cache was used, masked_chat will be None.).
     """
 
 
@@ -116,19 +113,18 @@ class Explainer:
 
         t0 = time()
         logger.info("Generating full response from the model...")
-        full_chat, response_chat = self.model.generate(
+        response = self.model.generate(
             chat=chat,
             keep_history=True,
             **generation_kwargs,
-        )  # type: ignore[misc]
+        )
         logger.debug("Generation took %.2f seconds.", time() - t0)
 
         t0 = time()
         history = self.shap_explainer(
-            source_chat=chat,
-            response_chat=response_chat,
-            full_chat=full_chat,
             model=self.model,
+            source_chat=chat,
+            response=response,
             **explanation_kwargs,
             **generation_kwargs,
         )
@@ -136,7 +132,7 @@ class Explainer:
 
         return ExplainerResult(
             source_chat=chat,
-            response_chat=response_chat,
-            full_chat=full_chat,
+            # chat is set as generate was called with keep_history=True
+            full_chat=response.chat,  # type: ignore[arg-type]
             history=history,
         )
