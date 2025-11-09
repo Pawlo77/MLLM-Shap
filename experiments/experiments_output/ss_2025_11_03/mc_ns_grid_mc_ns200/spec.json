@@ -1,0 +1,31 @@
+{
+  "experiment_set_id": "ss_2025_11_03",
+  "run_slug": "mc_ns_grid_mc_ns200",
+  "variant": {
+    "explainer_type": "mc",
+    "num_samples": null,
+    "fraction": 200
+  },
+  "dataset": {
+    "subset": "single_sentence",
+    "split": "test",
+    "revision": "refs/convert/parquet",
+    "repo_id": "Pawlo77/mllm-shap"
+  },
+  "selection": {
+    "max_samples": 20,
+    "shuffle_seed": 42,
+    "start_index": 0
+  },
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.2
+  },
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "AbsSumNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "CosineSimilarity"
+  },
+  "device": "cuda"
+}
