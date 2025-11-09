@@ -40,13 +40,13 @@ class TestHierarchicalExplainer:
     def test_contiguous_segment(self) -> None:
         """Extract start, end, and size for contiguous True block."""
         mask = torch.tensor([False, True, True, True, False])
-        start, end, n = HierarchicalExplainer.get_group_props(mask)
+        start, end, n = HierarchicalExplainer._HierarchicalExplainer__get_group_props(mask)
         assert (start, end, n) == (1, 3, 3)
 
     def test_single_true_value(self) -> None:
         """Handles single True correctly."""
         mask = torch.tensor([False, True, False])
-        start, end, n = HierarchicalExplainer.get_group_props(mask)
+        start, end, n = HierarchicalExplainer._HierarchicalExplainer__get_group_props(mask)
         assert (start, end, n) == (1, 1, 1)
 
     def test_group_splitting_by_modality_and_role(self) -> None:

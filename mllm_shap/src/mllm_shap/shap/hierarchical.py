@@ -184,7 +184,7 @@ class HierarchicalExplainer(BaseExplainer):
             A tensor containing the hierarchical SHAP values for the group.
         """
 
-        start_idx, end_idx, n = HierarchicalExplainer.get_group_props(group_mask)
+        start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
         subgroups_num = self.__get_subgroups_num(n=n)
 
         logger.debug(
@@ -324,7 +324,7 @@ class HierarchicalExplainer(BaseExplainer):
         )
 
     @staticmethod
-    def get_group_props(mask: Tensor) -> tuple[int, int, int]:
+    def __get_group_props(mask: Tensor) -> tuple[int, int, int]:
         """
         Get the start and end indices of the True values in the mask.
         Assumes that the mask contains at least one True value and
