@@ -537,7 +537,7 @@ class BaseExplainer(ABC):
         Args:
             chat: The chat instance.
             generation_kwargs: The generation kwargs for the model.generate method.
-            explanation_kwargs: The explanation kwargs for the SHAP explainer. Shoul not contain
+            explanation_kwargs: The explanation kwargs for the SHAP explainer. Should not contain
                 duplicate keys with generation_kwargs.
         Returns:
             The ExplainerResult instance.
