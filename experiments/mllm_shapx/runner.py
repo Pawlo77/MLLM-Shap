@@ -172,6 +172,8 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         already = existing_completed_from_disk(run_dir)
         ckpt["completed_indices"] = sorted(set(ckpt["completed_indices"]).union(already))
         ckpt.setdefault("next_index", 0)
+        LOGGER.info("Resuming run '%s': %d completed samples found on disk.",
+                    run.run_slug, len(ckpt["completed_indices"]))
     else:
         ckpt = {
             "completed_indices": [],
@@ -206,6 +208,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         # Skip if already completed (resume)
         if row_idx in set(ckpt["completed_indices"]):
             continue
+        LOGGER.info("Running sample index %d for variant '%s'.", row_idx, run.run_slug)
 
         # Audio column resolution
         if AudioCol.MALE.value in row:

@@ -173,7 +173,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
         dataset=DatasetConfig(
             subset=ds.get("subset", DEFAULT_SUBSET),
             split=ds.get("split", DEFAULT_SPLIT),
-            revision=ds.get("revision", "refs/convert/parquet"),
+            revision=ds.get("revision", "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf"),
             repo_id=ds.get("repo_id", "Pawlo77/mllm-shap"),
         ),
         selection=SelectionConfig(

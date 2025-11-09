@@ -5,13 +5,13 @@
     "dataset": {
         "subset": "single_sentence",
         "split": "test",
-        "revision": "refs/convert/parquet",
+        "revision": "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf",
         "repo_id": "Pawlo77/mllm-shap"
     },
     "selection": {
         "max_samples": 20,
         "shuffle_seed": 42,
-        "start_index": 0
+        "start_index": 3
     },
     "wandb": {
         "enabled": true,
@@ -31,7 +31,7 @@
         "similarity": "CosineSimilarity"
     },
     "experiments": [
-        {"explainer_type": "mc", "num_samples": [300, 400, 500], "name": "mc_ns_grid"},
-        {"explainer_type": "mc", "num_samples": [-1], "name": "mc_minimal"}
+        {"explainer_type": "mc", "num_samples": [-1], "name": "mc_minimal"},
+        {"explainer_type": "mc", "num_samples": [300, 400, 500], "name": "mc_ns_grid"}
     ]
 }
