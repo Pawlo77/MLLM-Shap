@@ -10,7 +10,7 @@
         "repo_id": "Pawlo77/mllm-shap"
     },
     "selection": {
-        "max_samples": 20,
+        "max_samples": 47,
         "shuffle_seed": 42,
         "start_index": 0,
         "max_prompt_tokens": 10
@@ -23,14 +23,13 @@
         "tags": ["single_sentence", "baseline", "text-only"]
     },
     "generation": {
-        "max_new_tokens": 32,
-        "text_temperature": 0.1
+        "text_temperature": 0.0
     },
     "shap": {
         "mode": "CONTEXTUAL",
         "normalizer": "AbsSumNormalizer",
         "reducer": "MeanReducer",
-        "similarity": "CosineSimilarity"
+        "similarity": "TfIdfCosineSimilarity"
     },
     "experiments": [
         {"explainer_type": "exact", "name": "exact_baseline"},
