@@ -18,13 +18,13 @@ class BaseChatConfig(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    added_vocab_tokens: set[int]
     device: torch.device
     token_filter: TokenFilter
     system_roles_setup: SystemRolesSetup
     empty_turn_sequences: set[str]
 
 
+# pylint: disable=duplicate-code
 class BaseModelConfig(BaseModel):
     """
     Configuration model for BaseMllmModel.

@@ -34,7 +34,7 @@ Following example demonstrates how to use MLLM-SHAP to explain text generation f
    # load model and setup explainer
    model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.TEXT) # track and generate only text history
    shap = McShapExplainer(
-      num_samples=-1, # minimal number of samples for Monte Carlo SHAP (one vs all, linear complexity, very poor approximation)
+      num_samples=-1, # minimal number of samples for Monte Carlo SHAP (first order omissions and empty masks, linear complexity, very poor approximation)
       mode=Mode.CONTEXTUAL, # use contextual embeddings, default
       embedding_reducer=MeanReducer(), # use mean pooling to reduce token embeddings to single embedding per audio, default
       similarity_measure=CosineSimilarity(), # use cosine similarity to compare embeddings, default
@@ -76,7 +76,7 @@ This will produce an output similar to the following:
 
 .. image:: _static/example_text_result.png
    :alt: Simple Text Example Result
-   :width: 300px
+   :width: 30%
    :align: center
    :class: padded-image
 
@@ -179,7 +179,7 @@ This will render pandas dataframe with audio players for each token, similar to:
 
 .. image:: _static/example_audio_result.png
    :alt: Simple Text Example Result
-   :width: 500px
+   :width: 50%
    :align: center
    :class: padded-image
 
@@ -198,6 +198,6 @@ This will produce a histogram similar to the following:
 
 .. image:: _static/example_shap_dist.png
    :alt: SHAP Values Distribution
-   :width: 600px
+   :width: 40%
    :align: center
    :class: padded-image

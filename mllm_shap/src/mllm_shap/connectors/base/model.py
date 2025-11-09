@@ -13,10 +13,12 @@ from ..config import HuggingFaceModelConfig, ModelConfig
 from ..enums import ModelHistoryTrackingMode
 from ._validators import BaseModelConfig, BaseModelGenerateConfig
 from .chat import BaseMllmChat
+from .model_response import ModelResponse
 
 logger: Logger = get_logger(__name__)
 
 
+# pylint: disable=duplicate-code
 class BaseMllmModel(ABC):
     """Base class for model connectors."""
 
@@ -78,7 +80,7 @@ class BaseMllmModel(ABC):
         max_new_tokens: int = 128,
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
-    ) -> tuple[BaseMllmChat, BaseMllmChat] | BaseMllmChat:
+    ) -> ModelResponse:
         """
         Generate audio based on the current chat state.
 
@@ -88,9 +90,7 @@ class BaseMllmModel(ABC):
             model_config: Additional model configuration parameters.
             keep_history: Whether to return chat state with full history or only generated content.
         Returns:
-            If keep_history is True, returns a tuple of (updated chat with full history,
-                new chat with generated content only).
-            If keep_history is False, returns the updated chat with generated content only.
+            ModelResponse: The updated chat state after generation.
         """
         logger.debug("Generating audio with max_new_tokens=%d, keep_history=%s", max_new_tokens, keep_history)
         # validation
@@ -101,22 +101,24 @@ class BaseMllmModel(ABC):
         )
 
     @abstractmethod
-    def get_static_embeddings(self, chat: BaseMllmChat) -> Tensor:  # type: ignore[return]
+    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:  # type: ignore[return]
         """
         Get static embeddings for the current chat state.
 
         Args:
-            chat: The current chat state.
+            responses: The model responses to get embeddings for.
         Returns:
             The static embeddings for the text and audio tokens.
         Raises:
-            ValueError: If chat is not an instance of BaseMllmChat.
+            ValueError: If responses is not a list of ModelResponse.
         """
         logger.debug("Getting static embeddings.")
-        if not isinstance(chat, BaseMllmChat):
-            raise ValueError(f"chat must be an instance of BaseMllmChat, got {type(chat)}")
+        if not isinstance(responses, list) or not all(isinstance(r, ModelResponse) for r in responses):
+            raise ValueError(f"responses must be a list of ModelResponse, got {type(responses)}")
 
-    def get_contextual_embeddings(self, *args: Any, static_embeddings: Tensor | None = None, **kwargs: Any) -> Tensor:
+    def get_contextual_embeddings(
+        self, *args: Any, static_embeddings: list[Tensor] | None = None, **kwargs: Any
+    ) -> list[Tensor]:
         """
         Get contextual embeddings for the current chat state.
 
@@ -127,20 +129,24 @@ class BaseMllmModel(ABC):
             **kwargs: Additional keyword arguments for :func:`get_static_embeddings`.
                 Used if static_embeddings is None.
         Returns:
-            The context embeddings for the text and audio tokens.
+            The context embeddings for the text and audio tokens, same format as in
+                :func:`get_static_embeddings`.
         Raises:
             ValueError: If static_embeddings is not an instance of Tensor.
         """
         logger.debug("Getting contextual embeddings.")
         if static_embeddings is None:
             static_embeddings = self.get_static_embeddings(*args, **kwargs)
-        if not isinstance(static_embeddings, Tensor):
-            raise ValueError(f"static_embeddings must be an instance of Tensor, got {type(static_embeddings)}")
+        if not isinstance(static_embeddings, list):
+            raise ValueError(f"static_embeddings must be an instance of list, got {type(static_embeddings)}")
+        for emb in static_embeddings:
+            if not isinstance(emb, Tensor):
+                raise ValueError(f"Each item in static_embeddings must be an instance of Tensor, got {type(emb)}")
         with torch.no_grad():
-            return cast(Tensor, raise_connector_error(self._get_contextual_embeddings, static_embeddings))
+            return cast(list[Tensor], raise_connector_error(self._get_contextual_embeddings, static_embeddings))
 
     @abstractmethod
-    def _get_contextual_embeddings(self, static_embeddings: Tensor) -> Tensor:
+    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
         """
         Get contextual embeddings for the current chat state.
 

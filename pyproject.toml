@@ -11,7 +11,7 @@ dependencies = [
   "jupyter>=1.1.1,<2.0.0",
   "ipywidgets>=8.1.7,<9.0.0",
   "torch>=2.8.0,<3.0.0",
-  "torchcodec>=0.7.0,<0.8.0",
+  "torchcodec>=0.8.0",
   "librosa>=0.11.0,<0.12.0",
   "soundfile>=0.13.1,<0.14.0",
   "transformers>=4.50",
@@ -19,7 +19,6 @@ dependencies = [
   "matplotlib>=3.10.6,<4.0.0",
   "pydantic>=2.11.10,<3.0.0",
   "nltk>=3.9.2,<4.0.0",
-  "semhash>=0.3.2,<0.4.0",
   "pandas>=2.3.3,<3.0.0",
   "tqdm>=4.67.1,<5.0.0",
   "sentence-transformers>=5.1.1,<6.0.0",
@@ -30,6 +29,7 @@ dependencies = [
   "pydub>=0.25.1,<0.26.0",
   "grpcio>=1.76.0",
   "wandb>=0.22.3",
+  "semhash>=0.3.3",
 ]
 
 [tool.uv.sources]
@@ -55,6 +55,8 @@ dev = [
   "types-requests==2.32.4.20250913",
   "types-pyyaml==6.0.12.20250915",
   "types-simplejson==3.20.0.20250822",
+  "types-tabulate>=0.9.0.20241207",
+  "pytest>=8.4.2",
 ]
 
 [tool.uv]

@@ -1,6 +1,7 @@
 """Precise SHAP explainer implementation."""
 
 from itertools import product
+from typing import Generator
 
 import torch
 from torch import Tensor
@@ -8,42 +9,28 @@ from torch import Tensor
 from .base.explainer import BaseShapExplainer
 
 
-def generate_all_masks(n: int, device: torch.device) -> Tensor:
-    """
-    Generate all possible masks for n features, excluding all-ones mask.
-
-    Args:
-        n: Number of features.
-        device: The device to create the masks on.
-    Returns:
-        A tensor of shape (2^n - 1, n) containing all possible masks
-    """
-    masks = list(product([0, 1], repeat=n))
-    masks_tensor = torch.tensor(masks, dtype=torch.bool, device=device)
-
-    # Drop all-ones masks
-    keep_mask = masks_tensor.sum(dim=1) != n
-    masks_tensor = masks_tensor[keep_mask]
-
-    return masks_tensor
-
-
 # pylint: disable=too-few-public-methods
 class PreciseShapExplainer(BaseShapExplainer):
     """Precise SHAP implementation generating all possible masks."""
 
-    def _generate_masks(self, n: int, device: torch.device, existing_masks: Tensor | None = None) -> Tensor:
-        all_masks = generate_all_masks(n, device)
+    __splits_generator: Generator[Tensor, None, None] | None = None
 
-        if existing_masks is not None:
-            # Convert to sets of tuples for fast comparison
-            seen = {tuple(row.tolist()) for row in existing_masks}
-            unseen_masks = [mask for mask in all_masks if tuple(mask.tolist()) not in seen]
+    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
+        if generated_masks == 0:
+            self.__splits_generator = PreciseShapExplainer.__get_splits_generator(
+                target_length=target_length,
+                device=device,
+            )
+        if self.__splits_generator is None:
+            raise RuntimeError("Splits generator is not present.")
 
-            if unseen_masks:
-                return torch.stack(unseen_masks, dim=0)
-            return torch.empty((0, n), dtype=torch.bool, device=device)
-        return all_masks
+        try:
+            return next(self.__splits_generator)
+        except StopIteration:
+            return None
+
+    def _get_num_splits(self, target_length: int) -> int:
+        return int(2**target_length - 1)  # exclude all-true mask
 
     # pylint: disable=too-many-locals
     def _calculate_shap_values(
@@ -95,3 +82,20 @@ class PreciseShapExplainer(BaseShapExplainer):
             shap_values[i] = torch.sum(weights * (included_outputs - excluded_outputs))
 
         return shap_values
+
+    @staticmethod
+    def __get_splits_generator(target_length: int, device: torch.device) -> Generator[Tensor, None, None]:
+        """
+        Generates all possible binary masks of a given length, excluding the all-ones mask.
+
+        Args:
+            target_length (int): The length of the binary masks to generate.
+            device (torch.device): The device on which to create the tensors.
+        Yields:
+            Tensor: A binary mask tensor of shape (1, target_length).
+        """
+        for split in product([0, 1], repeat=target_length):
+            split_tensor = torch.tensor(split, dtype=torch.bool, device=device)
+            if split_tensor.sum() == target_length:
+                continue
+            yield split_tensor

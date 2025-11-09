@@ -1,6 +1,6 @@
 [project]
 name = "mllm-shap"
-version = "0.1.1b4"
+version = "0.1.2"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -24,9 +24,15 @@ maintainers = [
   { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
 ]
 dependencies = [
+    "ipywidgets>=8.1.8",
     "liquid-audio>=1.0.0",
+    "matplotlib>=3.10.7",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.4",
+    "scikit-learn>=1.7.2",
     "torch>=2.9.0",
     "torchaudio>=2.9.0",
+    "torchcodec>=0.8",
     "tqdm>=4.67.1",
 ]
 keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
