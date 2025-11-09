@@ -1,10 +1,10 @@
-"""Factory for building models, explainers, and chats."""
+"""Factory to build explainers and chats for given variants and model kinds."""
 from __future__ import annotations
 
 from typing import Any, Dict, cast
 
 import torch
-from mllm_shap.connectors import LiquidAudio
+from mllm_shap.connectors import LiquidAudio, TransformersCausalText
 from mllm_shap.connectors.enums import ModelHistoryTrackingMode, Role, SystemRolesSetup
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 from mllm_shap.shap import Explainer, McShapExplainer
@@ -13,11 +13,14 @@ from mllm_shap.shap.precise import PreciseShapExplainer
 from mllm_shap.shap.similarity import CosineSimilarity
 
 from .config import NORMALIZER_MAP, REDUCER_MAP, ExplainerVariant, ShapConfig
-from .constants import ExplainerType
+from .constants import ExplainerType, ModelKind
 
 
 def build_explainer_for_variant(
-    device: torch.device, shap_cfg: ShapConfig, variant: ExplainerVariant
+    device: torch.device,
+    shap_cfg: ShapConfig,
+    variant: ExplainerVariant,
+    model_kind: str,
 ) -> Explainer:
     """
     Create (model + shap_explainer) wrapped in Explainer, with placeholders
@@ -32,7 +35,10 @@ def build_explainer_for_variant(
     reducer = reducer_cls()
     similarity = CosineSimilarity()
 
-    model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.AUDIO)
+    if model_kind == ModelKind.TRANSFORMERS_TEXT.value:
+        model = TransformersCausalText(device=device, history_tracking_mode=ModelHistoryTrackingMode.TEXT)
+    else:
+        model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.TEXT_AUDIO)
 
     if variant.explainer_type.lower() == ExplainerType.EXACT.value:
         shap_explainer = PreciseShapExplainer(
@@ -58,7 +64,10 @@ def build_explainer_for_variant(
     return Explainer(model=model, shap_explainer=shap_explainer)
 
 
-def build_chat(model: Any, user_question_text: str, audio_bytes: bytes) -> Any:
+def build_chat(model: Any,
+               user_question_text: str,
+               audio_bytes: bytes | None,
+               text_only: bool = False) -> Any:
     """
     Prepare a chat turn with the given text+audio for the LiquidAudio model.
     """
@@ -68,6 +77,7 @@ def build_chat(model: Any, user_question_text: str, audio_bytes: bytes) -> Any:
     )
     chat.new_turn(Role.USER)
     chat.add_text(user_question_text)
-    chat.add_audio(audio_bytes)
+    if not text_only and audio_bytes is not None:
+        chat.add_audio(audio_bytes)
     chat.end_turn()
     return chat

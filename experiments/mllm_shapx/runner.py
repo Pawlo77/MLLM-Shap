@@ -22,8 +22,11 @@ from .config import (
     ExplainerVariant,
     ShapConfig,
 )
-from .data import choose_prompt_text_column, iter_rows_for_selection
-from .constants import AudioCol, ExplainerType
+from .data import (choose_prompt_text_column,
+                   iter_rows_for_selection,
+                   filter_df_by_max_prompt_tokens,
+                   get_hf_text_tokenizer)
+from .constants import AudioCol, ExplainerType, ModelKind
 from .factory import build_chat, build_explainer_for_variant
 from .serialization import compute_modality_summary, serialize_conversation
 from .storage import (
@@ -136,7 +139,7 @@ def _reinstantiate_mc_for_num_samples(
     )
 
 
-def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-statements
+def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     cfg: ExperimentSet,
     run: ExpandedVariant,
     df: pd.DataFrame,
@@ -192,15 +195,30 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     )
 
     # ---- explainer (build once, re-instantiate for specific MC params)
-    explainer = build_explainer_for_variant(device, cfg.shap, run.variant)
+    explainer = build_explainer_for_variant(device, cfg.shap, run.variant, cfg.model_kind)
     if run.variant.explainer_type.lower() == ExplainerType.MC.value:
         explainer = _reinstantiate_mc(explainer, cfg.shap, num_samples=run.num_samples, fraction=run.fraction)
 
     # ---- data iteration
     text_col = choose_prompt_text_column(df)
 
+    is_text_only = cfg.model_kind == ModelKind.TRANSFORMERS_TEXT.value
+    working_df = df
+    if is_text_only and cfg.selection.max_prompt_tokens is not None:
+        tokenizer = get_hf_text_tokenizer()
+        filtered_df, count = filter_df_by_max_prompt_tokens(
+            df=working_df, text_col=text_col, tokenizer=tokenizer, max_tokens=int(cfg.selection.max_prompt_tokens)
+        )
+        LOGGER.info(
+            "Prompt token filter: <= %d tokens matched %d / %d rows. Using filtered subset.",
+            cfg.selection.max_prompt_tokens,
+            count,
+            len(working_df),
+        )
+        working_df = filtered_df
+
     for row_idx, row in iter_rows_for_selection(
-        df=df,
+        df=working_df,
         start_index=cfg.selection.start_index,
         max_samples=cfg.selection.max_samples,
         shuffle_seed=cfg.selection.shuffle_seed,
@@ -211,19 +229,21 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         LOGGER.info("Running sample index %d for variant '%s'.", row_idx, run.run_slug)
 
         # Audio column resolution
-        if AudioCol.MALE.value in row:
-            audio_bytes = row[AudioCol.MALE.value][0]
-        elif AudioCol.FEMALE.value in row:
-            audio_bytes = row[AudioCol.FEMALE.value][0]
-        else:
-            raise KeyError("Expected 'audio__male' or 'audio__female' in row.")
+        audio_bytes = None
+        if not is_text_only:
+            if AudioCol.MALE.value in row:
+                audio_bytes = row[AudioCol.MALE.value][0]
+            elif AudioCol.FEMALE.value in row:
+                audio_bytes = row[AudioCol.FEMALE.value][0]
+            else:
+                raise KeyError("Expected 'audio__male' or 'audio__female' in row for audio model.")
 
         # Prompt resolution
         prompt_list = row[text_col]
         user_text = str(prompt_list[0])
 
         # Build chat
-        chat = build_chat(explainer.model, user_text, audio_bytes)
+        chat = build_chat(explainer.model, user_text, audio_bytes, text_only=is_text_only)
         generation_kwargs = {
             "max_new_tokens": int(cfg.generation.max_new_tokens),
             "model_config": ModelConfig(text_temperature=float(cfg.generation.text_temperature)),

@@ -1,13 +1,19 @@
 """Central constants and enums to avoid magic strings."""
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, Enum
 
 
 class ExplainerType(StrEnum):
     """Explainer type strings."""
     EXACT = "exact"
     MC = "mc"
+
+
+class ModelKind(Enum):
+    """Available model backends/connectors."""
+    LIQUID_AUDIO = "liquid_audio"
+    TRANSFORMERS_TEXT = "hf_text"
 
 
 class TextCol(StrEnum):
