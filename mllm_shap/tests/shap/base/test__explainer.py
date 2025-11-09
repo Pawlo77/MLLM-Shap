@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 from torch import Tensor
+from copy import deepcopy
 from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.base.model_response import ModelResponse
@@ -72,18 +73,18 @@ class TestBaseShapExplainer:
         explainer_instance: BaseShapExplainer,
         dummy_model_instance: BaseMllmModel,
         dummy_response_instance: ModelResponse,
+        dummy_chat_instance: BaseMllmChat,
     ) -> None:
         """Test that SHAP and normalized SHAP values are computed properly."""
         masks = torch.tensor([[True, False, True], [False, True, True]])
         responses = [dummy_response_instance, dummy_response_instance]
-        shap_mask = torch.tensor([True, True, True])
 
         explainer_instance.similarity_measure.operates_on_embeddings = True
         shap_values, normalized = explainer_instance._BaseShapExplainer__get_shap_values(
+            source_chat=dummy_chat_instance,
             model=dummy_model_instance,
             masks=masks,
             responses=responses,
-            shap_values_mask=shap_mask,
             device=torch.device("cpu"),
         )
 
@@ -161,6 +162,7 @@ class TestBaseShapExplainer:
         norm_values = torch.ones(3)
         explainer_instance._BaseShapExplainer__save_to_cache(
             chat=dummy_chat_instance,
+            source_chat=deepcopy(dummy_chat_instance),
             responses=responses,
             masks=masks,
             shap_values=shap_values,
@@ -184,6 +186,7 @@ class TestBaseShapExplainer:
         with pytest.raises(ValueError):
             explainer_instance._BaseShapExplainer__save_to_cache(
                 chat=dummy_chat_instance,
+                source_chat=deepcopy(dummy_chat_instance),
                 responses=responses,
                 masks=masks,
                 shap_values=shap_values,

@@ -36,6 +36,8 @@ class Explainer(BaseExplainer):
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
         generation_kwargs = generation_kwargs or {}
+
+        # validation
         super().__call__(
             chat=chat,
             generation_kwargs=generation_kwargs,
@@ -66,4 +68,5 @@ class Explainer(BaseExplainer):
             # chat is set as generate was called with keep_history=True
             full_chat=response.chat,  # type: ignore[arg-type]
             history=history,
+            total_n_calls=self.shap_explainer.total_n_calls,
         )

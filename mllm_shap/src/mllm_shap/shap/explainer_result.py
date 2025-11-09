@@ -27,3 +27,6 @@ class ExplainerResult(BaseModel):
     Each entry is a tuple of  (mask, mask_hash, masked_chat, model_response)
     If cache was used, masked_chat will be None.).
     """
+
+    total_n_calls: int = 0
+    """Total number of MLLM calls made for last explanation."""

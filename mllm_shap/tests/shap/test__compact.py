@@ -6,7 +6,8 @@ from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.base.model_response import ModelResponse
 from mllm_shap.shap.base.explainer import BaseShapExplainer
-from mllm_shap.shap.compact import Explainer, ExplainerResult, _ExplainerConfig
+from mllm_shap.shap.compact import Explainer, ExplainerResult
+from mllm_shap.shap.base.explainer import _ExplainerConfig
 from mllm_shap.shap.precise import PreciseShapExplainer
 from torch import Tensor
 
@@ -73,6 +74,7 @@ class TestExplainerResult:
                     ),
                 )
             ],
+            total_n_calls=5,
         )
 
         assert result.full_chat is dummy_chat
