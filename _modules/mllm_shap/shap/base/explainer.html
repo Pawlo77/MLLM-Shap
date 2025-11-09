@@ -417,6 +417,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            masks (Tensor): 2D boolean tensor [num_masks, num_tokens],</span>
 <span class="sd">                each row indicates which tokens are included in that mask.</span>
+<span class="sd">                The first mask (index 0) represents the base mask with all tokens included</span>
+<span class="sd">                (all True values).</span>
 <span class="sd">            similarities (Tensor): 1D tensor [num_masks], similarity score for each mask.</span>
 <span class="sd">            device: The device to create the SHAP values on.</span>
 
