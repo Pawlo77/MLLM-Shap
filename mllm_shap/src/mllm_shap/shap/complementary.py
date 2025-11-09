@@ -2,12 +2,15 @@
 
 from functools import lru_cache
 from logging import Logger
+from typing import Any
 
 import torch
 from torch import Tensor
 
 from ..utils.logger import get_logger
 from .base.approx import BaseShapApproximation
+from ..connectors.base.chat import BaseMllmChat
+from ..connectors.base.model_response import ModelResponse
 
 logger: Logger = get_logger(__name__)
 
@@ -16,7 +19,7 @@ logger: Logger = get_logger(__name__)
 class ComplementaryShapExplainer(BaseShapApproximation):
     """Complementary SHAP implementation class."""
 
-    __next_mask: Tensor | None = None
+    __next_mask: Tensor | None
     """Holds the next mask to be returned (the complement of the last generated mask)."""
 
     @lru_cache(maxsize=1)
@@ -42,16 +45,20 @@ class ComplementaryShapExplainer(BaseShapApproximation):
 
     def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
         if self._first_call:
+            self._first_call = False
+
             if self._get_num_splits(target_length) % 2 == 1:
                 # on first call, if odd number of samples, return zero mask first
-                self._first_call = False
                 zero_mask = torch.zeros((1, target_length), dtype=torch.bool, device=device)
                 return zero_mask
 
+            # mark that zero mask was skipped
+            # so that _calculate_shap_values can adjust accordingly
             self._zero_mask_skipped = True
 
+        self._first_call = False
+
         if generated_masks < self._get_num_splits(target_length):
-            self._first_call = False
             if self.__next_mask is not None:
                 r = self.__next_mask
                 self.__next_mask = None
@@ -136,3 +143,9 @@ class ComplementaryShapExplainer(BaseShapApproximation):
                 minimal_splits_no_zero_interleaved,
             ]
         )
+
+    def __call__(
+        self, *args: Any, **kwargs: Any
+    ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None:
+        self.__next_mask = None
+        return super().__call__(*args, **kwargs)
