@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """Base class for chat state management."""
 
 from abc import ABC, abstractmethod
@@ -66,6 +67,9 @@ class BaseMllmChat(ABC):
     _system_roles: set[Role]
     __shap: ExplainerCache | None = None
 
+    __external_shap_values_mask: Tensor | None = None
+    __external_group_ids: Tensor | None = None
+
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
@@ -128,7 +132,9 @@ class BaseMllmChat(ABC):
         Returns:
             An instance of BaseMllmChat.
         Raises:
-            ValueError: If the mask size does not match the number of tokens in the chat.
+            ValueError: If the mask size does not match the number of tokens in the chat,
+                or if the mask is all False,
+                or if all text tokens are filtered out.
         """
         logger.debug("Creating new chat instance from existing chat with masks.")
 
@@ -136,6 +142,9 @@ class BaseMllmChat(ABC):
             raise ValueError("Mask size does not match the number of tokens in the chat.")
         if not mask.any():
             raise ValueError("Mask cannot be all False.")
+
+        # translate mask back - for group ids only first entry in mask is correct
+        mask = chat.translate_groups_ids_mask(mask)
 
         text_mask_relative = mask[chat.text_tokens_mask]
         audio_mask_relative = mask[chat.audio_tokens_mask]
@@ -176,6 +185,11 @@ class BaseMllmChat(ABC):
             chat=chat,
         )
         new_instance.refresh(full=True)
+
+        # dont propagate external masks / group ids
+        del new_instance.external_shap_values_mask
+        del new_instance.external_group_ids
+
         return new_instance
 
     @property
@@ -262,11 +276,132 @@ class BaseMllmChat(ABC):
         """
         return self.audio_tokens_no_system_mask  # no filtering
 
+    @property
+    def external_shap_values_mask(self) -> Tensor | None:
+        """
+        An optional external SHAP values mask. Should be a boolean tensor
+        with size equal to the number of tokens in the chat.
+
+        If provided, :attr:`shap_values_mask` will be and-ed with this mask.
+
+        Forbids adding new tokens to the chat while set.
+        """
+        return self.__external_shap_values_mask
+
+    @external_shap_values_mask.setter
+    def external_shap_values_mask(self, value: Tensor) -> None:
+        """
+        Set the external SHAP values mask.
+
+        Args:
+            value: The external SHAP values mask tensor.
+        Raises:
+            ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.
+        """
+        if self.input_tokens_num != value.shape[0]:
+            raise ValueError("External SHAP values mask size does not match the number of tokens in the chat.")
+        self.__external_shap_values_mask = value
+        self.refresh(shap=True)
+
+    @external_shap_values_mask.deleter
+    def external_shap_values_mask(self) -> None:
+        """
+        Delete the external SHAP values mask.
+        """
+        self.__external_shap_values_mask = None
+        self.refresh(shap=True)
+
+    @property
+    def external_group_ids(self) -> Tensor | None:
+        """
+        An optional external group IDs for tokens. Should be an integer tensor
+        with size equal to the number of tokens in the chat and set directly before
+        the explanation process.
+
+        All entries > 0 will be treated as belonging to the same group for
+        SHAP value calculations, 0 entries will be ignored from calculations
+        (shap_values_mask for them will be set to False). Takes precedence over
+        :attr:`external_shap_values_mask`.
+
+        Forbids adding new tokens to the chat while set.
+        """
+        return self.__external_group_ids
+
+    @external_group_ids.setter
+    def external_group_ids(self, value: Tensor) -> None:
+        """
+        Set the external group IDs for tokens.
+
+        Args:
+            value: The external group IDs tensor.
+        Raises:
+            ValueError: If the external group IDs size does not match the number of tokens in the chat.
+        """
+        if self.input_tokens_num != value.shape[0]:
+            raise ValueError("External group IDs size does not match the number of tokens in the chat.")
+        self.__external_group_ids = value
+        self.refresh(shap=True)
+
+    @external_group_ids.deleter
+    def external_group_ids(self) -> None:
+        """
+        Delete the external group IDs for tokens.
+        """
+        self.__external_group_ids = None
+        self.refresh(shap=True)
+
+    @cached_property
+    def external_group_ids_first_positions(self) -> Tensor:
+        """
+        Get the positions (indices) of the first occurrences of each
+        consecutive non-zero group ID in `external_group_ids`.
+
+        Returns:
+            Tensor of positions (indices) of the first occurrence of
+            each non-zero group ID, or None if not set.
+        Raises:
+            ValueError: If external_group_ids is not set.
+        """
+        if self.external_group_ids is None:
+            raise ValueError("external_group_ids is not set.")
+
+        ids = self.external_group_ids
+
+        # Get unique consecutive IDs and counts
+        unique_ids, counts = torch.unique_consecutive(ids, return_counts=True)
+
+        # Compute start indices for each run
+        start_positions = torch.cat([torch.tensor([0], device=ids.device), counts.cumsum(0)[:-1]])
+
+        # Filter out group ID == 0
+        mask = unique_ids != 0
+        first_positions = start_positions[mask]
+
+        return first_positions
+
+    @cached_property
+    def external_group_ids_positive_mask(self) -> Tensor:
+        """
+        Boolean mask indicating which tokens have positive group IDs.
+
+        Returns:
+            Boolean mask indicating which tokens have positive group IDs.
+        Raises:
+            ValueError: If external_group_ids is not set.
+        """
+        if self.external_group_ids is None:
+            raise ValueError("external_group_ids is not set.")
+
+        return self.external_group_ids > 0
+
     @cached_property
     def shap_values_mask(self) -> Tensor:
         """
         Boolean mask indicating which tokens should be considered
         for SHAP value calculations (i.e., non-system text tokens).
+
+        Raises:
+            ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.
         """
         mask = torch.zeros(self.input_tokens_num, dtype=torch.bool, device=self.torch_device)
 
@@ -278,9 +413,17 @@ class BaseMllmChat(ABC):
         audio_mask = self.audio_tokens_mask
         mask[audio_mask] = self.audio_tokens_no_system_mask_filtered
 
+        if self.external_group_ids is not None:
+            # mark only tokens within positive groups ids, just first token in each group
+            new_mask = torch.zeros_like(mask, dtype=torch.bool, device=self.torch_device)
+            new_mask[self.external_group_ids_first_positions] = True
+            mask = new_mask & mask
+        elif self.external_shap_values_mask is not None:
+            mask &= self.external_shap_values_mask
+
         return mask
 
-    def refresh(self, full: bool = False) -> None:
+    def refresh(self, full: bool = False, shap: bool = False) -> None:
         """
         Refresh cached properties, that is:
 
@@ -296,11 +439,25 @@ class BaseMllmChat(ABC):
         - audio_tokens_no_system_mask_filtered
         - text_tokens_no_system_mask_filtered
         - shap_values_mask
+        - external_group_ids_first_positions
+        - external_group_ids_positive_mask
+
+        If `shap` is True, will only refresh:
+        - shap_values_mask
+        - external_group_ids_first_positions
+        - external_group_ids_positive_mask
 
         Args:
             full: If True, refreshes all cached properties.
+            shap: If True, refreshes shap-related cached properties.
         """
-        logger.debug("Refreshing cached properties (full=%s).", full)
+        logger.debug("Refreshing cached properties (full=%s, shap=%s).", full, shap)
+
+        if shap:
+            self.__dict__.pop("shap_values_mask", None)
+            self.__dict__.pop("external_group_ids_first_positions", None)
+            self.__dict__.pop("external_group_ids_positive_mask", None)
+            return
 
         self.__dict__.pop("input_tokens", None)
         self.__dict__.pop("tokens_modality_flag", None)
@@ -314,6 +471,8 @@ class BaseMllmChat(ABC):
             self.__dict__.pop("audio_tokens_no_system_mask_filtered", None)
             self.__dict__.pop("text_tokens_no_system_mask_filtered", None)
             self.__dict__.pop("shap_values_mask", None)
+            self.__dict__.pop("external_group_ids_first_positions", None)
+            self.__dict__.pop("external_group_ids_positive_mask", None)
 
     def new_turn(self, speaker: Role) -> None:
         """
@@ -373,6 +532,7 @@ class BaseMllmChat(ABC):
         """
         if not isinstance(text, str) or not text:
             raise ValueError(f"text must be a non-empty string, got {type(text)}")
+        self._before_add()
 
         n_tokens_added = raise_connector_error(self._add_text, text)
         self._after_add(n_tokens_added, text_added=True)
@@ -401,6 +561,7 @@ class BaseMllmChat(ABC):
         """
         if not isinstance(audio_content, bytes) or not audio_content:
             raise ValueError(f"audio_content must be non-empty bytes, got {type(audio_content)}")
+        self._before_add()
 
         waveform, sample_rate = TorchAudioHandler.from_bytes(audio_content, audio_format=audio_format)
         n_tokens_added = raise_connector_error(self._add_audio, waveform, sample_rate)
@@ -434,6 +595,8 @@ class BaseMllmChat(ABC):
             ValueError: If length mismatch occurs after appending.
             RuntimeError: If an error occurs in the underlying connector implementation.
         """
+        self._before_add()
+
         text_tokens_added, audio_tokens_added = raise_connector_error(
             self._append,
             text,
@@ -609,6 +772,24 @@ class BaseMllmChat(ABC):
             conversation.append(turn_conversation)
 
         return conversation
+
+    def translate_groups_ids_mask(self, mask: Tensor) -> Tensor:
+        """
+        Translate a mask over group IDs to a mask over all tokens.
+
+        Args:
+            mask: A boolean tensor indicating which group IDs to include.
+        Returns:
+            A boolean tensor indicating which tokens to include.
+        """
+        if self.external_group_ids is not None:
+            # select groups ids included within a mask and mark all their tokens to True
+            groups_included = torch.where(mask[self.external_group_ids_first_positions])[0] + 1
+            mask[torch.isin(self.external_group_ids, groups_included)] = True
+            # remaining group ids are to be excluded, if they are in shap_values_mask
+            groups_excluded = torch.where(~mask[self.external_group_ids_first_positions])[0] + 1
+            mask[torch.isin(self.external_group_ids, groups_excluded)] = False
+        return mask
 
     @classmethod
     @abstractmethod
@@ -787,6 +968,18 @@ class BaseMllmChat(ABC):
             fill_value=self.speaker.value,
             tensor_name="token_roles",
         )
+
+    def _before_add(self) -> None:
+        """
+        Prepare for adding new tokens to the chat state.
+
+        Raises:
+            ValueError: If external_group_ids or external_shap_values_mask is set.
+        """
+        if self.external_group_ids is not None:
+            raise ValueError("Cannot add tokens when external_group_ids is set.")
+        if self.external_shap_values_mask is not None:
+            raise ValueError("Cannot add tokens when external_shap_values_mask is set.")
 
     def _after_add(self, num_tokens: int, text_added: bool = True, refresh: bool = True) -> None:
         """

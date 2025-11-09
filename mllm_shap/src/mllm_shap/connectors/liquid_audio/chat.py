@@ -215,7 +215,6 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
 
     @cached_property
     def input_tokens(self) -> list[Tensor]:
-        # Move everything to CPU and convert to lists
         text_mask = self.text_tokens_mask
         audio_mask = self.audio_tokens_mask
 

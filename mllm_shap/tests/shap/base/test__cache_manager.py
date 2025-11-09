@@ -42,6 +42,7 @@ class TestCacheManager:
             n=5,
             responses=responses,
             masks=masks,
+            shap_values_mask=chat.shap_values_mask,
         )
 
     @patch("mllm_shap.shap.base._cache_manager.MasksManager")
