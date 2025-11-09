@@ -66,7 +66,7 @@ class ComplementaryShapExplainer(BaseShapApproximation):
     def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
         if self._zero_mask_skipped:
             # Adjust masks and similarities to account for skipped zero mask
-            # that is remove full ones mask
+            # that is, remove the zero mask (all features off)
             masks = masks[1:]
             similarities = similarities[1:]
             logger.debug("Adjusted masks and similarities to account for skipped zero mask.")
