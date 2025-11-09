@@ -7,7 +7,9 @@ from typing import Any, Generator, cast
 
 import torch
 from torch import Tensor
+from pydantic import BaseModel, ConfigDict
 
+from ...utils.other import extend_tensor
 from ...connectors.base.explainer_cache import ExplainerCache
 from ...connectors.base.model import BaseMllmModel
 from ...connectors.base.model_response import ModelResponse
@@ -17,6 +19,7 @@ from ..embeddings import MeanReducer
 from ..enums import Mode
 from ..normalizers import PowerShiftNormalizer
 from ..similarity import CosineSimilarity
+from ..explainer_result import ExplainerResult
 from ._validators import BaseShapCallConfig, BaseShapConfig
 from .embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 from .normalizers import BaseNormalizer
@@ -53,6 +56,9 @@ class BaseShapExplainer(ABC):
 
     allow_mask_duplicates: bool
     """Whether to allow duplicate masks during generation."""
+
+    total_n_calls: int = 0
+    """Total number of MLLM calls made for last explanation."""
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
@@ -174,7 +180,7 @@ class BaseShapExplainer(ABC):
         num_splits = self._get_num_splits(mask_manager.n)
         get_next_split = self._get_next_split
 
-        class MasksGenerator:
+        class _MasksGenerator:
             """Generator class for masks."""
 
             def __init__(self) -> None:
@@ -207,14 +213,15 @@ class BaseShapExplainer(ABC):
             def __len__(self) -> int | None:
                 return num_splits
 
-        return cast(Generator[tuple[Tensor | None, int], None, None], MasksGenerator())
+        return cast(Generator[tuple[Tensor | None, int], None, None], _MasksGenerator())
 
+    # pylint: disable=too-many-locals
     def __get_shap_values(
         self,
         model: BaseMllmModel,
         masks: Tensor,
         responses: list[ModelResponse],
-        shap_values_mask: Tensor,
+        source_chat: BaseMllmChat,
         device: torch.device,
     ) -> tuple[Tensor, Tensor]:
         """
@@ -225,13 +232,16 @@ class BaseShapExplainer(ABC):
             masks: 2D boolean tensor [num_masks, num_tokens],
                 each row indicates which tokens are included in that mask.
             responses: The model responses corresponding to the masks.
-            shap_values_mask: 1D boolean tensor [num_tokens], indicating which tokens to calculate SHAP values for.
+            source_chat: The source chat instance used to search for
+                external group ids.
             device: The device to create the SHAP values on.
         Returns:
             A tuple containing:
             - The calculated SHAP values.
             - The normalized SHAP values.
         """
+        shap_values_mask = source_chat.shap_values_mask
+
         if self.similarity_measure.operates_on_embeddings:
             # get embeddings for the response
             embeddings = self.__get_embeddings(
@@ -267,11 +277,23 @@ class BaseShapExplainer(ABC):
         normalized_shap_values = shap_values.clone()
         normalized_shap_values[shap_values_mask] = self.normalizer(calculated_shap_values)
 
+        # duplicate if external group ids are used
+        if source_chat.external_group_ids is not None:
+            for group_id, group_shap_value, group_normalized_shap_value in zip(
+                source_chat.external_group_ids[source_chat.external_group_ids_first_positions],
+                shap_values[source_chat.external_group_ids_first_positions],
+                normalized_shap_values[source_chat.external_group_ids_first_positions],
+            ):
+                mask = source_chat.external_group_ids == group_id
+                shap_values[mask] = group_shap_value
+                normalized_shap_values[mask] = group_normalized_shap_value
+
         return shap_values, normalized_shap_values
 
     def __save_to_cache(
         self,
         chat: BaseMllmChat,
+        source_chat: BaseMllmChat,
         responses: list[ModelResponse],
         masks: Tensor,
         shap_values: Tensor,
@@ -282,6 +304,7 @@ class BaseShapExplainer(ABC):
 
         Args:
             chat: The chat instance to save the cache for.
+            source_chat: The original chat instance from which SHAP values were derived.
             responses: The model responses used for SHAP calculations.
             masks: The masks used for SHAP calculations.
             shap_values: The SHAP values calculated.
@@ -293,6 +316,15 @@ class BaseShapExplainer(ABC):
         if chat.cache is not None:
             raise ValueError("SHAP cache already exists for the provided chat.")
 
+        # translate it for reference to group ids
+        shap_values_mask = source_chat.translate_groups_ids_mask(source_chat.shap_values_mask)
+        # extend mask with False to match new response length
+        shap_values_mask = extend_tensor(
+            shap_values_mask,
+            target_length=chat.input_tokens_num,
+            fill_value=False,
+        )
+
         chat.cache = ExplainerCache.create(
             chat=chat,
             explainer_hash=hash(self),
@@ -300,6 +332,7 @@ class BaseShapExplainer(ABC):
             masks=masks,
             values=shap_values,
             normalized_values=normalized_shap_values,
+            shap_values_mask=shap_values_mask,
         )
 
     # keep the logic in one method for readability
@@ -347,6 +380,7 @@ class BaseShapExplainer(ABC):
         response_chat: BaseMllmChat = __config.response.chat  # type: ignore[assignment]
         source_chat = __config.source_chat
         device = source_chat.torch_device
+        self.total_n_calls = 0
 
         mask_manager = MasksManager(chat=source_chat)
         cache_manager = CacheManager(
@@ -377,11 +411,16 @@ class BaseShapExplainer(ABC):
             **generate_kwargs,
         )
 
-        logger.info(
-            "Deduplicated %d/%d masks using existing cache.",
-            cache_manager.extracted_num,
-            len(masks) - 1,  # exclude base mask
-        )
+        # retrieve generated masks from the generator
+        # TODO: write it in proper way
+        self.total_n_calls = gen.generated_masks  # type: ignore[attr-defined]
+
+        if cache_manager.extracted_num > 0:
+            logger.info(
+                "Deduplicated %d/%d masks using existing cache.",
+                cache_manager.extracted_num,
+                len(masks) - 1,  # exclude base mask
+            )
 
         # edge case - all chats were empty after filtering yet shap_values_mask had True values
         # this can happen only if shap_values_mask has one True value
@@ -406,13 +445,14 @@ class BaseShapExplainer(ABC):
             model=__config.model,
             masks=masks_tensor,
             responses=responses,
-            shap_values_mask=source_chat.shap_values_mask,
+            source_chat=source_chat,
             device=device,
         )
 
         # cache results
         self.__save_to_cache(
             chat=response_chat,
+            source_chat=source_chat,
             responses=responses,
             masks=masks_tensor,
             shap_values=shap_values,
@@ -436,3 +476,81 @@ class BaseShapExplainer(ABC):
                 self.normalizer,
             )
         )
+
+
+# pylint: disable=too-few-public-methods
+class _ExplainerConfig(BaseModel):
+    """
+    Configuration model for Explainer.
+    Used just for validation and type checking.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    shap_explainer: BaseShapExplainer
+    model: BaseMllmModel
+
+
+class BaseExplainer(ABC):
+    """Convenience base client for SHAP explainers."""
+
+    shap_explainer: BaseShapExplainer
+    """The SHAP explainer instance."""
+
+    model: BaseMllmModel
+    """The model connector instance."""
+
+    def __init__(
+        self,
+        model: BaseMllmModel,
+        shap_explainer: BaseShapExplainer,
+    ) -> None:
+        """
+        Initialize the explainer.
+
+        Args:
+            model: The model connector instance.
+            shap_explainer: The SHAP explainer instance.
+        """
+        # validation
+        __config = _ExplainerConfig(
+            shap_explainer=shap_explainer,
+            model=model,
+        )
+
+        self.shap_explainer = __config.shap_explainer
+        self.model = __config.model
+
+    # pylint: disable=magic-value-comparison
+    @abstractmethod
+    def __call__(  # type: ignore[return]
+        self,
+        *_: Any,
+        chat: BaseMllmChat,
+        generation_kwargs: dict[str, Any] | None = None,
+        **explanation_kwargs: Any,
+    ) -> ExplainerResult:
+        """
+        Call the explainer - generate full response from :attr:`chat`
+        using :attr:`model`, and then explain it using :attr:`shap_explainer`.
+
+        Args:
+            chat: The chat instance.
+            generation_kwargs: The generation kwargs for the model.generate method.
+            explanation_kwargs: The explanation kwargs for the SHAP explainer. Should not contain
+                duplicate keys with generation_kwargs.
+        Returns:
+            The ExplainerResult instance.
+        Raises:
+            ValueError: If generation_kwargs or explanation_kwargs contain invalid keys or duplicate keys.
+        """
+        generation_kwargs = generation_kwargs or {}
+        if "chat" in generation_kwargs or "keep_history" in generation_kwargs:
+            raise ValueError("generation_kwargs should not contain 'chat' or 'keep_history' keys.")
+        if "chat" in explanation_kwargs or "base_chat" in explanation_kwargs or "model" in explanation_kwargs:
+            raise ValueError("explanation_kwargs should not contain 'chat', 'base_chat' or 'model' keys.")
+
+        # ensure there are no duplicate keys between generation_kwargs and explanation_kwargs
+        common_keys = set(generation_kwargs.keys()) & set(explanation_kwargs.keys())
+        if common_keys:
+            raise ValueError(f"Duplicate keys found in generation_kwargs and explanation_kwargs: {sorted(common_keys)}")

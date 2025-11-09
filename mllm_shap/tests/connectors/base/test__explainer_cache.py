@@ -45,6 +45,7 @@ class TestExplainerCache:
             n=3,
             responses=base_responses,
             masks=masks,
+            shap_values_mask=chat.shap_values_mask,
         )
 
     def test_init_extends_masks(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
@@ -56,6 +57,7 @@ class TestExplainerCache:
             n=3,
             responses=base_responses,
             masks=masks,
+            shap_values_mask=chat.shap_values_mask,
         )
         assert cache.masks.shape == (2, chat.input_tokens_num)
         assert torch.all(cache.masks[:, :3])
@@ -73,6 +75,7 @@ class TestExplainerCache:
                 n=5,
                 responses=base_responses,
                 masks=masks,
+                shap_values_mask=chat.shap_values_mask,
             )
 
     def test_extend_values_adds_padding(self, chat: BaseMllmChat) -> None:
@@ -95,18 +98,16 @@ class TestExplainerCache:
         assert torch.allclose(out[:3], values)
         assert torch.isnan(out[3:]).all()
 
-    @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
-    def test_values_setter_raises_nan_in_text(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
+    def test_values_setter_raises_nan_in_text(self, cache: ExplainerCache) -> None:
         """Raise if NaNs appear in positions where mask=True."""
-        mock_shap_mask.return_value = torch.tensor([True, True, False, False, False])
+        cache.shap_values_mask = torch.tensor([True, True, False, False, False])
         values = torch.tensor([float("nan"), 1.0, float("nan")])
         with pytest.raises(ValueError, match="contain NaN values for text tokens"):
             cache.values = values
 
-    @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
-    def test_values_setter_raises_non_nan_in_non_text(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
+    def test_values_setter_raises_non_nan_in_non_text(self, cache: ExplainerCache) -> None:
         """Raise if non-NaN values exist where mask=False."""
-        mock_shap_mask.return_value = torch.tensor([True, True, False, False, False])
+        cache.shap_values_mask = torch.tensor([True, True, False, False, False])
         values = torch.tensor([1.0, 2.0, 3.0])
         with pytest.raises(
             ValueError,
@@ -149,6 +150,7 @@ class TestExplainerCache:
             masks=masks,
             values=values[:3],
             normalized_values=normalized[:3],
+            shap_values_mask=chat.shap_values_mask,
         )
         assert cache.calculated_by == 999
         assert torch.allclose(cache.values, values, equal_nan=True)
