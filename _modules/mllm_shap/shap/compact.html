@@ -277,91 +277,32 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..connectors.base.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmChat</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..connectors.base.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..connectors.base.model_response</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base.explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base.explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapExplainer</span><span class="p">,</span> <span class="n">BaseExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.explainer_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExplainerResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.precise</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreciseShapExplainer</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="c1"># pylint: disable=too-few-public-methods</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_ExplainerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Configuration model for Explainer.</span>
-<span class="sd">    Used just for validation and type checking.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span>
-
-
-<span class="c1"># pylint: disable=too-few-public-methods</span>
-<div class="viewcode-block" id="ExplainerResult">
-<a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.ExplainerResult">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ExplainerResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result model for Explainer.&quot;&quot;&quot;</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for pydantic model.&quot;&quot;&quot;</span>
-
-    <span class="n">full_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The full chat instance after generation (entire conversation). It will be set with SHAP values and cache.&quot;&quot;&quot;</span>
-
-    <span class="n">source_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Chat to get explained (without base response).&quot;&quot;&quot;</span>
-
-    <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BaseMllmChat</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ModelResponse</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The history of chats and masks used during explanation</span>
-<span class="sd">    (if applicable, that is if explainer was called with `verbose=True`).</span>
-<span class="sd">    Each entry is a tuple of  (mask, mask_hash, masked_chat, model_response)</span>
-<span class="sd">    If cache was used, masked_chat will be None.).</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
-
-
-
-<span class="c1"># pylint: disable=too-few-public-methods</span>
 <div class="viewcode-block" id="Explainer">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.Explainer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Explainer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SHAP explainer for audio models.&quot;&quot;&quot;</span>
-
-    <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The SHAP explainer instance.&quot;&quot;&quot;</span>
-
-    <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The model connector instance.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Explainer</span><span class="p">(</span><span class="n">BaseExplainer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience client class for SHAP explanation.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
         <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize the explainer.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            model: The model connector instance.</span>
-<span class="sd">            shap_explainer: The SHAP explainer instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># validation</span>
-        <span class="n">__config</span> <span class="o">=</span> <span class="n">_ExplainerConfig</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">shap_explainer</span><span class="o">=</span><span class="n">shap_explainer</span> <span class="ow">or</span> <span class="n">PreciseShapExplainer</span><span class="p">(),</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">shap_explainer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">model</span>
-
-    <span class="c1"># pylint: disable=magic-value-comparison</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -369,25 +310,14 @@
         <span class="n">generation_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">explanation_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExplainerResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Call the explainer - generate full response from :attr:`chat`</span>
-<span class="sd">        using :attr:`model`, and then explain it using :attr:`shap_explainer`.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            chat: The chat instance.</span>
-<span class="sd">            generation_kwargs: The generation kwargs for the model.generate method.</span>
-<span class="sd">            explanation_kwargs: The explanation kwargs for the SHAP explainer. Shoul not contain</span>
-<span class="sd">                duplicate keys with generation_kwargs.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The ExplainerResult instance.</span>
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If generation_kwargs or explanation_kwargs contain invalid keys.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">generation_kwargs</span> <span class="o">=</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="s2">&quot;chat&quot;</span> <span class="ow">in</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;keep_history&quot;</span> <span class="ow">in</span> <span class="n">generation_kwargs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;generation_kwargs should not contain &#39;chat&#39; or &#39;keep_history&#39; keys.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;chat&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;base_chat&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;explanation_kwargs should not contain &#39;chat&#39;, &#39;base_chat&#39; or &#39;model&#39; keys.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># validation</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span>
+            <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
+            <span class="n">generation_kwargs</span><span class="o">=</span><span class="n">generation_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">explanation_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating full response from the model...&quot;</span><span class="p">)</span>
@@ -413,6 +343,7 @@
             <span class="c1"># chat is set as generate was called with keep_history=True</span>
             <span class="n">full_chat</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
+            <span class="n">total_n_calls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">total_n_calls</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 </pre></div>

@@ -445,6 +445,8 @@
 </li>
       <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.similarity.BaseEmbeddingSimilarity">BaseEmbeddingSimilarity (class in mllm_shap.shap.base.similarity)</a>
 </li>
+      <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer">BaseExplainer (class in mllm_shap.shap.base.explainer)</a>
+</li>
       <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding">BaseExternalEmbedding (class in mllm_shap.shap.base.embeddings)</a>
 </li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat">BaseMllmChat (class in mllm_shap.connectors.base.chat)</a>
@@ -659,8 +661,6 @@
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_SYSTEM_TURN">(mllm_shap.connectors.LiquidAudioChat attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.empty_turn_sequences">empty_turn_sequences (mllm_shap.connectors.base.chat.BaseMllmChat attribute)</a>
 
       <ul>
@@ -691,7 +691,11 @@
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.end_turn">(mllm_shap.connectors.LiquidAudioChat method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.shap.html#mllm_shap.shap.enums.Mode.endswith">endswith() (mllm_shap.shap.enums.Mode method)</a>
+</li>
+      <li><a href="mllm_shap.shap.html#mllm_shap.shap.similarity.EuclideanSimilarity">EuclideanSimilarity (class in mllm_shap.shap.similarity)</a>
 </li>
       <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.filters.ExcludePunctuationTokensFilter">ExcludePunctuationTokensFilter (class in mllm_shap.connectors.filters)</a>
 </li>
@@ -705,12 +709,52 @@
       </ul></li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache">ExplainerCache (class in mllm_shap.connectors.base.explainer_cache)</a>
 </li>
-      <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.ExplainerResult">ExplainerResult (class in mllm_shap.shap.compact)</a>
-</li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.extend_masks">extend_masks() (mllm_shap.connectors.base.explainer_cache.ExplainerCache method)</a>
+</li>
+      <li><a href="mllm_shap.utils.html#mllm_shap.utils.other.extend_tensor">extend_tensor() (in module mllm_shap.utils.other)</a>
 </li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.extend_values">extend_values() (mllm_shap.connectors.base.explainer_cache.ExplainerCache static method)</a>
 </li>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids">external_group_ids (mllm_shap.connectors.base.chat.BaseMllmChat property)</a>
+
+      <ul>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids">(mllm_shap.connectors.liquid_audio.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids">(mllm_shap.connectors.LiquidAudioChat property)</a>
+</li>
+      </ul></li>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_first_positions">external_group_ids_first_positions (mllm_shap.connectors.base.chat.BaseMllmChat property)</a>
+
+      <ul>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_first_positions">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_first_positions">(mllm_shap.connectors.liquid_audio.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_first_positions">(mllm_shap.connectors.LiquidAudioChat property)</a>
+</li>
+      </ul></li>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_positive_mask">external_group_ids_positive_mask (mllm_shap.connectors.base.chat.BaseMllmChat property)</a>
+
+      <ul>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_positive_mask">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_positive_mask">(mllm_shap.connectors.liquid_audio.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_positive_mask">(mllm_shap.connectors.LiquidAudioChat property)</a>
+</li>
+      </ul></li>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask">external_shap_values_mask (mllm_shap.connectors.base.chat.BaseMllmChat property)</a>
+
+      <ul>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask">(mllm_shap.connectors.liquid_audio.LiquidAudioChat property)</a>
+</li>
+        <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_shap_values_mask">(mllm_shap.connectors.LiquidAudioChat property)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -757,8 +801,6 @@
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.from_chat">(mllm_shap.connectors.LiquidAudioChat class method)</a>
 </li>
       </ul></li>
-      <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.ExplainerResult.full_chat">full_chat (mllm_shap.shap.compact.ExplainerResult attribute)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -825,7 +867,9 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.ExplainerResult.history">history (mllm_shap.shap.compact.ExplainerResult attribute)</a>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.had_different_masks">had_different_masks (mllm_shap.connectors.base.explainer_cache.ExplainerCache attribute)</a>
+</li>
+      <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer">HierarchicalExplainer (class in mllm_shap.shap)</a>
 </li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel.history_tracking_mode">history_tracking_mode (mllm_shap.connectors.base.model.BaseMllmModel attribute)</a>
 
@@ -848,6 +892,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.shap.html#mllm_shap.shap.normalizers.IdentityNormalizer">IdentityNormalizer (class in mllm_shap.shap.normalizers)</a>
+</li>
+      <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.enums.ModalityFlag.IGNORE">IGNORE (mllm_shap.connectors.enums.ModalityFlag attribute)</a>
 </li>
       <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.enums.ModalityFlag.imag">imag (mllm_shap.connectors.enums.ModalityFlag attribute)</a>
 
@@ -947,6 +993,10 @@
 <h2 id="K">K</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.k">k (mllm_shap.shap.HierarchicalExplainer attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.filters.KeepAllTokens">KeepAllTokens (class in mllm_shap.connectors.filters)</a>
 </li>
   </ul></td>
@@ -987,6 +1037,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="mllm_shap.utils.html#mllm_shap.utils.other.make_consecutive_ids_ignore_zero">make_consecutive_ids_ignore_zero() (in module mllm_shap.utils.other)</a>
+</li>
       <li><a href="mllm_shap.shap.html#mllm_shap.shap.enums.Mode.maketrans">maketrans() (mllm_shap.shap.enums.Mode static method)</a>
 </li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.masks">masks (mllm_shap.connectors.base.explainer_cache.ExplainerCache attribute)</a>
@@ -1261,9 +1313,13 @@
 </li>
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.model">(mllm_shap.connectors.LiquidAudio attribute)</a>
 </li>
+        <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer.model">(mllm_shap.shap.base.explainer.BaseExplainer attribute)</a>
+</li>
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.Explainer.model">(mllm_shap.shap.compact.Explainer attribute)</a>
 </li>
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.Explainer.model">(mllm_shap.shap.Explainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.model">(mllm_shap.shap.HierarchicalExplainer attribute)</a>
 </li>
       </ul></li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat_entry.ChatEntry.model_config">model_config (mllm_shap.connectors.base.chat_entry.ChatEntry attribute)</a>
@@ -1282,8 +1338,6 @@
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.filters.KeepAllTokens.model_config">(mllm_shap.connectors.filters.KeepAllTokens attribute)</a>
 </li>
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.model_config">(mllm_shap.connectors.ModelConfig attribute)</a>
-</li>
-        <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.ExplainerResult.model_config">(mllm_shap.shap.compact.ExplainerResult attribute)</a>
 </li>
       </ul></li>
       <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.model_inputs">model_inputs (mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat attribute)</a>
@@ -1399,6 +1453,8 @@
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.embeddings.ZeroReducer.n">(mllm_shap.shap.embeddings.ZeroReducer attribute)</a>
 </li>
       </ul></li>
+      <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.n_calls">n_calls (mllm_shap.shap.HierarchicalExplainer attribute)</a>
+</li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.new_turn">new_turn() (mllm_shap.connectors.base.chat.BaseMllmChat method)</a>
 
       <ul>
@@ -1463,6 +1519,8 @@
 
       <ul>
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.similarity.CosineSimilarity.operates_on_embeddings">(mllm_shap.shap.similarity.CosineSimilarity attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.similarity.EuclideanSimilarity.operates_on_embeddings">(mllm_shap.shap.similarity.EuclideanSimilarity attribute)</a>
 </li>
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.similarity.TfIdfCosineSimilarity.operates_on_embeddings">(mllm_shap.shap.similarity.TfIdfCosineSimilarity attribute)</a>
 </li>
@@ -1575,10 +1633,14 @@
 </li>
       <li><a href="mllm_shap.utils.html#mllm_shap.utils.other.safe_mask_unsqueeze">safe_mask_unsqueeze() (in module mllm_shap.utils.other)</a>
 </li>
-      <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.Explainer.shap_explainer">shap_explainer (mllm_shap.shap.compact.Explainer attribute)</a>
+      <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer.shap_explainer">shap_explainer (mllm_shap.shap.base.explainer.BaseExplainer attribute)</a>
 
       <ul>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.Explainer.shap_explainer">(mllm_shap.shap.compact.Explainer attribute)</a>
+</li>
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.Explainer.shap_explainer">(mllm_shap.shap.Explainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.shap_explainer">(mllm_shap.shap.HierarchicalExplainer attribute)</a>
 </li>
       </ul></li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat_entry.ChatEntry.shap_values">shap_values (mllm_shap.connectors.base.chat_entry.ChatEntry attribute)</a>
@@ -1586,6 +1648,8 @@
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.shap_values_mask">shap_values_mask (mllm_shap.connectors.base.chat.BaseMllmChat property)</a>
 
       <ul>
+        <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.shap_values_mask">(mllm_shap.connectors.base.explainer_cache.ExplainerCache attribute)</a>
+</li>
         <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.shap_values_mask">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat property)</a>
 </li>
         <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.shap_values_mask">(mllm_shap.connectors.liquid_audio.LiquidAudioChat property)</a>
@@ -1609,8 +1673,6 @@
         <li><a href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.similarity_measure">(mllm_shap.shap.PreciseShapExplainer attribute)</a>
 </li>
       </ul></li>
-      <li><a href="mllm_shap.shap.html#mllm_shap.shap.compact.ExplainerResult.source_chat">source_chat (mllm_shap.shap.compact.ExplainerResult attribute)</a>
-</li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.speaker">speaker (mllm_shap.connectors.base.chat.BaseMllmChat attribute)</a>
 
       <ul>
@@ -1749,8 +1811,6 @@
         <li><a href="mllm_shap.utils.html#mllm_shap.utils.audio.TorchAudioHandler.to_bytes">(mllm_shap.utils.audio.TorchAudioHandler static method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.token_filter">token_filter (mllm_shap.connectors.base.chat.BaseMllmChat attribute)</a>
 
       <ul>
@@ -1771,6 +1831,8 @@
         <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_roles">(mllm_shap.connectors.LiquidAudioChat attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.token_sequences_to_exclude">token_sequences_to_exclude (mllm_shap.connectors.base.chat.BaseMllmChat attribute)</a>
 
       <ul>
@@ -1815,8 +1877,36 @@
       </ul></li>
       <li><a href="mllm_shap.utils.html#mllm_shap.utils.audio.TorchAudioHandler">TorchAudioHandler (class in mllm_shap.utils.audio)</a>
 </li>
+      <li><a href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer.total_n_calls">total_n_calls (mllm_shap.shap.base.explainer.BaseShapExplainer attribute)</a>
+
+      <ul>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.total_n_calls">(mllm_shap.shap.ComplementaryNeymanShapExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.total_n_calls">(mllm_shap.shap.ComplementaryShapExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.total_n_calls">(mllm_shap.shap.HierarchicalExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.total_n_calls">(mllm_shap.shap.monte_carlo.LimitedMcShapExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.total_n_calls">(mllm_shap.shap.monte_carlo.StandardMcShapExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.precise.PreciseShapExplainer.total_n_calls">(mllm_shap.shap.precise.PreciseShapExplainer attribute)</a>
+</li>
+        <li><a href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.total_n_calls">(mllm_shap.shap.PreciseShapExplainer attribute)</a>
+</li>
+      </ul></li>
       <li><a href="mllm_shap.shap.html#mllm_shap.shap.enums.Mode.translate">translate() (mllm_shap.shap.enums.Mode method)</a>
 </li>
+      <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.translate_groups_ids_mask">translate_groups_ids_mask() (mllm_shap.connectors.base.chat.BaseMllmChat method)</a>
+
+      <ul>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.translate_groups_ids_mask">(mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat method)</a>
+</li>
+        <li><a href="mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.liquid_audio.LiquidAudioChat.translate_groups_ids_mask">(mllm_shap.connectors.liquid_audio.LiquidAudioChat method)</a>
+</li>
+        <li><a href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.translate_groups_ids_mask">(mllm_shap.connectors.LiquidAudioChat method)</a>
+</li>
+      </ul></li>
       <li><a href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.turn_number">turn_number (mllm_shap.connectors.base.chat.BaseMllmChat attribute)</a>
 
       <ul>

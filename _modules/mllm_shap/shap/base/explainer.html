@@ -280,7 +280,9 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">...utils.other</span><span class="w"> </span><span class="kn">import</span> <span class="n">extend_tensor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.explainer_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExplainerCache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.model_response</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelResponse</span>
@@ -290,6 +292,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">PowerShiftNormalizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..similarity</span><span class="w"> </span><span class="kn">import</span> <span class="n">CosineSimilarity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..explainer_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExplainerResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapCallConfig</span><span class="p">,</span> <span class="n">BaseShapConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingReducer</span><span class="p">,</span> <span class="n">BaseExternalEmbedding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseNormalizer</span>
@@ -331,6 +334,9 @@
 
     <span class="n">allow_mask_duplicates</span><span class="p">:</span> <span class="nb">bool</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether to allow duplicate masks during generation.&quot;&quot;&quot;</span>
+
+    <span class="n">total_n_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total number of MLLM calls made for last explanation.&quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -452,7 +458,7 @@
         <span class="n">num_splits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_num_splits</span><span class="p">(</span><span class="n">mask_manager</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
         <span class="n">get_next_split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_split</span>
 
-        <span class="k">class</span><span class="w"> </span><span class="nc">MasksGenerator</span><span class="p">:</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">_MasksGenerator</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Generator class for masks.&quot;&quot;&quot;</span>
 
             <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -485,14 +491,15 @@
             <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">num_splits</span>
 
-        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">MasksGenerator</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">_MasksGenerator</span><span class="p">())</span>
 
+    <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__get_shap_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span>
-        <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">source_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -503,13 +510,16 @@
 <span class="sd">            masks: 2D boolean tensor [num_masks, num_tokens],</span>
 <span class="sd">                each row indicates which tokens are included in that mask.</span>
 <span class="sd">            responses: The model responses corresponding to the masks.</span>
-<span class="sd">            shap_values_mask: 1D boolean tensor [num_tokens], indicating which tokens to calculate SHAP values for.</span>
+<span class="sd">            source_chat: The source chat instance used to search for</span>
+<span class="sd">                external group ids.</span>
 <span class="sd">            device: The device to create the SHAP values on.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple containing:</span>
 <span class="sd">            - The calculated SHAP values.</span>
 <span class="sd">            - The normalized SHAP values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shap_values_mask</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">shap_values_mask</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="o">.</span><span class="n">operates_on_embeddings</span><span class="p">:</span>
             <span class="c1"># get embeddings for the response</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_embeddings</span><span class="p">(</span>
@@ -545,11 +555,23 @@
         <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="n">normalized_shap_values</span><span class="p">[</span><span class="n">shap_values_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalizer</span><span class="p">(</span><span class="n">calculated_shap_values</span><span class="p">)</span>
 
+        <span class="c1"># duplicate if external group ids are used</span>
+        <span class="k">if</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">group_shap_value</span><span class="p">,</span> <span class="n">group_normalized_shap_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids</span><span class="p">[</span><span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">],</span>
+                <span class="n">shap_values</span><span class="p">[</span><span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">],</span>
+                <span class="n">normalized_shap_values</span><span class="p">[</span><span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">],</span>
+            <span class="p">):</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="o">==</span> <span class="n">group_id</span>
+                <span class="n">shap_values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_shap_value</span>
+                <span class="n">normalized_shap_values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_normalized_shap_value</span>
+
         <span class="k">return</span> <span class="n">shap_values</span><span class="p">,</span> <span class="n">normalized_shap_values</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__save_to_cache</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
+        <span class="n">source_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
         <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">shap_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -560,6 +582,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            chat: The chat instance to save the cache for.</span>
+<span class="sd">            source_chat: The original chat instance from which SHAP values were derived.</span>
 <span class="sd">            responses: The model responses used for SHAP calculations.</span>
 <span class="sd">            masks: The masks used for SHAP calculations.</span>
 <span class="sd">            shap_values: The SHAP values calculated.</span>
@@ -571,6 +594,15 @@
         <span class="k">if</span> <span class="n">chat</span><span class="o">.</span><span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SHAP cache already exists for the provided chat.&quot;</span><span class="p">)</span>
 
+        <span class="c1"># translate it for reference to group ids</span>
+        <span class="n">shap_values_mask</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">translate_groups_ids_mask</span><span class="p">(</span><span class="n">source_chat</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="p">)</span>
+        <span class="c1"># extend mask with False to match new response length</span>
+        <span class="n">shap_values_mask</span> <span class="o">=</span> <span class="n">extend_tensor</span><span class="p">(</span>
+            <span class="n">shap_values_mask</span><span class="p">,</span>
+            <span class="n">target_length</span><span class="o">=</span><span class="n">chat</span><span class="o">.</span><span class="n">input_tokens_num</span><span class="p">,</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
         <span class="n">chat</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">ExplainerCache</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="n">explainer_hash</span><span class="o">=</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
@@ -578,6 +610,7 @@
             <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
             <span class="n">values</span><span class="o">=</span><span class="n">shap_values</span><span class="p">,</span>
             <span class="n">normalized_values</span><span class="o">=</span><span class="n">normalized_shap_values</span><span class="p">,</span>
+            <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># keep the logic in one method for readability</span>
@@ -625,6 +658,7 @@
         <span class="n">response_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="n">source_chat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">source_chat</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">torch_device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">mask_manager</span> <span class="o">=</span> <span class="n">MasksManager</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">)</span>
         <span class="n">cache_manager</span> <span class="o">=</span> <span class="n">CacheManager</span><span class="p">(</span>
@@ -655,11 +689,16 @@
             <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Deduplicated </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> masks using existing cache.&quot;</span><span class="p">,</span>
-            <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># exclude base mask</span>
-        <span class="p">)</span>
+        <span class="c1"># retrieve generated masks from the generator</span>
+        <span class="c1"># TODO: write it in proper way</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">generated_masks</span>  <span class="c1"># type: ignore[attr-defined]</span>
+
+        <span class="k">if</span> <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Deduplicated </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> masks using existing cache.&quot;</span><span class="p">,</span>
+                <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># exclude base mask</span>
+            <span class="p">)</span>
 
         <span class="c1"># edge case - all chats were empty after filtering yet shap_values_mask had True values</span>
         <span class="c1"># this can happen only if shap_values_mask has one True value</span>
@@ -684,13 +723,14 @@
             <span class="n">model</span><span class="o">=</span><span class="n">__config</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks_tensor</span><span class="p">,</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
-            <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">source_chat</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="p">,</span>
+            <span class="n">source_chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># cache results</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__save_to_cache</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">response_chat</span><span class="p">,</span>
+            <span class="n">source_chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks_tensor</span><span class="p">,</span>
             <span class="n">shap_values</span><span class="o">=</span><span class="n">shap_values</span><span class="p">,</span>
@@ -714,6 +754,87 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">normalizer</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span></div>
+
+
+
+<span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ExplainerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration model for Explainer.</span>
+<span class="sd">    Used just for validation and type checking.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span>
+
+
+<div class="viewcode-block" id="BaseExplainer">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseExplainer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience base client for SHAP explainers.&quot;&quot;&quot;</span>
+
+    <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The SHAP explainer instance.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The model connector instance.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
+        <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the explainer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: The model connector instance.</span>
+<span class="sd">            shap_explainer: The SHAP explainer instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># validation</span>
+        <span class="n">__config</span> <span class="o">=</span> <span class="n">_ExplainerConfig</span><span class="p">(</span>
+            <span class="n">shap_explainer</span><span class="o">=</span><span class="n">shap_explainer</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">shap_explainer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">model</span>
+
+    <span class="c1"># pylint: disable=magic-value-comparison</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>  <span class="c1"># type: ignore[return]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
+        <span class="n">generation_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">explanation_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExplainerResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Call the explainer - generate full response from :attr:`chat`</span>
+<span class="sd">        using :attr:`model`, and then explain it using :attr:`shap_explainer`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            chat: The chat instance.</span>
+<span class="sd">            generation_kwargs: The generation kwargs for the model.generate method.</span>
+<span class="sd">            explanation_kwargs: The explanation kwargs for the SHAP explainer. Should not contain</span>
+<span class="sd">                duplicate keys with generation_kwargs.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The ExplainerResult instance.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If generation_kwargs or explanation_kwargs contain invalid keys or duplicate keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">generation_kwargs</span> <span class="o">=</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s2">&quot;chat&quot;</span> <span class="ow">in</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;keep_history&quot;</span> <span class="ow">in</span> <span class="n">generation_kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;generation_kwargs should not contain &#39;chat&#39; or &#39;keep_history&#39; keys.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;chat&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;base_chat&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span> <span class="ow">or</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">explanation_kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;explanation_kwargs should not contain &#39;chat&#39;, &#39;base_chat&#39; or &#39;model&#39; keys.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># ensure there are no duplicate keys between generation_kwargs and explanation_kwargs</span>
+        <span class="n">common_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">generation_kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">explanation_kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">common_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate keys found in generation_kwargs and explanation_kwargs: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">common_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

@@ -285,6 +285,30 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base.similarity</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingSimilarity</span>
 
 
+<div class="viewcode-block" id="EuclideanSimilarity">
+<a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.similarity.EuclideanSimilarity">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EuclideanSimilarity</span><span class="p">(</span><span class="n">BaseEmbeddingSimilarity</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Euclidean similarity calculation,</span>
+<span class="sd">    used in implementation of U4 utility function from the paper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the Euclidean similarity between the base embedding and other embeddings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base: The base embedding tensor, shape [embedding_dim].</span>
+<span class="sd">            other: The other embeddings tensor to compare against, shape [num_embeddings, embedding_dim].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># calculate euclidean distances</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">other</span> <span class="o">-</span> <span class="n">base</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># convert distances to similarities</span>
+        <span class="n">similarities</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">distances</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">similarities</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="CosineSimilarity">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.similarity.CosineSimilarity">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CosineSimilarity</span><span class="p">(</span><span class="n">BaseEmbeddingSimilarity</span><span class="p">):</span>
@@ -328,8 +352,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="n">analyzer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">ModelResponse</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the TF-IDF weighted Cosine similarity between the base response and other responses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base: The base model response.</span>
+<span class="sd">            other: The list of other model responses to compare against.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor containing the TF-IDF weighted Cosine similarities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="c1"># check if other[0] == base</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">base</span> <span class="o">==</span> <span class="n">other</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">generated_text_tokens</span><span class="p">,</span> <span class="n">other</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">generated_text_tokens</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">generated_audio_tokens</span><span class="p">,</span> <span class="n">other</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">generated_audio_tokens</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The first element of &#39;other&#39; must be equal to &#39;base&#39; tensor.&quot;</span><span class="p">)</span>
 
         <span class="n">generated_text_tokens_hashes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__tokenize</span><span class="p">(</span><span class="n">tensor</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">generated_text_tokens</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">other</span><span class="p">]</span>

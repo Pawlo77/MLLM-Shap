@@ -271,7 +271,8 @@
                 <article class="bd-article">
                   
   <h1>Source code for mllm_shap.connectors.base.chat</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Base class for chat state management.&quot;&quot;&quot;</span>
+<span></span><span class="c1"># pylint: disable=too-many-lines</span>
+<span class="sd">&quot;&quot;&quot;Base class for chat state management.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
@@ -344,6 +345,9 @@
     <span class="n">_system_roles</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Role</span><span class="p">]</span>
     <span class="n">__shap</span><span class="p">:</span> <span class="n">ExplainerCache</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="n">__external_shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">__external_group_ids</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -408,7 +412,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            An instance of BaseMllmChat.</span>
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the mask size does not match the number of tokens in the chat.</span>
+<span class="sd">            ValueError: If the mask size does not match the number of tokens in the chat,</span>
+<span class="sd">                or if the mask is all False,</span>
+<span class="sd">                or if all text tokens are filtered out.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating new chat instance from existing chat with masks.&quot;</span><span class="p">)</span>
 
@@ -416,6 +422,9 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mask size does not match the number of tokens in the chat.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Mask cannot be all False.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># translate mask back - for group ids only first entry in mask is correct</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">translate_groups_ids_mask</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
 
         <span class="n">text_mask_relative</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span><span class="n">chat</span><span class="o">.</span><span class="n">text_tokens_mask</span><span class="p">]</span>
         <span class="n">audio_mask_relative</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span><span class="n">chat</span><span class="o">.</span><span class="n">audio_tokens_mask</span><span class="p">]</span>
@@ -456,6 +465,11 @@
             <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">new_instance</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">full</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># dont propagate external masks / group ids</span>
+        <span class="k">del</span> <span class="n">new_instance</span><span class="o">.</span><span class="n">external_shap_values_mask</span>
+        <span class="k">del</span> <span class="n">new_instance</span><span class="o">.</span><span class="n">external_group_ids</span>
+
         <span class="k">return</span> <span class="n">new_instance</span></div>
 
 
@@ -543,11 +557,132 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">audio_tokens_no_system_mask</span>  <span class="c1"># no filtering</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_shap_values_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        An optional external SHAP values mask. Should be a boolean tensor</span>
+<span class="sd">        with size equal to the number of tokens in the chat.</span>
+
+<span class="sd">        If provided, :attr:`shap_values_mask` will be and-ed with this mask.</span>
+
+<span class="sd">        Forbids adding new tokens to the chat while set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__external_shap_values_mask</span>
+
+    <span class="nd">@external_shap_values_mask</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_shap_values_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the external SHAP values mask.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            value: The external SHAP values mask tensor.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_tokens_num</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;External SHAP values mask size does not match the number of tokens in the chat.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__external_shap_values_mask</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">shap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@external_shap_values_mask</span><span class="o">.</span><span class="n">deleter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_shap_values_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete the external SHAP values mask.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__external_shap_values_mask</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">shap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_group_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        An optional external group IDs for tokens. Should be an integer tensor</span>
+<span class="sd">        with size equal to the number of tokens in the chat and set directly before</span>
+<span class="sd">        the explanation process.</span>
+
+<span class="sd">        All entries &gt; 0 will be treated as belonging to the same group for</span>
+<span class="sd">        SHAP value calculations, 0 entries will be ignored from calculations</span>
+<span class="sd">        (shap_values_mask for them will be set to False). Takes precedence over</span>
+<span class="sd">        :attr:`external_shap_values_mask`.</span>
+
+<span class="sd">        Forbids adding new tokens to the chat while set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__external_group_ids</span>
+
+    <span class="nd">@external_group_ids</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_group_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the external group IDs for tokens.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            value: The external group IDs tensor.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the external group IDs size does not match the number of tokens in the chat.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_tokens_num</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;External group IDs size does not match the number of tokens in the chat.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__external_group_ids</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">shap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@external_group_ids</span><span class="o">.</span><span class="n">deleter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_group_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete the external group IDs for tokens.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__external_group_ids</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">shap</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_group_ids_first_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the positions (indices) of the first occurrences of each</span>
+<span class="sd">        consecutive non-zero group ID in `external_group_ids`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor of positions (indices) of the first occurrence of</span>
+<span class="sd">            each non-zero group ID, or None if not set.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If external_group_ids is not set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;external_group_ids is not set.&quot;</span><span class="p">)</span>
+
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span>
+
+        <span class="c1"># Get unique consecutive IDs and counts</span>
+        <span class="n">unique_ids</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique_consecutive</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Compute start indices for each run</span>
+        <span class="n">start_positions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">ids</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">counts</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="mi">0</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+        <span class="c1"># Filter out group ID == 0</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">unique_ids</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="n">first_positions</span> <span class="o">=</span> <span class="n">start_positions</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">first_positions</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">external_group_ids_positive_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Boolean mask indicating which tokens have positive group IDs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Boolean mask indicating which tokens have positive group IDs.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If external_group_ids is not set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;external_group_ids is not set.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">shap_values_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Boolean mask indicating which tokens should be considered</span>
 <span class="sd">        for SHAP value calculations (i.e., non-system text tokens).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_tokens_num</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">torch_device</span><span class="p">)</span>
 
@@ -559,11 +694,19 @@
         <span class="n">audio_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">audio_tokens_mask</span>
         <span class="n">mask</span><span class="p">[</span><span class="n">audio_mask</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">audio_tokens_no_system_mask_filtered</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># mark only tokens within positive groups ids, just first token in each group</span>
+            <span class="n">new_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">torch_device</span><span class="p">)</span>
+            <span class="n">new_mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">new_mask</span> <span class="o">&amp;</span> <span class="n">mask</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_shap_values_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">&amp;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_shap_values_mask</span>
+
         <span class="k">return</span> <span class="n">mask</span>
 
 <div class="viewcode-block" id="BaseMllmChat.refresh">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.refresh">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">shap</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Refresh cached properties, that is:</span>
 
@@ -579,11 +722,25 @@
 <span class="sd">        - audio_tokens_no_system_mask_filtered</span>
 <span class="sd">        - text_tokens_no_system_mask_filtered</span>
 <span class="sd">        - shap_values_mask</span>
+<span class="sd">        - external_group_ids_first_positions</span>
+<span class="sd">        - external_group_ids_positive_mask</span>
+
+<span class="sd">        If `shap` is True, will only refresh:</span>
+<span class="sd">        - shap_values_mask</span>
+<span class="sd">        - external_group_ids_first_positions</span>
+<span class="sd">        - external_group_ids_positive_mask</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            full: If True, refreshes all cached properties.</span>
+<span class="sd">            shap: If True, refreshes shap-related cached properties.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Refreshing cached properties (full=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">full</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Refreshing cached properties (full=</span><span class="si">%s</span><span class="s2">, shap=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">full</span><span class="p">,</span> <span class="n">shap</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shap</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;shap_values_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;external_group_ids_first_positions&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;external_group_ids_positive_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;input_tokens&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;tokens_modality_flag&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -596,7 +753,9 @@
         <span class="k">if</span> <span class="n">full</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;audio_tokens_no_system_mask_filtered&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;text_tokens_no_system_mask_filtered&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;shap_values_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;shap_values_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;external_group_ids_first_positions&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;external_group_ids_positive_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BaseMllmChat.new_turn">
@@ -665,6 +824,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;text must be a non-empty string, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_add</span><span class="p">()</span>
 
         <span class="n">n_tokens_added</span> <span class="o">=</span> <span class="n">raise_connector_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_text</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_after_add</span><span class="p">(</span><span class="n">n_tokens_added</span><span class="p">,</span> <span class="n">text_added</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -696,6 +856,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">audio_content</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">audio_content</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;audio_content must be non-empty bytes, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">audio_content</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_add</span><span class="p">()</span>
 
         <span class="n">waveform</span><span class="p">,</span> <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">TorchAudioHandler</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">audio_content</span><span class="p">,</span> <span class="n">audio_format</span><span class="o">=</span><span class="n">audio_format</span><span class="p">)</span>
         <span class="n">n_tokens_added</span> <span class="o">=</span> <span class="n">raise_connector_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_audio</span><span class="p">,</span> <span class="n">waveform</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
@@ -732,6 +893,8 @@
 <span class="sd">            ValueError: If length mismatch occurs after appending.</span>
 <span class="sd">            RuntimeError: If an error occurs in the underlying connector implementation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_before_add</span><span class="p">()</span>
+
         <span class="n">text_tokens_added</span><span class="p">,</span> <span class="n">audio_tokens_added</span> <span class="o">=</span> <span class="n">raise_connector_error</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_append</span><span class="p">,</span>
             <span class="n">text</span><span class="p">,</span>
@@ -918,6 +1081,27 @@
         <span class="k">return</span> <span class="n">conversation</span></div>
 
 
+<div class="viewcode-block" id="BaseMllmChat.translate_groups_ids_mask">
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.translate_groups_ids_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">translate_groups_ids_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Translate a mask over group IDs to a mask over all tokens.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mask: A boolean tensor indicating which group IDs to include.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean tensor indicating which tokens to include.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># select groups ids included within a mask and mark all their tokens to True</span>
+            <span class="n">groups_included</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span><span class="p">,</span> <span class="n">groups_included</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># remaining group ids are to be excluded, if they are in shap_values_mask</span>
+            <span class="n">groups_excluded</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids_first_positions</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span><span class="p">,</span> <span class="n">groups_excluded</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">mask</span></div>
+
+
     <span class="nd">@classmethod</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_new_instance</span><span class="p">(</span>
@@ -1095,6 +1279,18 @@
             <span class="n">fill_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">speaker</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">tensor_name</span><span class="o">=</span><span class="s2">&quot;token_roles&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_before_add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare for adding new tokens to the chat state.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If external_group_ids or external_shap_values_mask is set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_group_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot add tokens when external_group_ids is set.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_shap_values_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot add tokens when external_shap_values_mask is set.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_after_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">text_added</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">refresh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>

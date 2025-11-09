@@ -310,6 +310,12 @@
     <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The masks used for SHAP calculations.&quot;&quot;&quot;</span>
 
+    <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The mask indicating which SHAP values are relevant.&quot;&quot;&quot;</span>
+
+    <span class="n">had_different_masks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the masks used for SHAP calculations differed from chat&#39;s masks.&quot;&quot;&quot;</span>
+
     <span class="n">_values</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The SHAP values calculated.&quot;&quot;&quot;</span>
 
@@ -321,6 +327,7 @@
         <span class="n">chat</span><span class="p">:</span> <span class="s2">&quot;BaseMllmChat&quot;</span><span class="p">,</span>
         <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -329,10 +336,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            data: The data to initialize the instance with.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span> <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span> <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span> <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span> <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span> <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">masks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">responses</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Masks size does not match the number of responses in the chat.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shap_values_mask</span> <span class="o">=</span> <span class="n">shap_values_mask</span>
 
         <span class="k">if</span> <span class="n">chat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">chat</span><span class="o">.</span><span class="n">input_tokens_num</span> <span class="o">&lt;</span> <span class="n">masks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
@@ -356,6 +365,11 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Masks size does not match the number of tokens in the chat.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">=</span> <span class="n">masks</span>
 
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">chat</span><span class="o">.</span><span class="n">shap_values_mask</span> <span class="o">!=</span> <span class="n">shap_values_mask</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">had_different_masks</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">had_different_masks</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="c1"># pylint: disable=too-many-positional-arguments,too-many-arguments</span>
 <div class="viewcode-block" id="ExplainerCache.create">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.create">[docs]</a>
@@ -368,6 +382,7 @@
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">normalized_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExplainerCache&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a new ExplainerCache instance.</span>
@@ -379,6 +394,7 @@
 <span class="sd">            masks: The masks used for SHAP calculations.</span>
 <span class="sd">            values: The SHAP values calculated.</span>
 <span class="sd">            normalized_values: The normalized SHAP values calculated.</span>
+<span class="sd">            shap_values_mask: The mask indicating which SHAP values are relevant.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ExplainerCache instance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -388,6 +404,7 @@
             <span class="n">n</span><span class="o">=</span><span class="n">masks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
+            <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">normalized_values</span> <span class="o">=</span> <span class="n">normalized_values</span>
@@ -419,9 +436,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__values_setter</span><span class="p">(</span><span class="s2">&quot;_normalized_values&quot;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        SHAP values.</span>
+<span class="sd">        SHAP values. Can be none if :class:`HierarchicalExplainer` is used.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If SHAP values are no longer valid or have not been computed yet.</span>
@@ -430,7 +447,7 @@
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span>
 
     <span class="nd">@values</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the SHAP values.</span>
 
@@ -439,6 +456,9 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If SHAP values are not valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__values_setter</span><span class="p">(</span><span class="s2">&quot;_values&quot;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ExplainerCache.extend_masks">
@@ -483,7 +503,7 @@
         <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">input_tokens_num</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SHAP values size does not match the number of tokens in the chat.&quot;</span><span class="p">)</span>
 
-        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="c1"># only validate up to n</span>
         <span class="n">mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="p">:]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># noqa: E203</span>
 

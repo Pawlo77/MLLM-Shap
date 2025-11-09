@@ -345,6 +345,63 @@
         <span class="n">masked</span> <span class="o">=</span> <span class="n">masked</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">masked</span></div>
 
+
+
+<div class="viewcode-block" id="make_consecutive_ids_ignore_zero">
+<a class="viewcode-back" href="../../../mllm_shap.utils.html#mllm_shap.utils.other.make_consecutive_ids_ignore_zero">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_consecutive_ids_ignore_zero</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Renumber non-zero tensor values to consecutive integers starting from 1,</span>
+<span class="sd">    preserving the order of first appearance. Zeros remain unchanged.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        t: Input tensor with integer IDs.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Tensor with renumbered IDs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get unique consecutive non-zero values in order of appearance</span>
+    <span class="n">nonzero_mask</span> <span class="o">=</span> <span class="n">t</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="n">unique_vals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique_consecutive</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">nonzero_mask</span><span class="p">])</span>
+
+    <span class="c1"># Map original IDs to new consecutive ones</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">item</span><span class="p">():</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_vals</span><span class="p">)}</span>
+
+    <span class="c1"># Apply mapping (zeros unchanged)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">old_id</span><span class="p">,</span> <span class="n">new_id</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">t</span> <span class="o">==</span> <span class="n">old_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_id</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="extend_tensor">
+<a class="viewcode-back" href="../../../mllm_shap.utils.html#mllm_shap.utils.other.extend_tensor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extend_tensor</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extend a tensor to the target length by appending the fill value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        t: The input tensor to be extended.</span>
+<span class="sd">        target_length: The desired length of the output tensor.</span>
+<span class="sd">        fill_value: The value to use for extension.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The extended tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">current_length</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">current_length</span> <span class="o">&gt;=</span> <span class="n">target_length</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span>
+
+    <span class="n">extension_size</span> <span class="o">=</span> <span class="n">target_length</span> <span class="o">-</span> <span class="n">current_length</span>
+    <span class="n">extension</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">extension_size</span><span class="p">,),</span>
+        <span class="n">fill_value</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">extended_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">t</span><span class="p">,</span> <span class="n">extension</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">extended_tensor</span></div>
+
 </pre></div>
 
                 </article>

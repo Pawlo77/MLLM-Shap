@@ -441,6 +441,39 @@ Render audio in the specified audio column for jupyter notebooks.</p>
 <span id="mllm-shap-utils-other-module"></span><h2>mllm_shap.utils.other module<a class="headerlink" href="#module-mllm_shap.utils.other" title="Link to this heading">#</a></h2>
 <p>General utility functions.</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="mllm_shap.utils.other.extend_tensor">
+<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.other.</span></span><span class="sig-name descname"><span class="pre">extend_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/other.html#extend_tensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.other.extend_tensor" title="Link to this definition">#</a></dt>
+<dd><p>Extend a tensor to the target length by appending the fill value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> – The input tensor to be extended.</p></li>
+<li><p><strong>target_length</strong> – The desired length of the output tensor.</p></li>
+<li><p><strong>fill_value</strong> – The value to use for extension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The extended tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mllm_shap.utils.other.make_consecutive_ids_ignore_zero">
+<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.other.</span></span><span class="sig-name descname"><span class="pre">make_consecutive_ids_ignore_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/other.html#make_consecutive_ids_ignore_zero"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.other.make_consecutive_ids_ignore_zero" title="Link to this definition">#</a></dt>
+<dd><p>Renumber non-zero tensor values to consecutive integers starting from 1,
+preserving the order of first appearance. Zeros remain unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> – Input tensor with integer IDs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor with renumbered IDs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="mllm_shap.utils.other.raise_connector_error">
 <span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.other.</span></span><span class="sig-name descname"><span class="pre">raise_connector_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callable_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/other.html#raise_connector_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.other.raise_connector_error" title="Link to this definition">#</a></dt>
 <dd><p>Wrapper to raise connector errors with more context.</p>
@@ -552,6 +585,8 @@ tensor properties, and unsqueeze to maintain batch dimension.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.utils.other">mllm_shap.utils.other module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.other.extend_tensor"><code class="docutils literal notranslate"><span class="pre">extend_tensor()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.other.make_consecutive_ids_ignore_zero"><code class="docutils literal notranslate"><span class="pre">make_consecutive_ids_ignore_zero()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.other.raise_connector_error"><code class="docutils literal notranslate"><span class="pre">raise_connector_error()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.other.safe_mask"><code class="docutils literal notranslate"><span class="pre">safe_mask()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.other.safe_mask_unsqueeze"><code class="docutils literal notranslate"><span class="pre">safe_mask_unsqueeze()</span></code></a></li>

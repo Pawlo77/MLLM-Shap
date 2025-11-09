@@ -497,6 +497,58 @@ by calling add_text/add_audio methods.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids" title="Link to this definition">#</a></dt>
+<dd><p>An optional external group IDs for tokens. Should be an integer tensor
+with size equal to the number of tokens in the chat and set directly before
+the explanation process.</p>
+<p>All entries &gt; 0 will be treated as belonging to the same group for
+SHAP value calculations, 0 entries will be ignored from calculations
+(shap_values_mask for them will be set to False). Takes precedence over
+<a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask" title="mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">external_shap_values_mask</span></code></a>.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_first_positions">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_first_positions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_first_positions" title="Link to this definition">#</a></dt>
+<dd><p>Get the positions (indices) of the first occurrences of each
+consecutive non-zero group ID in <cite>external_group_ids</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor of positions (indices) of the first occurrence of
+each non-zero group ID, or None if not set.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_positive_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_positive_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_positive_mask" title="Link to this definition">#</a></dt>
+<dd><p>Boolean mask indicating which tokens have positive group IDs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Boolean mask indicating which tokens have positive group IDs.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask" title="Link to this definition">#</a></dt>
+<dd><p>An optional external SHAP values mask. Should be a boolean tensor
+with size equal to the number of tokens in the chat.</p>
+<p>If provided, <a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat.shap_values_mask" title="mllm_shap.connectors.base.chat.BaseMllmChat.shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shap_values_mask</span></code></a> will be and-ed with this mask.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.from_chat">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_chat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/chat.html#BaseMllmChat.from_chat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.from_chat" title="Link to this definition">#</a></dt>
@@ -512,7 +564,9 @@ by calling add_text/add_audio methods.</p>
 <dd class="field-even"><p>An instance of BaseMllmChat.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat.</p>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat,
+    or if the mask is all False,
+    or if all text tokens are filtered out.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -595,7 +649,7 @@ by calling add_text/add_audio methods.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.refresh">
-<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/chat.html#BaseMllmChat.refresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.refresh" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/chat.html#BaseMllmChat.refresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.refresh" title="Link to this definition">#</a></dt>
 <dd><p>Refresh cached properties, that is:</p>
 <ul class="simple">
 <li><p>input_tokens</p></li>
@@ -610,10 +664,19 @@ by calling add_text/add_audio methods.</p>
 <li><p>audio_tokens_no_system_mask_filtered</p></li>
 <li><p>text_tokens_no_system_mask_filtered</p></li>
 <li><p>shap_values_mask</p></li>
+<li><p>external_group_ids_first_positions</p></li>
+<li><p>external_group_ids_positive_mask</p></li>
 </ul>
+<p>If <cite>shap</cite> is True, will only refresh:
+- shap_values_mask
+- external_group_ids_first_positions
+- external_group_ids_positive_mask</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>full</strong> – If True, refreshes all cached properties.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full</strong> – If True, refreshes all cached properties.</p></li>
+<li><p><strong>shap</strong> – If True, refreshes shap-related cached properties.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -623,6 +686,11 @@ by calling add_text/add_audio methods.</p>
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.shap_values_mask" title="Link to this definition">#</a></dt>
 <dd><p>Boolean mask indicating which tokens should be considered
 for SHAP value calculations (i.e., non-system text tokens).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the external SHAP values mask size does not match the number of tokens in the chat.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -701,6 +769,20 @@ Relative to <a class="reference internal" href="#mllm_shap.connectors.base.chat.
 <dd><p>The device on which tensors are stored.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.translate_groups_ids_mask">
+<span class="sig-name descname"><span class="pre">translate_groups_ids_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/chat.html#BaseMllmChat.translate_groups_ids_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.translate_groups_ids_mask" title="Link to this definition">#</a></dt>
+<dd><p>Translate a mask over group IDs to a mask over all tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mask</strong> – A boolean tensor indicating which group IDs to include.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A boolean tensor indicating which tokens to include.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.chat.BaseMllmChat.turn_number">
 <span class="sig-name descname"><span class="pre">turn_number</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#mllm_shap.connectors.base.chat.BaseMllmChat.turn_number" title="Link to this definition">#</a></dt>
@@ -774,7 +856,7 @@ TEXT CONTENT:
 <p>Cache for explainer computations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.explainer_cache.ExplainerCache">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.connectors.base.explainer_cache.</span></span><span class="sig-name descname"><span class="pre">ExplainerCache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculated_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/connectors/base/explainer_cache.html#ExplainerCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.connectors.base.explainer_cache.</span></span><span class="sig-name descname"><span class="pre">ExplainerCache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_values_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculated_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">had_different_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/connectors/base/explainer_cache.html#ExplainerCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>Cache for explainer computations associated with a chat.
 Saves and validates calculated SHAP values, masks, and reduced embeddings.</p>
@@ -792,7 +874,7 @@ Saves and validates calculated SHAP values, masks, and reduced embeddings.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.explainer_cache.ExplainerCache.create">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">explainer_hash</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache" title="mllm_shap.connectors.base.explainer_cache.ExplainerCache"><span class="pre">ExplainerCache</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/explainer_cache.html#ExplainerCache.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.create" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">explainer_hash</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ModelResponse</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_values_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache" title="mllm_shap.connectors.base.explainer_cache.ExplainerCache"><span class="pre">ExplainerCache</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/connectors/base/explainer_cache.html#ExplainerCache.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.create" title="Link to this definition">#</a></dt>
 <dd><p>Create a new ExplainerCache instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -803,6 +885,7 @@ Saves and validates calculated SHAP values, masks, and reduced embeddings.</p>
 <li><p><strong>masks</strong> – The masks used for SHAP calculations.</p></li>
 <li><p><strong>values</strong> – The SHAP values calculated.</p></li>
 <li><p><strong>normalized_values</strong> – The normalized SHAP values calculated.</p></li>
+<li><p><strong>shap_values_mask</strong> – The mask indicating which SHAP values are relevant.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -835,6 +918,12 @@ Saves and validates calculated SHAP values, masks, and reduced embeddings.</p>
 <dd class="field-even"><p>The extended SHAP values.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.explainer_cache.ExplainerCache.had_different_masks">
+<span class="sig-name descname"><span class="pre">had_different_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.had_different_masks" title="Link to this definition">#</a></dt>
+<dd><p>Whether the masks used for SHAP calculations differed from chat’s masks.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -887,10 +976,16 @@ Saves and validates calculated SHAP values, masks, and reduced embeddings.</p>
 <dd><p>The model responses used for SHAP calculations.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.connectors.base.explainer_cache.ExplainerCache.shap_values_mask">
+<span class="sig-name descname"><span class="pre">shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.shap_values_mask" title="Link to this definition">#</a></dt>
+<dd><p>The mask indicating which SHAP values are relevant.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="mllm_shap.connectors.base.explainer_cache.ExplainerCache.values">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.values" title="Link to this definition">#</a></dt>
-<dd><p>SHAP values.</p>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.values" title="Link to this definition">#</a></dt>
+<dd><p>SHAP values. Can be none if <code class="xref py py-class docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code> is used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – If SHAP values are no longer valid or have not been computed yet.</p>
@@ -1089,6 +1184,10 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.decode_text"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.decode_text()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.empty_turn_sequences"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.empty_turn_sequences</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.end_turn"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.end_turn()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.external_group_ids</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_first_positions"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.external_group_ids_first_positions</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_group_ids_positive_mask"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.external_group_ids_positive_mask</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.external_shap_values_mask"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.external_shap_values_mask</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.from_chat"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.from_chat()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.get_conversation"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.get_conversation()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.input_tokens"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.input_tokens</span></code></a></li>
@@ -1109,6 +1208,7 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.token_turns"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.token_turns</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.tokens_modality_flag"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.tokens_modality_flag</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.torch_device"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.torch_device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.translate_groups_ids_mask"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.translate_groups_ids_mask()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.chat.BaseMllmChat.turn_number"><code class="docutils literal notranslate"><span class="pre">BaseMllmChat.turn_number</span></code></a></li>
 </ul>
 </li>
@@ -1133,12 +1233,14 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.create"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.create()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.extend_masks"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.extend_masks()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.extend_values"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.extend_values()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.had_different_masks"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.had_different_masks</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.masks"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.masks</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.model_config"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.model_config</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.model_post_init"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.model_post_init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.n"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.n</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.normalized_values"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.normalized_values</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.responses"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.responses</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.shap_values_mask"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.shap_values_mask</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.base.explainer_cache.ExplainerCache.values"><code class="docutils literal notranslate"><span class="pre">ExplainerCache.values</span></code></a></li>
 </ul>
 </li>

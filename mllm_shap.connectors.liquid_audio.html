@@ -628,6 +628,58 @@ by calling add_text/add_audio methods.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids" title="Link to this definition">#</a></dt>
+<dd><p>An optional external group IDs for tokens. Should be an integer tensor
+with size equal to the number of tokens in the chat and set directly before
+the explanation process.</p>
+<p>All entries &gt; 0 will be treated as belonging to the same group for
+SHAP value calculations, 0 entries will be ignored from calculations
+(shap_values_mask for them will be set to False). Takes precedence over
+<a class="reference internal" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask" title="mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">external_shap_values_mask</span></code></a>.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_first_positions">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_first_positions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_first_positions" title="Link to this definition">#</a></dt>
+<dd><p>Get the positions (indices) of the first occurrences of each
+consecutive non-zero group ID in <cite>external_group_ids</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor of positions (indices) of the first occurrence of
+each non-zero group ID, or None if not set.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_positive_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_positive_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_positive_mask" title="Link to this definition">#</a></dt>
+<dd><p>Boolean mask indicating which tokens have positive group IDs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Boolean mask indicating which tokens have positive group IDs.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask" title="Link to this definition">#</a></dt>
+<dd><p>An optional external SHAP values mask. Should be a boolean tensor
+with size equal to the number of tokens in the chat.</p>
+<p>If provided, <a class="reference internal" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.shap_values_mask" title="mllm_shap.connectors.liquid_audio.LiquidAudioChat.shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shap_values_mask</span></code></a> will be and-ed with this mask.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.from_chat">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_chat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.from_chat" title="Link to this definition">#</a></dt>
@@ -643,7 +695,9 @@ by calling add_text/add_audio methods.</p>
 <dd class="field-even"><p>An instance of BaseMllmChat.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat.</p>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat,
+    or if the mask is all False,
+    or if all text tokens are filtered out.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -731,7 +785,7 @@ by calling add_text/add_audio methods.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.refresh">
-<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.refresh" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.refresh" title="Link to this definition">#</a></dt>
 <dd><p>Refresh cached properties, that is:</p>
 <ul class="simple">
 <li><p>input_tokens</p></li>
@@ -746,10 +800,19 @@ by calling add_text/add_audio methods.</p>
 <li><p>audio_tokens_no_system_mask_filtered</p></li>
 <li><p>text_tokens_no_system_mask_filtered</p></li>
 <li><p>shap_values_mask</p></li>
+<li><p>external_group_ids_first_positions</p></li>
+<li><p>external_group_ids_positive_mask</p></li>
 </ul>
+<p>If <cite>shap</cite> is True, will only refresh:
+- shap_values_mask
+- external_group_ids_first_positions
+- external_group_ids_positive_mask</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>full</strong> – If True, refreshes all cached properties.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full</strong> – If True, refreshes all cached properties.</p></li>
+<li><p><strong>shap</strong> – If True, refreshes shap-related cached properties.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -759,6 +822,11 @@ by calling add_text/add_audio methods.</p>
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.shap_values_mask" title="Link to this definition">#</a></dt>
 <dd><p>Boolean mask indicating which tokens should be considered
 for SHAP value calculations (i.e., non-system text tokens).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the external SHAP values mask size does not match the number of tokens in the chat.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -835,6 +903,20 @@ Relative to <a class="reference internal" href="#mllm_shap.connectors.liquid_aud
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.torch_device">
 <span class="sig-name descname"><span class="pre">torch_device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.torch_device" title="Link to this definition">#</a></dt>
 <dd><p>The device on which tensors are stored.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.LiquidAudioChat.translate_groups_ids_mask">
+<span class="sig-name descname"><span class="pre">translate_groups_ids_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.translate_groups_ids_mask" title="Link to this definition">#</a></dt>
+<dd><p>Translate a mask over group IDs to a mask over all tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mask</strong> – A boolean tensor indicating which group IDs to include.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A boolean tensor indicating which tokens to include.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1077,6 +1159,58 @@ by calling add_text/add_audio methods.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids" title="Link to this definition">#</a></dt>
+<dd><p>An optional external group IDs for tokens. Should be an integer tensor
+with size equal to the number of tokens in the chat and set directly before
+the explanation process.</p>
+<p>All entries &gt; 0 will be treated as belonging to the same group for
+SHAP value calculations, 0 entries will be ignored from calculations
+(shap_values_mask for them will be set to False). Takes precedence over
+<a class="reference internal" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask" title="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">external_shap_values_mask</span></code></a>.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_first_positions">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_first_positions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_first_positions" title="Link to this definition">#</a></dt>
+<dd><p>Get the positions (indices) of the first occurrences of each
+consecutive non-zero group ID in <cite>external_group_ids</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor of positions (indices) of the first occurrence of
+each non-zero group ID, or None if not set.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_positive_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_group_ids_positive_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_positive_mask" title="Link to this definition">#</a></dt>
+<dd><p>Boolean mask indicating which tokens have positive group IDs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Boolean mask indicating which tokens have positive group IDs.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If external_group_ids is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external_shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask" title="Link to this definition">#</a></dt>
+<dd><p>An optional external SHAP values mask. Should be a boolean tensor
+with size equal to the number of tokens in the chat.</p>
+<p>If provided, <a class="reference internal" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.shap_values_mask" title="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.shap_values_mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">shap_values_mask</span></code></a> will be and-ed with this mask.</p>
+<p>Forbids adding new tokens to the chat while set.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.from_chat">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_chat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.from_chat" title="Link to this definition">#</a></dt>
@@ -1092,7 +1226,9 @@ by calling add_text/add_audio methods.</p>
 <dd class="field-even"><p>An instance of BaseMllmChat.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat.</p>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the mask size does not match the number of tokens in the chat,
+    or if the mask is all False,
+    or if all text tokens are filtered out.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1180,7 +1316,7 @@ by calling add_text/add_audio methods.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.refresh">
-<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.refresh" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.refresh" title="Link to this definition">#</a></dt>
 <dd><p>Refresh cached properties, that is:</p>
 <ul class="simple">
 <li><p>input_tokens</p></li>
@@ -1195,10 +1331,19 @@ by calling add_text/add_audio methods.</p>
 <li><p>audio_tokens_no_system_mask_filtered</p></li>
 <li><p>text_tokens_no_system_mask_filtered</p></li>
 <li><p>shap_values_mask</p></li>
+<li><p>external_group_ids_first_positions</p></li>
+<li><p>external_group_ids_positive_mask</p></li>
 </ul>
+<p>If <cite>shap</cite> is True, will only refresh:
+- shap_values_mask
+- external_group_ids_first_positions
+- external_group_ids_positive_mask</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>full</strong> – If True, refreshes all cached properties.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full</strong> – If True, refreshes all cached properties.</p></li>
+<li><p><strong>shap</strong> – If True, refreshes shap-related cached properties.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1208,6 +1353,11 @@ by calling add_text/add_audio methods.</p>
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shap_values_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.shap_values_mask" title="Link to this definition">#</a></dt>
 <dd><p>Boolean mask indicating which tokens should be considered
 for SHAP value calculations (i.e., non-system text tokens).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the external SHAP values mask size does not match the number of tokens in the chat.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1284,6 +1434,20 @@ Relative to <a class="reference internal" href="#mllm_shap.connectors.liquid_aud
 <dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.torch_device">
 <span class="sig-name descname"><span class="pre">torch_device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.torch_device" title="Link to this definition">#</a></dt>
 <dd><p>The device on which tensors are stored.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.translate_groups_ids_mask">
+<span class="sig-name descname"><span class="pre">translate_groups_ids_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.translate_groups_ids_mask" title="Link to this definition">#</a></dt>
+<dd><p>Translate a mask over group IDs to a mask over all tokens.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mask</strong> – A boolean tensor indicating which group IDs to include.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A boolean tensor indicating which tokens to include.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1487,6 +1651,10 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.device</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.empty_turn_sequences"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.empty_turn_sequences</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.end_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.end_turn()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_first_positions"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_first_positions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_group_ids_positive_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_positive_mask</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.external_shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_shap_values_mask</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.from_chat()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.get_conversation"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.get_conversation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.input_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens</span></code></a></li>
@@ -1508,6 +1676,7 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.token_turns"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_turns</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.tokens_modality_flag"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.tokens_modality_flag</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.torch_device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.torch_device</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.translate_groups_ids_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.translate_groups_ids_mask()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.turn_number"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.turn_number</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.LiquidAudioChat.validate_from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.validate_from_chat</span></code></a></li>
 </ul>
@@ -1535,6 +1704,10 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.device</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.empty_turn_sequences"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.empty_turn_sequences</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.end_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.end_turn()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_first_positions"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_first_positions</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_group_ids_positive_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_positive_mask</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.external_shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_shap_values_mask</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.from_chat()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.get_conversation"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.get_conversation()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.input_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens</span></code></a></li>
@@ -1556,6 +1729,7 @@ Used if static_embeddings is None.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.token_turns"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_turns</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.tokens_modality_flag"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.tokens_modality_flag</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.torch_device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.torch_device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.translate_groups_ids_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.translate_groups_ids_mask()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.turn_number"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.turn_number</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.liquid_audio.chat.LiquidAudioChat.validate_from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.validate_from_chat</span></code></a></li>
 </ul>
