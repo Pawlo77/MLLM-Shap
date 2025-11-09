@@ -63,3 +63,54 @@ def safe_mask_unsqueeze(tensor: Tensor, mask: Tensor) -> Tensor:
     else:
         masked = masked.unsqueeze(0)
     return masked
+
+
+def make_consecutive_ids_ignore_zero(t: torch.Tensor) -> torch.Tensor:
+    """
+    Renumber non-zero tensor values to consecutive integers starting from 1,
+    preserving the order of first appearance. Zeros remain unchanged.
+
+    Args:
+        t: Input tensor with integer IDs.
+    Returns:
+        Tensor with renumbered IDs.
+    """
+    # Get unique consecutive non-zero values in order of appearance
+    nonzero_mask = t != 0
+    unique_vals = torch.unique_consecutive(t[nonzero_mask])
+
+    # Map original IDs to new consecutive ones
+    mapping = {v.item(): i + 1 for i, v in enumerate(unique_vals)}
+
+    # Apply mapping (zeros unchanged)
+    out = t.clone()
+    for old_id, new_id in mapping.items():
+        out[t == old_id] = new_id
+
+    return out
+
+
+def extend_tensor(t: Tensor, target_length: int, fill_value: Any) -> Tensor:
+    """
+    Extend a tensor to the target length by appending the fill value.
+
+    Args:
+        t: The input tensor to be extended.
+        target_length: The desired length of the output tensor.
+        fill_value: The value to use for extension.
+    Returns:
+        The extended tensor.
+    """
+    current_length = t.shape[0]
+    if current_length >= target_length:
+        return t
+
+    extension_size = target_length - current_length
+    extension = torch.full(
+        (extension_size,),
+        fill_value,
+        dtype=t.dtype,
+        device=t.device,
+    )
+    extended_tensor = torch.cat([t, extension], dim=0)
+    return extended_tensor
