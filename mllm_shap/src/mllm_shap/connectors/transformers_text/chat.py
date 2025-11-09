@@ -37,13 +37,13 @@ class TransformersTextChat(BaseMllmChat):
         system_roles_setup: SystemRolesSetup | None = None,
     ) -> None:
         empty_turn_sequences = empty_turn_sequences or set()
+        self.tokenizer = tokenizer
         super().__init__(
             device=device,
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
         )
-        self.tokenizer = tokenizer
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
 
     def apply_text_mask(self, text_mask_relative: Tensor) -> None:
