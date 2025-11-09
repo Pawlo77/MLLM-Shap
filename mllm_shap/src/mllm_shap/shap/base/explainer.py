@@ -492,7 +492,7 @@ class _ExplainerConfig(BaseModel):
 
 
 class BaseExplainer(ABC):
-    """Convenience  base client for SHAP explainers."""
+    """Convenience base client for SHAP explainers."""
 
     shap_explainer: BaseShapExplainer
     """The SHAP explainer instance."""
