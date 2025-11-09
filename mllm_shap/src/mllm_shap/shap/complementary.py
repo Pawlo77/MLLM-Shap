@@ -56,8 +56,6 @@ class ComplementaryShapExplainer(BaseShapApproximation):
             # so that _calculate_shap_values can adjust accordingly
             self._zero_mask_skipped = True
 
-        self._first_call = False
-
         if generated_masks < self._get_num_splits(target_length):
             if self.__next_mask is not None:
                 r = self.__next_mask
