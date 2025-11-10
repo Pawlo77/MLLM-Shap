@@ -77,21 +77,21 @@ class TestGenerateMinimalSplits:
         """Test that generate_minimal_splits produces correct shape."""
         device = torch.device("cpu")
         n = 4
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert masks.shape == (n + 1, n)
 
     def test_first_row_is_all_false(self) -> None:
         """Test that the first row of generated minimal splits is all False."""
         device = torch.device("cpu")
         n = 3
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert torch.equal(masks[0], torch.zeros(n, dtype=torch.bool, device=device))
 
     def test_each_subsequent_row_has_single_false(self) -> None:
         """Each subsequent row should have exactly one False at the correct position."""
         device = torch.device("cpu")
         n = 5
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         for i in range(1, n + 1):
             row = masks[i]
             assert torch.sum(~row) == 1  # exactly one False
@@ -102,7 +102,7 @@ class TestGenerateMinimalSplits:
         """Generated minimal splits have correct dtype and device."""
         device = torch.device("cpu")
         n = 2
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert masks.dtype == torch.bool
         assert masks.device == device
 
@@ -125,7 +125,7 @@ class TestGetNextSplitBase:
         mask = self.explainer._get_next_split_base(
             target_length=self.target_length,
             device=self.device,
-            generated_masks=0,
+            generated_masks_num=0,
         )
         assert isinstance(mask, Tensor)
         assert self.explainer._base_masks is not None
@@ -138,7 +138,7 @@ class TestGetNextSplitBase:
         result = self.explainer._get_next_split_base(
             target_length=self.target_length,
             device=self.device,
-            generated_masks=num_base,
+            generated_masks_num=num_base,
         )
         assert result is None
 
@@ -151,7 +151,7 @@ class TestGetNextSplitBase:
             self.explainer._get_next_split_base(
                 target_length=self.target_length,
                 device=self.device,
-                generated_masks=1,
+                generated_masks_num=1,
             )
 
     def test_runtime_error_multiple_base_rejected(self) -> None:
@@ -164,5 +164,5 @@ class TestGetNextSplitBase:
             self.explainer._get_next_split_base(
                 target_length=self.target_length,
                 device=self.device,
-                generated_masks=0,
+                generated_masks_num=0,
             )

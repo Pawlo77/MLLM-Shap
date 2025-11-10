@@ -81,3 +81,70 @@ class TestPowerShiftNormalizer:
             PowerShiftNormalizer(power=0)
         with pytest.raises(ValueError):
             PowerShiftNormalizer(power=-1)
+
+
+class TestMinMaxNormalizer:
+    """Tests for MinMaxNormalizer."""
+
+    def test_normal_case(self, shap_values: torch.Tensor) -> None:
+        """Test normal case where min != max."""
+        from mllm_shap.shap.normalizers import MinMaxNormalizer
+
+        normalizer = MinMaxNormalizer()
+        out = normalizer(shap_values)
+
+        # Should be between 0 and 1
+        assert torch.all((out >= 0) & (out <= 1))
+        # Should sum to 1
+        assert torch.isclose(out.sum(), torch.tensor(1.0), atol=1e-6)
+
+        # Manual expected computation
+        min_val, max_val = shap_values.min(), shap_values.max()
+        expected = (shap_values - min_val) / (max_val - min_val)
+        expected /= expected.sum()
+        assert torch.allclose(out, expected)
+
+    def test_equal_values(self) -> None:
+        """Test case where all SHAP values are identical (min == max)."""
+        from mllm_shap.shap.normalizers import MinMaxNormalizer
+
+        normalizer = MinMaxNormalizer()
+        shap_values = torch.tensor([3.0, 3.0, 3.0])
+        out = normalizer(shap_values)
+
+        # Should return uniform distribution
+        expected = torch.ones_like(shap_values) / len(shap_values)
+        assert torch.allclose(out, expected)
+        # Should sum to 1
+        assert torch.isclose(out.sum(), torch.tensor(1.0), atol=1e-6)
+
+    def test_zero_values(self, zero_shap_values: torch.Tensor) -> None:
+        """Test case where all SHAP values are zeros."""
+        from mllm_shap.shap.normalizers import MinMaxNormalizer
+
+        normalizer = MinMaxNormalizer()
+        out = normalizer(zero_shap_values)
+
+        # Should return uniform distribution
+        expected = torch.ones_like(zero_shap_values) / len(zero_shap_values)
+        assert torch.allclose(out, expected)
+        # Should sum to 1
+        assert torch.isclose(out.sum(), torch.tensor(1.0), atol=1e-6)
+
+    def test_negative_values(self) -> None:
+        """Test normalization with negative values included."""
+        from mllm_shap.shap.normalizers import MinMaxNormalizer
+
+        shap_values = torch.tensor([-5.0, 0.0, 5.0])
+        normalizer = MinMaxNormalizer()
+        out = normalizer(shap_values)
+
+        # Should be between 0 and 1 and sum to 1
+        assert torch.all((out >= 0) & (out <= 1))
+        assert torch.isclose(out.sum(), torch.tensor(1.0), atol=1e-6)
+
+        # Manual expected computation
+        min_val, max_val = shap_values.min(), shap_values.max()
+        expected = (shap_values - min_val) / (max_val - min_val)
+        expected /= expected.sum()
+        assert torch.allclose(out, expected)

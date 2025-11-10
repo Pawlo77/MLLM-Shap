@@ -3,7 +3,7 @@
 import gc
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any, Generator, cast
+from typing import Any, Generator
 
 import torch
 from torch import Tensor
@@ -24,7 +24,7 @@ from ._validators import BaseShapCallConfig, BaseShapConfig
 from .embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 from .normalizers import BaseNormalizer
 from .similarity import BaseEmbeddingSimilarity
-from ._masks_manager import MasksManager
+from ._masks_manager import MasksManager, MaskGenerator
 from ._cache_manager import CacheManager
 from ._generate_responses import generate_responses
 
@@ -102,14 +102,21 @@ class BaseShapExplainer(ABC):
         self.allow_mask_duplicates = __config.allow_mask_duplicates
 
     @abstractmethod
-    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
+    def _get_next_split(
+        self,
+        target_length: int,
+        device: torch.device,
+        generated_masks_num: int,
+        existing_masks: list[Tensor] | None = None,
+    ) -> Tensor | None:
         """
         Get next split to evaluate.
 
         Args:
             target_length: Length of the splits
             device: The device to create the masks on
-            generated_masks: Number of masks generated so far
+            generated_masks_num: Number of masks generated so far
+            existing_masks: List of existing masks
         Returns:
             Tensor of shape [1, n], dtype=torch.bool, representing the next split to evaluate
                 or None if no more splits are to be generated.
@@ -147,52 +154,46 @@ class BaseShapExplainer(ABC):
             Tensor: 1D tensor [num_tokens] with SHAP values (NaN where base_mask=False).
         """
 
-    def __get_embeddings(self, responses: list[ModelResponse], model: BaseMllmModel) -> Tensor:
-        """
-        Get embeddings for the given chat state.
-
-        Args:
-            responses: The model responses to get embeddings for.
-            chat: The current chat state.
-        Returns:
-            The embeddings tensor.
-        """
-        if self.embedding_model is not None:
-            return self.embedding_reducer(self.embedding_model(responses=responses))
-
-        if self.mode == Mode.STATIC:
-            return self.embedding_reducer(model.get_static_embeddings(responses=responses))
-        return self.embedding_reducer(model.get_contextual_embeddings(responses=responses))
-
-    def __masks_generator(
+    def _get_masks_generator(
         self,
         mask_manager: MasksManager,
         device: torch.device,
-    ) -> Generator[tuple[Tensor | None, int], None, None]:
+        masks: list[Tensor],
+    ) -> MaskGenerator:
         """
         Generator that yields masks one by one.
 
         Args:
             mask_manager: The masks manager instance.
             device: The device to create the masks on.
+            masks: List of existing masks.
         Returns:
             A generator yielding tuples of (mask, mask_hash).
         """
         num_splits = self._get_num_splits(mask_manager.n)
         get_next_split = self._get_next_split
 
-        class _MasksGenerator:
+        class _MasksGenerator(MaskGenerator):
             """Generator class for masks."""
 
             def __init__(self) -> None:
-                self.generated_masks = 0
+                """Initialize the MaskGenerator."""
+                super().__init__()
+                self._iter = self.__mask_iter()
 
-            def __iter__(self) -> Generator[tuple[Tensor | None, int], None, None]:
+            def send(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
+                return self._iter.send(*args, **kwargs)
+
+            def throw(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
+                return self._iter.throw(*args, **kwargs)
+
+            def __mask_iter(self) -> Generator[tuple[Tensor | None, int], None, None]:
                 while True:
                     new_split = get_next_split(
                         target_length=mask_manager.n,
                         device=device,
-                        generated_masks=self.generated_masks,
+                        generated_masks_num=self.generated_masks,
+                        existing_masks=masks,
                     )
                     if new_split is None:
                         break
@@ -211,10 +212,33 @@ class BaseShapExplainer(ABC):
                     self.generated_masks += 1
                     yield new_mask, new_mask_hash
 
+            def __iter__(self) -> MaskGenerator:
+                return self
+
+            def __next__(self) -> tuple[Tensor | None, int]:
+                return next(self._iter)
+
             def __len__(self) -> int | None:
                 return num_splits
 
-        return cast(Generator[tuple[Tensor | None, int], None, None], _MasksGenerator())
+        return _MasksGenerator()
+
+    def __get_embeddings(self, responses: list[ModelResponse], model: BaseMllmModel) -> Tensor:
+        """
+        Get embeddings for the given chat state.
+
+        Args:
+            responses: The model responses to get embeddings for.
+            chat: The current chat state.
+        Returns:
+            The embeddings tensor.
+        """
+        if self.embedding_model is not None:
+            return self.embedding_reducer(self.embedding_model(responses=responses))
+
+        if self.mode == Mode.STATIC:
+            return self.embedding_reducer(model.get_static_embeddings(responses=responses))
+        return self.embedding_reducer(model.get_contextual_embeddings(responses=responses))
 
     # pylint: disable=too-many-locals
     def __get_shap_values(
@@ -398,7 +422,7 @@ class BaseShapExplainer(ABC):
         masks = [mask_manager.get_initial_mask(device=device)]
         responses = [__config.response]
 
-        gen = self.__masks_generator(mask_manager=mask_manager, device=device)
+        gen = self._get_masks_generator(mask_manager=mask_manager, device=device, masks=masks)
         chats_skipped, history = generate_responses(
             masks=masks,
             responses=responses,
@@ -413,8 +437,7 @@ class BaseShapExplainer(ABC):
         )
 
         # retrieve generated masks from the generator
-        # TODO: write it in proper way
-        self.total_n_calls = gen.generated_masks  # type: ignore[attr-defined]
+        self.total_n_calls = gen.generated_masks
 
         if cache_manager.extracted_num > 0:
             logger.info(
@@ -501,6 +524,9 @@ class BaseExplainer(ABC):
     model: BaseMllmModel
     """The model connector instance."""
 
+    total_n_calls: int = 0
+    """Total number of MLLM calls made for last explanation."""
+
     def __init__(
         self,
         model: BaseMllmModel,
@@ -555,3 +581,5 @@ class BaseExplainer(ABC):
         common_keys = set(generation_kwargs.keys()) & set(explanation_kwargs.keys())
         if common_keys:
             raise ValueError(f"Duplicate keys found in generation_kwargs and explanation_kwargs: {sorted(common_keys)}")
+        
+        self.total_n_calls = 0

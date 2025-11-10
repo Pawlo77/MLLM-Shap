@@ -151,8 +151,14 @@ class DummyShapExplainer(BaseShapExplainer):
     def _get_num_splits(self, target_length: int) -> int | None:
         return 3
 
-    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
-        if generated_masks > self._get_num_splits(target_length):
+    def _get_next_split(
+        self,
+        target_length: int,
+        device: torch.device,
+        generated_masks_num: int,
+        existing_masks: list[Tensor] | None = None,
+    ) -> Tensor | None:
+        if generated_masks_num > self._get_num_splits(target_length):
             return None
 
         return torch.rand(target_length, device=device) > 0.5

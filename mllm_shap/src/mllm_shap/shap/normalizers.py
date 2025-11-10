@@ -2,6 +2,7 @@
 
 """Normalizers for SHAP values."""
 
+import torch
 from torch import Tensor
 
 from .base.normalizers import BaseNormalizer
@@ -56,3 +57,18 @@ class PowerShiftNormalizer(BaseNormalizer):
             return shap_values
         normalized = powered / total
         return normalized
+
+class MinMaxNormalizer(BaseNormalizer):
+    """
+    Normalizer that scales SHAP values to the [0, 1] range using min-max normalization
+    then normalizes them to sum to 1.
+    """
+
+    def __call__(self, shap_values: Tensor) -> Tensor:
+        min_val = shap_values.min()
+        max_val = shap_values.max()
+        if max_val - min_val == 0:
+            return torch.ones_like(shap_values) / len(shap_values)
+        normalized = (shap_values - min_val) / (max_val - min_val)
+        normalized /= normalized.sum()
+        return normalized 
