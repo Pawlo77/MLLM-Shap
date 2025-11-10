@@ -148,20 +148,20 @@ class DummyModel(BaseMllmModel):
 class DummyShapExplainer(BaseShapExplainer):
     """Dummy SHAP explainer for testing purposes."""
 
-    def _get_num_splits(self, target_length: int) -> int | None:
+    def _get_num_splits(self, n: int) -> int:
         return 3
 
     def _get_next_split(
         self,
-        target_length: int,
+        n: int,
         device: torch.device,
         generated_masks_num: int,
         existing_masks: list[Tensor] | None = None,
     ) -> Tensor | None:
-        if generated_masks_num > self._get_num_splits(target_length):
+        if generated_masks_num > self._get_num_splits(n):
             return None
 
-        return torch.rand(target_length, device=device) > 0.5
+        return torch.rand(n, device=device) > 0.5
 
     def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
         # return a simple 1D tensor of ones with length equal to number of tokens

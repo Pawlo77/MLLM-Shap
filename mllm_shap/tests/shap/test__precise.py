@@ -13,6 +13,7 @@ class TestPreciseShapExplainer:
     def test_get_num_splits_returns_correct_value(self) -> None:
         """Test that _get_num_splits returns 2**n - 1 for given target length."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         n = 3
         result = explainer._get_num_splits(n)
         assert result == 2**n - 1
@@ -20,6 +21,7 @@ class TestPreciseShapExplainer:
     def test_get_next_split_generates_all_masks(self) -> None:
         """Test that _get_next_split generates all possible masks except all-ones."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         n = 3
         device = torch.device("cpu")
 
@@ -49,12 +51,15 @@ class TestPreciseShapExplainer:
     def test_get_next_split_raises_if_generator_missing(self) -> None:
         """Test that calling _get_next_split without initialization raises an error."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
+        explainer._first_call = False
         with pytest.raises(RuntimeError, match="Splits generator is not present."):
-            explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks_num=1)
+            explainer._get_next_split(n=3, device=torch.device("cpu"), generated_masks_num=1)
 
     def test_get_next_split_returns_none_after_completion(self) -> None:
         """Test that _get_next_split returns None after all masks have been generated."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         n = 2
         device = torch.device("cpu")
 
@@ -71,6 +76,7 @@ class TestPreciseShapExplainer:
         SHAP values should match the coefficients [1.0, 2.0].
         """
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         device = torch.device("cpu")
         n = 2
 
@@ -90,6 +96,7 @@ class TestPreciseShapExplainer:
     def test_calculate_shap_values_handles_single_feature(self) -> None:
         """Test SHAP value computation for single-feature case."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         device = torch.device("cpu")
 
         masks = torch.tensor([[False], [True]], dtype=torch.bool, device=device)
@@ -102,6 +109,7 @@ class TestPreciseShapExplainer:
     def test_calculate_shap_values_device_consistency(self) -> None:
         """Test that SHAP values are computed on the same device and dtype as inputs."""
         explainer = PreciseShapExplainer()
+        explainer._initialize_state()
         device = torch.device("cpu")
 
         masks = torch.tensor(

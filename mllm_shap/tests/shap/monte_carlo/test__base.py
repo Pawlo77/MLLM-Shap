@@ -30,35 +30,35 @@ class TestBaseMcShapExplainer:
         return DummyMcExplainer(num_samples=None, fraction=0.5)
 
     def test_get_num_splits_with_num_samples_negative_one(self, explainer: BaseMcShapExplainer) -> None:
-        """Should return target_length + 1 when num_samples = -1 (minimal mode)."""
+        """Should return n + 1 when num_samples = -1 (minimal mode)."""
         explainer.num_samples = -1
-        result = explainer._get_num_splits(target_length=4)
+        result = explainer._get_num_splits(n=4)
         assert result == 5
 
-    def test_get_num_splits_with_num_samples_less_than_target_raises(self, explainer: BaseMcShapExplainer) -> None:
-        """Should raise ValueError when num_samples < target_length."""
+    def test_get_num_splits_with_num_samples_less_than_n_raises(self, explainer: BaseMcShapExplainer) -> None:
+        """Should raise ValueError when num_samples < n."""
         explainer.num_samples = 2
         with pytest.raises(ValueError, match="num_samples must be at least"):
-            _ = explainer._get_num_splits(target_length=5)
+            _ = explainer._get_num_splits(n=5)
 
     def test_get_num_splits_with_num_samples_greater_than_possible(self, explainer: BaseMcShapExplainer) -> None:
         """Should clamp to maximum number of masks if num_samples too large."""
         explainer.num_samples = 9999
-        result = explainer._get_num_splits(target_length=3)
+        result = explainer._get_num_splits(n=3)
         assert result == 2**3 - 1
 
     def test_get_num_splits_with_fraction(self, explainer: BaseMcShapExplainer) -> None:
         """Should compute number of splits based on fraction if num_samples is None."""
         explainer.num_samples = None
         explainer.fraction = 0.25
-        result = explainer._get_num_splits(target_length=4)
+        result = explainer._get_num_splits(n=4)
         expected = int((2**4 - 1) * 0.25)
         assert result == expected
 
     def test_generate_minimal_splits_shape_and_values(self, explainer: BaseMcShapExplainer) -> None:
         """_generate_minimal_splits() should return correct shape and one-hot pattern."""
         device = torch.device("cpu")
-        masks = explainer._generate_minimal_splits(target_length=3, device=device)
+        masks = explainer._generate_minimal_splits(n=3, device=device)
         assert masks.shape == (4, 3)
         # first row all False
         assert torch.sum(masks[0]) == 0
@@ -72,23 +72,21 @@ class TestBaseMcShapExplainer:
     def test_get_next_split_returns_minimal_then_random(self, explainer: BaseMcShapExplainer) -> None:
         """Should yield minimal masks first, then random masks up to budget."""
         device = torch.device("cpu")
-        target_length = 3
+        n = 3
         explainer.num_samples = 6  # enough for minimal + random
 
         # first call: minimal mask
-        mask0 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=0)
-        assert mask0.shape == (target_length,)
+        mask0 = explainer._get_next_split(n=n, device=device, generated_masks_num=0)
+        assert mask0.shape == (n,)
         assert mask0.dtype == torch.bool
 
         # next minimal mask
-        mask1 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=1)
+        mask1 = explainer._get_next_split(n=n, device=device, generated_masks_num=1)
         assert mask1 is not None
 
         # random mask after minimal ones
-        mask_random = explainer._get_next_split(
-            target_length=target_length, device=device, generated_masks_num=target_length + 1
-        )
-        assert mask_random.shape == (1, target_length)
+        mask_random = explainer._get_next_split(n=n, device=device, generated_masks_num=n + 1)
+        assert mask_random.shape == (1, n)
         assert mask_random.dtype == torch.bool
 
     def test_get_next_split_returns_none_when_exceeded_budget(self, explainer: BaseMcShapExplainer) -> None:
@@ -96,7 +94,7 @@ class TestBaseMcShapExplainer:
         device = torch.device("cpu")
         explainer.num_samples = 3
         explainer.include_minimal_masks = False
-        result = explainer._get_next_split(target_length=3, device=device, generated_masks_num=3)
+        result = explainer._get_next_split(n=3, device=device, generated_masks_num=3)
         assert result is None
 
     def test_calculate_shap_values_computation(self, explainer: BaseMcShapExplainer) -> None:
