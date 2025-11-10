@@ -63,6 +63,7 @@ class Explainer(BaseExplainer):
         )
         logger.debug("Explanation took %.2f seconds.", time() - t0)
 
+        self.total_n_calls = self.shap_explainer.total_n_calls
         return ExplainerResult(
             source_chat=chat,
             # chat is set as generate was called with keep_history=True

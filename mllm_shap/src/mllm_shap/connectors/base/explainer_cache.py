@@ -103,9 +103,9 @@ class ExplainerCache(BaseModel):
         explainer_hash: int,
         responses: list[ModelResponse],
         masks: Tensor,
-        values: Tensor,
         normalized_values: Tensor,
         shap_values_mask: Tensor,
+        values: Tensor | None = None,
     ) -> "ExplainerCache":
         """
         Create a new ExplainerCache instance.
@@ -129,8 +129,9 @@ class ExplainerCache(BaseModel):
             masks=masks,
             shap_values_mask=shap_values_mask,
         )
-        instance.values = values
         instance.normalized_values = normalized_values
+        if values is not None:
+            instance.values = values
         return instance
 
     @property

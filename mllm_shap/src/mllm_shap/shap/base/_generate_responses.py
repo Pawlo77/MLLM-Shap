@@ -4,7 +4,7 @@ import gc
 from logging import Logger
 from threading import Lock, Thread
 from time import time
-from typing import Generator, Any
+from typing import Any
 
 from torch import Tensor
 from tqdm import tqdm as standard_tqdm
@@ -13,6 +13,7 @@ from tqdm.auto import tqdm
 from ...connectors.base.chat import AllTextTokensFilteredOutError, BaseMllmChat
 from ...connectors.base.model import BaseMllmModel
 from ...connectors.base.model_response import ModelResponse
+from ._masks_manager import MaskGenerator
 from ...utils.logger import get_logger
 from ._cache_manager import CacheManager
 
@@ -23,7 +24,7 @@ logger: Logger = get_logger(__name__)
 def generate_responses(
     masks: list[Tensor],
     responses: list[ModelResponse],
-    gen: Generator[tuple[Tensor | None, int], None, None],
+    gen: MaskGenerator,
     source_chat: BaseMllmChat,
     model: BaseMllmModel,
     cache_manager: CacheManager,
@@ -143,7 +144,7 @@ def _process_mask(
 def _generate_responses_multi(
     masks: list[Tensor],
     responses: list[ModelResponse],
-    gen: Generator[tuple[Tensor | None, int], None, None],
+    gen: MaskGenerator,
     source_chat: BaseMllmChat,
     model: BaseMllmModel,
     cache_manager: CacheManager,
@@ -227,7 +228,7 @@ def _generate_responses_multi(
 def _generate_responses_single(
     masks: list[Tensor],
     responses: list[ModelResponse],
-    gen: Generator[tuple[Tensor | None, int], None, None],
+    gen: MaskGenerator,
     source_chat: BaseMllmChat,
     model: BaseMllmModel,
     cache_manager: CacheManager,

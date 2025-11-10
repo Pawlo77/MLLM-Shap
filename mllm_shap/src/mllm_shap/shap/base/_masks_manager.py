@@ -1,6 +1,8 @@
 """Mask manager for SHAP explainability."""
 
+from abc import ABC
 from logging import Logger
+from typing import Generator
 import torch
 from torch import Tensor
 
@@ -9,6 +11,17 @@ from ...utils.logger import get_logger
 from ...connectors.base.chat import BaseMllmChat
 
 logger: Logger = get_logger(__name__)
+
+
+class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
+    """Generator for producing unique masks for SHAP explainability."""
+
+    generated_masks: int
+
+    def __init__(self) -> None:
+        """Initialize the MaskGenerator."""
+        super().__init__()
+        self.generated_masks = 0
 
 
 class NoTokensToExplainError(Exception):

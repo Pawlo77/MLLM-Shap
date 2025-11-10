@@ -50,7 +50,7 @@ class TestPreciseShapExplainer:
         """Test that calling _get_next_split without initialization raises an error."""
         explainer = PreciseShapExplainer()
         with pytest.raises(RuntimeError, match="Splits generator is not present."):
-            explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks=1)
+            explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks_num=1)
 
     def test_get_next_split_returns_none_after_completion(self) -> None:
         """Test that _get_next_split returns None after all masks have been generated."""

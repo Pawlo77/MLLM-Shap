@@ -12,14 +12,16 @@ import torch
 from torch import Tensor
 from tqdm.auto import tqdm
 
-from ..connectors.base.explainer_cache import ExplainerCache
-from ..connectors.base.chat import BaseMllmChat
-from ..connectors.base.model_response import ModelResponse
-from ..utils.logger import get_logger
-from ..utils.other import extend_tensor
-from .base.explainer import BaseExplainer, BaseShapExplainer
-from .explainer_result import ExplainerResult
-from .precise import PreciseShapExplainer
+from ...connectors.base.explainer_cache import ExplainerCache
+from ...connectors.base.chat import BaseMllmChat
+from ...connectors.base.model_response import ModelResponse
+from ...utils.logger import get_logger
+from ...utils.other import extend_tensor
+from ..base.explainer import BaseExplainer, BaseShapExplainer
+from ..explainer_result import ExplainerResult
+from ..precise import PreciseShapExplainer
+from ..normalizers import MinMaxNormalizer
+from .enums import Mode
 
 logger: Logger = get_logger(__name__)
 
@@ -33,7 +35,8 @@ class HierarchicalExplainer(BaseExplainer):
     Groups cannot share different modalities (e.g., text and audio tokens).
     Uses an underlying SHAP explainer for group explanations.
 
-    It has no history nor non-normalized shap values available.
+    It has no history nor non-normalized shap values available. Refer to
+    :class:`Mode` for details on how groups are formed at the first level.
     """
 
     k: int
@@ -42,14 +45,15 @@ class HierarchicalExplainer(BaseExplainer):
     n_calls: int = 0
     """Number of internal SHAP explainer calls made for last explanation."""
 
-    total_n_calls: int = 0
-    """Total number of MLLM calls made for last explanation."""
-
+    mode: Mode
+    """The mode of the hierarchical explainer."""
+    
     _progress_bar: tqdm | None = None
 
     def __init__(
         self,
         shap_explainer: BaseShapExplainer | None = None,
+        mode: Mode = Mode.TEXT,
         k: int = 10,
         **kwargs: Any,
     ) -> None:
@@ -58,16 +62,23 @@ class HierarchicalExplainer(BaseExplainer):
 
         Args:
             k: Maximum final group size at each level.
-            shap_explainer: The SHAP explainer instance.
+            shap_explainer: The SHAP explainer instance. 
+                Should use :class:`MinMaxNormalizer` for normalization. This is not
+                validated internally, but strongly recommended for correct results.
+            mode: The mode of the hierarchical explainer.
             kwargs: Additional keyword arguments.
         Raises:
             ValueError: If k is less than 1 or not an integer.
         """
-        super().__init__(shap_explainer=shap_explainer or PreciseShapExplainer(), **kwargs)
+        super().__init__(
+            shap_explainer=shap_explainer or PreciseShapExplainer(normalizer=MinMaxNormalizer()), **kwargs
+        )
 
         if k < 1 or int(k) != k:
             raise ValueError("k must be an integer, at least 1.")
         self.k = k
+
+        self.mode = mode
 
     def __get_subgroups_num(self, n: int) -> int:
         """
@@ -78,10 +89,10 @@ class HierarchicalExplainer(BaseExplainer):
         Returns:
             The number of subgroups.
         """
-        return math.ceil(n / self.k)
+        return math.ceil(math.log(n, self.k))
 
     # pylint: disable=too-many-positional-arguments,too-many-arguments
-    def __calculate_group_shap_values(
+    def __calculate_group_normalized_shap_values(
         self,
         chat: BaseMllmChat,
         response: ModelResponse,
@@ -186,6 +197,7 @@ class HierarchicalExplainer(BaseExplainer):
 
         start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
         subgroups_num = self.__get_subgroups_num(n=n)
+        subgroup_size = math.ceil(n / subgroups_num)
 
         logger.debug(
             "Computing SHAP values for group [%d:%d] of size %d with %d subgroups.",
@@ -196,19 +208,22 @@ class HierarchicalExplainer(BaseExplainer):
         )
 
         if subgroups_num == 1:  # base case - group size <= k
-            return self.__calculate_group_shap_values(
+            r = self.__calculate_group_normalized_shap_values(
                 chat=chat,
                 response=response,
                 shap_values_mask=group_mask,
                 generation_kwargs=generation_kwargs,
                 **explanation_kwargs,
             )
+            return r
 
         group_ids = torch.zeros_like(group_mask, dtype=torch.long)
-        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(n=n, k=self.k)  # noqa: E203
+        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(
+            n=n, k=subgroup_size
+        )  # noqa: E203
 
         # calculate SHAP values for this level
-        normalized_shap_values = self.__calculate_group_shap_values(
+        normalized_shap_values = self.__calculate_group_normalized_shap_values(
             chat=chat,
             response=response,
             group_ids=group_ids,
@@ -230,6 +245,42 @@ class HierarchicalExplainer(BaseExplainer):
 
         return normalized_shap_values
 
+    def __save_to_cache(
+        self,
+        chat: BaseMllmChat,
+        source_chat: BaseMllmChat,
+        normalized_shap_values: Tensor,
+    ) -> None:
+        """
+        Save the explanation results to the chat cache.
+
+        Args:
+            chat: The chat instance.
+            source_chat: The source chat instance.
+            normalized_shap_values: The computed normalized SHAP values.
+        """
+
+        # extend normalized shap values to match response length
+        normalized_shap_values = extend_tensor(
+            normalized_shap_values,
+            target_length=chat.input_tokens_num,
+            fill_value=float("nan"),
+        )
+        shap_values_mask = extend_tensor(
+            source_chat.shap_values_mask,
+            target_length=chat.input_tokens_num,
+            fill_value=False,
+        )
+
+        chat.cache = ExplainerCache.create(
+            chat=chat,
+            explainer_hash=hash(self.shap_explainer),
+            responses=[],
+            masks=torch.empty((0, chat.input_tokens_num), dtype=torch.bool),
+            normalized_values=normalized_shap_values,
+            shap_values_mask=shap_values_mask,
+        )
+
     def __call__(
         self,
         *_: Any,
@@ -242,6 +293,15 @@ class HierarchicalExplainer(BaseExplainer):
         # disable verbose logging in internal calls
         explanation_kwargs["verbose"] = False
         explanation_kwargs["progress_bar"] = False
+
+        # validation
+        super().__call__(
+            chat=chat,
+            generation_kwargs=generation_kwargs,
+            **explanation_kwargs,
+        )
+
+        # reset call counters
         self.n_calls = 0
         self.total_n_calls = 0
 
@@ -255,49 +315,52 @@ class HierarchicalExplainer(BaseExplainer):
         )
         logger.debug("Generation took %.2f seconds.", time() - t0)
 
-        # validation
-        super().__call__(
-            chat=chat,
-            generation_kwargs=generation_kwargs,
-            **explanation_kwargs,
-        )
-
-        # compute initial groups. This differs from :method:`__compute` as
-        # at this point we cannot assume that groups are contiguous
-        # First level groups are for logical purposes cannot be joined together,
-        # therefore they do not get batched.
-        group_ids = HierarchicalExplainer.__get_group_ids(chat=chat)
-        n_groups = int(group_ids.max().item()) + 1
-        logger.info("Total number of groups at first level: %d", n_groups)
-
-        self.n_calls = 0
         if progress_bar:
             self._progress_bar = tqdm(
                 desc="Calculating SHAP values",
             )
         t0 = time()
 
-        # calculate fist level SHAP values
-        response_with_cache = deepcopy(response)
-        normalized_shap_values = self.__calculate_group_shap_values(
-            chat=chat,
-            response=response_with_cache,
-            group_ids=group_ids,
-            generation_kwargs=generation_kwargs,
-            **explanation_kwargs,
-        )
-
-        # call for each group recursively
-        for group_id in range(1, n_groups):
-            group_mask = chat.shap_values_mask & (group_ids == group_id)
-            group_shap_values = self.__compute(
+        if self.mode == Mode.TEXT:
+            normalized_shap_values = self.__compute(
                 chat=chat,
                 response=response,
-                group_mask=group_mask,
+                group_mask=chat.shap_values_mask,
                 generation_kwargs=generation_kwargs,
                 **explanation_kwargs,
             )
-            normalized_shap_values[group_mask] *= group_shap_values[group_mask]
+        else:
+            # compute initial groups. This differs from :method:`__compute` as
+            # at this point we cannot assume that groups are contiguous
+            # First level groups are for logical purposes cannot be joined together,
+            # therefore they do not get batched.
+            group_ids = HierarchicalExplainer.__get_group_ids(
+                chat=chat, include_role=(self.mode == Mode.MULTI_MODAL_MULTI_USER)
+            )
+            n_groups = int(group_ids.max().item()) + 1
+            logger.info("Total number of groups at first level: %d", n_groups)
+
+            # calculate fist level SHAP values
+            response_with_cache = deepcopy(response)
+            normalized_shap_values = self.__calculate_group_normalized_shap_values(
+                chat=chat,
+                response=response_with_cache,
+                group_ids=group_ids,
+                generation_kwargs=generation_kwargs,
+                **explanation_kwargs,
+            )
+
+            # call for each group recursively
+            for group_id in range(1, n_groups):
+                group_mask = chat.shap_values_mask & (group_ids == group_id)
+                group_shap_values = self.__compute(
+                    chat=chat,
+                    response=response,
+                    group_mask=group_mask,
+                    generation_kwargs=generation_kwargs,
+                    **explanation_kwargs,
+                )
+                normalized_shap_values[group_mask] *= group_shap_values[group_mask]
 
         logger.debug("Explanation took %.2f seconds.", time() - t0)
 
@@ -305,20 +368,16 @@ class HierarchicalExplainer(BaseExplainer):
             self._progress_bar.close()
             self._progress_bar = None
 
-        # extend normalized shap values to match response length
-        normalized_shap_values = extend_tensor(
-            normalized_shap_values,
-            target_length=response.chat.input_tokens_num,  # type: ignore[union-attr]
-            fill_value=float("nan"),
+        full_chat = cast(BaseMllmChat, response.chat)
+        self.__save_to_cache(
+            chat=full_chat,
+            source_chat=chat,
+            normalized_shap_values=normalized_shap_values,
         )
-
-        # set normalized SHAP values in the response cache
-        response_with_cache.chat.cache.normalized_values = normalized_shap_values  # type: ignore[union-attr]
-        response_with_cache.chat.cache.values = None  # type: ignore[union-attr]
 
         return ExplainerResult(
             source_chat=chat,
-            full_chat=response_with_cache.chat,  # type: ignore[arg-type]
+            full_chat=full_chat,
             history=None,
             total_n_calls=self.total_n_calls,
         )
@@ -340,7 +399,7 @@ class HierarchicalExplainer(BaseExplainer):
         return start_idx, end_idx, n
 
     @staticmethod
-    def __get_group_ids(chat: "BaseMllmChat") -> Tensor:
+    def __get_group_ids(chat: "BaseMllmChat", include_role: bool = True) -> Tensor:
         """
         Get initial group IDs for explainable tokens in the chat, splitting by
         contiguity, modality, and token role changes.
@@ -348,16 +407,20 @@ class HierarchicalExplainer(BaseExplainer):
         Args:
             chat: The chat instance containing `shap_values_mask`,
                 `tokens_modality_flag`, and `token_roles`.
-
+            include_role: Whether to consider token roles when determining groups.
         Returns:
             Tensor: Group IDs for explainable tokens. Tokens with different modalities
             or roles will be assigned separate groups even if contiguous.
-
         Example:
-            mask:       tensor([T, T, F, T, T, T, F, F, T, T])
-            modality:   tensor([0, 0, 0, 1, 1, 1, 0, 0, 0, 0])
-            roles:      tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
-            result:     tensor([0, 0, 0, 1, 1, 2, 0, 0, 3, 3])
+            For `include_role=True` and the following token properties:
+
+                mask:     tensor([T, T, F, T, T, T, F, F, T, T])
+                modality: tensor([0, 0, 0, 1, 1, 1, 0, 0, 0, 0])
+                roles:    tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+
+            The output will be:
+
+                tensor([0, 0, 0, 1, 1, 2, 0, 0, 3, 3])
         """
         mask = chat.shap_values_mask
         modality_flag = chat.tokens_modality_flag
@@ -368,13 +431,20 @@ class HierarchicalExplainer(BaseExplainer):
 
         # Previous token info
         prev_mask = torch.cat([torch.tensor([False], device=device), mask[:-1]])
-        prev_modality = torch.cat([torch.tensor([modality_flag[0]], device=device), modality_flag[:-1]])
-        prev_role = torch.cat([torch.tensor([token_roles[0]], device=device), token_roles[:-1]])
+        prev_modality = torch.cat(
+            [torch.tensor([modality_flag[0]], device=device), modality_flag[:-1]]
+        )
 
         # Start new group if:
         # - token is explainable
-        # - AND (previous not explainable OR modality changed OR role changed)
-        group_start = mask & (~prev_mask | (modality_flag != prev_modality) | (token_roles != prev_role))
+        # - AND (previous not explainable OR modality changed OR role changed (if `include_role`))
+        group_mask = ~prev_mask | (modality_flag != prev_modality)
+        if include_role:
+            prev_role = torch.cat(
+                [torch.tensor([token_roles[0]], device=device), token_roles[:-1]]
+            )
+            group_mask |= token_roles != prev_role
+        group_start = mask & group_mask
 
         # Assign cumulative group IDs
         group_ids[mask] = torch.cumsum(group_start[mask].int(), dim=0)
