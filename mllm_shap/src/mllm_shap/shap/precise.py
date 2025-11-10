@@ -17,14 +17,15 @@ class PreciseShapExplainer(BaseShapExplainer):
 
     def _get_next_split(
         self,
-        target_length: int,
+        n: int,
         device: torch.device,
         generated_masks_num: int,
         existing_masks: list[Tensor] | None = None,
     ) -> Tensor | None:
-        if generated_masks_num == 0:
+        if self._first_call:
+            self._first_call = False
             self.__splits_generator = PreciseShapExplainer.__get_splits_generator(
-                target_length=target_length,
+                n=n,
                 device=device,
             )
         if self.__splits_generator is None:
@@ -35,8 +36,8 @@ class PreciseShapExplainer(BaseShapExplainer):
         except StopIteration:
             return None
 
-    def _get_num_splits(self, target_length: int) -> int:
-        return int(2**target_length - 1)  # exclude all-true mask
+    def _get_num_splits(self, n: int) -> int:
+        return int(2**n - 1)  # exclude all-true mask
 
     # pylint: disable=too-many-locals
     def _calculate_shap_values(
@@ -90,18 +91,18 @@ class PreciseShapExplainer(BaseShapExplainer):
         return shap_values
 
     @staticmethod
-    def __get_splits_generator(target_length: int, device: torch.device) -> Generator[Tensor, None, None]:
+    def __get_splits_generator(n: int, device: torch.device) -> Generator[Tensor, None, None]:
         """
         Generates all possible binary masks of a given length, excluding the all-ones mask.
 
         Args:
-            target_length (int): The length of the binary masks to generate.
+            n (int): The length of the binary masks to generate.
             device (torch.device): The device on which to create the tensors.
         Yields:
-            Tensor: A binary mask tensor of shape (1, target_length).
+            Tensor: A binary mask tensor of shape (1, n).
         """
-        for split in product([0, 1], repeat=target_length):
+        for split in product([0, 1], repeat=n):
             split_tensor = torch.tensor(split, dtype=torch.bool, device=device)
-            if split_tensor.sum() == target_length:
+            if split_tensor.sum() == n:
                 continue
             yield split_tensor

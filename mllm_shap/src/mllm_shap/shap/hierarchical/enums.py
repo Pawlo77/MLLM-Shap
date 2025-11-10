@@ -6,12 +6,12 @@ from enum import Enum
 class Mode(int, Enum):
     """
     Defines supported grouping modes.
-    
+
     Warning:
-        Depending on mode, first level groups might be large - 
+        Depending on mode, first level groups might be large -
         only `TEXT` mode guarantees small first level groups, as
         only then it is divided by size corresponding to
-        log(number of tokens, k) formula. Other modes 
+        log(number of tokens, k) formula. Other modes
         do not divide first level groups at all, therefore
         first level call will have cost of up to 2^(number of groups),
         depending on shap explainer algorithm used.m

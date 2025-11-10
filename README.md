@@ -16,7 +16,7 @@ git push origin --tags
 From `~/mllm_shap` directory:
 
 ```bash
-sphinx-apidoc -o docs/ src     
+sphinx-apidoc -o docs/ src
 ```
 
 This will generate `.rst` files with definition of new modules. To update and locally analyze their docs, do from `~/mllm_shap/docs` directory:

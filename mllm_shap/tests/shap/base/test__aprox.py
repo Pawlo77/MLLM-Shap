@@ -11,10 +11,10 @@ from torch import Tensor
 class DummyExplainer(BaseShapApproximation):
     """Concrete subclass for testing abstract BaseShapApproximation."""
 
-    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
+    def _get_next_split(self, n: int, device: torch.device, generated_masks: int) -> Tensor | None:
         return None
 
-    def _get_num_splits(self, target_length: int) -> int:
+    def _get_num_splits(self, n: int) -> int:
         # Return a large enough value to avoid budget errors
         return 100
 
@@ -112,7 +112,7 @@ class TestGetNextSplitBase:
 
     def setup_method(self) -> None:
         self.device = torch.device("cpu")
-        self.target_length = 3
+        self.n = 3
         self.explainer = DummyExplainer(num_samples=5)
         # initialize internal state
         self.explainer._first_call = True
@@ -123,20 +123,20 @@ class TestGetNextSplitBase:
     def test_first_call_generates_base_masks(self) -> None:
         """Should generate base masks on first call."""
         mask = self.explainer._get_next_split_base(
-            target_length=self.target_length,
+            n=self.n,
             device=self.device,
             generated_masks_num=0,
         )
         assert isinstance(mask, Tensor)
         assert self.explainer._base_masks is not None
-        assert mask.shape == (self.target_length,)
+        assert mask.shape == (self.n,)
 
     def test_returns_none_when_generated_masks_exceed_base(self) -> None:
         """Should return None when generated masks exceed base mask count."""
-        self.explainer._get_next_split_base(self.target_length, self.device, 0)
+        self.explainer._get_next_split_base(self.n, self.device, 0)
         num_base = self.explainer._base_masks.shape[0]
         result = self.explainer._get_next_split_base(
-            target_length=self.target_length,
+            n=self.n,
             device=self.device,
             generated_masks_num=num_base,
         )
@@ -149,7 +149,7 @@ class TestGetNextSplitBase:
         self.explainer._first_call = False
         with pytest.raises(RuntimeError, match="Base masks are not present"):
             self.explainer._get_next_split_base(
-                target_length=self.target_length,
+                n=self.n,
                 device=self.device,
                 generated_masks_num=1,
             )
@@ -162,7 +162,7 @@ class TestGetNextSplitBase:
         self.explainer._base_calls_num = 0
         with pytest.raises(RuntimeError, match="Multiple base masks were rejected"):
             self.explainer._get_next_split_base(
-                target_length=self.target_length,
+                n=self.n,
                 device=self.device,
                 generated_masks_num=0,
             )
