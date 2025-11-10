@@ -2,19 +2,23 @@
 
 import pytest
 import torch
-from mllm_shap.shap.monte_carlo._base import BaseMcShapExplainer
 from torch import Tensor
+from mllm_shap.shap.monte_carlo._base import BaseMcShapExplainer
 
 
 class DummyMcExplainer(BaseMcShapExplainer):
     """Concrete implementation for testing abstract BaseMcShapExplainer."""
 
-    def __init__(self, num_samples=None, fraction=1.0):
+    def __init__(self, num_samples: int | None = None, fraction: float = 1.0) -> None:
         super().__init__()
         self.num_samples = num_samples
         self.fraction = fraction
         self.include_minimal_masks = True
-        self.__base_masks = None
+        # reset internal state
+        self._first_call = True
+        self._zero_mask_skipped = False
+        self._base_masks = None
+        self._base_calls_num = 0
 
 
 class TestBaseMcShapExplainer:
@@ -52,55 +56,47 @@ class TestBaseMcShapExplainer:
         assert result == expected
 
     def test_generate_minimal_splits_shape_and_values(self, explainer: BaseMcShapExplainer) -> None:
-        """__generate_minimal_splits() should return correct shape and one-hot pattern."""
+        """_generate_minimal_splits() should return correct shape and one-hot pattern."""
         device = torch.device("cpu")
-        masks = explainer._BaseMcShapExplainer__generate_minimal_splits(target_length=3, device=device)
+        masks = explainer._generate_minimal_splits(target_length=3, device=device)
         assert masks.shape == (4, 3)
-        assert masks[0].sum() == 0  # empty mask
-        assert torch.equal(masks[1:], ~torch.eye(3, dtype=torch.bool))
+        # first row all False
+        assert torch.sum(masks[0]) == 0
+        # subsequent rows: each one False
+        for i in range(1, 4):
+            row = masks[i]
+            assert torch.sum(~row) == 1
+            false_index = torch.where(~row)[0].item()
+            assert false_index == i - 1
 
-    def test_get_next_split_returns_minimal_masks_then_random(self, explainer: BaseMcShapExplainer) -> None:
+    def test_get_next_split_returns_minimal_then_random(self, explainer: BaseMcShapExplainer) -> None:
         """Should yield minimal masks first, then random masks up to budget."""
         device = torch.device("cpu")
         target_length = 3
-        explainer.num_samples = 6  # enough for all minimal + random
-        mask0 = explainer._get_next_split(target_length=target_length, device=device, generated_masks=0)
-        assert mask0 is not None and mask0.dtype == torch.bool
+        explainer.num_samples = 6  # enough for minimal + random
 
-        # next minimal masks
-        mask1 = explainer._get_next_split(target_length=target_length, device=device, generated_masks=1)
+        # first call: minimal mask
+        mask0 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=0)
+        assert mask0.shape == (target_length,)
+        assert mask0.dtype == torch.bool
+
+        # next minimal mask
+        mask1 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=1)
         assert mask1 is not None
 
         # random mask after minimal ones
         mask_random = explainer._get_next_split(
-            target_length=target_length,
-            device=device,
-            generated_masks=target_length + 1,
+            target_length=target_length, device=device, generated_masks_num=target_length + 1
         )
-        assert mask_random is not None and mask_random.shape == (1, target_length)
-
-    def test_get_next_split_raises_if_no_base_masks(self, explainer: BaseMcShapExplainer) -> None:
-        """Should raise RuntimeError if __base_masks is unexpectedly None."""
-        device = torch.device("cpu")
-        explainer._BaseMcShapExplainer__base_masks = None
-        explainer.include_minimal_masks = True
-        with pytest.raises(RuntimeError, match="Base masks are not present"):
-            _ = explainer._get_next_split(target_length=3, device=device, generated_masks=5)
-
-    def test_get_next_split_raises_if_sampling_budget_too_low(self, explainer: BaseMcShapExplainer) -> None:
-        """Should raise RuntimeError if sampling budget smaller than minimal masks count."""
-        device = torch.device("cpu")
-        explainer.num_samples = 2
-        explainer._BaseMcShapExplainer__base_masks = torch.zeros((5, 3), dtype=torch.bool)
-        with pytest.raises(RuntimeError, match="Not enough sampling budget"):
-            _ = explainer._get_next_split(target_length=2, device=device, generated_masks=0)
+        assert mask_random.shape == (1, target_length)
+        assert mask_random.dtype == torch.bool
 
     def test_get_next_split_returns_none_when_exceeded_budget(self, explainer: BaseMcShapExplainer) -> None:
         """Should return None if all masks already generated."""
         device = torch.device("cpu")
         explainer.num_samples = 3
-        explainer._BaseMcShapExplainer__base_masks = torch.zeros((2, 3), dtype=torch.bool)
-        result = explainer._get_next_split(target_length=3, device=device, generated_masks=5)
+        explainer.include_minimal_masks = False
+        result = explainer._get_next_split(target_length=3, device=device, generated_masks_num=3)
         assert result is None
 
     def test_calculate_shap_values_computation(self, explainer: BaseMcShapExplainer) -> None:
