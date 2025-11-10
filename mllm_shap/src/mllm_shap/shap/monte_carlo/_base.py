@@ -16,39 +16,19 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
     """Whether to include minimal masks (single-feature and empty masks) in the sampling."""
 
     @lru_cache(maxsize=1)
-    def _get_num_splits(self, target_length: int) -> int:
+    def _get_num_splits(self, n: int) -> int:
         if self.num_samples is not None:
             if self.num_samples == -1:
                 # Minimal: only single-feature masks and empty mask
-                return target_length + 1
-            if self.num_samples < target_length:
+                return n + 1
+            if self.num_samples < n:
                 raise ValueError("num_samples must be at least equal to the number of features.")
-            if self.num_samples > (2**target_length - 1):
-                return int(2**target_length - 1)  # maximum possible masks excluding all-ones mask
+            if self.num_samples > (2**n - 1):
+                return int(2**n - 1)  # maximum possible masks excluding all-ones mask
             return self.num_samples
 
-        total_masks = 2**target_length - 1  # exclude all-ones mask
+        total_masks = 2**n - 1  # exclude all-ones mask
         return int(total_masks * self.fraction)
-
-    def _get_next_split(
-        self,
-        target_length: int,
-        device: torch.device,
-        generated_masks_num: int,
-        existing_masks: list[Tensor] | None = None,
-    ) -> Tensor | None:
-        r = self._get_next_split_base(
-            target_length=target_length,
-            device=device,
-            generated_masks_num=generated_masks_num,
-            existing_masks=existing_masks,
-        )
-        if r is not None:
-            return r
-
-        if generated_masks_num < self._get_num_splits(target_length):
-            return self._get_random_split(target_length=target_length, device=device)
-        return None
 
     # pylint: disable=unused-argument
     def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:

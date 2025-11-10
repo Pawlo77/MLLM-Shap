@@ -18,6 +18,7 @@ from ...connectors.base.model_response import ModelResponse
 from ...utils.logger import get_logger
 from ...utils.other import extend_tensor
 from ..base.explainer import BaseExplainer, BaseShapExplainer
+from ..base.approx import BaseShapApproximation
 from ..explainer_result import ExplainerResult
 from ..precise import PreciseShapExplainer
 from ..normalizers import MinMaxNormalizer
@@ -47,7 +48,10 @@ class HierarchicalExplainer(BaseExplainer):
 
     mode: Mode
     """The mode of the hierarchical explainer."""
-    
+
+    use_importance_sampling: bool = False
+    """Whether to use importance for setting sampling budget (for each group)."""
+
     _progress_bar: tqdm | None = None
 
     def __init__(
@@ -55,30 +59,37 @@ class HierarchicalExplainer(BaseExplainer):
         shap_explainer: BaseShapExplainer | None = None,
         mode: Mode = Mode.TEXT,
         k: int = 10,
+        use_importance_sampling: bool = False,
         **kwargs: Any,
     ) -> None:
         """
         Initialize the explainer.
 
         Args:
-            k: Maximum final group size at each level.
-            shap_explainer: The SHAP explainer instance. 
+            shap_explainer: The SHAP explainer instance.
                 Should use :class:`MinMaxNormalizer` for normalization. This is not
                 validated internally, but strongly recommended for correct results.
+            k: Maximum final group size at each level.
             mode: The mode of the hierarchical explainer.
+            use_importance_sampling: Whether to use importance for setting sampling budget (for each group).
+                Applicable only if `shap_explainer` supports fraction-based sampling.
             kwargs: Additional keyword arguments.
         Raises:
             ValueError: If k is less than 1 or not an integer.
         """
-        super().__init__(
-            shap_explainer=shap_explainer or PreciseShapExplainer(normalizer=MinMaxNormalizer()), **kwargs
-        )
+        super().__init__(shap_explainer=shap_explainer or PreciseShapExplainer(normalizer=MinMaxNormalizer()), **kwargs)
 
         if k < 1 or int(k) != k:
             raise ValueError("k must be an integer, at least 1.")
         self.k = k
 
         self.mode = mode
+
+        if use_importance_sampling and not isinstance(self.shap_explainer, BaseShapApproximation):
+            raise ValueError(
+                "use_importance_sampling is True, but shap_explainer does not support fraction-based approximation."
+            )
+        self.use_importance_sampling = use_importance_sampling
 
     def __get_subgroups_num(self, n: int) -> int:
         """
@@ -99,6 +110,7 @@ class HierarchicalExplainer(BaseExplainer):
         group_ids: Tensor | None = None,
         shap_values_mask: Tensor | None = None,
         generation_kwargs: dict[str, Any] | None = None,
+        importance: float = 1.0,
         **explanation_kwargs: Any,
     ) -> Tensor:
         """
@@ -114,6 +126,8 @@ class HierarchicalExplainer(BaseExplainer):
                 should be considered for SHAP value calculations.
                 Takes precedence over group_ids if both are provided.
             generation_kwargs: Additional generation arguments.
+            importance: Importance value for the group, used for sampling budget if
+                `use_importance_sampling` is True.
             explanation_kwargs: Additional explanation arguments.
         Returns:
             A tensor containing the SHAP values for the group.
@@ -152,6 +166,20 @@ class HierarchicalExplainer(BaseExplainer):
                 (group_ids > 0).sum().item(),
             )
 
+        if self.use_importance_sampling:
+            # set fraction based on importance
+            base_fraction = cast(BaseShapApproximation, self.shap_explainer).fraction
+            if base_fraction is None:
+                raise ValueError("shap_explainer fraction is None, cannot use importance sampling.")
+
+            new_fraction = min(1.0, base_fraction * importance)
+            cast(BaseShapApproximation, self.shap_explainer).fraction = new_fraction
+            logger.debug(
+                "Setting SHAP explainer fraction to %.4f based on importance %.4f.",
+                new_fraction,
+                importance,
+            )
+
         _ = self.shap_explainer(
             model=self.model,
             source_chat=chat,
@@ -159,6 +187,10 @@ class HierarchicalExplainer(BaseExplainer):
             **explanation_kwargs,
             **(generation_kwargs or {}),
         )
+
+        if self.use_importance_sampling:
+            # restore original fraction
+            cast(BaseShapApproximation, self.shap_explainer).fraction = base_fraction
 
         if shap_values_mask is not None:
             del chat.external_shap_values_mask
@@ -174,12 +206,14 @@ class HierarchicalExplainer(BaseExplainer):
         cache = cast(ExplainerCache, response.chat.cache)  # type: ignore[union-attr]
         return cache.normalized_values[: cache.n]
 
+    # pylint: disable=too-many-locals
     def __compute(
         self,
         chat: BaseMllmChat,
         response: ModelResponse,
         group_mask: Tensor,
         generation_kwargs: dict[str, Any] | None = None,
+        importance: float = 1.0,
         **explanation_kwargs: Any,
     ) -> Tensor:
         """
@@ -191,6 +225,8 @@ class HierarchicalExplainer(BaseExplainer):
             group_mask: A boolean tensor indicating the group.
             generation_kwargs: Additional generation arguments.
             explanation_kwargs: Additional explanation arguments.
+            importance: Importance value for the group, used for sampling budget if
+                `use_importance_sampling` is True.
         Returns:
             A tensor containing the hierarchical SHAP values for the group.
         """
@@ -213,12 +249,13 @@ class HierarchicalExplainer(BaseExplainer):
                 response=response,
                 shap_values_mask=group_mask,
                 generation_kwargs=generation_kwargs,
+                importance=importance,
                 **explanation_kwargs,
             )
             return r
 
         group_ids = torch.zeros_like(group_mask, dtype=torch.long)
-        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(
+        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(  # noqa: E203
             n=n, k=subgroup_size
         )  # noqa: E203
 
@@ -228,6 +265,7 @@ class HierarchicalExplainer(BaseExplainer):
             response=response,
             group_ids=group_ids,
             generation_kwargs=generation_kwargs,
+            importance=importance,
             **explanation_kwargs,
         )
 
@@ -239,6 +277,7 @@ class HierarchicalExplainer(BaseExplainer):
                 response=response,
                 group_mask=subgroup_mask,
                 generation_kwargs=generation_kwargs,
+                importance=float(normalized_shap_values[subgroup_mask][0].item()),
                 **explanation_kwargs,
             )
             normalized_shap_values[subgroup_mask] *= subgroup_shap_values[subgroup_mask]
@@ -300,10 +339,7 @@ class HierarchicalExplainer(BaseExplainer):
             generation_kwargs=generation_kwargs,
             **explanation_kwargs,
         )
-
-        # reset call counters
         self.n_calls = 0
-        self.total_n_calls = 0
 
         t0 = time()
         logger.info("Generating full response from the model...")
@@ -358,6 +394,7 @@ class HierarchicalExplainer(BaseExplainer):
                     response=response,
                     group_mask=group_mask,
                     generation_kwargs=generation_kwargs,
+                    importance=float(normalized_shap_values[group_mask][0].item()),
                     **explanation_kwargs,
                 )
                 normalized_shap_values[group_mask] *= group_shap_values[group_mask]
@@ -431,18 +468,14 @@ class HierarchicalExplainer(BaseExplainer):
 
         # Previous token info
         prev_mask = torch.cat([torch.tensor([False], device=device), mask[:-1]])
-        prev_modality = torch.cat(
-            [torch.tensor([modality_flag[0]], device=device), modality_flag[:-1]]
-        )
+        prev_modality = torch.cat([torch.tensor([modality_flag[0]], device=device), modality_flag[:-1]])
 
         # Start new group if:
         # - token is explainable
         # - AND (previous not explainable OR modality changed OR role changed (if `include_role`))
         group_mask = ~prev_mask | (modality_flag != prev_modality)
         if include_role:
-            prev_role = torch.cat(
-                [torch.tensor([token_roles[0]], device=device), token_roles[:-1]]
-            )
+            prev_role = torch.cat([torch.tensor([token_roles[0]], device=device), token_roles[:-1]])
             group_mask |= token_roles != prev_role
         group_start = mask & group_mask
 
