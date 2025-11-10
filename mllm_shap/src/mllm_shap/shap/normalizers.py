@@ -58,6 +58,7 @@ class PowerShiftNormalizer(BaseNormalizer):
         normalized = powered / total
         return normalized
 
+
 class MinMaxNormalizer(BaseNormalizer):
     """
     Normalizer that scales SHAP values to the [0, 1] range using min-max normalization
@@ -71,4 +72,4 @@ class MinMaxNormalizer(BaseNormalizer):
             return torch.ones_like(shap_values) / len(shap_values)
         normalized = (shap_values - min_val) / (max_val - min_val)
         normalized /= normalized.sum()
-        return normalized 
+        return normalized

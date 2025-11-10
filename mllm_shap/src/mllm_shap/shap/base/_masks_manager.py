@@ -1,14 +1,16 @@
 """Mask manager for SHAP explainability."""
 
-from abc import ABC
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Generator
+from typing import Any, Generator
+
 import torch
 from torch import Tensor
 
-from ...utils.logger import get_logger
-
 from ...connectors.base.chat import BaseMllmChat
+from ...utils.logger import get_logger
 
 logger: Logger = get_logger(__name__)
 
@@ -22,6 +24,23 @@ class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
         """Initialize the MaskGenerator."""
         super().__init__()
         self.generated_masks = 0
+        self._iter = self._mask_iter()
+
+    def send(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
+        return self._iter.send(*args, **kwargs)
+
+    def throw(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
+        return self._iter.throw(*args, **kwargs)
+
+    @abstractmethod
+    def _mask_iter(self) -> Generator[tuple[Tensor | None, int], None, None]:
+        """Iterator that yields unique masks and their hashes."""
+
+    def __iter__(self) -> "MaskGenerator":
+        return self
+
+    def __next__(self) -> tuple[Tensor | None, int]:
+        return next(self._iter)
 
 
 class NoTokensToExplainError(Exception):
@@ -43,12 +62,13 @@ class MasksManager:
     _seen_masks: set[int]
     """Set of seen mask hashes to avoid duplicates."""
 
-    def __init__(self, chat: BaseMllmChat) -> None:
+    def __init__(self, chat: BaseMllmChat, log_stats: bool = False) -> None:
         """
         Initialize the MasksManager.
 
         Args:
             chat: The chat object containing the mask and token information.
+            log_stats: Whether to log statistics about the mask generation.
         Raises:
             NoTokensToExplainError: If there are no tokens to explain in the provided chat.
         """
@@ -66,6 +86,13 @@ class MasksManager:
         self.n = n
 
         self._seen_masks = set()
+
+        if log_stats:
+            logger.info(
+                "Number of tokens for explainability: %d (up to %d additional calls)",
+                self.n,
+                self.max_masks_number,
+            )
 
     @property
     def max_masks_number(self) -> int:
