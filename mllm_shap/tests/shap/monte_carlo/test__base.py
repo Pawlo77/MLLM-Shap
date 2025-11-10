@@ -58,7 +58,7 @@ class TestBaseMcShapExplainer:
     def test_generate_minimal_splits_shape_and_values(self, explainer: BaseMcShapExplainer) -> None:
         """_generate_minimal_splits() should return correct shape and one-hot pattern."""
         device = torch.device("cpu")
-        masks = explainer.generate_minimal_splits(target_length=3, device=device)
+        masks = explainer._generate_minimal_splits(target_length=3, device=device)
         assert masks.shape == (4, 3)
         # first row all False
         assert torch.sum(masks[0]) == 0
@@ -76,17 +76,17 @@ class TestBaseMcShapExplainer:
         explainer.num_samples = 6  # enough for minimal + random
 
         # first call: minimal mask
-        mask0 = explainer._get_next_split(target_length=target_length, device=device, generated_masks=0)
+        mask0 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=0)
         assert mask0.shape == (target_length,)
         assert mask0.dtype == torch.bool
 
         # next minimal mask
-        mask1 = explainer._get_next_split(target_length=target_length, device=device, generated_masks=1)
+        mask1 = explainer._get_next_split(target_length=target_length, device=device, generated_masks_num=1)
         assert mask1 is not None
 
         # random mask after minimal ones
         mask_random = explainer._get_next_split(
-            target_length=target_length, device=device, generated_masks=target_length + 1
+            target_length=target_length, device=device, generated_masks_num=target_length + 1
         )
         assert mask_random.shape == (1, target_length)
         assert mask_random.dtype == torch.bool
@@ -96,7 +96,7 @@ class TestBaseMcShapExplainer:
         device = torch.device("cpu")
         explainer.num_samples = 3
         explainer.include_minimal_masks = False
-        result = explainer._get_next_split(target_length=3, device=device, generated_masks=3)
+        result = explainer._get_next_split(target_length=3, device=device, generated_masks_num=3)
         assert result is None
 
     def test_calculate_shap_values_computation(self, explainer: BaseMcShapExplainer) -> None:

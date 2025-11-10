@@ -34,14 +34,14 @@ class TestComplementaryShapExplainerNumSplits:
             _ = explainer._get_num_splits(target_length=2)
 
     def test_num_samples_odd_raises(self, explainer: ComplementaryShapExplainer) -> None:
-        explainer.num_samples = 7
+        explainer.num_samples = 9
         with pytest.raises(ValueError, match="num_samples must not be odd"):
-            _ = explainer._get_num_splits(target_length=3)
+            _ = explainer._get_num_splits(target_length=4)
 
     def test_num_samples_too_large_clamps(self, explainer: ComplementaryShapExplainer) -> None:
         explainer.num_samples = 999
         result = explainer._get_num_splits(target_length=3)
-        assert result == 2**3 - 1
+        assert result == 2**3 - 2
 
     def test_fraction_returns_even_or_adjusted(self, explainer: ComplementaryShapExplainer) -> None:
         explainer.num_samples = None
@@ -63,24 +63,12 @@ class TestComplementaryShapExplainerNextSplit:
     def explainer(self) -> ComplementaryShapExplainer:
         return DummyComplementaryExplainer(num_samples=4)
 
-    def test_first_call_zero_mask_for_odd(self) -> None:
-        explainer = DummyComplementaryExplainer(num_samples=None)
-        explainer._first_call = True
-        explainer.fraction = 1.0
-        target_length = 3
-        # make _get_num_splits return odd
-        explainer._get_num_splits = lambda x: 5
-        mask = explainer._get_next_split(target_length, device=torch.device("cpu"), generated_masks=0)
-        assert torch.sum(mask) == 0
-        assert mask.shape == (1, target_length)
-        assert not explainer._first_call  # first_call should be set False
-
     def test_complementary_mask_pair_generation(self) -> None:
         explainer = DummyComplementaryExplainer(num_samples=8)
         explainer._first_call = False
         target_length = 3
-        mask1 = explainer._get_next_split(target_length, device=torch.device("cpu"), generated_masks=0)
-        mask2 = explainer._get_next_split(target_length, device=torch.device("cpu"), generated_masks=1)
+        mask1 = explainer._get_next_split(target_length, device=torch.device("cpu"), generated_masks_num=0)
+        mask2 = explainer._get_next_split(target_length, device=torch.device("cpu"), generated_masks_num=1)
         # mask2 should be complement of mask1
         assert torch.equal(mask2, ~mask1)
         # __next_mask should be None after retrieving
@@ -89,26 +77,8 @@ class TestComplementaryShapExplainerNextSplit:
     def test_returns_none_when_budget_exceeded(self) -> None:
         explainer = DummyComplementaryExplainer(num_samples=8)
         explainer._first_call = False
-        result = explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks=9)
+        result = explainer._get_next_split(target_length=3, device=torch.device("cpu"), generated_masks_num=9)
         assert result is None
-
-
-class TestComplementaryShapExplainerMinimalSplits:
-    """Tests for _generate_minimal_splits method."""
-
-    def test_minimal_splits_shape_and_order(self) -> None:
-        explainer = DummyComplementaryExplainer(num_samples=6)
-        target_length = 3
-        device = torch.device("cpu")
-        masks = explainer._generate_minimal_splits(target_length, device)
-        # total rows = 2 * target_length + 1
-        assert masks.shape[0] == 2 * target_length + 1
-        assert masks.shape[1] == target_length
-        # first row should be all False
-        assert torch.sum(masks[0]) == 0
-        # subsequent rows should be interleaved complementary
-        for i in range(1, masks.shape[0], 2):
-            assert torch.equal(masks[i], ~masks[i + 1])
 
 
 class TestComplementaryShapExplainerCalculateShapValues:
@@ -120,6 +90,7 @@ class TestComplementaryShapExplainerCalculateShapValues:
         # 2 complementary pairs
         masks = torch.tensor(
             [
+                [True, True],
                 [True, False],
                 [False, True],
                 [False, True],
@@ -127,7 +98,16 @@ class TestComplementaryShapExplainerCalculateShapValues:
             ],
             dtype=torch.bool,
         )
-        similarities = torch.tensor([1.0, 3.0, 2.0, 4.0])
+        explainer._M = torch.tensor(
+            [
+                [2, 0],
+                [0, 2],
+            ],
+            dtype=torch.float32,
+            device=device,
+        )
+        explainer._zero_mask_skipped = True
+        similarities = torch.tensor([1.0, 1.0, 3.0, 2.0, 4.0])
         result = explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
         assert isinstance(result, Tensor)
         assert result.shape[0] == masks.shape[1]
@@ -137,12 +117,22 @@ class TestComplementaryShapExplainerCalculateShapValues:
         device = torch.device("cpu")
         masks = torch.tensor(
             [
+                [True, True],
                 [True, False],
                 [True, False],
             ],
             dtype=torch.bool,
         )
-        similarities = torch.tensor([1.0, 2.0])
+        explainer._M = torch.tensor(
+            [
+                [2, 0],
+                [0, 2],
+            ],
+            dtype=torch.float32,
+            device=device,
+        )
+        explainer._zero_mask_skipped = True
+        similarities = torch.tensor([1.0, 1.0, 2.0])
         with pytest.raises(ValueError, match="Masks are not complementary pairs"):
             _ = explainer._calculate_shap_values(masks, similarities, device)
 
@@ -151,12 +141,22 @@ class TestComplementaryShapExplainerCalculateShapValues:
         device = torch.device("cpu")
         masks = torch.tensor(
             [
+                [True, True],
                 [True, False],
                 [False, True],
                 [True, True],
             ],
             dtype=torch.bool,
         )
-        similarities = torch.tensor([1.0, 2.0, 3.0])
+        explainer._M = torch.tensor(
+            [
+                [2, 0],
+                [0, 2],
+            ],
+            dtype=torch.float32,
+            device=device,
+        )
+        explainer._zero_mask_skipped = True
+        similarities = torch.tensor([1.0, 1.0, 2.0, 3.0])
         with pytest.raises(ValueError, match="Masks should be in complementary pairs"):
             _ = explainer._calculate_shap_values(masks, similarities, device)

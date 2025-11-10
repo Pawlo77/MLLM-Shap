@@ -15,8 +15,14 @@ class PreciseShapExplainer(BaseShapExplainer):
 
     __splits_generator: Generator[Tensor, None, None] | None = None
 
-    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
-        if generated_masks == 0:
+    def _get_next_split(
+        self,
+        target_length: int,
+        device: torch.device,
+        generated_masks_num: int,
+        existing_masks: list[Tensor] | None = None,
+    ) -> Tensor | None:
+        if generated_masks_num == 0:
             self.__splits_generator = PreciseShapExplainer.__get_splits_generator(
                 target_length=target_length,
                 device=device,
