@@ -1,6 +1,7 @@
 """Complementary SHAP explainer implementation."""
 
 from logging import Logger
+from typing import Any
 
 import torch
 from torch import Tensor

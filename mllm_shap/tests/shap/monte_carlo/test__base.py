@@ -106,7 +106,7 @@ class TestBaseMcShapExplainer:
         similarities = torch.tensor([1.0, 3.0])
         result = explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
         assert isinstance(result, Tensor)
-        # included_mean = [(1+0)/1, (0+3)/1] = [1,3]
-        # excluded_mean = [(0+3)/1, (1+0)/1] = [3,1]
+        # included_mean = [(1 + 0)/1, (0 + 3)/1] = [1, 3]
+        # excluded_mean = [(0 + 3)/1, (1 + 0)/1] = [3, 1]
         # diff = [-2, 2]
         assert torch.allclose(result, torch.tensor([-2.0, 2.0]))

@@ -146,7 +146,8 @@ class BaseShapExplainer(ABC):
         Args:
             masks (Tensor): 2D boolean tensor [num_masks, num_tokens],
                 each row indicates which tokens are included in that mask.
-                First mask is an initial mask.
+                The first mask (index 0) represents the base mask with all tokens included
+                (all True values).
             similarities (Tensor): 1D tensor [num_masks], similarity score for each mask.
             device: The device to create the SHAP values on.
 
@@ -516,7 +517,7 @@ class _ExplainerConfig(BaseModel):
 
 
 class BaseExplainer(ABC):
-    """Convenience  base client for SHAP explainers."""
+    """Convenience base client for SHAP explainers."""
 
     shap_explainer: BaseShapExplainer
     """The SHAP explainer instance."""
@@ -564,7 +565,7 @@ class BaseExplainer(ABC):
         Args:
             chat: The chat instance.
             generation_kwargs: The generation kwargs for the model.generate method.
-            explanation_kwargs: The explanation kwargs for the SHAP explainer. Shoul not contain
+            explanation_kwargs: The explanation kwargs for the SHAP explainer. Should not contain
                 duplicate keys with generation_kwargs.
         Returns:
             The ExplainerResult instance.
