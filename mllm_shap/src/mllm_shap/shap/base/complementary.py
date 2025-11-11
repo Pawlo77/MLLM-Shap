@@ -48,19 +48,18 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         self._M = None
         self._C = None
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,duplicate-code
     def _get_masks_generator(
         self,
         mask_manager: MasksManager,
         device: torch.device,
         masks: list[Tensor],
-        only_unique: bool = True,
         allow_full_or_empty: bool = False,
     ) -> MaskGenerator:
         n = mask_manager.n
         num_splits = self._get_num_splits(mask_manager.n)
         get_next_split = self._get_next_split
-        mode = 1  # 1 - S, -1 - N \ S = ~S
+        allow_mask_duplicates = self.allow_mask_duplicates
 
         # Initialize M matrix
         if self._M is None:
@@ -75,10 +74,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         class _MasksGenerator(MaskGenerator):
             """Generator class for masks."""
 
-            def __init__(self, mode: int) -> None:
+            def __init__(self) -> None:
                 """Initialize the MaskGenerator."""
                 super().__init__()
-                self._mode = mode
                 self._next_result: tuple[Tensor | None, int] | None = None
 
             def _mask_iter(self) -> Generator[tuple[Tensor | None, int], None, None]:
@@ -117,10 +115,8 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
 
                     new_mask_hash = mask_manager.get_hash(new_mask)
                     new_mask_neg_hash = mask_manager.get_hash(new_mask_neg)
-                    if only_unique:
-                        if only_unique and (
-                            mask_manager.seen(mask_hash=new_mask_hash) or mask_manager.seen(mask_hash=new_mask_neg_hash)
-                        ):
+                    if not allow_mask_duplicates:
+                        if mask_manager.seen(mask_hash=new_mask_hash) or mask_manager.seen(mask_hash=new_mask_neg_hash):
                             logger.debug(
                                 "Generated duplicate mask of size %d, skipping.",
                                 coalition_size,
@@ -134,10 +130,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                     for split in (new_split, new_split_neg):
                         coalition_size = int(split.sum().item())
                         logger.debug(
-                            "new_split: %s, coalition_size: %d, mode: %d",
+                            "new_split: %s, coalition_size: %d",
                             split.squeeze(0),
                             coalition_size,
-                            self._mode,
                         )
 
                         BaseComplementaryShapApproximation._increment_coalition_val(  # pylint: disable=protected-access
@@ -150,7 +145,7 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
             def __len__(self) -> int | None:
                 return num_splits
 
-        return _MasksGenerator(mode=mode)
+        return _MasksGenerator()
 
     def _calculate_C_matrix(self, masks: Tensor, similarities: Tensor, device: torch.device) -> None:
         """
