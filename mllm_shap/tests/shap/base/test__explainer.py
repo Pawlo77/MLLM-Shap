@@ -80,7 +80,7 @@ class TestBaseShapExplainer:
         responses = [dummy_response_instance, dummy_response_instance]
 
         explainer_instance.similarity_measure.operates_on_embeddings = True
-        shap_values, normalized = explainer_instance._BaseShapExplainer__get_shap_values(
+        shap_values, normalized = explainer_instance._get_shap_values(
             source_chat=dummy_chat_instance,
             model=dummy_model_instance,
             masks=masks,
@@ -155,12 +155,12 @@ class TestBaseShapExplainer:
         dummy_chat_instance: BaseMllmChat,
         dummy_response_instance: ModelResponse,
     ) -> None:
-        """Test __save_to_cache assigns a new ExplainerCache when no existing cache."""
+        """Test _save_to_cache assigns a new ExplainerCache when no existing cache."""
         responses = [dummy_response_instance]
         masks = torch.ones((2, 3), dtype=torch.bool)
         shap_values = torch.zeros(3)
         norm_values = torch.ones(3)
-        explainer_instance._BaseShapExplainer__save_to_cache(
+        explainer_instance._save_to_cache(
             chat=dummy_chat_instance,
             source_chat=deepcopy(dummy_chat_instance),
             responses=responses,
@@ -176,7 +176,7 @@ class TestBaseShapExplainer:
         dummy_chat_instance: BaseMllmChat,
         dummy_response_instance: ModelResponse,
     ) -> None:
-        """Test __save_to_cache raises ValueError when cache already exists."""
+        """Test _save_to_cache raises ValueError when cache already exists."""
         dummy_chat_instance.cache = object()  # simulate existing cache
         responses = [dummy_response_instance]
         masks = torch.ones((2, 3), dtype=torch.bool)
@@ -184,7 +184,7 @@ class TestBaseShapExplainer:
         norm_values = torch.ones(3)
 
         with pytest.raises(ValueError):
-            explainer_instance._BaseShapExplainer__save_to_cache(
+            explainer_instance._save_to_cache(
                 chat=dummy_chat_instance,
                 source_chat=deepcopy(dummy_chat_instance),
                 responses=responses,
