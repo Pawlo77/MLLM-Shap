@@ -252,7 +252,7 @@ class TestComplementaryShapExplainerCalculateShapValues:
         explainer._zero_mask_skipped = True
         masks = torch.ones((2, 2), dtype=torch.bool)
         similarities = torch.ones(2)
-        with pytest.raises(RuntimeError, match="M and C matrices must be initialized"):
+        with pytest.raises(RuntimeError, match="M matrix must be calculated before final calculations."):
             _ = explainer._calculate_shap_values(masks, similarities, torch.device("cpu"))
 
     def test_result_matches_manual_computation(self) -> None:
