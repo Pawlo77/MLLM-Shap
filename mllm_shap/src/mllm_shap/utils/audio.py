@@ -1,17 +1,12 @@
 """Utility functions for audio processing and display."""
 
 from typing import TYPE_CHECKING
+from io import BytesIO
 import numpy as np
 import torch
-import torchaudio.functional as AF
 import soundfile as sf
 from torch import Tensor
 from pydub import AudioSegment
-from io import BytesIO
-import soundfile as sf
-import torch
-from torch import Tensor
-from torchaudio import save
 
 if TYPE_CHECKING:
     from IPython.display import Audio
@@ -52,33 +47,23 @@ class TorchAudioHandler:
         Returns:
             A tuple containing the audio tensor and the sample rate.
         """
-
         try:
             waveform_np, sample_rate = sf.read(BytesIO(audio_content))
             waveform = torch.from_numpy(waveform_np).float()
 
-            if waveform.dim() == 1:
+            if waveform.dim() == MONO_CHANNELS:
                 waveform = waveform.unsqueeze(0)
-            else:
+            elif waveform.dim() == WAVEFORM_2D_DIM:
                 waveform = waveform.T
+
+            if waveform.shape[0] > MONO_CHANNELS:
+                waveform = waveform.mean(dim=0, keepdim=True)
+
+            return waveform, int(sample_rate)
 
         except Exception as e:
             print(f"Error loading with soundfile: {e}, for format: {audio_format}.")
-            raise e
-
-        if waveform.shape[0] > 1:
-            waveform = waveform.mean(dim=0, keepdim=True)
-
-        if sample_rate != TARGET_SAMPLE_RATE:
-            # AF.resample expects shape [*, time]. We currently have [1, time].
-            waveform = AF.resample(
-                waveform,
-                orig_freq=sample_rate,
-                new_freq=TARGET_SAMPLE_RATE,
-            )
-            sample_rate = TARGET_SAMPLE_RATE
-
-        return waveform, sample_rate
+            raise
 
     @staticmethod
     def to_bytes(
@@ -125,7 +110,7 @@ class TorchAudioHandler:
 
         if fmt == AUDIO_FORMAT_MP3:
             # requires ffmpeg on PATH; pydub delegates to ffmpeg for MP3 encoding
-            # (if ffmpeg is missing you'll get an error from pydub)
+            # (if ffmpeg is missing will get an error from pydub)
             pcm16 = (wf.numpy() * 32767.0).astype(np.int16)
             seg = AudioSegment(
                 pcm16.tobytes(),
