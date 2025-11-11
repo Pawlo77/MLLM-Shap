@@ -80,11 +80,10 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     """
     mode = Mode[shap_cfg.mode]
     normalizer_cls = NORMALIZER_MAP[shap_cfg.normalizer]
-    reducer_cls = REDUCER_MAP[shap_cfg.reducer]
     similarity_cls = SIMILARITY_MAP.get(shap_cfg.similarity, TfIdfCosineSimilarity)
 
     normalizer = normalizer_cls()  # PowerShiftNormalizer() uses default power=1.0
-    reducer = reducer_cls()
+    reducer = REDUCER_MAP[shap_cfg.reducer]()
     similarity = similarity_cls()
 
     model = _build_model(device=device, connector=connector)
