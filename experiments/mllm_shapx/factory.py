@@ -13,7 +13,7 @@ from mllm_shap.connectors.enums import (
     SystemRolesSetup,
 )
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
-from mllm_shap.shap import Explainer
+from mllm_shap.shap import Explainer, ComplementaryNeymanShapExplainer, ComplementaryShapExplainer
 from mllm_shap.shap.monte_carlo import LimitedMcShapExplainer, StandardMcShapExplainer
 from mllm_shap.shap.enums import Mode
 from mllm_shap.shap.precise import PreciseShapExplainer
@@ -63,7 +63,7 @@ def _build_external_embedding(
     )
 
 
-def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arguments
+def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arguments,too-many-branches
     device: torch.device,
     shap_cfg: ShapConfig,
     variant: ExplainerVariant,
@@ -74,22 +74,24 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     concrete_fraction: float | None = None,
 ) -> Explainer:
     """
-    Create (model + shap_explainer) wrapped in Explainer, with placeholders for MC
-    (first entry of num_samples/fractions). Concrete values can be re-instantiated
-    later by the runner.
+    Create (model + shap_explainer) wrapped in Explainer.
+    - complementary: MC-like; pass through num_samples/fraction
+    - neyman: AUTO mode; explicitly pass neither num_samples nor fraction
     """
     mode = Mode[shap_cfg.mode]
     normalizer_cls = NORMALIZER_MAP[shap_cfg.normalizer]
     similarity_cls = SIMILARITY_MAP.get(shap_cfg.similarity, TfIdfCosineSimilarity)
 
-    normalizer = normalizer_cls()  # PowerShiftNormalizer() uses default power=1.0
+    normalizer = normalizer_cls()
     reducer = REDUCER_MAP[shap_cfg.reducer]()
     similarity = similarity_cls()
 
     model = _build_model(device=device, connector=connector)
     external_emb = _build_external_embedding(model, embedding_cfg, device)
 
-    if variant.explainer_type.lower() == ExplainerType.EXACT.value:
+    t = variant.explainer_type.lower()
+
+    if t == ExplainerType.EXACT.value:
         kwargs: Dict[str, Any] = {
             "mode": mode,
             "embedding_reducer": reducer,
@@ -100,10 +102,10 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
             kwargs["embedding_model"] = external_emb
         shap_explainer = PreciseShapExplainer(**kwargs)
 
-    elif variant.explainer_type.lower() in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
+    elif t in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
         ctor: Type[Any] = (
             LimitedMcShapExplainer
-            if variant.explainer_type.lower() == ExplainerType.LIMITED_MC.value
+            if t == ExplainerType.LIMITED_MC.value
             else StandardMcShapExplainer
         )
         kwargs = {
@@ -124,6 +126,43 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
                 **kwargs,
             )
 
+    elif t == ExplainerType.COMPLEMENTARY.value:
+        # MC-like: honor num_samples/fraction
+        kwargs = {
+            "mode": mode,
+            "embedding_reducer": reducer,
+            "similarity_measure": similarity,
+            "normalizer": normalizer,
+        }
+        if external_emb is not None:
+            kwargs["embedding_model"] = external_emb
+        if concrete_num_samples is not None:
+            shap_explainer = ComplementaryShapExplainer(num_samples=int(concrete_num_samples), **kwargs)
+        else:
+            shap_explainer = ComplementaryShapExplainer(
+                num_samples=None,
+                fraction=float(concrete_fraction) if concrete_fraction is not None else None,
+                **kwargs,
+            )
+
+    elif t == ExplainerType.NEYMAN.value:
+        kwargs = {
+            "mode": mode,
+            "embedding_reducer": reducer,
+            "similarity_measure": similarity,
+            "normalizer": normalizer,
+        }
+        if external_emb is not None:
+            kwargs["embedding_model"] = external_emb
+        if concrete_num_samples is not None:
+            shap_explainer = ComplementaryNeymanShapExplainer(num_samples=int(concrete_num_samples), **kwargs)
+        else:
+            shap_explainer = ComplementaryNeymanShapExplainer(
+                num_samples=None,
+                fraction=float(concrete_fraction) if concrete_fraction is not None else None,
+                **kwargs,
+            )
+
     else:
         raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
 
@@ -136,10 +175,10 @@ def build_chat(
     audio_bytes: bytes | None,
     text_only: bool = False,
     *,
-    token_filter: Any | None = None,      # NEW
+    token_filter: Any | None = None,
 ) -> Any:
     """Prepare a chat turn with the given text+audio for the LiquidAudio model."""
-    tf = token_filter or ExcludePunctuationTokensFilter()  # use provided instance if given
+    tf = token_filter or ExcludePunctuationTokensFilter()
 
     chat = model.get_new_chat(
         system_roles_setup=SystemRolesSetup.NONE,

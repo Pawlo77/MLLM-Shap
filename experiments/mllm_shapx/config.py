@@ -5,10 +5,10 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Callable, Mapping
+from typing import Any, Dict, List, Optional, Union, Mapping, Callable
 
+from mllm_shap.shap.base.embeddings import BaseEmbeddingReducer
 from mllm_shap.shap.embeddings import (
-    BaseEmbeddingReducer,
     FirstReducer,
     MaxReducer,
     MeanReducer,
@@ -20,6 +20,7 @@ from mllm_shap.shap.normalizers import (
     AbsSumNormalizer,
     IdentityNormalizer,
     PowerShiftNormalizer,
+    MinMaxNormalizer,
 )
 from mllm_shap.shap.similarity import CosineSimilarity, TfIdfCosineSimilarity
 
@@ -89,10 +90,11 @@ class ExplainerVariant:
     """
     One experiment variant.
 
-    - explainer_type: 'exact' or 'mc'
-    - For MC you can provide:
+    - explainer_type: 'exact' | 'limited_mc' | 'standard_mc' | 'complementary' | 'neyman' | 'hierarchical'
+    - MC-like explainers ('limited_mc', 'standard_mc', 'complementary'):
         * num_samples: list[int] (each entry yields a run)
         * fractions:   list[float] in (0, 1] (each entry yields a run)
+    - 'neyman': ignores num_samples/fractions (auto mode).
     """
     explainer_type: str = ExplainerType.LIMITED_MC.value
     num_samples: Optional[List[int]] = None
@@ -136,15 +138,16 @@ class ExperimentSet:
             raw = json.load(f)
         return parse_experiment_set(raw)
 
-
 # ---------------------------
 # REGISTRIES
 # ---------------------------
 
+
 NORMALIZER_MAP = {
     "AbsSumNormalizer": AbsSumNormalizer,
     "IdentityNormalizer": IdentityNormalizer,
-    "PowerShiftNormalizer": PowerShiftNormalizer,
+    "PowerShiftNormalizer": PowerShiftNormalizer,  # has argument 'power'
+    "MinMaxNormalizer": MinMaxNormalizer,          # NEW
 }
 
 REDUCER_MAP: Mapping[str, Callable[[], BaseEmbeddingReducer]] = {
@@ -161,10 +164,10 @@ SIMILARITY_MAP = {
     SimilarityType.TFIDF_COSINE.value: TfIdfCosineSimilarity,
 }
 
-
 # ---------------------------
 # PARSING & VALIDATION
 # ---------------------------
+
 
 def _subdict(d: Dict[str, Any], key: str) -> Dict[str, Any]:
     v = d.get(key, {})
@@ -189,6 +192,8 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
                 num_samples=e.get("num_samples"),
                 fractions=e.get("fractions"),
                 name=e.get("name"),
+                hierarchical_k=e.get("hierarchical_k"),
+                hierarchical_base=e.get("hierarchical_base"),
             )
         )
 
@@ -287,13 +292,24 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             if t not in allowed:
                 errs.append(f"experiments[{i}].explainer_type must be {sorted(allowed)}.")
                 continue
-            wants_mc_knobs = t in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value) or (
+
+            # MC-like knobs required for: limited_mc, standard_mc, complementary
+            wants_mc_knobs = t in (
+                ExplainerType.LIMITED_MC.value,
+                ExplainerType.STANDARD_MC.value,
+                ExplainerType.COMPLEMENTARY.value,
+                ExplainerType.NEYMAN.value
+            ) or (
                 t == ExplainerType.HIERARCHICAL.value and (exp.hierarchical_base or "").lower()
-                in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value)
+                in (ExplainerType.LIMITED_MC.value,
+                    ExplainerType.STANDARD_MC.value,
+                    ExplainerType.COMPLEMENTARY.value,
+                    ExplainerType.NEYMAN.value)
             )
+
             if wants_mc_knobs:
                 if not exp.num_samples and not exp.fractions:
-                    errs.append(f"experiments[{i}]: MC requires num_samples or fractions.")
+                    errs.append(f"experiments[{i}]: MC-like explainer requires num_samples or fractions.")
                 if exp.num_samples is not None:
                     if not isinstance(exp.num_samples, list) or not exp.num_samples:
                         errs.append(f"experiments[{i}].num_samples must be a non-empty list of ints.")
