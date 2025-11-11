@@ -5,9 +5,10 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Callable, Mapping
 
 from mllm_shap.shap.embeddings import (
+    BaseEmbeddingReducer,
     FirstReducer,
     MaxReducer,
     MeanReducer,
@@ -143,10 +144,10 @@ class ExperimentSet:
 NORMALIZER_MAP = {
     "AbsSumNormalizer": AbsSumNormalizer,
     "IdentityNormalizer": IdentityNormalizer,
-    "PowerShiftNormalizer": PowerShiftNormalizer,  # has argument 'power'
+    "PowerShiftNormalizer": PowerShiftNormalizer,
 }
 
-REDUCER_MAP = {
+REDUCER_MAP: Mapping[str, Callable[[], BaseEmbeddingReducer]] = {
     "MeanReducer": MeanReducer,
     "MaxReducer": MaxReducer,
     "MinReducer": MinReducer,
