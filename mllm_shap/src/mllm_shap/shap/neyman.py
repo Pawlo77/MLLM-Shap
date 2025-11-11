@@ -47,6 +47,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         purely random sampling - random samples are drawn with pre-defined member
         within them. This guarantees that initialization step will cover all entries
         within `(number of players) * (number of players + 1) * initial_num_samples` calls.
+        If no `:attr:initial_num_samples` or `:attr:initial_fraction` is provided,
+        a default formula is used - `max(2, ceil(total_num_splits / (2 * n * n)))`.
 
     Warning:
         This explainer requires the source chat to have at least one non-user turn
