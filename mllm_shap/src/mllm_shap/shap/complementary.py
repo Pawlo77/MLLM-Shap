@@ -1,6 +1,7 @@
 """Complementary SHAP explainer implementation."""
 
 from logging import Logger
+from typing import cast
 
 import torch
 from torch import Tensor
@@ -21,8 +22,8 @@ class ComplementaryShapExplainer(BaseComplementaryShapApproximation):
     def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
         if not self._zero_mask_skipped:
             raise RuntimeError("Zero mask was not skipped during mask generation.")
-        if self._M is None or self._C is None:
-            raise RuntimeError("M and C matrices must be initialized before calculating SHAP values.")
+        if self._M is None or self._M.sum() == 0:
+            raise RuntimeError("M matrix must be calculated before final calculations.")
 
         # Adjust masks and similarities to account for skipped zero mask
         # that is remove full ones mask
@@ -32,7 +33,7 @@ class ComplementaryShapExplainer(BaseComplementaryShapApproximation):
 
         # exclude zero-mask column
         M = self._M[:, 1:]
-        C = self._C[:, 1:]
+        C = cast(Tensor, self._C)[:, 1:]
 
         # it is not guaranteed especially with small budget
         non_zero_mask = M > 0
