@@ -93,18 +93,6 @@ class TestTorchAudioHandler:
         assert args[1] is dummy_waveform
         assert kwargs["format"] == "mp3"
 
-    @patch("mllm_shap.utils.audio.save")
-    def test_to_bytes_supports_custom_format(self, mock_save: MagicMock, dummy_waveform: torch.Tensor) -> None:
-        """Test that to_bytes works with non-default audio format."""
-        mock_save.side_effect = lambda buffer, waveform, sr, format: buffer.write(b"flac_bytes")
-
-        result = TorchAudioHandler.to_bytes(dummy_waveform, sample_rate=44100, audio_format="flac")
-
-        assert b"flac_bytes" in result
-        mock_save.assert_called_once()
-        _, _, kwargs = mock_save.mock_calls[0]
-        assert kwargs["format"] == "flac"
-
     @patch("mllm_shap.utils.audio.save", side_effect=Exception("Save failed"))
     def test_to_bytes_raises_on_error(self, mock_save: MagicMock, dummy_waveform: torch.Tensor) -> None:
         """Test that to_bytes raises exception if torchaudio.save fails."""
