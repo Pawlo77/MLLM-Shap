@@ -58,14 +58,13 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
     """
     Materialize user-defined variants into concrete runs.
     - exact: single run
-    - limited_mc/standard_mc:
+    - limited_mc/standard_mc/complementary:
         - num_samples: one run per entry
         - fractions: one run per entry
+    - neyman:
+        - single AUTO run (ignores ns/fractions even if provided)
     - hierarchical:
-        - base exact: single run
-        - base limited/standard mc:
-            - num_samples/fractions drive multiple runs
-        - no knobs → single run
+        - unchanged here (will be tightened later to use complementary/neyman only)
     """
     out: List[ExpandedVariant] = []
 
@@ -77,7 +76,10 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
             out.append(ExpandedVariant(run_slug=slug, variant=v, fraction=None, num_samples=None))
             continue
 
-        if t in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
+        if t in (ExplainerType.LIMITED_MC.value,
+                 ExplainerType.STANDARD_MC.value,
+                 ExplainerType.COMPLEMENTARY.value,
+                 ExplainerType.NEYMAN.value):
             if v.num_samples:
                 for ns in v.num_samples:
                     ns_i = int(ns)
@@ -90,7 +92,6 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
                     suffix = f"{t}_frac{str(f).replace('.', '_')}"
                     slug = (v.name + "_" + suffix) if v.name else suffix
                     out.append(ExpandedVariant(slug, v, f, None))
-            # If neither list present (should be validated earlier), still nothing to add.
             continue
 
         if t == ExplainerType.HIERARCHICAL.value:
@@ -103,7 +104,12 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
                 slug = v.name or "hier_exact"
                 out.append(ExpandedVariant(slug, v, None, None, base_variant=base))
 
-            elif base in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
+            elif base in (
+                ExplainerType.LIMITED_MC.value,
+                ExplainerType.STANDARD_MC.value,
+                ExplainerType.COMPLEMENTARY.value,
+                ExplainerType.NEYMAN.value
+            ):
                 if v.num_samples:
                     for ns in v.num_samples:
                         ns_i = int(ns)
@@ -123,7 +129,6 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
                 raise ValueError(f"Unsupported hierarchical base: {base}")
             continue
 
-        # Should have been validated already:
         raise ValueError(f"Unsupported explainer_type: {v.explainer_type}")
 
     return out
