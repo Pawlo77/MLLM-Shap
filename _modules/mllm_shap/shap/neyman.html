@@ -387,6 +387,7 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If sampling parameters are invalid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;allow_mask_duplicates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">initial_num_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">initial_fraction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -535,7 +536,6 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_masks_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;only_unique&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># won&#39;t cause issues as we force `Role.ASSISTANT` presence in chat</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;allow_full_or_empty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_masks_generator</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -586,12 +586,18 @@
         <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
 
         <span class="n">positive_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">positive_mask</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Some entries in M matrix are zero. They are all expected to be &gt;= `initial_num_splits`.&quot;</span>
-            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__step</span> <span class="o">==</span> <span class="n">_Step</span><span class="o">.</span><span class="n">NEYMAN_ALLOCATION</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">positive_mask</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Some entries in M matrix are zero. They are all expected to be &gt;= `initial_num_splits`.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">C</span> <span class="o">/</span> <span class="n">M</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">C</span> <span class="o">/</span> <span class="n">M</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># it is not guaranteed especially with small budget</span>
+        <span class="n">non_zero_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+        <span class="n">ratio</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">M</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__get_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
