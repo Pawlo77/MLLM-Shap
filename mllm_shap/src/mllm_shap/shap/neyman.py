@@ -61,28 +61,34 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_fraction: float | None
     """Initial fraction of samples to draw in the first step."""
 
-    _initial_num_splits: int
+    __use_default_initial_sampling_formula: bool = False
+    """
+    Whether to use default formula for initial sampling
+    Set when both `initial_num_samples` and `initial_fraction` are None.
+    """
+
+    __initial_num_splits: int
     """Number of initial splits for each entry of matrix M."""
 
-    _C_squared: Tensor | None
+    __C_squared: Tensor | None
     """
     C squared matrix for Neyman allocation -
     C[i, j] =sum of squared complementary contributions
         for feature i in coalitions of size j+1.
     """
 
-    _M_hat: Tensor | None
+    __M_hat: Tensor | None
     """
     M_hat matrix for Neyman allocation,
     holding number of samples to be allocated
     of size i + 1 at index i.
     """
 
-    _step: int
+    __step: int
     """Steps in the Neyman allocation process."""
 
-    _i: int
-    _j: int
+    __i: int
+    __j: int
     """Indices for tracking position in the _M matrix."""
 
     def __init__(
@@ -104,10 +110,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             ValueError: If sampling parameters are invalid.
         """
         super().__init__(*args, **kwargs)
-        self._validate_sampling_params(
-            num_samples=initial_num_samples,
-            fraction=initial_fraction,
-        )
+
+        if initial_num_samples is None and initial_fraction is None:
+            logger.debug("Using default initial sampling formula.")
+            self.__use_default_initial_sampling_formula = True
+        else:
+            self._validate_sampling_params(
+                num_samples=initial_num_samples,
+                fraction=initial_fraction,
+            )
 
         self.initial_num_samples = initial_num_samples
         self.initial_fraction = initial_fraction
@@ -131,12 +142,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             raise ValueError("Total number of splits could not be determined.") from e
 
         try:
-            initial_num_splits = BaseComplementaryShapApproximation._get_num_splits_static(
-                n=n,
-                num_samples=self.initial_num_samples,
-                fraction=self.initial_fraction,
-                force_minimal=False,
-            )
+            if self.__use_default_initial_sampling_formula:
+                initial_num_splits = max(2, math.ceil(num_splits / (2 * n * n)))
+            else:
+                initial_num_splits = BaseComplementaryShapApproximation._get_num_splits_static(
+                    n=n,
+                    num_samples=self.initial_num_samples,
+                    fraction=self.initial_fraction,
+                    force_minimal=False,
+                )
         except ValueError as e:
             raise ValueError("Initial number of splits could not be determined.") from e
 
@@ -153,7 +167,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 initial_num_splits,
                 num_splits,
             )
-        self._initial_num_splits = initial_num_splits
+        self.__initial_num_splits = initial_num_splits
 
         return num_splits
 
@@ -168,7 +182,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         if self._M is None:
             raise RuntimeError("M matrix must be initialized before sampling.")
 
-        if self._step == _Step.INITIAL_SAMPLING:  # initial sampling
+        if self.__step == _Step.INITIAL_SAMPLING:  # initial sampling
             logger.debug(
                 "Min %f, Sum %f, Zero count %d",
                 self._M.min().item(),
@@ -182,40 +196,40 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
             if not self._first_call and self.__update_M_position():  # stopping condition
                 logger.debug("Moving to Neyman allocation step.")
-                self._step = _Step.NEYMAN_ALLOCATION
+                self.__step = _Step.NEYMAN_ALLOCATION
                 return None
             self._first_call = False
 
-            if not self._M[self._i, self._j] < self._initial_num_splits:
+            if not self._M[self.__i, self.__j] < self.__initial_num_splits:
                 raise RuntimeError("__update_M_position did not update position correctly.")
 
             # self._i == 0 --> include no tokens
             new_mask = self._get_random_split(
                 n=n,
                 device=device,
-                true_values_num=self._j,
-                include_token=self._i if self._j > 0 else None,
+                true_values_num=self.__j,
+                include_token=self.__i if self.__j > 0 else None,
             )
-            if self._j > 0 and not new_mask.squeeze()[self._i]:
+            if self.__j > 0 and not new_mask.squeeze()[self.__i]:
                 raise RuntimeError("Generated mask does not include the required token.")
 
             return new_mask
 
-        if self._M_hat is None:
+        if self.__M_hat is None:
             raise RuntimeError("M_hat matrix must be initialized before sampling.")
-        if self._j == self._M_hat.shape[0]:  # end of sampling
+        if self.__j == self.__M_hat.shape[0]:  # end of sampling
             return None
 
-        if self._M_hat[self._j] > 0:
+        if self.__M_hat[self.__j] > 0:
             new_mask = self._get_random_split(
                 n=n,
                 device=device,
-                true_values_num=self._j,
+                true_values_num=self.__j,
             )
-            self._M_hat[self._j] -= 1
+            self.__M_hat[self.__j] -= 1
             return new_mask
 
-        self._j += 1
+        self.__j += 1
         return self._get_next_split(
             n=n,
             device=device,
@@ -238,10 +252,12 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         C = self._C[:, 1:]
 
         non_zero_mask = M != 0
-        ratio = torch.zeros_like(C)
-        ratio[non_zero_mask] = C[non_zero_mask] / M[non_zero_mask]
+        if not torch.all(non_zero_mask):
+            raise RuntimeError(
+                "Some entries in M matrix are zero. They are all expected to be >= `initial_num_splits`."
+            )
 
-        return torch.sum(ratio, dim=1) / M.shape[0]
+        return torch.sum(C / M, dim=1) / M.shape[0]
 
     def _initialize_state(self) -> None:
         """
@@ -250,11 +266,10 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         super()._initialize_state()
         self.__get_start.cache_clear()
 
-        self._step = _Step.INITIAL_SAMPLING
-        self._i = 0
-        self._j = 0
-        self._C = None
-        self._C_squared = None
+        self.__step = _Step.INITIAL_SAMPLING
+        self.__i = 0
+        self.__j = 0
+        self.__C_squared = None
 
     def _get_masks_generator(self, *args: Any, **kwargs: Any) -> Any:
         kwargs["include_mode"] = False
@@ -268,9 +283,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         """
         if self._M is None:
             raise RuntimeError("M matrix must be initialized before calculating C matrix.")
-        if self._C is None or self._C_squared is None:
+        if self._C is None or self.__C_squared is None:
             self._C = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
-            self._C_squared = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
+            self.__C_squared = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
 
         m = masks.shape[0] // 2
         if 2 * m != masks.shape[0]:
@@ -290,8 +305,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
             BaseComplementaryShapApproximation._increment_coalition_val(self._C, S, s_size, u)
             BaseComplementaryShapApproximation._increment_coalition_val(self._C, NS, ns_size, -u)
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C_squared, S, s_size, u_squared)
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C_squared, NS, ns_size, u_squared)
+            BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, S, s_size, u_squared)
+            BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, NS, ns_size, u_squared)
 
     @lru_cache(maxsize=1)
     def __get_start(self) -> int:
@@ -317,7 +332,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         if self._M is None:
             raise RuntimeError("M matrix must be initialized before updating position.")
 
-        not_completed = self._M < self._initial_num_splits
+        not_completed = self._M < self.__initial_num_splits
 
         if not torch.any(not_completed):  # stop initial and move to next step
             return True
@@ -325,14 +340,14 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         # Given current (i, j) and a boolean mask[n, n], find the next (i, j)
         # position where mask is True, scanning row by row.
         flat = not_completed.flatten()
-        start_idx = self._i * self._M.shape[1] + self._j + 1
+        start_idx = self.__i * self._M.shape[1] + self.__j + 1
         next_idxs = torch.nonzero(flat[start_idx:], as_tuple=False)
         if next_idxs.numel() == 0:  # next pass
             next_idxs = torch.nonzero(flat, as_tuple=False)
             start_idx = 0
 
         next_idx = next_idxs[0, 0].item() + start_idx
-        self._i, self._j = cast(tuple[int, int], divmod(next_idx, self._M.shape[1]))
+        self.__i, self.__j = cast(tuple[int, int], divmod(next_idx, self._M.shape[1]))
         return False
 
     def __estimate_sigma_squared(self) -> Tensor:
@@ -344,12 +359,12 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         Raises:
             RuntimeError: If M or C matrices are not initialized.
         """
-        if self._M is None or self._C is None or self._C_squared is None:
+        if self._M is None or self._C is None or self.__C_squared is None:
             raise RuntimeError("M, C and C_squared matrices must be initialized before estimating sigma squared.")
 
         M = self._M.to(self._C.dtype)
         M_small = M - 1
-        sigma = (self._C_squared - torch.pow(self._C, 2) / M) / M_small
+        sigma = (self.__C_squared - torch.pow(self._C, 2) / M) / M_small
         if torch.any(sigma < 0):
             logger.warning("Negative variance estimates found; setting them to zero.")
             sigma = torch.clamp(sigma, min=0.0)
@@ -391,9 +406,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             + torch.sum(sigma_right / (k_right + 1).to(sigma_right.dtype), dim=0)
         )
 
-        self._M_hat = torch.zeros(self._M.shape[0], dtype=inner.dtype, device=inner.device)
-        self._M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
-        logger.debug("M hat %s", self._M_hat)
+        self.__M_hat = torch.zeros(self._M.shape[0], dtype=inner.dtype, device=inner.device)
+        self.__M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
+        logger.debug("M hat %s", self.__M_hat)
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
@@ -439,7 +454,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         _ = self._get_num_splits(n=mask_manager.n)  # calculate _initial_num_splits
         logger.info(
             "Starting initial sampling step with %d samples per entry in M",
-            self._initial_num_splits,
+            self.__initial_num_splits,
         )
         chats_skipped, history = self._generate_step(
             mask_manager=mask_manager,
@@ -466,17 +481,17 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         )
 
         # otherwise initial sampling exceeded entire budget
-        if self._step == _Step.NEYMAN_ALLOCATION:
+        if self.__step == _Step.NEYMAN_ALLOCATION:
             # prepare for step 2
             self.__estimate_M_hat(n=mask_manager.n)
-            self._j = self.__get_start()
-            self._i = 0
+            self.__j = self.__get_start()
+            self.__i = 0
             existing_masks_num = len(masks)
 
             # second step - Neyman allocation
             logger.info(
                 "Starting Neyman allocation step with %d remaining samples",
-                cast(Tensor, self._M_hat).sum().item(),
+                cast(Tensor, self.__M_hat).sum().item(),
             )
             new_chats_skipped, new_history = self._generate_step(
                 mask_manager=mask_manager,
