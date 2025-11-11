@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mllm_shap.shap.monte_carlo.standard &#8212; mllm-shap  documentation</title>
+    <title>mllm_shap.shap.hierarchical.enums &#8212; mllm-shap  documentation</title>
   
   
   
@@ -41,7 +41,7 @@
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/shap/monte_carlo/standard';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/shap/hierarchical/enums';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -253,7 +253,7 @@
     
     <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap.monte_carlo.standard</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap.hierarchical.enums</span></li>
   </ul>
 </nav>
 </div>
@@ -270,19 +270,47 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for mllm_shap.shap.monte_carlo.standard</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Standard Monte Carlo approximation SHAP explainer implementation.&quot;&quot;&quot;</span>
+  <h1>Source code for mllm_shap.shap.hierarchical.enums</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Configuration for possible modes.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">._base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMcShapExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
-<div class="viewcode-block" id="StandardMcShapExplainer">
-<a class="viewcode-back" href="../../../../mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">StandardMcShapExplainer</span><span class="p">(</span><span class="n">BaseMcShapExplainer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard Monte Carlo SHAP Explainer.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Mode">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.hierarchical.html#mllm_shap.shap.hierarchical.enums.Mode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Mode</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines supported grouping modes.</span>
 
-    <span class="n">include_minimal_masks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+<span class="sd">    Warning:</span>
+<span class="sd">        Depending on mode, first level groups might be large -</span>
+<span class="sd">        only `TEXT` mode guarantees small first level groups, as</span>
+<span class="sd">        only then it is divided by size corresponding to</span>
+<span class="sd">        log(number of tokens, k) formula. Other modes</span>
+<span class="sd">        do not divide first level groups at all, therefore</span>
+<span class="sd">        first level call will have cost of up to 2^(number of groups),</span>
+<span class="sd">        depending on shap explainer algorithm used.m</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">TEXT</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits first level groups just by size, requires single modality.</span>
+<span class="sd">    As most models always include system prompts, this restricts</span>
+<span class="sd">    usage to text-only mode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">MULTI_MODAL</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits first level groups according to size and modalities.</span>
+<span class="sd">    Results in moderate first level group sizes, but might mix</span>
+<span class="sd">    different users&#39; inputs together. Cheapest mode for multimodal inputs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">MULTI_MODAL_MULTI_USER</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits first level groups according to size, modalities, and users.</span>
+<span class="sd">    Results in larger first level groups, but better preserves logical structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 </pre></div>
 

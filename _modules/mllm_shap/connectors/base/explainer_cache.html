@@ -380,9 +380,9 @@
         <span class="n">explainer_hash</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">normalized_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExplainerCache&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a new ExplainerCache instance.</span>
@@ -406,8 +406,9 @@
             <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
             <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">normalized_values</span> <span class="o">=</span> <span class="n">normalized_values</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
         <span class="k">return</span> <span class="n">instance</span></div>
 
 

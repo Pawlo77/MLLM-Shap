@@ -275,6 +275,7 @@
 
 <span class="sd">&quot;&quot;&quot;Normalizers for SHAP values.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base.normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseNormalizer</span>
@@ -336,6 +337,25 @@
         <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">shap_values</span>
         <span class="n">normalized</span> <span class="o">=</span> <span class="n">powered</span> <span class="o">/</span> <span class="n">total</span>
+        <span class="k">return</span> <span class="n">normalized</span></div>
+
+
+
+<div class="viewcode-block" id="MinMaxNormalizer">
+<a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.normalizers.MinMaxNormalizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MinMaxNormalizer</span><span class="p">(</span><span class="n">BaseNormalizer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalizer that scales SHAP values to the [0, 1] range using min-max normalization</span>
+<span class="sd">    then normalizes them to sum to 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shap_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">min_val</span> <span class="o">=</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">max_val</span> <span class="o">=</span> <span class="n">shap_values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">shap_values</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">shap_values</span><span class="p">)</span>
+        <span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">shap_values</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span>
+        <span class="n">normalized</span> <span class="o">/=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">normalized</span></div>
 
 </pre></div>

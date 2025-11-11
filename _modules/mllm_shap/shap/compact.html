@@ -338,6 +338,7 @@
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Explanation took </span><span class="si">%.2f</span><span class="s2"> seconds.&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">total_n_calls</span>
         <span class="k">return</span> <span class="n">ExplainerResult</span><span class="p">(</span>
             <span class="n">source_chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="c1"># chat is set as generate was called with keep_history=True</span>

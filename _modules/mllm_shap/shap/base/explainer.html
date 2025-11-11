@@ -276,7 +276,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
@@ -297,7 +297,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingReducer</span><span class="p">,</span> <span class="n">BaseExternalEmbedding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.normalizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseNormalizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.similarity</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEmbeddingSimilarity</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._masks_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">MasksManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._masks_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">MasksManager</span><span class="p">,</span> <span class="n">MaskGenerator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._cache_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CacheManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._generate_responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_responses</span>
 
@@ -311,7 +311,7 @@
 
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="c1"># pylint: disable=too-few-public-methods,too-many-instance-attributes</span>
 <div class="viewcode-block" id="BaseShapExplainer">
 <a class="viewcode-back" href="../../../../mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseShapExplainer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -337,6 +337,9 @@
 
     <span class="n">total_n_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Total number of MLLM calls made for last explanation.&quot;&quot;&quot;</span>
+
+    <span class="n">_first_call</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicates if it&#39;s the first call to generate masks.&quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -380,28 +383,35 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">allow_mask_duplicates</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">allow_mask_duplicates</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_next_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">generated_masks</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_next_split</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">generated_masks_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">existing_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get next split to evaluate.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            target_length: Length of the splits</span>
+<span class="sd">            n: Length of the splits</span>
 <span class="sd">            device: The device to create the masks on</span>
-<span class="sd">            generated_masks: Number of masks generated so far</span>
+<span class="sd">            generated_masks_num: Number of masks generated so far</span>
+<span class="sd">            existing_masks: List of existing masks</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor of shape [1, n], dtype=torch.bool, representing the next split to evaluate</span>
 <span class="sd">                or None if no more splits are to be generated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_num_splits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_num_splits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determine the number of masks to generate based on num_samples and fraction.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            target_length: Length of the masks</span>
+<span class="sd">            n: Length of the splits</span>
 <span class="sd">        Returns:</span>
-<span class="sd">            Number of masks to generate or None if it is impossible to determine.</span>
+<span class="sd">            Number of masks to generate.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
@@ -426,55 +436,42 @@
 <span class="sd">            Tensor: 1D tensor [num_tokens] with SHAP values (NaN where base_mask=False).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__get_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get embeddings for the given chat state.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            responses: The model responses to get embeddings for.</span>
-<span class="sd">            chat: The current chat state.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            The embeddings tensor.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_model</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">Mode</span><span class="o">.</span><span class="n">STATIC</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_static_embeddings</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_contextual_embeddings</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">__masks_generator</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_masks_generator</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mask_manager</span><span class="p">:</span> <span class="n">MasksManager</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskGenerator</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generator that yields masks one by one.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mask_manager: The masks manager instance.</span>
 <span class="sd">            device: The device to create the masks on.</span>
+<span class="sd">            masks: List of existing masks.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A generator yielding tuples of (mask, mask_hash).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">num_splits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_num_splits</span><span class="p">(</span><span class="n">mask_manager</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
         <span class="n">get_next_split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_split</span>
 
-        <span class="k">class</span><span class="w"> </span><span class="nc">_MasksGenerator</span><span class="p">:</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">_MasksGenerator</span><span class="p">(</span><span class="n">MaskGenerator</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Generator class for masks.&quot;&quot;&quot;</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">generated_masks</span> <span class="o">=</span> <span class="mi">0</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">_mask_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
                 <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">new_split</span> <span class="o">=</span> <span class="n">get_next_split</span><span class="p">(</span>
-                        <span class="n">target_length</span><span class="o">=</span><span class="n">mask_manager</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
+                        <span class="n">n</span><span class="o">=</span><span class="n">mask_manager</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
                         <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-                        <span class="n">generated_masks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_masks</span><span class="p">,</span>
+                        <span class="n">generated_masks_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_masks</span><span class="p">,</span>
+                        <span class="n">existing_masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="n">new_split</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">break</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">new_split</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="n">new_split</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Generated zero or all-ones mask, skipping.&quot;</span><span class="p">)</span>
+                        <span class="k">continue</span>
 
                     <span class="n">new_mask</span> <span class="o">=</span> <span class="n">mask_manager</span><span class="o">.</span><span class="n">prepare_mask</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="n">new_split</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">new_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -493,16 +490,80 @@
             <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">num_splits</span>
 
-        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">_MasksGenerator</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">_MasksGenerator</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize internal state before starting mask generation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_first_call</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mask_manager</span><span class="p">:</span> <span class="n">MasksManager</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BaseMllmChat</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ModelResponse</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a step of masks and get model responses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mask_manager: The masks manager instance.</span>
+<span class="sd">            device: The device to create the masks on.</span>
+<span class="sd">            masks: List of existing masks.</span>
+<span class="sd">            generate_kwargs: Additional keyword arguments for the model&#39;s generate method.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple containing:</span>
+<span class="sd">            - Number of chats skipped due to being empty.</span>
+<span class="sd">            - History of chats and masks used during explanation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_masks_generator</span><span class="p">(</span><span class="n">mask_manager</span><span class="o">=</span><span class="n">mask_manager</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">generate_responses</span><span class="p">(</span>
+            <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
+            <span class="n">gen</span><span class="o">=</span><span class="n">gen</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># retrieve generated masks from the generator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">generated_masks</span>
+
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_similarities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get similarities between the base response and other responses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            responses: The model responses to compare.</span>
+<span class="sd">            model: The model instance.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor containing the similarities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="o">.</span><span class="n">operates_on_embeddings</span><span class="p">:</span>
+            <span class="c1"># get embeddings for the response</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_embeddings</span><span class="p">(</span>
+                <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># calculate similarities between original response embeddings</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">embeddings</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">other</span><span class="o">=</span><span class="n">embeddings</span><span class="p">)</span>
+
+        <span class="c1"># If not operating on embeddings, handle raw responses</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">responses</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">other</span><span class="o">=</span><span class="n">responses</span><span class="p">)</span>
 
     <span class="c1"># pylint: disable=too-many-locals</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__get_shap_values</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_shap_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span>
         <span class="n">source_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">similarities</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get SHAP values for the given mask.</span>
@@ -515,27 +576,16 @@
 <span class="sd">            source_chat: The source chat instance used to search for</span>
 <span class="sd">                external group ids.</span>
 <span class="sd">            device: The device to create the SHAP values on.</span>
+<span class="sd">            similarities: Precomputed similarities between base and masked responses.</span>
+<span class="sd">                If None, will be computed.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple containing:</span>
 <span class="sd">            - The calculated SHAP values.</span>
 <span class="sd">            - The normalized SHAP values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">shap_values_mask</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">shap_values_mask</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="o">.</span><span class="n">operates_on_embeddings</span><span class="p">:</span>
-            <span class="c1"># get embeddings for the response</span>
-            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_embeddings</span><span class="p">(</span>
-                <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="p">)</span>
-
-            <span class="c1"># calculate similarities between original response embeddings</span>
-            <span class="n">similarities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">embeddings</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">other</span><span class="o">=</span><span class="n">embeddings</span><span class="p">)</span>
-
-            <span class="k">del</span> <span class="n">embeddings</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># If not operating on embeddings, handle raw responses</span>
-            <span class="n">similarities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">responses</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">other</span><span class="o">=</span><span class="n">responses</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">similarities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">similarities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_similarities</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
 
         <span class="c1"># Pre-allocate SHAP values with NaNs</span>
         <span class="n">shap_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
@@ -570,7 +620,7 @@
 
         <span class="k">return</span> <span class="n">shap_values</span><span class="p">,</span> <span class="n">normalized_shap_values</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__save_to_cache</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save_to_cache</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
         <span class="n">source_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
@@ -615,6 +665,23 @@
             <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">__get_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">],</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get embeddings for the given chat state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            responses: The model responses to get embeddings for.</span>
+<span class="sd">            chat: The current chat state.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The embeddings tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_model</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">Mode</span><span class="o">.</span><span class="n">STATIC</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_static_embeddings</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_reducer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_contextual_embeddings</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">))</span>
+
     <span class="c1"># keep the logic in one method for readability</span>
     <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="c1"># pylint: disable=too-many-locals,too-many-statements,too-many-branches</span>
@@ -656,32 +723,27 @@
             <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_state</span><span class="p">()</span>
+
         <span class="c1"># validated within BaseShapCallConfig</span>
         <span class="n">response_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="n">source_chat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">source_chat</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">torch_device</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="n">mask_manager</span> <span class="o">=</span> <span class="n">MasksManager</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">)</span>
+        <span class="n">mask_manager</span> <span class="o">=</span> <span class="n">MasksManager</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span> <span class="n">log_stats</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">cache_manager</span> <span class="o">=</span> <span class="n">CacheManager</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">response_chat</span><span class="p">,</span>
             <span class="n">explainer_hash</span><span class="o">=</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
         <span class="p">)</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Number of tokens for explainability: </span><span class="si">%d</span><span class="s2"> (up to </span><span class="si">%d</span><span class="s2"> additional calls)&quot;</span><span class="p">,</span>
-            <span class="n">mask_manager</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
-            <span class="n">mask_manager</span><span class="o">.</span><span class="n">max_masks_number</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="n">masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">mask_manager</span><span class="o">.</span><span class="n">get_initial_mask</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)]</span>
         <span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">__config</span><span class="o">.</span><span class="n">response</span><span class="p">]</span>
 
-        <span class="n">gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__masks_generator</span><span class="p">(</span><span class="n">mask_manager</span><span class="o">=</span><span class="n">mask_manager</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">chats_skipped</span><span class="p">,</span> <span class="n">history</span> <span class="o">=</span> <span class="n">generate_responses</span><span class="p">(</span>
+        <span class="n">chats_skipped</span><span class="p">,</span> <span class="n">history</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_step</span><span class="p">(</span>
+            <span class="n">mask_manager</span><span class="o">=</span><span class="n">mask_manager</span><span class="p">,</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
-            <span class="n">gen</span><span class="o">=</span><span class="n">gen</span><span class="p">,</span>
             <span class="n">source_chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span>
             <span class="n">model</span><span class="o">=</span><span class="n">__config</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="n">cache_manager</span><span class="o">=</span><span class="n">cache_manager</span><span class="p">,</span>
@@ -690,10 +752,6 @@
             <span class="n">verbose</span><span class="o">=</span><span class="n">__config</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
             <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="c1"># retrieve generated masks from the generator</span>
-        <span class="c1"># TODO: write it in proper way</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">generated_masks</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
         <span class="k">if</span> <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -721,7 +779,7 @@
         <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 
         <span class="c1"># calculate SHAP values (relative to source_chat)</span>
-        <span class="n">shap_values</span><span class="p">,</span> <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_shap_values</span><span class="p">(</span>
+        <span class="n">shap_values</span><span class="p">,</span> <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_shap_values</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">__config</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks_tensor</span><span class="p">,</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
@@ -730,7 +788,7 @@
         <span class="p">)</span>
 
         <span class="c1"># cache results</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__save_to_cache</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_to_cache</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">response_chat</span><span class="p">,</span>
             <span class="n">source_chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span>
             <span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span>
@@ -782,6 +840,9 @@
 
     <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The model connector instance.&quot;&quot;&quot;</span>
+
+    <span class="n">total_n_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total number of MLLM calls made for last explanation.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -836,7 +897,9 @@
         <span class="c1"># ensure there are no duplicate keys between generation_kwargs and explanation_kwargs</span>
         <span class="n">common_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">generation_kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">explanation_kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">common_keys</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate keys found in generation_kwargs and explanation_kwargs: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">common_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate keys found in generation_kwargs and explanation_kwargs: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">common_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 </pre></div>
 

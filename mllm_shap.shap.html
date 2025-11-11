@@ -324,9 +324,24 @@
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">ComplementaryNeymanShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/neyman.html#ComplementaryNeymanShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapApproximation</span></code></p>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">ComplementaryNeymanShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/neyman.html#ComplementaryNeymanShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseComplementaryShapApproximation</span></code></p>
 <p>Base Complementary Neyman SHAP implementation class</p>
+<p>Budget should be doubled in comparison to paper to account for symmetric sampling.</p>
+<dl class="simple">
+<dt>Info:</dt><dd><p>Initial step in this explainer due to performance and stability issues is not
+purely random sampling - random samples are drawn with pre-defined member
+within them. This guarantees that initialization step will cover all entries
+within <cite>(number of players) * (number of players + 1) * initial_num_samples</cite> calls.</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This explainer requires the source chat to have SYSTEM_ASSISTANT roles setup.
+It is due to its requirement to evaluate all-zeros and all-ones splits, which
+otherwise would be rejected by connectors as invalid. It requires at least
+one turn for assistant and some system messages to be present.</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates">
 <span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates" title="Link to this definition">#</a></dt>
@@ -351,17 +366,22 @@
 <dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.generate_minimal_splits">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_minimal_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.generate_minimal_splits" title="Link to this definition">#</a></dt>
-<dd><p>Generate a minimal set of boolean masks as a batched tensor.
-Shape: (target_length + 1, target_length)</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.include_minimal_masks">
 <span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
 <dd><p>Whether to include minimal masks (single-feature and empty masks) in the sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_fraction">
+<span class="sig-name descname"><span class="pre">initial_fraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_fraction" title="Link to this definition">#</a></dt>
+<dd><p>Initial fraction of samples to draw in the first step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_num_samples">
+<span class="sig-name descname"><span class="pre">initial_num_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_num_samples" title="Link to this definition">#</a></dt>
+<dd><p>Initial number of samples to draw in the first step.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -400,7 +420,7 @@ Shape: (target_length + 1, target_length)</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">ComplementaryShapExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.6</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/complementary.html#ComplementaryShapExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseShapApproximation</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseComplementaryShapApproximation</span></code></p>
 <p>Complementary SHAP implementation class.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.allow_mask_duplicates">
@@ -426,16 +446,9 @@ Shape: (target_length + 1, target_length)</p>
 <dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.generate_minimal_splits">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_minimal_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.generate_minimal_splits" title="Link to this definition">#</a></dt>
-<dd><p>Generate a minimal set of boolean masks as a batched tensor.
-Shape: (target_length + 1, target_length)</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.ComplementaryShapExplainer.include_minimal_masks">
-<span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#mllm_shap.shap.ComplementaryShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
 <dd><p>Whether to include minimal masks (single-feature and empty masks) in the sampling.</p>
 </dd></dl>
 
@@ -489,21 +502,34 @@ Shape: (target_length + 1, target_length)</p>
 <dd><p>The SHAP explainer instance.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.Explainer.total_n_calls">
+<span class="sig-name descname"><span class="pre">total_n_calls</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#mllm_shap.shap.Explainer.total_n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Total number of MLLM calls made for last explanation.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="mllm_shap.shap.HierarchicalExplainer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">HierarchicalExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/hierarchical.html#HierarchicalExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.HierarchicalExplainer" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">HierarchicalExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.hierarchical.html#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.TEXT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_importance_sampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/hierarchical/explainer.html#HierarchicalExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.HierarchicalExplainer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer" title="mllm_shap.shap.base.explainer.BaseExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseExplainer</span></code></a></p>
 <p>SHAP explainer implementing hierarchical approach for speed-up.</p>
 <p>Groups are divided into subgroups recursively until the final group size.
 Groups cannot share different modalities (e.g., text and audio tokens).
 Uses an underlying SHAP explainer for group explanations.</p>
-<p>It has no history nor non-normalized shap values available.</p>
+<p>It has no history nor non-normalized shap values available. Refer to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Mode</span></code> for details on how groups are formed at the first level.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.HierarchicalExplainer.k">
 <span class="sig-name descname"><span class="pre">k</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#mllm_shap.shap.HierarchicalExplainer.k" title="Link to this definition">#</a></dt>
 <dd><p>Maximum final group size at each level.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.HierarchicalExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.hierarchical.html#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.HierarchicalExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The mode of the hierarchical explainer.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -530,12 +556,18 @@ Uses an underlying SHAP explainer for group explanations.</p>
 <dd><p>Total number of MLLM calls made for last explanation.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.HierarchicalExplainer.use_importance_sampling">
+<span class="sig-name descname"><span class="pre">use_importance_sampling</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#mllm_shap.shap.HierarchicalExplainer.use_importance_sampling" title="Link to this definition">#</a></dt>
+<dd><p>Whether to use importance for setting sampling budget (for each group).</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.McShapExplainer">
 <span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.</span></span><span class="sig-name descname"><span class="pre">McShapExplainer</span></span><a class="headerlink" href="#mllm_shap.shap.McShapExplainer" title="Link to this definition">#</a></dt>
-<dd><p>alias of <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.limited.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a></p>
+<dd><p>alias of <a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.limited.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.limited.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
@@ -605,6 +637,7 @@ Uses an underlying SHAP explainer for group explanations.</p>
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer"><code class="docutils literal notranslate"><span class="pre">BaseExplainer</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer.model"><code class="docutils literal notranslate"><span class="pre">BaseExplainer.model</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">BaseExplainer.shap_explainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">BaseExplainer.total_n_calls</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer"><code class="docutils literal notranslate"><span class="pre">BaseShapExplainer</span></code></a><ul>
@@ -662,6 +695,12 @@ Uses an underlying SHAP explainer for group explanations.</p>
 <dt class="sig sig-object py" id="mllm_shap.shap.compact.Explainer.shap_explainer">
 <span class="sig-name descname"><span class="pre">shap_explainer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseShapExplainer" title="mllm_shap.shap.base.explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a></em><a class="headerlink" href="#mllm_shap.shap.compact.Explainer.shap_explainer" title="Link to this definition">#</a></dt>
 <dd><p>The SHAP explainer instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.compact.Explainer.total_n_calls">
+<span class="sig-name descname"><span class="pre">total_n_calls</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#mllm_shap.shap.compact.Explainer.total_n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Total number of MLLM calls made for last explanation.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1215,19 +1254,19 @@ Monte Carlo methods by including first-order-omission masks,
 that is masks omitting exactly one feature (parametrizable).</p>
 <ul class="simple">
 <li><dl class="simple">
-<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a> implements a limited Monte Carlo sampling</dt><dd><p>approach that avoids drawing the same mask more than once, which helps
+<dt><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a> implements a limited Monte Carlo sampling</dt><dd><p>approach that avoids drawing the same mask more than once, which helps
 to better cover the feature space within a limited number of samples.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">StandardMcShapExplainer</span></code></a> implements the standard Monte Carlo</dt><dd><p>sampling approach, allowing for repeated masks as per true Monte Carlo
+<dt><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">StandardMcShapExplainer</span></code></a> implements the standard Monte Carlo</dt><dd><p>sampling approach, allowing for repeated masks as per true Monte Carlo
 sampling methodology.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><a class="reference internal" href="#mllm_shap.shap.monte_carlo.approximate_budget" title="mllm_shap.shap.monte_carlo.approximate_budget"><code class="xref py py-func docutils literal notranslate"><span class="pre">approximate_budget()</span></code></a> is a utility function to estimate the number</dt><dd><p>of samples required to achieve a desired error bound with a specified
+<dt><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.approximate_budget" title="mllm_shap.shap.monte_carlo.approximate_budget"><code class="xref py py-func docutils literal notranslate"><span class="pre">approximate_budget()</span></code></a> is a utility function to estimate the number</dt><dd><p>of samples required to achieve a desired error bound with a specified
 confidence level using Hoeffding’s inequality.</p>
 </dd>
 </dl>
@@ -1247,7 +1286,7 @@ confidence level using Hoeffding’s inequality.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model">
 <span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
-<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1262,13 +1301,6 @@ confidence level using Hoeffding’s inequality.</p>
 <dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.generate_minimal_splits">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_minimal_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.generate_minimal_splits" title="Link to this definition">#</a></dt>
-<dd><p>Generate a minimal set of boolean masks as a batched tensor.
-Shape: (target_length + 1, target_length)</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks">
 <span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
@@ -1278,7 +1310,7 @@ Shape: (target_length + 1, target_length)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode">
 <span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode" title="Link to this definition">#</a></dt>
-<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1322,7 +1354,7 @@ Shape: (target_length + 1, target_length)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model">
 <span class="sig-name descname"><span class="pre">embedding_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.embeddings.BaseExternalEmbedding" title="mllm_shap.shap.base.embeddings.BaseExternalEmbedding"><span class="pre">BaseExternalEmbedding</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model" title="Link to this definition">#</a></dt>
-<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
+<dd><p>The external embedding model to use. If provided, overrides <a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1337,13 +1369,6 @@ Shape: (target_length + 1, target_length)</p>
 <dd><p>Fraction of total possible masks to generate if num_samples is None.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.generate_minimal_splits">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_minimal_splits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.generate_minimal_splits" title="Link to this definition">#</a></dt>
-<dd><p>Generate a minimal set of boolean masks as a batched tensor.
-Shape: (target_length + 1, target_length)</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks">
 <span class="sig-name descname"><span class="pre">include_minimal_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks" title="Link to this definition">#</a></dt>
@@ -1353,7 +1378,7 @@ Shape: (target_length + 1, target_length)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode">
 <span class="sig-name descname"><span class="pre">mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.enums.Mode" title="mllm_shap.shap.enums.Mode"><span class="pre">Mode</span></a></em><a class="headerlink" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode" title="Link to this definition">#</a></dt>
-<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
+<dd><p>The SHAP mode, either <cite>STATIC</cite> or <cite>CONTEXTUAL</cite>. Used if no <a class="reference internal" href="mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model" title="mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">embedding_model</span></code></a> is provided.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1420,6 +1445,14 @@ with a specified confidence level using Hoeffding’s inequality.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.normalizers.</span></span><span class="sig-name descname"><span class="pre">IdentityNormalizer</span></span><a class="reference internal" href="_modules/mllm_shap/shap/normalizers.html#IdentityNormalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.normalizers.IdentityNormalizer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></p>
 <p>Normalizer that returns SHAP values unchanged.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.normalizers.MinMaxNormalizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.normalizers.</span></span><span class="sig-name descname"><span class="pre">MinMaxNormalizer</span></span><a class="reference internal" href="_modules/mllm_shap/shap/normalizers.html#MinMaxNormalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.normalizers.MinMaxNormalizer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.normalizers.BaseNormalizer" title="mllm_shap.shap.base.normalizers.BaseNormalizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseNormalizer</span></code></a></p>
+<p>Normalizer that scales SHAP values to the [0, 1] range using min-max normalization
+then normalizes them to sum to 1.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1574,8 +1607,9 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_model</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_reducer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.fraction</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.generate_minimal_splits"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.generate_minimal_splits()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.include_minimal_masks</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_fraction</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_num_samples</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.mode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.normalizer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.num_samples</span></code></a></li>
@@ -1588,7 +1622,6 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_model</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_reducer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.fraction</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.generate_minimal_splits"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.generate_minimal_splits()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.include_minimal_masks</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.mode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.ComplementaryShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.normalizer</span></code></a></li>
@@ -1600,14 +1633,17 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.Explainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">Explainer.total_n_calls</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.k"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.k</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.mode"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.mode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.model"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.model</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.n_calls</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.shap_explainer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.total_n_calls</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.HierarchicalExplainer.use_importance_sampling"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.use_importance_sampling</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.McShapExplainer"><code class="docutils literal notranslate"><span class="pre">McShapExplainer</span></code></a></li>
@@ -1627,6 +1663,7 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.compact.Explainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">Explainer.total_n_calls</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1720,7 +1757,6 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_reducer</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.fraction</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.generate_minimal_splits"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.generate_minimal_splits()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.include_minimal_masks</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.mode</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.normalizer</span></code></a></li>
@@ -1734,7 +1770,6 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_reducer</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.fraction</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.generate_minimal_splits"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.generate_minimal_splits()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.include_minimal_masks</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.mode</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.normalizer</span></code></a></li>
@@ -1749,6 +1784,7 @@ If False, it operates on raw tokens.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.normalizers">mllm_shap.shap.normalizers module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.AbsSumNormalizer"><code class="docutils literal notranslate"><span class="pre">AbsSumNormalizer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.IdentityNormalizer"><code class="docutils literal notranslate"><span class="pre">IdentityNormalizer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.MinMaxNormalizer"><code class="docutils literal notranslate"><span class="pre">MinMaxNormalizer</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer"><code class="docutils literal notranslate"><span class="pre">PowerShiftNormalizer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.normalizers.PowerShiftNormalizer.power"><code class="docutils literal notranslate"><span class="pre">PowerShiftNormalizer.power</span></code></a></li>
 </ul>
