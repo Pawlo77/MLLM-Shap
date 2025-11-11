@@ -11,8 +11,19 @@ from torch import Tensor
 class DummyExplainer(BaseShapApproximation):
     """Concrete subclass for testing abstract BaseShapApproximation."""
 
-    def _get_next_split(self, n: int, device: torch.device, generated_masks: int) -> Tensor | None:
-        return None
+    def _get_next_split(
+        self,
+        n: int,
+        device: torch.device,
+        generated_masks_num: int,
+        existing_masks: list[Tensor] | None = None,
+    ) -> Tensor | None:
+        return super()._get_next_split(
+            n=n,
+            device=device,
+            generated_masks_num=generated_masks_num,
+            existing_masks=existing_masks,
+        )
 
     def _get_num_splits(self, n: int) -> int:
         # Return a large enough value to avoid budget errors
@@ -166,3 +177,175 @@ class TestGetNextSplitBase:
                 device=self.device,
                 generated_masks_num=0,
             )
+
+    def test_returns_none_when_minimal_masks_disabled(self) -> None:
+        """Should return None immediately when minimal masks are disabled."""
+        self.explainer.include_minimal_masks = False
+        mask = self.explainer._get_next_split_base(
+            n=self.n,
+            device=self.device,
+            generated_masks_num=0,
+        )
+        assert mask is None
+
+    def test_returns_none_after_consuming_all_base_masks(self) -> None:
+        """Should yield None once all minimal masks have been emitted."""
+        first_mask = self.explainer._get_next_split_base(self.n, self.device, 0)
+        assert first_mask is not None
+        total = self.explainer._base_masks.shape[0]
+        for idx in range(1, total):
+            mask = self.explainer._get_next_split_base(self.n, self.device, idx)
+            assert mask is not None
+        result = self.explainer._get_next_split_base(self.n, self.device, total)
+        assert result is None
+
+    def test_raises_when_budget_too_small_for_minimal_masks(self) -> None:
+        """Should raise if reported sampling budget is smaller than minimal mask count."""
+        from types import MethodType
+
+        total = self.explainer._generate_minimal_splits(self.n, self.device).shape[0]
+
+        def limited_budget(_self: DummyExplainer, _n: int) -> int:
+            return total - 1
+
+        self.explainer._get_num_splits = MethodType(limited_budget, self.explainer)
+        with pytest.raises(RuntimeError, match="Not enough sampling budget"):
+            self.explainer._get_next_split_base(self.n, self.device, 0)
+
+
+class TestGetRandomSplit:
+    """Tests for the random split helper."""
+
+    def test_returns_binary_tensor_with_expected_shape(self) -> None:
+        """Default call should produce boolean mask of shape (1, n)."""
+        torch.manual_seed(0)
+        mask = DummyExplainer._get_random_split(n=4, device=torch.device("cpu"))
+        assert mask.shape == (1, 4)
+        assert mask.dtype == torch.bool
+
+    def test_honors_true_values_constraint(self) -> None:
+        """When true_values_num is provided, mask should contain that many True values."""
+        torch.manual_seed(1)
+        mask = DummyExplainer._get_random_split(
+            n=6,
+            device=torch.device("cpu"),
+            true_values_num=2,
+        )
+        assert mask.sum().item() == 2
+
+    def test_include_token_keeps_position_true(self) -> None:
+        """include_token should guarantee the specified index is True."""
+        torch.manual_seed(2)
+        mask = DummyExplainer._get_random_split(
+            n=5,
+            device=torch.device("cpu"),
+            true_values_num=3,
+            include_token=2,
+        )
+        assert mask.shape == (1, 5)
+        assert mask[0, 2]
+        assert mask.sum().item() == 3
+
+
+class TestGetNextSplit:
+    """Tests for _get_next_split orchestrating base and random masks."""
+
+    def test_prefers_base_masks_before_random(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Should emit base mask before falling back to random splits."""
+        explainer = DummyExplainer(num_samples=5)
+        device = torch.device("cpu")
+        captured: list[str] = []
+        explainer._initialize_state()
+
+        def fake_random_split(n: int, device: torch.device, **_: Any) -> Tensor:
+            captured.append("random")
+            return torch.ones((1, n), dtype=torch.bool, device=device)
+
+        monkeypatch.setattr(
+            DummyExplainer,
+            "_get_random_split",
+            staticmethod(fake_random_split),
+        )
+
+        mask = explainer._get_next_split(
+            n=3,
+            device=device,
+            generated_masks_num=0,
+            existing_masks=[],
+        )
+        assert mask is not None
+        assert captured == []
+
+    def test_calls_random_after_minimal_masks_exhausted(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Should fall back to random mask generation after emitting minimal masks."""
+        explainer = DummyExplainer(num_samples=10)
+        device = torch.device("cpu")
+        random_masks: list[Tensor] = []
+        explainer._initialize_state()
+
+        def fake_random_split(n: int, device: torch.device, **_: Any) -> Tensor:
+            mask = torch.ones((1, n), dtype=torch.bool, device=device)
+            random_masks.append(mask)
+            return mask
+
+        monkeypatch.setattr(
+            DummyExplainer,
+            "_get_random_split",
+            staticmethod(fake_random_split),
+        )
+
+        total = explainer._generate_minimal_splits(3, device).shape[0]
+        for generated in range(total + 1):
+            explainer._get_next_split(
+                n=3,
+                device=device,
+                generated_masks_num=generated,
+                existing_masks=[],
+            )
+
+        assert random_masks  # random masks were produced
+
+    def test_respects_sampling_budget_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Should return None when sampling budget has been reached."""
+        explainer = DummyExplainer(num_samples=1)
+        device = torch.device("cpu")
+        explainer._initialize_state()
+
+        def limited_budget(_self: DummyExplainer, n: int) -> int:
+            return explainer._generate_minimal_splits(n, device).shape[0]
+
+        monkeypatch.setattr(explainer, "_get_num_splits", limited_budget.__get__(explainer, DummyExplainer))
+
+        total = explainer._generate_minimal_splits(3, device).shape[0]
+        for generated in range(total):
+            explainer._get_next_split(
+                n=3,
+                device=device,
+                generated_masks_num=generated,
+                existing_masks=[],
+            )
+        mask = explainer._get_next_split(
+            n=3,
+            device=device,
+            generated_masks_num=total,
+            existing_masks=[],
+        )
+        assert mask is None
+
+
+class TestValidateSamplingParams:
+    """Additional tests for sampling parameter validation."""
+
+    def test_accepts_valid_fraction_only(self) -> None:
+        """Providing only fraction within (0,1] should be valid."""
+        BaseShapApproximation._validate_sampling_params(num_samples=None, fraction=0.5)
+
+    def test_accepts_minimal_num_samples(self) -> None:
+        """num_samples == -1 should be allowed."""
+        BaseShapApproximation._validate_sampling_params(num_samples=-1, fraction=None)
+
+    @pytest.mark.parametrize("fraction", [None, 0.5])
+    def test_rejects_invalid_num_samples_type(self, fraction: float | None) -> None:
+        """Non-integer num_samples should be rejected regardless of fraction."""
+        with pytest.raises(ValueError, match="num_samples must be a positive integer"):
+            BaseShapApproximation._validate_sampling_params(num_samples=1.2, fraction=fraction)

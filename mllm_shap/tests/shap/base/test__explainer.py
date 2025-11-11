@@ -1,194 +1,121 @@
-"""Unit tests for the refactored BaseShapExplainer class."""
+"""Unit tests for BaseExplainer convenience wrapper."""
 
-from unittest.mock import MagicMock, patch
+from __future__ import annotations
+
+from typing import Any
 
 import pytest
-import torch
-from torch import Tensor
-from copy import deepcopy
-from mllm_shap.connectors.base.chat import BaseMllmChat
-from mllm_shap.connectors.base.model import BaseMllmModel
-from mllm_shap.connectors.base.model_response import ModelResponse
-from mllm_shap.shap.base.explainer import (
-    BaseShapExplainer,
-    NotEnoughTokensToExplainError,
-)
-from mllm_shap.shap.embeddings import MeanReducer
-from mllm_shap.shap.enums import Mode
-from mllm_shap.shap.normalizers import PowerShiftNormalizer
-from mllm_shap.shap.similarity import CosineSimilarity
+from pydantic import ValidationError
+
+from mllm_shap.shap.base.explainer import BaseExplainer
+from mllm_shap.shap.explainer_result import ExplainerResult
 
 from ...dummy import DummyChat, DummyModel, DummyShapExplainer
 
 
-class TestBaseShapExplainer:
-    """Tests for the refactored BaseShapExplainer class."""
+class ConcreteExplainer(BaseExplainer):
+    """Minimal concrete implementation used for testing BaseExplainer helpers."""
 
-    @staticmethod
-    @pytest.fixture
-    def explainer_instance() -> BaseShapExplainer:
-        """Fixture for DummyShapExplainer."""
-        return DummyShapExplainer()
+    def __init__(self, model: DummyModel, shap_explainer: DummyShapExplainer) -> None:
+        super().__init__(model=model, shap_explainer=shap_explainer)
+        self.calls: list[tuple[DummyChat, dict[str, Any], dict[str, Any]]] = []
 
-    @staticmethod
-    @pytest.fixture
-    def dummy_chat_instance() -> BaseMllmChat:
-        """Fixture for BaseMllmChat."""
-        return DummyChat(num_tokens=3)
-
-    @staticmethod
-    @pytest.fixture
-    def dummy_model_instance() -> BaseMllmModel:
-        """Fixture for DummyModel."""
-        return DummyModel()
-
-    @staticmethod
-    @pytest.fixture
-    def dummy_response_instance(dummy_chat_instance: BaseMllmChat) -> ModelResponse:
-        """Fixture for ModelResponse."""
-        return ModelResponse(
-            chat=dummy_chat_instance,
-            generated_audio_tokens=torch.tensor([]),
-            generated_text_tokens=torch.tensor([1, 2, 3]),
-            generated_modality_flag=torch.ones(3, dtype=torch.bool),
+    def __call__(
+        self, *args: Any, chat: DummyChat, generation_kwargs: dict[str, Any] | None = None, **explanation_kwargs: Any
+    ) -> ExplainerResult:
+        BaseExplainer.__call__(
+            self,
+            *args,
+            chat=chat,
+            generation_kwargs=generation_kwargs,
+            **explanation_kwargs,
+        )
+        gen_copy = dict(generation_kwargs or {})
+        exp_copy = dict(explanation_kwargs)
+        self.calls.append((chat, gen_copy, exp_copy))
+        return ExplainerResult(
+            full_chat=chat,
+            source_chat=chat,
+            history=None,
+            total_n_calls=self.total_n_calls,
         )
 
-    def test_initialization_defaults(self, explainer_instance: BaseShapExplainer) -> None:
-        """Test default initialization components."""
-        expl = explainer_instance
-        assert isinstance(expl.embedding_reducer, MeanReducer)
-        assert isinstance(expl.similarity_measure, CosineSimilarity)
-        assert isinstance(expl.normalizer, PowerShiftNormalizer)
-        assert expl.mode in (Mode.STATIC, Mode.CONTEXTUAL)
 
-    def test_hash_returns_int(self, explainer_instance: BaseShapExplainer) -> None:
-        """Test that __hash__ returns an integer and is deterministic."""
-        h1 = hash(explainer_instance)
-        h2 = hash(explainer_instance)
-        assert isinstance(h1, int)
-        assert h1 == h2
+class TestBaseExplainer:
+    """High level tests validating BaseExplainer safeguards."""
 
-    def test_get_shap_values_computation(
-        self,
-        explainer_instance: BaseShapExplainer,
-        dummy_model_instance: BaseMllmModel,
-        dummy_response_instance: ModelResponse,
-        dummy_chat_instance: BaseMllmChat,
-    ) -> None:
-        """Test that SHAP and normalized SHAP values are computed properly."""
-        masks = torch.tensor([[True, False, True], [False, True, True]])
-        responses = [dummy_response_instance, dummy_response_instance]
+    @staticmethod
+    def _create_explainer() -> ConcreteExplainer:
+        return ConcreteExplainer(model=DummyModel(), shap_explainer=DummyShapExplainer())
 
-        explainer_instance.similarity_measure.operates_on_embeddings = True
-        shap_values, normalized = explainer_instance._get_shap_values(
-            source_chat=dummy_chat_instance,
-            model=dummy_model_instance,
-            masks=masks,
-            responses=responses,
-            device=torch.device("cpu"),
-        )
+    def test_init_validates_dependencies(self) -> None:
+        """Pydantic config should reject invalid dependency types."""
+        with pytest.raises(ValidationError):
+            ConcreteExplainer(model=DummyModel(), shap_explainer="oops")  # type: ignore[arg-type]
+        with pytest.raises(ValidationError):
+            ConcreteExplainer(model="not-a-model", shap_explainer=DummyShapExplainer())  # type: ignore[arg-type]
 
-        assert shap_values.shape == (3,)
-        assert normalized.shape == (3,)
-        assert torch.isfinite(normalized).all()
+    def test_call_rejects_chat_in_generation_kwargs(self) -> None:
+        """Passing forbidden keys in generation kwargs should raise."""
+        explainer = self._create_explainer()
+        with pytest.raises(ValueError, match="generation_kwargs"):
+            explainer(chat=DummyChat(), generation_kwargs={"chat": DummyChat()})
 
-    def test_call_returns_history(
-        self,
-        explainer_instance: BaseShapExplainer,
-        dummy_model_instance: BaseMllmModel,
-        dummy_chat_instance: BaseMllmChat,
-        dummy_response_instance: ModelResponse,
-    ) -> None:
-        """Test __call__ returns history correctly when verbose=True."""
-        history = explainer_instance(
-            model=dummy_model_instance,
-            source_chat=dummy_chat_instance,
-            response=dummy_response_instance,
-            progress_bar=False,
-            verbose=True,
-        )
+    def test_call_rejects_keep_history_in_generation_kwargs(self) -> None:
+        """Passing keep_history in generation kwargs should raise."""
+        explainer = self._create_explainer()
+        with pytest.raises(ValueError, match="keep_history"):
+            explainer(chat=DummyChat(), generation_kwargs={"keep_history": True})
 
-        assert isinstance(history, list)
-        assert len(history) > 0
-        for el in history:
-            assert len(el) == 4
-            assert isinstance(el[0], Tensor)  # generated mask
-            assert isinstance(el[1], int)  # mask hash
-            assert isinstance(el[2], BaseMllmChat)  # chat
-            assert isinstance(el[3], ModelResponse)  # model response
+    def test_call_rejects_reserved_keys_in_explanation_kwargs(self) -> None:
+        """Reserved explanation kwargs should trigger validation error."""
+        explainer = self._create_explainer()
+        with pytest.raises(ValueError, match="base_chat"):
+            explainer(chat=DummyChat(), base_chat=DummyChat())
+        with pytest.raises(ValueError, match="model"):
+            explainer(chat=DummyChat(), model=DummyModel())
 
-    @patch("mllm_shap.shap.base.explainer.MasksManager")
-    @patch("mllm_shap.shap.base.explainer.CacheManager")
-    @patch("mllm_shap.shap.base.explainer.generate_responses")
-    def test_call_raises_not_enough_tokens(
-        self,
-        mock_generate_responses: MagicMock,
-        mock_cache_manager: MagicMock,
-        mock_masks_manager: MagicMock,
-        explainer_instance: BaseShapExplainer,
-        dummy_model_instance: BaseMllmModel,
-        dummy_chat_instance: BaseMllmChat,
-        dummy_response_instance: ModelResponse,
-    ) -> None:
-        """Test that NotEnoughTokensToExplainError is raised when all chats are skipped."""
-        mock_masks_manager.return_value.n = 3
-        mock_masks_manager.return_value.max_masks_number = 2
-        mock_masks_manager.return_value.get_initial_mask.return_value = torch.tensor([True, True, True])
-        mock_cache_manager.return_value.extracted_num = 0
-        # simulate all chats skipped
-        mock_generate_responses.return_value = (2, [])
-
-        with pytest.raises(NotEnoughTokensToExplainError):
-            explainer_instance(
-                model=dummy_model_instance,
-                source_chat=dummy_chat_instance,
-                response=dummy_response_instance,
-                progress_bar=False,
-                verbose=True,
+    def test_call_rejects_duplicate_keys_between_kwargs(self) -> None:
+        """Common keys across generation and explanation kwargs must fail."""
+        explainer = self._create_explainer()
+        with pytest.raises(ValueError, match="Duplicate keys"):
+            explainer(
+                chat=DummyChat(),
+                generation_kwargs={"temperature": 0.1},
+                temperature=0.2,
             )
 
-    @patch("mllm_shap.shap.base.explainer.ExplainerCache.create")
-    def test_save_to_cache_creates_new_cache(
-        self,
-        mock_create: MagicMock,
-        explainer_instance: BaseShapExplainer,
-        dummy_chat_instance: BaseMllmChat,
-        dummy_response_instance: ModelResponse,
-    ) -> None:
-        """Test _save_to_cache assigns a new ExplainerCache when no existing cache."""
-        responses = [dummy_response_instance]
-        masks = torch.ones((2, 3), dtype=torch.bool)
-        shap_values = torch.zeros(3)
-        norm_values = torch.ones(3)
-        explainer_instance._save_to_cache(
-            chat=dummy_chat_instance,
-            source_chat=deepcopy(dummy_chat_instance),
-            responses=responses,
-            masks=masks,
-            shap_values=shap_values,
-            normalized_shap_values=norm_values,
+    def test_call_resets_total_call_counter(self) -> None:
+        """Base call should reset total_n_calls before execution."""
+        explainer = self._create_explainer()
+        explainer.total_n_calls = 7
+        result = explainer(chat=DummyChat(), explanation_kwargs={"alpha": 1.0})
+        assert explainer.total_n_calls == 0
+        assert result.total_n_calls == 0
+
+    def test_call_records_arguments_for_subclass(self) -> None:
+        """Subclass should receive normalized kwargs after validation."""
+        explainer = self._create_explainer()
+        chat = DummyChat()
+        generation_kwargs = {"temperature": 0.3, "top_p": 0.9}
+        result = explainer(
+            "unused",
+            chat=chat,
+            generation_kwargs=generation_kwargs,
+            sample_size=4,
         )
-        mock_create.assert_called_once()
+        assert result.full_chat is chat
+        recorded_chat, recorded_gen, recorded_exp = explainer.calls[-1]
+        assert recorded_chat is chat
+        assert recorded_gen == generation_kwargs
+        assert recorded_exp == {"sample_size": 4}
 
-    def test_save_to_cache_raises_when_cache_exists(
-        self,
-        explainer_instance: BaseShapExplainer,
-        dummy_chat_instance: BaseMllmChat,
-        dummy_response_instance: ModelResponse,
-    ) -> None:
-        """Test _save_to_cache raises ValueError when cache already exists."""
-        dummy_chat_instance.cache = object()  # simulate existing cache
-        responses = [dummy_response_instance]
-        masks = torch.ones((2, 3), dtype=torch.bool)
-        shap_values = torch.zeros(3)
-        norm_values = torch.ones(3)
-
-        with pytest.raises(ValueError):
-            explainer_instance._save_to_cache(
-                chat=dummy_chat_instance,
-                source_chat=deepcopy(dummy_chat_instance),
-                responses=responses,
-                masks=masks,
-                shap_values=shap_values,
-                normalized_shap_values=norm_values,
-            )
+    def test_call_supports_empty_kwargs(self) -> None:
+        """Calling without optional kwargs should still track invocation."""
+        explainer = self._create_explainer()
+        result = explainer(chat=DummyChat())
+        assert result.history is None
+        recorded_chat, recorded_gen, recorded_exp = explainer.calls[-1]
+        assert isinstance(recorded_chat, DummyChat)
+        assert recorded_gen == {}
+        assert recorded_exp == {}

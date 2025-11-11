@@ -119,10 +119,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         # filter out text tokens based on the text_mask
         # masking done on new_instance as it can mutate the tensors
         new_instance.text = safe_mask(new_instance.text, text_mask_relative)
-        new_instance.text_tokens_no_system_mask = safe_mask(
-            new_instance.text_tokens_no_system_mask,
-            text_mask_relative,
-        )
+        new_instance.text_tokens_no_system_mask = safe_mask(new_instance.text_tokens_no_system_mask, text_mask_relative)
 
         # split audio mask into input and output parts
         # masks relative to audio tokens
@@ -147,6 +144,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         new_audio_map_in = (
             chat._audio_map[chat._audio_map < 0][final_audio_in_relative] + removed_audio_in_relative_shift
         )
+        # pick > 0 --> audio out, by final_audio_out_relative - what to keep, and adjust indices
         new_audio_map_out = (
             chat._audio_map[chat._audio_map > 0][final_audio_out_relative] - removed_audio_out_relative_shift
         )

@@ -1,4 +1,4 @@
-This folder contains example use cases of the `audio-shap` package. Most examples utilize the `liquid_audio` model (see the [connector](./../mllm_shap/src/mllm_shap/connectors/liquid_audio/)).
+This folder contains example use cases of the `audio-shap` package. Most examples utilize the `liquid_audio` model (see the [connector](./../mllm_shap/src/mllm_shap/connectors/liquid/)).
 
 Each notebook can also serve as a **manual test** to verify the package’s correct functionality—especially useful for those developing custom connectors or extending the package’s capabilities.
 

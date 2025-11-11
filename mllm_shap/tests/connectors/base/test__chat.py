@@ -92,6 +92,22 @@ class TestDummyChat:
             chat.add_audio(b"abcd", audio_format="mp3")
         assert chat.input_tokens_num > initial_tokens
 
+    def test_add_text_rejects_invalid_input(self, chat: BaseMllmChat) -> None:
+        """add_text should reject non-string or empty values before touching chat state."""
+        chat.speaker = Role.USER
+        with pytest.raises(ValueError, match="text must be a non-empty string"):
+            chat.add_text(123)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="text must be a non-empty string"):
+            chat.add_text("")
+
+    def test_add_audio_rejects_invalid_input(self, chat: BaseMllmChat) -> None:
+        """add_audio should reject non-bytes or empty payloads."""
+        chat.speaker = Role.USER
+        with pytest.raises(ValueError, match="audio_content must be non-empty bytes"):
+            chat.add_audio("not-bytes")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="audio_content must be non-empty bytes"):
+            chat.add_audio(b"")
+
     def test_append_method(self, chat: BaseMllmChat) -> None:
         """Test append method."""
         chat.speaker = Role.USER
@@ -114,6 +130,25 @@ class TestDummyChat:
         assert not new_mask[0]
         assert not new_mask[3]
 
+    def test_detect_returns_indices_when_not_marking(self, chat: BaseMllmChat) -> None:
+        """_detect should return match indices when mark=False."""
+        tokens = torch.tensor([4, 5, 4, 5, 6])
+        seq_tensor = torch.tensor([4, 5])
+        matches = chat._detect(tokens, seq_tensor, mask=None, mark=False)
+        assert matches.tolist() == [0, 2]
+
+    def test_new_turn_raises_if_already_active(self, chat: BaseMllmChat) -> None:
+        """new_turn should guard against nested turns."""
+        chat.speaker = Role.USER
+        with pytest.raises(ValueError, match="Cannot start a new turn"):
+            chat.new_turn(Role.USER)
+
+    def test_end_turn_raises_if_no_active(self, chat: BaseMllmChat) -> None:
+        """end_turn should fail when there is no active speaker."""
+        chat.speaker = None
+        with pytest.raises(ValueError, match="No active turn"):
+            chat.end_turn()
+
     def test_from_chat(self) -> None:
         """Test from_chat class method."""
         base_chat = DummyChat(num_tokens=3)
@@ -127,6 +162,65 @@ class TestDummyChat:
         # all-False mask raises
         with pytest.raises(ValueError):
             DummyChat.from_chat(torch.zeros(3, dtype=torch.bool), base_chat)
+
+    def test_from_chat_clears_external_masks(self) -> None:
+        """External group ids and shap masks must not leak to new chat."""
+        base_chat = DummyChat(num_tokens=3)
+        base_chat.external_group_ids = torch.tensor([0, 1, 1], dtype=torch.int32)
+        base_chat.external_shap_values_mask = torch.tensor([True, False, True])
+
+        new_chat = DummyChat.from_chat(torch.tensor([True, True, True]), base_chat)
+
+        assert new_chat.external_group_ids is None
+        assert new_chat.external_shap_values_mask is None
+
+    def test_before_add_blocks_when_external_masks_set(self, chat: BaseMllmChat) -> None:
+        """Setting external masks should prevent further additions."""
+        ids = torch.tensor([0, 1, 1, 0, 2], dtype=torch.int32)
+        chat.external_group_ids = ids[: chat.input_tokens_num]
+        chat.speaker = Role.USER
+        with pytest.raises(ValueError, match="Cannot add tokens when external_group_ids is set"):
+            chat.add_text("hello")
+
+        del chat.external_group_ids
+        chat.speaker = Role.USER
+        chat.add_text("hello")
+        assert chat.input_tokens_num == 6
+
+        chat.external_shap_values_mask = torch.ones(chat.input_tokens_num, dtype=torch.bool)
+        chat.speaker = Role.USER
+        with pytest.raises(ValueError, match="Cannot add tokens when external_shap_values_mask is set"):
+            chat.add_text("world")
+        del chat.external_shap_values_mask
+
+    def test_external_masks_size_validation(self, chat: BaseMllmChat) -> None:
+        """External mask setters should validate tensor lengths."""
+        with pytest.raises(ValueError, match="External SHAP values mask size"):
+            chat.external_shap_values_mask = torch.ones(chat.input_tokens_num + 1, dtype=torch.bool)
+
+        with pytest.raises(ValueError, match="External group IDs size"):
+            chat.external_group_ids = torch.ones(chat.input_tokens_num + 2, dtype=torch.int32)
+
+    def test_translate_group_ids_mask_marks_full_groups(self, chat: BaseMllmChat) -> None:
+        """translate_groups_ids_mask should expand selections to entire groups."""
+        ids = torch.tensor([0, 1, 1, 2, 2], dtype=torch.int32)
+        chat.external_group_ids = ids
+        group_mask = torch.zeros(chat.input_tokens_num, dtype=torch.bool)
+        positions = chat.external_group_ids_first_positions
+        group_mask[positions] = torch.tensor([False, True])
+
+        translated = chat.translate_groups_ids_mask(group_mask.clone())
+        expected = torch.tensor([False, False, False, True, True])
+        assert torch.equal(translated, expected)
+
+        del chat.external_group_ids
+
+    def test_is_system_turn_flag(self, chat: BaseMllmChat) -> None:
+        """is_system_turn should reflect membership in system roles set."""
+        chat.speaker = Role.SYSTEM
+        assert chat.is_system_turn is True
+        chat.speaker = Role.USER
+        assert chat.is_system_turn is False
 
 
 class TestGetConversation:
@@ -149,6 +243,11 @@ class TestGetConversation:
         )
         chat.text_tokens_mask = torch.ones(4, dtype=torch.bool)
         return chat
+
+    def test_returns_empty_when_no_turns(self) -> None:
+        """Chats without turns should yield an empty conversation."""
+        chat = DummyChat(num_tokens=2)
+        assert chat.get_conversation() == []
 
     def test_single_turn_text(self, chat: BaseMllmChat) -> None:
         """Test get_conversation for single turn with text modality."""

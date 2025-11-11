@@ -13,7 +13,7 @@ Subpackages
    :maxdepth: 4
 
    mllm_shap.connectors.base
-   mllm_shap.connectors.liquid_audio
+   mllm_shap.connectors.liquid
 
 Submodules
 ----------
