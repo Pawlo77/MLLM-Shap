@@ -78,6 +78,21 @@ class TestExplainerCache:
                 shap_values_mask=chat.shap_values_mask,
             )
 
+    def test_init_raises_if_masks_do_not_match_responses(
+        self, chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> None:
+        """Mask rows must match number of responses."""
+        masks = torch.ones(1, 3, dtype=torch.bool)
+        with pytest.raises(ValueError, match="Masks size does not match the number of responses"):
+            ExplainerCache(
+                chat=chat,
+                calculated_by=10,
+                n=3,
+                responses=base_responses,
+                masks=masks,
+                shap_values_mask=chat.shap_values_mask,
+            )
+
     def test_extend_values_adds_padding(self, chat: BaseMllmChat) -> None:
         """Test extend_values correctly appends fill values."""
         base = torch.tensor([[1.0, 2.0]])
@@ -115,6 +130,20 @@ class TestExplainerCache:
         ):
             cache.values = values
 
+    def test_values_setter_allows_reset_to_none(self, cache: ExplainerCache) -> None:
+        """Setting values to None should clear stored tensor."""
+        cache.shap_values_mask = torch.tensor([True, True, False, False, False])
+        cache.values = torch.tensor([1.0, 2.0, float("nan")])
+        cache.values = None
+        with pytest.raises(ValueError, match="have not been computed yet"):
+            _ = cache.values
+
+    def test_values_setter_rejects_oversized_tensor(self, cache: ExplainerCache) -> None:
+        """Values longer than chat length should raise."""
+        oversized = torch.arange(cache.chat.input_tokens_num + 1, dtype=torch.float)
+        with pytest.raises(ValueError, match="Values size is larger"):
+            cache.values = oversized
+
     def test_values_getter_unset(self, cache: ExplainerCache) -> None:
         """Raise if SHAP values not yet computed."""
         with pytest.raises(ValueError, match="have not been computed yet"):
@@ -138,6 +167,12 @@ class TestExplainerCache:
         with pytest.raises(ValueError, match="have not been computed yet"):
             _ = cache.normalized_values
 
+    def test_normalized_values_validation(self, cache: ExplainerCache) -> None:
+        """Normalized values must obey mask rules identical to raw values."""
+        cache.shap_values_mask = torch.tensor([True, True, False, False, False])
+        with pytest.raises(ValueError, match="contain NaN values for text tokens"):
+            cache.normalized_values = torch.tensor([float("nan"), 1.0, float("nan")])
+
     def test_create_classmethod(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
         """Test ExplainerCache.create sets fields correctly."""
         masks = torch.ones(2, 3, dtype=torch.bool)
@@ -155,6 +190,28 @@ class TestExplainerCache:
         assert cache.calculated_by == 999
         assert torch.allclose(cache.values, values, equal_nan=True)
         assert torch.allclose(cache.normalized_values, normalized, equal_nan=True)
+        assert cache.n == masks.shape[1]
+
+    def test_had_different_masks_flag(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+        """had_different_masks should reflect mismatch between chat and provided mask."""
+        shap_mask = chat.shap_values_mask.clone()
+        shap_mask[0] = False
+        cache = ExplainerCache(
+            chat=chat,
+            calculated_by=1,
+            n=3,
+            responses=base_responses,
+            masks=torch.ones(2, 3, dtype=torch.bool),
+            shap_values_mask=shap_mask,
+        )
+        assert cache.had_different_masks is True
+
+    def test_extend_masks_restores_length(self, cache: ExplainerCache) -> None:
+        """extend_masks should append False columns up to chat length."""
+        cache.masks = cache.masks[:, :3]
+        cache.extend_masks()
+        assert cache.masks.shape[1] == cache.chat.input_tokens_num
+        assert torch.all(~cache.masks[:, 3:])
 
     def test_del_resets_references(self, cache: ExplainerCache) -> None:
         """Test that __del__ sets all internal refs to None."""

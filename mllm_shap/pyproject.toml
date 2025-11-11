@@ -1,13 +1,10 @@
 [project]
 name = "mllm-shap"
-version = "0.1.5"
+version = "0.1.6"
 description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 classifiers = [
-    # change when ready
-    "Development Status :: 4 - Beta",
-
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",

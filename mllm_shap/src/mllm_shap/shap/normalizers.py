@@ -68,7 +68,7 @@ class MinMaxNormalizer(BaseNormalizer):
     def __call__(self, shap_values: Tensor) -> Tensor:
         min_val = shap_values.min()
         max_val = shap_values.max()
-        if max_val - min_val == 0:
+        if max_val - min_val == 0:  # all values are the same
             return torch.ones_like(shap_values) / len(shap_values)
         normalized = (shap_values - min_val) / (max_val - min_val)
         normalized /= normalized.sum()
