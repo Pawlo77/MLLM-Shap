@@ -11,7 +11,9 @@ from torch import Tensor
 class DummyExplainer(BaseShapApproximation):
     """Concrete subclass for testing abstract BaseShapApproximation."""
 
-    def _get_next_split(self, n: int, device: torch.device, generated_masks: int, extra_arg: Any = None) -> Tensor | None:
+    def _get_next_split(
+        self, n: int, device: torch.device, generated_masks: int, extra_arg: Any = None
+    ) -> Tensor | None:
         return None
 
     def _get_num_splits(self, n: int) -> int:
