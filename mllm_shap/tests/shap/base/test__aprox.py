@@ -11,10 +11,12 @@ from torch import Tensor
 class DummyExplainer(BaseShapApproximation):
     """Concrete subclass for testing abstract BaseShapApproximation."""
 
-    def _get_next_split(self, target_length: int, device: torch.device, generated_masks: int) -> Tensor | None:
+    def _get_next_split(
+        self, n: int, device: torch.device, generated_masks: int, extra_arg: Any = None
+    ) -> Tensor | None:
         return None
 
-    def _get_num_splits(self, target_length: int) -> int:
+    def _get_num_splits(self, n: int) -> int:
         # Return a large enough value to avoid budget errors
         return 100
 
@@ -77,21 +79,21 @@ class TestGenerateMinimalSplits:
         """Test that generate_minimal_splits produces correct shape."""
         device = torch.device("cpu")
         n = 4
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert masks.shape == (n + 1, n)
 
     def test_first_row_is_all_false(self) -> None:
         """Test that the first row of generated minimal splits is all False."""
         device = torch.device("cpu")
         n = 3
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert torch.equal(masks[0], torch.zeros(n, dtype=torch.bool, device=device))
 
     def test_each_subsequent_row_has_single_false(self) -> None:
         """Each subsequent row should have exactly one False at the correct position."""
         device = torch.device("cpu")
         n = 5
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         for i in range(1, n + 1):
             row = masks[i]
             assert torch.sum(~row) == 1  # exactly one False
@@ -102,7 +104,7 @@ class TestGenerateMinimalSplits:
         """Generated minimal splits have correct dtype and device."""
         device = torch.device("cpu")
         n = 2
-        masks = DummyExplainer.generate_minimal_splits(n, device)
+        masks = DummyExplainer._generate_minimal_splits(n, device)
         assert masks.dtype == torch.bool
         assert masks.device == device
 
@@ -112,7 +114,7 @@ class TestGetNextSplitBase:
 
     def setup_method(self) -> None:
         self.device = torch.device("cpu")
-        self.target_length = 3
+        self.n = 3
         self.explainer = DummyExplainer(num_samples=5)
         # initialize internal state
         self.explainer._first_call = True
@@ -123,22 +125,22 @@ class TestGetNextSplitBase:
     def test_first_call_generates_base_masks(self) -> None:
         """Should generate base masks on first call."""
         mask = self.explainer._get_next_split_base(
-            target_length=self.target_length,
+            n=self.n,
             device=self.device,
-            generated_masks=0,
+            generated_masks_num=0,
         )
         assert isinstance(mask, Tensor)
         assert self.explainer._base_masks is not None
-        assert mask.shape == (self.target_length,)
+        assert mask.shape == (self.n,)
 
     def test_returns_none_when_generated_masks_exceed_base(self) -> None:
         """Should return None when generated masks exceed base mask count."""
-        self.explainer._get_next_split_base(self.target_length, self.device, 0)
+        self.explainer._get_next_split_base(self.n, self.device, 0)
         num_base = self.explainer._base_masks.shape[0]
         result = self.explainer._get_next_split_base(
-            target_length=self.target_length,
+            n=self.n,
             device=self.device,
-            generated_masks=num_base,
+            generated_masks_num=num_base,
         )
         assert result is None
 
@@ -149,9 +151,9 @@ class TestGetNextSplitBase:
         self.explainer._first_call = False
         with pytest.raises(RuntimeError, match="Base masks are not present"):
             self.explainer._get_next_split_base(
-                target_length=self.target_length,
+                n=self.n,
                 device=self.device,
-                generated_masks=1,
+                generated_masks_num=1,
             )
 
     def test_runtime_error_multiple_base_rejected(self) -> None:
@@ -162,7 +164,7 @@ class TestGetNextSplitBase:
         self.explainer._base_calls_num = 0
         with pytest.raises(RuntimeError, match="Multiple base masks were rejected"):
             self.explainer._get_next_split_base(
-                target_length=self.target_length,
+                n=self.n,
                 device=self.device,
-                generated_masks=0,
+                generated_masks_num=0,
             )
