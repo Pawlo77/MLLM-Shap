@@ -176,29 +176,20 @@ def build_chat(  # pylint: disable=too-many-arguments
     text_only: bool = False,
     *,
     token_filter: Any | None = None,
-    is_neyman: bool = False
 ) -> Any:
     """Prepare a chat turn with the given text+audio for the LiquidAudio model."""
     tf = token_filter or ExcludePunctuationTokensFilter()
 
     chat = None
-    if is_neyman:
-        chat = model.get_new_chat(
-            system_roles_setup=SystemRolesSetup.SYSTEM_ASSISTANT,
-            token_filter=tf,
-        )
-        chat.new_turn(Role.ASSISTANT)
-        chat.add_text("You are a helpful assitant.")
-        chat.end_turn()
-        chat.new_turn(Role.USER)
-        chat.add_text(user_text)
-    else:
-        chat = model.get_new_chat(
-            system_roles_setup=SystemRolesSetup.NONE,
-            token_filter=tf,
-        )
-        chat.new_turn(Role.USER)
-        chat.add_text(user_text)
+    chat = model.get_new_chat(
+        system_roles_setup=SystemRolesSetup.SYSTEM_ASSISTANT,
+        token_filter=tf,
+    )
+    chat.new_turn(Role.ASSISTANT)
+    chat.add_text("You are a helpful assitant.")
+    chat.end_turn()
+    chat.new_turn(Role.USER)
+    chat.add_text(user_text)
 
     if not text_only and audio_bytes is not None:
         chat.add_audio(audio_bytes)
