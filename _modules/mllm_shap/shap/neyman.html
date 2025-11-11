@@ -293,7 +293,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base._cache_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CacheManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base._masks_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">MasksManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base._validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapCallConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base.approx</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseComplementaryShapApproximation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base.complementary</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseComplementaryShapApproximation</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -324,7 +324,8 @@
 <span class="sd">        within `(number of players) * (number of players + 1) * initial_num_samples` calls.</span>
 
 <span class="sd">    Warning:</span>
-<span class="sd">        This explainer requires the source chat to have SYSTEM_ASSISTANT roles setup.</span>
+<span class="sd">        This explainer requires the source chat to have at least one non-user turn</span>
+<span class="sd">        (:class:`Role.ASSISTANT` or :class:`Role.SYSTEM`).</span>
 <span class="sd">        It is due to its requirement to evaluate all-zeros and all-ones splits, which</span>
 <span class="sd">        otherwise would be rejected by connectors as invalid. It requires at least</span>
 <span class="sd">        one turn for assistant and some system messages to be present.</span>
@@ -398,9 +399,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_num_samples</span> <span class="o">=</span> <span class="n">initial_num_samples</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_fraction</span> <span class="o">=</span> <span class="n">initial_fraction</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize internal state before starting mask generation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_initialize_state</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__get_start</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__step</span> <span class="o">=</span> <span class="n">_Step</span><span class="o">.</span><span class="n">INITIAL_SAMPLING</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_num_splits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get total number of splits to generate, as well</span>
 <span class="sd">        as number of initial splits for each entry of matrix M.</span>
 <span class="sd">        It determines initial step duration.</span>
@@ -411,11 +424,13 @@
 <span class="sd">            Number of masks to generate.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="c1"># determine total number of splits</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">num_splits</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_num_splits</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Total number of splits could not be determined.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
+        <span class="c1"># determine initial number of splits per entry in M</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__use_default_initial_sampling_formula</span><span class="p">:</span>
                 <span class="n">initial_num_splits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">num_splits</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span><span class="p">)))</span>
@@ -429,8 +444,9 @@
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Initial number of splits could not be determined.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-        <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Initial number of splits must be at least 1.&quot;</span><span class="p">)</span>
+        <span class="c1"># validate initial number of splits</span>
+        <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Initial number of splits must be at least 2.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&gt;</span> <span class="n">num_splits</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Initial number of splits </span><span class="si">{</span><span class="n">initial_num_splits</span><span class="si">}</span><span class="s2"> is larger than total number of splits </span><span class="si">{</span><span class="n">num_splits</span><span class="si">}</span><span class="s2">.&quot;</span>
@@ -478,7 +494,8 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__initial_num_splits</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;__update_M_position did not update position correctly.&quot;</span><span class="p">)</span>
 
-            <span class="c1"># self._i == 0 --&gt; include no tokens</span>
+            <span class="c1"># `self.__j == 0` --&gt; include no tokens</span>
+            <span class="c1"># generate split of size `self.__j` with required token `self.__i`</span>
             <span class="n">new_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_random_split</span><span class="p">(</span>
                 <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
@@ -492,9 +509,12 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M_hat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;M_hat matrix must be initialized before sampling.&quot;</span><span class="p">)</span>
+        <span class="c1"># dont end on total budget exceeded here, as it might slightly differ</span>
+        <span class="c1"># from one estimated with `self.__M_hat`. This difference should be minimal.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__j</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M_hat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>  <span class="c1"># end of sampling</span>
             <span class="k">return</span> <span class="kc">None</span>
 
+        <span class="c1"># generate split of size `self.__j`</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M_hat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">new_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_random_split</span><span class="p">(</span>
                 <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
@@ -512,50 +532,14 @@
             <span class="n">existing_masks</span><span class="o">=</span><span class="n">existing_masks</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_shap_values</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">similarities</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero_mask_skipped</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Zero mask was not skipped during mask generation.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;M and C matrices must be initialized before calculating SHAP values.&quot;</span><span class="p">)</span>
-
-        <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
-        <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
-
-        <span class="n">non_zero_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">!=</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">non_zero_mask</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Some entries in M matrix are zero. They are all expected to be &gt;= `initial_num_splits`.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">C</span> <span class="o">/</span> <span class="n">M</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize internal state before starting mask generation.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_initialize_state</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__get_start</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">__step</span> <span class="o">=</span> <span class="n">_Step</span><span class="o">.</span><span class="n">INITIAL_SAMPLING</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__j</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span> <span class="o">=</span> <span class="kc">None</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_masks_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;include_mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;only_unique&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># won&#39;t cause issues as we force `Role.ASSISTANT` presence in chat</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;allow_full_or_empty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_masks_generator</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_C_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">similarities</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Overload to also calculate C squared matrix for Neyman allocation.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Overload to also calculate C squared matrix.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;M matrix must be initialized before calculating C matrix.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -566,12 +550,13 @@
         <span class="k">if</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">masks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Masks should be in complementary pairs.&quot;</span><span class="p">)</span>
 
+        <span class="c1"># change: include C squared calculation within same loop</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">masks</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">~</span><span class="n">masks</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Masks are not complementary pairs.&quot;</span><span class="p">)</span>
 
             <span class="n">S</span> <span class="o">=</span> <span class="n">masks</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span>
-            <span class="n">NS</span> <span class="o">=</span> <span class="n">masks</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">NS</span> <span class="o">=</span> <span class="n">masks</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># complement of S</span>
             <span class="n">s_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
             <span class="n">ns_size</span> <span class="o">=</span> <span class="n">masks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">s_size</span>
 
@@ -583,11 +568,34 @@
             <span class="n">BaseComplementaryShapApproximation</span><span class="o">.</span><span class="n">_increment_coalition_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">u_squared</span><span class="p">)</span>
             <span class="n">BaseComplementaryShapApproximation</span><span class="o">.</span><span class="n">_increment_coalition_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span><span class="p">,</span> <span class="n">NS</span><span class="p">,</span> <span class="n">ns_size</span><span class="p">,</span> <span class="n">u_squared</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_shap_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">similarities</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero_mask_skipped</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Zero mask was not skipped during mask generation.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;M and C matrices must be initialized before calculating SHAP values.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># exclude zero-mask column</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
+
+        <span class="n">positive_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">positive_mask</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Some entries in M matrix are zero. They are all expected to be &gt;= `initial_num_splits`.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">C</span> <span class="o">/</span> <span class="n">M</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__get_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns:</span>
-<span class="sd">            Starting index in matrix M for Neyman allocation.</span>
+<span class="sd">            Starting index in matrix M for Neyman allocation (step _Step.NEYMAN_ALLOCATION).</span>
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If matrix M is not initialized.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -597,7 +605,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__update_M_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update position in matrix M for Neyman allocation.</span>
+<span class="sd">        Update position in matrix M during `_Step.INITIAL_SAMPLING` step.</span>
+<span class="sd">        If no more positions are left, returns True to indicate moving to next step.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Boolean indicating if a full pass on M was completed.</span>
@@ -608,11 +617,10 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;M matrix must be initialized before updating position.&quot;</span><span class="p">)</span>
 
         <span class="n">not_completed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__initial_num_splits</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">not_completed</span><span class="p">):</span>  <span class="c1"># stop initial and move to next step</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-        <span class="c1"># Given current (i, j) and a boolean mask[n, n], find the next (i, j)</span>
+        <span class="c1"># Given current (i, j) and a boolean M[n, n], find the next (i, j)</span>
         <span class="c1"># position where mask is True, scanning row by row.</span>
         <span class="n">flat</span> <span class="o">=</span> <span class="n">not_completed</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="n">start_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">__j</span> <span class="o">+</span> <span class="mi">1</span>
@@ -640,7 +648,7 @@
         <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">M_small</span> <span class="o">=</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="n">M_small</span>
-        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>  <span class="c1"># should never happen, but numerical issues might cause it</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Negative variance estimates found; setting them to zero.&quot;</span><span class="p">)</span>
             <span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
 
@@ -664,18 +672,18 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Remaining samples for Neyman allocation must be odd.&quot;</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 
-        <span class="n">sigma_hat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__estimate_sigma_squared</span><span class="p">()</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sigma squared estimates: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sigma_hat</span><span class="p">)</span>
+        <span class="n">sigma_squared_hat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__estimate_sigma_squared</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sigma squared estimates: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sigma_squared_hat</span><span class="p">)</span>
 
         <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_start</span><span class="p">()</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">sigma_hat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">sigma_squared_hat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># Indices for the right half</span>
-        <span class="n">k_vec</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">sigma_hat</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># indexes</span>
+        <span class="n">k_vec</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">sigma_squared_hat</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># indexes</span>
         <span class="n">k_left</span> <span class="o">=</span> <span class="n">k_vec</span>
         <span class="n">k_right</span> <span class="o">=</span> <span class="n">right</span> <span class="o">-</span> <span class="n">k_vec</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">sigma_left</span> <span class="o">=</span> <span class="n">sigma_hat</span><span class="p">[:,</span> <span class="n">k_left</span><span class="p">]</span>  <span class="c1"># shape (n, r - l)</span>
-        <span class="n">sigma_right</span> <span class="o">=</span> <span class="n">sigma_hat</span><span class="p">[:,</span> <span class="n">k_right</span><span class="p">]</span>  <span class="c1"># shape (n, r - l)</span>
+        <span class="n">sigma_left</span> <span class="o">=</span> <span class="n">sigma_squared_hat</span><span class="p">[:,</span> <span class="n">k_left</span><span class="p">]</span>  <span class="c1"># shape (n, r - l)</span>
+        <span class="n">sigma_right</span> <span class="o">=</span> <span class="n">sigma_squared_hat</span><span class="p">[:,</span> <span class="n">k_right</span><span class="p">]</span>  <span class="c1"># shape (n, r - l)</span>
         <span class="n">inner</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sigma_left</span> <span class="o">/</span> <span class="p">(</span><span class="n">k_left</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">sigma_left</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sigma_right</span> <span class="o">/</span> <span class="p">(</span><span class="n">k_right</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">sigma_right</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -685,6 +693,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__M_hat</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">right</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">m</span> <span class="o">/</span> <span class="n">inner</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="n">inner</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;M hat </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M_hat</span><span class="p">)</span>
 
+    <span class="c1"># pylint: disable=signature-differs</span>
     <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="c1"># pylint: disable=too-many-locals,too-many-statements,too-many-branches</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
@@ -711,10 +720,15 @@
         <span class="n">source_chat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">source_chat</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">torch_device</span>
 
+        <span class="c1"># additional validations guaranteeing no masks will be rejected by chat/model</span>
         <span class="k">if</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">system_roles_setup</span> <span class="o">!=</span> <span class="n">SystemRolesSetup</span><span class="o">.</span><span class="n">SYSTEM_ASSISTANT</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Source chat must have SYSTEM_ASSISTANT roles setup for Neyman SHAP.&quot;</span><span class="p">)</span>
+        <span class="c1"># cant check for SYSTEM role alone, as some models might use it for steering tokens</span>
         <span class="k">if</span> <span class="n">Role</span><span class="o">.</span><span class="n">ASSISTANT</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">token_roles</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Source chat must have at least one ASSISTANT turn with some message.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Source chat must have at least one non-user message for Neyman SHAP.&quot;</span>
+                <span class="s2">&quot;No assistant role found, make sure that existing messages cover it.&quot;</span>
+            <span class="p">)</span>
 
         <span class="n">mask_manager</span> <span class="o">=</span> <span class="n">MasksManager</span><span class="p">(</span><span class="n">chat</span><span class="o">=</span><span class="n">source_chat</span><span class="p">,</span> <span class="n">log_stats</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">cache_manager</span> <span class="o">=</span> <span class="n">CacheManager</span><span class="p">(</span>
@@ -746,8 +760,6 @@
         <span class="p">)</span>
 
         <span class="n">masks_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
-
         <span class="n">similarities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_similarities</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_C_matrix</span><span class="p">(</span>
             <span class="n">masks</span><span class="o">=</span><span class="n">masks_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="p">],</span>  <span class="c1"># exclude initial all-ones mask</span>
@@ -794,12 +806,6 @@
                 <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Deduplicated </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> masks using existing cache.&quot;</span><span class="p">,</span>
-                    <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span><span class="p">,</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># exclude base mask</span>
-                <span class="p">)</span>
             <span class="c1"># edge case from :class:`BaseShapExplainer` does not apply here</span>
             <span class="c1"># as we have :attr:`_initial_num_splits` &gt;= 1</span>
 
@@ -815,6 +821,13 @@
             <span class="k">del</span> <span class="n">new_history</span>
             <span class="k">del</span> <span class="n">new_masks_tensor</span>
             <span class="k">del</span> <span class="n">new_similarities</span>
+
+        <span class="k">if</span> <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Deduplicated </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2"> masks using existing cache.&quot;</span><span class="p">,</span>
+                <span class="n">cache_manager</span><span class="o">.</span><span class="n">extracted_num</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># exclude base mask</span>
+            <span class="p">)</span>
 
         <span class="k">del</span> <span class="n">mask_manager</span>
         <span class="k">del</span> <span class="n">cache_manager</span>

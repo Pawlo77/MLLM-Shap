@@ -280,7 +280,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..connectors.base.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmChat</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base.explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapExplainer</span><span class="p">,</span> <span class="n">BaseExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base.explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base.shap_explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapExplainer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.explainer_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExplainerResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.precise</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreciseShapExplainer</span>
 
@@ -291,7 +292,14 @@
 <div class="viewcode-block" id="Explainer">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.Explainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Explainer</span><span class="p">(</span><span class="n">BaseExplainer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience client class for SHAP explanation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience client class for SHAP explanation.</span>
+
+<span class="sd">    It generates the full response from the model</span>
+<span class="sd">    and then uses the provided SHAP explainer to compute SHAP values.</span>
+
+<span class="sd">    Uses :class:`PreciseShapExplainer` as the default SHAP explainer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

@@ -279,7 +279,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base.approx</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseComplementaryShapApproximation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base.complementary</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseComplementaryShapApproximation</span>
 
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -305,10 +305,12 @@
         <span class="n">similarities</span> <span class="o">=</span> <span class="n">similarities</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_C_matrix</span><span class="p">(</span><span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span> <span class="n">similarities</span><span class="o">=</span><span class="n">similarities</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 
+        <span class="c1"># exclude zero-mask column</span>
         <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
         <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_C</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
 
-        <span class="n">non_zero_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="c1"># it is not guaranteed especially with small budget</span>
+        <span class="n">non_zero_mask</span> <span class="o">=</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
         <span class="n">ratio</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">M</span><span class="p">[</span><span class="n">non_zero_mask</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>

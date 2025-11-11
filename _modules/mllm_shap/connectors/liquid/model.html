@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mllm_shap.connectors.liquid_audio.model &#8212; mllm-shap  documentation</title>
+    <title>mllm_shap.connectors.liquid.model &#8212; mllm-shap  documentation</title>
   
   
   
@@ -41,7 +41,7 @@
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/connectors/liquid_audio/model';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/connectors/liquid/model';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -253,7 +253,7 @@
     
     <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.connectors.liquid_audio.model</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.connectors.liquid.model</span></li>
   </ul>
 </nav>
 </div>
@@ -270,7 +270,7 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for mllm_shap.connectors.liquid_audio.model</h1><div class="highlight"><pre>
+  <h1>Source code for mllm_shap.connectors.liquid.model</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;LiquidAudio model connector.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -318,7 +318,7 @@
 
 
 <div class="viewcode-block" id="LiquidAudio">
-<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.LiquidAudio">[docs]</a>
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudio">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LiquidAudio</span><span class="p">(</span><span class="n">BaseMllmModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Connector for LiquidAudio model.</span>
@@ -356,7 +356,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
 <div class="viewcode-block" id="LiquidAudio.get_new_chat">
-<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.LiquidAudio.get_new_chat">[docs]</a>
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudio.get_new_chat">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_new_chat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LiquidAudioChat</span><span class="p">:</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;processor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span>
@@ -365,7 +365,7 @@
 
 
 <div class="viewcode-block" id="LiquidAudio.generate">
-<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.LiquidAudio.generate">[docs]</a>
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudio.generate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
@@ -448,7 +448,7 @@
 
 
 <div class="viewcode-block" id="LiquidAudio.get_static_embeddings">
-<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid_audio.html#mllm_shap.connectors.LiquidAudio.get_static_embeddings">[docs]</a>
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudio.get_static_embeddings">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_static_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_static_embeddings</span><span class="p">(</span><span class="n">responses</span><span class="o">=</span><span class="n">responses</span><span class="p">)</span>
 
