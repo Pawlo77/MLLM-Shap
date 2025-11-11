@@ -1,12 +1,30 @@
 """Tests for the HierarchicalExplainer module."""
 
+import math
+
 import pytest
 import torch
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.hierarchical.enums import Mode
 from mllm_shap.shap.precise import PreciseShapExplainer
-
+from mllm_shap.shap.base.approx import BaseShapApproximation
 from ...dummy import DummyModel
+
+
+class DummyApproxExplainer(BaseShapApproximation):
+    """Minimal approximation explainer to satisfy importance sampling checks."""
+
+    def _get_num_splits(self, n: int) -> int:
+        if self.num_samples is not None:
+            return self.num_samples
+        fraction = self.fraction or 1.0
+        return max(1, math.ceil((2**n - 1) * fraction))
+
+    def _calculate_shap_values(
+        self, masks: torch.Tensor, similarities: torch.Tensor, device: torch.device
+    ) -> torch.Tensor:
+        del similarities
+        return torch.ones((masks.shape[-1],), dtype=torch.float, device=device)
 
 
 class DummyChat:
@@ -19,6 +37,23 @@ class DummyChat:
         self.tokens_modality_flag = torch.tensor([0, 0, 0, 1, 1, 1, 0, 0, 0, 0])
         # Roles: e.g., 0=system/user, 1=model
         self.token_roles = torch.tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+        self.torch_device = torch.device("cpu")
+        self.input_tokens_num = len(self.shap_values_mask)
+        self.cache = None
+        self.external_shap_values_mask = None
+        self.external_group_ids = None
+
+    def translate_groups_ids_mask(self, mask: torch.Tensor) -> torch.Tensor:
+        """Return the mask unchanged for test purposes."""
+        return mask
+
+    def clone(self) -> "DummyChat":
+        """Return a shallow copy used to mimic BaseMllmChat behavior."""
+        new_chat = DummyChat()
+        new_chat.shap_values_mask = self.shap_values_mask.clone()
+        new_chat.tokens_modality_flag = self.tokens_modality_flag.clone()
+        new_chat.token_roles = self.token_roles.clone()
+        return new_chat
 
 
 class TestHierarchicalExplainerStatic:
@@ -53,6 +88,12 @@ class TestHierarchicalExplainerStatic:
         start, end, n = HierarchicalExplainer._HierarchicalExplainer__get_group_props(mask)
         assert (start, end, n) == (1, 1, 1)
 
+    def test_get_group_props_raises_for_empty(self) -> None:
+        """Empty masks should raise IndexError as there is no group."""
+        mask = torch.tensor([False, False])
+        with pytest.raises(IndexError):
+            HierarchicalExplainer._HierarchicalExplainer__get_group_props(mask)
+
 
 class TestHierarchicalExplainerGrouping:
     """Tests for group creation and segmentation logic."""
@@ -78,13 +119,22 @@ class TestHierarchicalExplainerGrouping:
         group_ids = HierarchicalExplainer._HierarchicalExplainer__get_group_ids(chat)
         assert torch.equal(group_ids, torch.zeros_like(chat.shap_values_mask, dtype=torch.long))
 
+    def test_group_ids_resets_to_zero_between_calls(self) -> None:
+        """Reusing the same chat instance should not leak previous group ids."""
+        chat = DummyChat()
+        result_first = HierarchicalExplainer._HierarchicalExplainer__get_group_ids(chat, include_role=True)
+        chat.shap_values_mask[0] = False
+        result_second = HierarchicalExplainer._HierarchicalExplainer__get_group_ids(chat, include_role=True)
+        assert result_first[0] == 1
+        assert result_second[0] == 0
+
 
 class TestHierarchicalExplainerCore:
     """Tests for initialization and key numeric properties."""
 
     def test_get_subgroups_num(self) -> None:
         """Subgroup count should equal ceil(log(n, k))."""
-        explainer = HierarchicalExplainer(k=4, shap_explainer=PreciseShapExplainer(), model=DummyModel())
+        explainer = HierarchicalExplainer(k=4, shap_explainer=DummyApproxExplainer(fraction=0.5), model=DummyModel())
         assert explainer._HierarchicalExplainer__get_subgroups_num(10) == 2
         assert explainer._HierarchicalExplainer__get_subgroups_num(8) == 2
         assert explainer._HierarchicalExplainer__get_subgroups_num(4) == 1
@@ -98,12 +148,34 @@ class TestHierarchicalExplainerCore:
 
     def test_default_mode_is_text(self) -> None:
         """Ensure default mode is Mode.TEXT."""
-        explainer = HierarchicalExplainer(k=5, shap_explainer=PreciseShapExplainer(), model=DummyModel())
+        explainer = HierarchicalExplainer(k=5, shap_explainer=DummyApproxExplainer(fraction=0.5), model=DummyModel())
         assert explainer.mode == Mode.TEXT
 
     def test_mode_explicit_setting(self) -> None:
         """Ensure custom mode is properly set."""
         explainer = HierarchicalExplainer(
-            k=5, shap_explainer=PreciseShapExplainer(), model=DummyModel(), mode=Mode.MULTI_MODAL_MULTI_USER
+            k=5,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+            mode=Mode.MULTI_MODAL_MULTI_USER,
         )
         assert explainer.mode == Mode.MULTI_MODAL_MULTI_USER
+
+    def test_importance_sampling_validation(self) -> None:
+        """Enabling importance sampling without proper explainer should raise."""
+        with pytest.raises(ValueError, match="importance_sampling"):
+            HierarchicalExplainer(
+                k=4, shap_explainer=PreciseShapExplainer(), model=DummyModel(), use_importance_sampling=True
+            )
+
+    def test_get_subgroups_num_always_positive(self) -> None:
+        """For any n >= k, subgroup count should be at least 1."""
+        explainer = HierarchicalExplainer(k=4, shap_explainer=DummyApproxExplainer(fraction=0.5), model=DummyModel())
+        for n in (4, 5, 100):
+            assert explainer._HierarchicalExplainer__get_subgroups_num(n) >= 1
+
+    def test_repeated_buckets_respects_k(self) -> None:
+        """Bucket output should never exceed the expected maximum value."""
+        n, k = 11, 4
+        buckets = HierarchicalExplainer._HierarchicalExplainer__repeated_buckets(n=n, k=k)
+        assert buckets.max().item() == math.ceil(n / k)

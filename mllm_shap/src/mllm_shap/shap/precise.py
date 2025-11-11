@@ -6,7 +6,7 @@ from typing import Generator
 import torch
 from torch import Tensor
 
-from .base.explainer import BaseShapExplainer
+from .base.shap_explainer import BaseShapExplainer
 
 
 # pylint: disable=too-few-public-methods

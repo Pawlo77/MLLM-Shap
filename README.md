@@ -2,6 +2,8 @@
 
 # Developer notes
 
+More detailed commands are available in [contributing](./CONTRIBUTING.md).
+
 #### Deploying
 
 Deployment to PyPi is handled from github workflow automatically.

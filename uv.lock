@@ -1554,7 +1554,7 @@ wheels = [
 
 [[package]]
 name = "mllm-shap"
-version = "0.1.4"
+version = "0.1.6"
 source = { editable = "mllm_shap" }
 dependencies = [
     { name = "ipywidgets" },
