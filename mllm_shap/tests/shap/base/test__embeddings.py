@@ -57,3 +57,46 @@ class TestBaseEmbeddingReducer:
         # result tensors should have at most n columns in last dimension
         for emb in result:
             assert emb.shape[1] == embeddings[0].shape[1] or emb.shape[-1] <= n
+
+    def test_call_returns_same_list_instance(self) -> None:
+        """Should mutate the provided list in place rather than creating a new one."""
+        reducer = DummyReducer(n=None)
+        embeddings = [torch.randn(4, 6) for _ in range(2)]
+        result = reducer(embeddings)
+        assert result is embeddings
+
+    def test_call_sampling_replaces_tensor_reference(self) -> None:
+        """Should replace individual tensors when sampling is applied."""
+        reducer = DummyReducer(n=1)
+        embeddings = [torch.arange(12, dtype=torch.float32).reshape(3, 4)]
+        original = embeddings[0]
+        torch.manual_seed(0)
+        result = reducer(embeddings)
+        assert result is embeddings
+        assert result[0] is not original
+        assert result[0].shape[-1] == 1
+
+    def test_call_does_not_sample_when_limit_exceeds_dimension(self) -> None:
+        """Should not alter tensor references when sampling limit exceeds last dimension."""
+        reducer = DummyReducer(n=10)
+        embeddings = [torch.arange(12, dtype=torch.float32).reshape(3, 4)]
+        original = embeddings[0]
+        result = reducer(embeddings)
+        assert result[0] is original
+
+    def test_call_handles_empty_embeddings_list(self) -> None:
+        """Should safely handle empty inputs."""
+        reducer = DummyReducer(n=2)
+        embeddings: list[Tensor] = []
+        result = reducer(embeddings)
+        assert result is embeddings
+        assert result == []
+
+    def test_call_handles_zero_length_tensor(self) -> None:
+        """Should return tensors with zero samples without raising an error."""
+        reducer = DummyReducer(n=2)
+        embeddings = [torch.empty((0, 5))]
+        torch.manual_seed(0)
+        result = reducer(embeddings)
+        assert result[0].shape[0] == 0
+        assert result[0].shape[-1] == 0

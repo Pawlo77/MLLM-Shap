@@ -12,9 +12,6 @@ from ..base.approx import BaseShapApproximation
 class BaseMcShapExplainer(BaseShapApproximation, ABC):
     """Base Monte Carlo SHAP implementation class"""
 
-    include_minimal_masks: bool = True
-    """Whether to include minimal masks (single-feature and empty masks) in the sampling."""
-
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
         if self.num_samples is not None:

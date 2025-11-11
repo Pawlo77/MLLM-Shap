@@ -17,7 +17,8 @@ from ...connectors.base.chat import BaseMllmChat
 from ...connectors.base.model_response import ModelResponse
 from ...utils.logger import get_logger
 from ...utils.other import extend_tensor
-from ..base.explainer import BaseExplainer, BaseShapExplainer
+from ..base.explainer import BaseExplainer
+from ..base.shap_explainer import BaseShapExplainer
 from ..base.approx import BaseShapApproximation
 from ..explainer_result import ExplainerResult
 from ..precise import PreciseShapExplainer
@@ -36,6 +37,8 @@ class HierarchicalExplainer(BaseExplainer):
     Groups cannot share different modalities (e.g., text and audio tokens).
     Uses an underlying SHAP explainer for group explanations.
 
+    Should be used with SHAP explainers that normalize using :class:`MinMaxNormalizer`.
+
     It has no history nor non-normalized shap values available. Refer to
     :class:`Mode` for details on how groups are formed at the first level.
     """
@@ -43,23 +46,29 @@ class HierarchicalExplainer(BaseExplainer):
     k: int
     """Maximum final group size at each level."""
 
-    n_calls: int = 0
+    n_calls: int
     """Number of internal SHAP explainer calls made for last explanation."""
 
     mode: Mode
     """The mode of the hierarchical explainer."""
 
-    use_importance_sampling: bool = False
+    use_importance_sampling: bool
     """Whether to use importance for setting sampling budget (for each group)."""
 
-    _progress_bar: tqdm | None = None
+    importance_sampling_min_fraction: float
+    """Minimum fraction for importance sampling."""
 
+    _progress_bar: tqdm | None = None
+    """Progress bar for explanation process."""
+
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         shap_explainer: BaseShapExplainer | None = None,
         mode: Mode = Mode.TEXT,
         k: int = 10,
         use_importance_sampling: bool = False,
+        importance_sampling_min_fraction: float = 0.1,
         **kwargs: Any,
     ) -> None:
         """
@@ -73,23 +82,42 @@ class HierarchicalExplainer(BaseExplainer):
             mode: The mode of the hierarchical explainer.
             use_importance_sampling: Whether to use importance for setting sampling budget (for each group).
                 Applicable only if `shap_explainer` supports fraction-based sampling.
+            importance_sampling_min_fraction: Minimum fraction for importance sampling.
             kwargs: Additional keyword arguments.
         Raises:
             ValueError: If k is less than 1 or not an integer.
         """
-        super().__init__(shap_explainer=shap_explainer or PreciseShapExplainer(normalizer=MinMaxNormalizer()), **kwargs)
+        super().__init__(
+            shap_explainer=shap_explainer or PreciseShapExplainer(normalizer=MinMaxNormalizer()),
+            **kwargs,
+        )
 
-        if k < 1 or int(k) != k:
-            raise ValueError("k must be an integer, at least 1.")
+        if not isinstance(self.shap_explainer.normalizer, MinMaxNormalizer):
+            logger.warning(
+                "It is strongly recommended to use MinMaxNormalizer with HierarchicalExplainer for correct results."
+            )
+
+        if k < 2 or int(k) != k:  # pylint: disable=magic-value-comparison
+            raise ValueError("k must be an integer, at least 2.")
         self.k = k
 
         self.mode = mode
 
-        if use_importance_sampling and not isinstance(self.shap_explainer, BaseShapApproximation):
+        if (
+            use_importance_sampling
+            and not isinstance(self.shap_explainer, BaseShapApproximation)
+            or cast(BaseShapApproximation, self.shap_explainer).fraction is None
+        ):
             raise ValueError(
                 "use_importance_sampling is True, but shap_explainer does not support fraction-based approximation."
             )
         self.use_importance_sampling = use_importance_sampling
+
+        if not isinstance(importance_sampling_min_fraction, float) or not (
+            0.0 < importance_sampling_min_fraction <= 1.0
+        ):
+            raise ValueError("importance_sampling_min_fraction must be in (0.0, 1.0].")
+        self.importance_sampling_min_fraction = importance_sampling_min_fraction
 
     def __get_subgroups_num(self, n: int) -> int:
         """
@@ -159,7 +187,6 @@ class HierarchicalExplainer(BaseExplainer):
                 r = torch.zeros_like(group_ids, dtype=torch.float)
                 r[group_ids == 1] = 1.0
                 return r
-
             logger.debug(
                 "Calculating SHAP values for %d groups of %d tokens.",
                 n_groups,
@@ -170,9 +197,9 @@ class HierarchicalExplainer(BaseExplainer):
             # set fraction based on importance
             base_fraction = cast(BaseShapApproximation, self.shap_explainer).fraction
             if base_fraction is None:
-                raise ValueError("shap_explainer fraction is None, cannot use importance sampling.")
+                raise RuntimeError("shap_explainer fraction is None, cannot use importance sampling.")
 
-            new_fraction = min(1.0, base_fraction * importance)
+            new_fraction = max(self.importance_sampling_min_fraction, min(1.0, base_fraction * importance))
             cast(BaseShapApproximation, self.shap_explainer).fraction = new_fraction
             logger.debug(
                 "Setting SHAP explainer fraction to %.4f based on importance %.4f.",
@@ -188,23 +215,22 @@ class HierarchicalExplainer(BaseExplainer):
             **(generation_kwargs or {}),
         )
 
+        # clean up
         if self.use_importance_sampling:
             # restore original fraction
             cast(BaseShapApproximation, self.shap_explainer).fraction = base_fraction
-
         if shap_values_mask is not None:
             del chat.external_shap_values_mask
         else:
             del chat.external_group_ids
 
         self.n_calls += 1
-        # correct because no cache hits in hierarchical explainer internal calls are possible
         self.total_n_calls += self.shap_explainer.total_n_calls
         if self._progress_bar is not None:
             self._progress_bar.update(self.shap_explainer.total_n_calls)
 
         cache = cast(ExplainerCache, response.chat.cache)  # type: ignore[union-attr]
-        return cache.normalized_values[: cache.n]
+        return cache.normalized_values[: cache.n]  # do not return for response tokens
 
     # pylint: disable=too-many-locals
     def __compute(

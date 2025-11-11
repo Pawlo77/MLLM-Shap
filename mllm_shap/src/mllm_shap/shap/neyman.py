@@ -20,7 +20,7 @@ from ..utils.logger import get_logger
 from .base._cache_manager import CacheManager
 from .base._masks_manager import MasksManager
 from .base._validators import BaseShapCallConfig
-from .base.approx import BaseComplementaryShapApproximation
+from .base.complementary import BaseComplementaryShapApproximation
 
 logger: Logger = get_logger(__name__)
 
@@ -49,7 +49,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         within `(number of players) * (number of players + 1) * initial_num_samples` calls.
 
     Warning:
-        This explainer requires the source chat to have SYSTEM_ASSISTANT roles setup.
+        This explainer requires the source chat to have at least one non-user turn
+        (:class:`Role.ASSISTANT` or :class:`Role.SYSTEM`).
         It is due to its requirement to evaluate all-zeros and all-ones splits, which
         otherwise would be rejected by connectors as invalid. It requires at least
         one turn for assistant and some system messages to be present.
@@ -123,9 +124,21 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.initial_num_samples = initial_num_samples
         self.initial_fraction = initial_fraction
 
+    def _initialize_state(self) -> None:
+        """
+        Initialize internal state before starting mask generation.
+        """
+        super()._initialize_state()
+        self.__get_start.cache_clear()
+
+        self.__step = _Step.INITIAL_SAMPLING
+        self.__i = 0
+        self.__j = 0
+        self.__C_squared = None
+
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
-        """ "
+        """
         Get total number of splits to generate, as well
         as number of initial splits for each entry of matrix M.
         It determines initial step duration.
@@ -136,11 +149,13 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             Number of masks to generate.
         """
 
+        # determine total number of splits
         try:
             num_splits = super()._get_num_splits(n=n)
         except ValueError as e:
             raise ValueError("Total number of splits could not be determined.") from e
 
+        # determine initial number of splits per entry in M
         try:
             if self.__use_default_initial_sampling_formula:
                 initial_num_splits = max(2, math.ceil(num_splits / (2 * n * n)))
@@ -154,8 +169,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         except ValueError as e:
             raise ValueError("Initial number of splits could not be determined.") from e
 
-        if initial_num_splits < 1:
-            raise ValueError("Initial number of splits must be at least 1.")
+        # validate initial number of splits
+        if initial_num_splits < 2:  # pylint: disable=magic-value-comparison
+            raise ValueError("Initial number of splits must be at least 2.")
         if initial_num_splits > num_splits:
             raise ValueError(
                 f"Initial number of splits {initial_num_splits} is larger than total number of splits {num_splits}."
@@ -203,7 +219,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             if not self._M[self.__i, self.__j] < self.__initial_num_splits:
                 raise RuntimeError("__update_M_position did not update position correctly.")
 
-            # self._i == 0 --> include no tokens
+            # `self.__j == 0` --> include no tokens
+            # generate split of size `self.__j` with required token `self.__i`
             new_mask = self._get_random_split(
                 n=n,
                 device=device,
@@ -217,9 +234,12 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         if self.__M_hat is None:
             raise RuntimeError("M_hat matrix must be initialized before sampling.")
+        # dont end on total budget exceeded here, as it might slightly differ
+        # from one estimated with `self.__M_hat`. This difference should be minimal.
         if self.__j == self.__M_hat.shape[0]:  # end of sampling
             return None
 
+        # generate split of size `self.__j`
         if self.__M_hat[self.__j] > 0:
             new_mask = self._get_random_split(
                 n=n,
@@ -237,50 +257,14 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             existing_masks=existing_masks,
         )
 
-    def _calculate_shap_values(
-        self,
-        masks: Tensor,
-        similarities: Tensor,
-        device: torch.device,
-    ) -> Tensor:
-        if not self._zero_mask_skipped:
-            raise RuntimeError("Zero mask was not skipped during mask generation.")
-        if self._M is None or self._C is None:
-            raise RuntimeError("M and C matrices must be initialized before calculating SHAP values.")
-
-        M = self._M[:, 1:]
-        C = self._C[:, 1:]
-
-        non_zero_mask = M != 0
-        if not torch.all(non_zero_mask):
-            raise RuntimeError(
-                "Some entries in M matrix are zero. They are all expected to be >= `initial_num_splits`."
-            )
-
-        return torch.sum(C / M, dim=1) / M.shape[0]
-
-    def _initialize_state(self) -> None:
-        """
-        Initialize internal state before starting mask generation.
-        """
-        super()._initialize_state()
-        self.__get_start.cache_clear()
-
-        self.__step = _Step.INITIAL_SAMPLING
-        self.__i = 0
-        self.__j = 0
-        self.__C_squared = None
-
     def _get_masks_generator(self, *args: Any, **kwargs: Any) -> Any:
-        kwargs["include_mode"] = False
         kwargs["only_unique"] = False
+        # won't cause issues as we force `Role.ASSISTANT` presence in chat
         kwargs["allow_full_or_empty"] = True
         return super()._get_masks_generator(*args, **kwargs)
 
     def _calculate_C_matrix(self, masks: Tensor, similarities: Tensor, device: torch.device) -> None:
-        """
-        Overload to also calculate C squared matrix for Neyman allocation.
-        """
+        """Overload to also calculate C squared matrix."""
         if self._M is None:
             raise RuntimeError("M matrix must be initialized before calculating C matrix.")
         if self._C is None or self.__C_squared is None:
@@ -291,12 +275,13 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         if 2 * m != masks.shape[0]:
             raise ValueError("Masks should be in complementary pairs.")
 
+        # change: include C squared calculation within same loop
         for i in range(m):
             if not torch.all(masks[2 * i] == ~masks[2 * i + 1]):
                 raise ValueError("Masks are not complementary pairs.")
 
             S = masks[2 * i]
-            NS = masks[2 * i + 1]
+            NS = masks[2 * i + 1]  # complement of S
             s_size = int(S.sum().item())
             ns_size = masks.shape[1] - s_size
 
@@ -308,11 +293,34 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, S, s_size, u_squared)
             BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, NS, ns_size, u_squared)
 
+    def _calculate_shap_values(
+        self,
+        masks: Tensor,
+        similarities: Tensor,
+        device: torch.device,
+    ) -> Tensor:
+        if not self._zero_mask_skipped:
+            raise RuntimeError("Zero mask was not skipped during mask generation.")
+        if self._M is None or self._C is None:
+            raise RuntimeError("M and C matrices must be initialized before calculating SHAP values.")
+
+        # exclude zero-mask column
+        M = self._M[:, 1:]
+        C = self._C[:, 1:]
+
+        positive_mask = M > 0
+        if not torch.all(positive_mask):
+            raise RuntimeError(
+                "Some entries in M matrix are zero. They are all expected to be >= `initial_num_splits`."
+            )
+
+        return torch.sum(C / M, dim=1) / M.shape[0]
+
     @lru_cache(maxsize=1)
     def __get_start(self) -> int:
         """
         Returns:
-            Starting index in matrix M for Neyman allocation.
+            Starting index in matrix M for Neyman allocation (step _Step.NEYMAN_ALLOCATION).
         Raises:
             ValueError: If matrix M is not initialized.
         """
@@ -322,7 +330,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
     def __update_M_position(self) -> bool:
         """
-        Update position in matrix M for Neyman allocation.
+        Update position in matrix M during `_Step.INITIAL_SAMPLING` step.
+        If no more positions are left, returns True to indicate moving to next step.
 
         Returns:
             Boolean indicating if a full pass on M was completed.
@@ -333,11 +342,10 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             raise RuntimeError("M matrix must be initialized before updating position.")
 
         not_completed = self._M < self.__initial_num_splits
-
         if not torch.any(not_completed):  # stop initial and move to next step
             return True
 
-        # Given current (i, j) and a boolean mask[n, n], find the next (i, j)
+        # Given current (i, j) and a boolean M[n, n], find the next (i, j)
         # position where mask is True, scanning row by row.
         flat = not_completed.flatten()
         start_idx = self.__i * self._M.shape[1] + self.__j + 1
@@ -365,7 +373,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         M = self._M.to(self._C.dtype)
         M_small = M - 1
         sigma = (self.__C_squared - torch.pow(self._C, 2) / M) / M_small
-        if torch.any(sigma < 0):
+        if torch.any(sigma < 0):  # should never happen, but numerical issues might cause it
             logger.warning("Negative variance estimates found; setting them to zero.")
             sigma = torch.clamp(sigma, min=0.0)
 
@@ -389,18 +397,18 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             raise RuntimeError("Remaining samples for Neyman allocation must be odd.")
         m = int(m)
 
-        sigma_hat = self.__estimate_sigma_squared()
-        logger.debug("Sigma squared estimates: %s", sigma_hat)
+        sigma_squared_hat = self.__estimate_sigma_squared()
+        logger.debug("Sigma squared estimates: %s", sigma_squared_hat)
 
         left = self.__get_start()
-        right = sigma_hat.shape[0]
+        right = sigma_squared_hat.shape[0]
 
         # Indices for the right half
-        k_vec = torch.arange(left, right, device=sigma_hat.device)  # indexes
+        k_vec = torch.arange(left, right, device=sigma_squared_hat.device)  # indexes
         k_left = k_vec
         k_right = right - k_vec - 1
-        sigma_left = sigma_hat[:, k_left]  # shape (n, r - l)
-        sigma_right = sigma_hat[:, k_right]  # shape (n, r - l)
+        sigma_left = sigma_squared_hat[:, k_left]  # shape (n, r - l)
+        sigma_right = sigma_squared_hat[:, k_right]  # shape (n, r - l)
         inner = torch.sqrt(
             torch.sum(sigma_left / (k_left + 1).to(sigma_left.dtype), dim=0)
             + torch.sum(sigma_right / (k_right + 1).to(sigma_right.dtype), dim=0)
@@ -410,6 +418,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
         logger.debug("M hat %s", self.__M_hat)
 
+    # pylint: disable=signature-differs
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     # pylint: disable=too-many-locals,too-many-statements,too-many-branches
     def __call__(  # type: ignore[override]
@@ -436,10 +445,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         source_chat = __config.source_chat
         device = source_chat.torch_device
 
+        # additional validations guaranteeing no masks will be rejected by chat/model
         if source_chat.system_roles_setup != SystemRolesSetup.SYSTEM_ASSISTANT:
             raise ValueError("Source chat must have SYSTEM_ASSISTANT roles setup for Neyman SHAP.")
+        # cant check for SYSTEM role alone, as some models might use it for steering tokens
         if Role.ASSISTANT not in source_chat.token_roles:
-            raise ValueError("Source chat must have at least one ASSISTANT turn with some message.")
+            logger.warning(
+                "Source chat must have at least one non-user message for Neyman SHAP."
+                "No assistant role found, make sure that existing messages cover it."
+            )
 
         mask_manager = MasksManager(chat=source_chat, log_stats=True)
         cache_manager = CacheManager(
@@ -471,8 +485,6 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         )
 
         masks_tensor = torch.stack(masks, dim=0)
-        gc.collect()
-
         similarities = self._get_similarities(responses=responses, model=model)
         self._calculate_C_matrix(
             masks=masks_tensor[1:, source_chat.shap_values_mask],  # exclude initial all-ones mask
@@ -519,12 +531,6 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 device=device,
             )
 
-            if cache_manager.extracted_num > 0:
-                logger.info(
-                    "Deduplicated %d/%d masks using existing cache.",
-                    cache_manager.extracted_num,
-                    len(masks) - 1,  # exclude base mask
-                )
             # edge case from :class:`BaseShapExplainer` does not apply here
             # as we have :attr:`_initial_num_splits` >= 1
 
@@ -540,6 +546,13 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             del new_history
             del new_masks_tensor
             del new_similarities
+
+        if cache_manager.extracted_num > 0:
+            logger.info(
+                "Deduplicated %d/%d masks using existing cache.",
+                cache_manager.extracted_num,
+                len(masks) - 1,  # exclude base mask
+            )
 
         del mask_manager
         del cache_manager

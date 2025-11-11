@@ -14,6 +14,8 @@ class BaseEmbeddingSimilarity(ABC):
     """
     Indicates that the similarity operates on embeddings.
     If False, it operates on raw tokens.
+
+    Used to resolve input to :func:`__call__`.
     """
 
     @abstractmethod

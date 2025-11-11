@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from ...connectors.base.chat import AllTextTokensFilteredOutError, BaseMllmChat
 from ...connectors.base.model import BaseMllmModel
 from ...connectors.base.model_response import ModelResponse
-from ._masks_manager import MaskGenerator
+from ._mask_generator import MaskGenerator
 from ...utils.logger import get_logger
 from ._cache_manager import CacheManager
 
