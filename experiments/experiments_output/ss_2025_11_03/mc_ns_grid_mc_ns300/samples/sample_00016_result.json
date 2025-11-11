@@ -1,0 +1,804 @@
+{
+  "row_index": 16,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 157.56065964698792,
+  "prompt_text": "A vigilante uses a \"fire-bang\"...flash-bangs mixed with firecrackers...how useful and practical is that?",
+  "attr_summary": {
+    "abs_sum_text": 0.25537109375,
+    "abs_sum_audio": 0.74346923828125,
+    "frac_text": 0.2556675832569508,
+    "frac_audio": 0.7443324167430492,
+    "count_text_tokens": 28,
+    "count_audio_segments": 82
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "<|im_start|>",
+          "user",
+          "\n",
+          "A",
+          " vigil",
+          "ante",
+          " uses",
+          " a",
+          " \"",
+          "fire",
+          "-b",
+          "ang",
+          "\"",
+          "...",
+          "fl",
+          "ash",
+          "-b",
+          "angs",
+          " mixed",
+          " with",
+          " fire",
+          "c",
+          "rack",
+          "ers",
+          "...",
+          "how",
+          " useful",
+          " and",
+          " practical",
+          " is",
+          " that",
+          "?"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          -0.0093994140625,
+          -0.00811767578125,
+          -0.00848388671875,
+          -0.00933837890625,
+          -0.0091552734375,
+          -0.009033203125,
+          -0.009033203125,
+          -0.00933837890625,
+          -0.00921630859375,
+          -0.009521484375,
+          -0.00946044921875,
+          -0.0087890625,
+          -0.0089111328125,
+          -0.00958251953125,
+          -0.00933837890625,
+          -0.0087890625,
+          -0.00897216796875,
+          -0.00933837890625,
+          -0.009765625,
+          -0.00897216796875,
+          -0.00872802734375,
+          -0.009033203125,
+          -0.00823974609375,
+          -0.00885009765625,
+          -0.0096435546875,
+          -0.009765625,
+          -0.0101318359375,
+          -0.0084228515625,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          }
+        ],
+        "shap_values": [
+          -0.0087890625,
+          -0.009033203125,
+          -0.0089111328125,
+          -0.00958251953125,
+          -0.00848388671875,
+          -0.0091552734375,
+          -0.00933837890625,
+          -0.00860595703125,
+          -0.00897216796875,
+          -0.00927734375,
+          -0.0093994140625,
+          -0.00872802734375,
+          -0.00927734375,
+          -0.00921630859375,
+          -0.0091552734375,
+          -0.0084228515625,
+          -0.0091552734375,
+          -0.00933837890625,
+          -0.010009765625,
+          -0.00982666015625,
+          -0.00958251953125,
+          -0.00927734375,
+          -0.00885009765625,
+          -0.00897216796875,
+          -0.0093994140625,
+          -0.00885009765625,
+          -0.00909423828125,
+          -0.00860595703125,
+          -0.0093994140625,
+          -0.00872802734375,
+          -0.0086669921875,
+          -0.009765625,
+          -0.00946044921875,
+          -0.008544921875,
+          -0.0091552734375,
+          -0.00897216796875,
+          -0.00897216796875,
+          -0.00933837890625,
+          -0.0089111328125,
+          -0.00885009765625,
+          -0.00927734375,
+          -0.0084228515625,
+          -0.00897216796875,
+          -0.00872802734375,
+          -0.00885009765625,
+          -0.00885009765625,
+          -0.00927734375,
+          -0.00921630859375,
+          -0.0091552734375,
+          -0.00946044921875,
+          -0.00885009765625,
+          -0.00897216796875,
+          -0.00872802734375,
+          -0.00885009765625,
+          -0.0098876953125,
+          -0.00836181640625,
+          -0.00946044921875,
+          -0.0098876953125,
+          -0.00921630859375,
+          -0.00958251953125,
+          -0.00830078125,
+          -0.00927734375,
+          -0.008544921875,
+          -0.00885009765625,
+          -0.00872802734375,
+          -0.0084228515625,
+          -0.009033203125,
+          -0.01025390625,
+          -0.00921630859375,
+          -0.0091552734375,
+          -0.00933837890625,
+          -0.00885009765625,
+          -0.00933837890625,
+          -0.00897216796875,
+          -0.00946044921875,
+          -0.0086669921875,
+          -0.00946044921875,
+          -0.00848388671875,
+          -0.00897216796875,
+          -0.00872802734375,
+          -0.0093994140625,
+          -0.0079345703125
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3405
+          }
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}
