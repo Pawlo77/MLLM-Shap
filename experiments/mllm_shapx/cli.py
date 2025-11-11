@@ -20,7 +20,7 @@ from .runner import expand_variants, run_single_sentence_variant  # noqa: E402
 
 def _setup_logging() -> None:
     """Configure root logger from environment."""
-    level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    level = os.environ.get("LOG_LEVEL", "DEBUG").upper()
     logging.basicConfig(
         level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

@@ -76,9 +76,29 @@ def filter_df_by_max_prompt_tokens(
     lengths = []
     for _, row in df.iterrows():
         text = _first_text(row)
-        ids = tokenizer.encode(text, add_special_tokens=False)
+        ids = tokenizer.encode(text, add_special_tokens=True)
         lengths.append(len(ids))
-    mask = pd.Series(lengths) <= int(max_tokens)
+    mask = pd.Series(lengths) <= int(max_tokens + 2)
+    filtered = df[mask.values].reset_index(drop=True)
+    return filtered, int(mask.sum())
+
+
+def filter_df_by_min_prompt_tokens(
+    df: pd.DataFrame, text_col: str, tokenizer: Any, min_tokens: int
+) -> tuple[pd.DataFrame, int]:
+    """
+    Return (filtered_df, total_matching_count) where rows are limited to prompts with >= min_tokens.
+    """
+    def _first_text(row: Any) -> str:
+        v = row[text_col]
+        return v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
+
+    lengths = []
+    for _, row in df.iterrows():
+        text = _first_text(row)
+        ids = tokenizer.encode(text, add_special_tokens=True)
+        lengths.append(len(ids))
+    mask = pd.Series(lengths) >= int(min_tokens - 2)
     filtered = df[mask.values].reset_index(drop=True)
     return filtered, int(mask.sum())
 
