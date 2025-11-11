@@ -13,7 +13,7 @@ from mllm_shap.connectors.enums import (
     SystemRolesSetup,
 )
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
-from mllm_shap.shap import Explainer, HierarchicalExplainer
+from mllm_shap.shap import Explainer
 from mllm_shap.shap.monte_carlo import LimitedMcShapExplainer, StandardMcShapExplainer
 from mllm_shap.shap.enums import Mode
 from mllm_shap.shap.precise import PreciseShapExplainer
@@ -124,44 +124,6 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
                 fraction=float(concrete_fraction) if concrete_fraction is not None else None,
                 **kwargs,
             )
-
-    elif variant.explainer_type.lower() == ExplainerType.HIERARCHICAL.value:
-        # Choose base explainer type:
-        # if MC knobs present → limited_mc by default, else exact (unless explicitly set)
-        base = (
-            variant.hierarchical_base
-            or (
-                ExplainerType.LIMITED_MC.value
-                if (variant.num_samples or variant.fractions)
-                else ExplainerType.EXACT.value
-            )
-        ).lower()
-
-        if base == ExplainerType.EXACT.value:
-            base_variant = ExplainerVariant(explainer_type=ExplainerType.EXACT.value)
-            base_expl = build_explainer_for_variant(
-                device,
-                shap_cfg,
-                base_variant,
-                connector,
-                embedding_cfg=embedding_cfg,
-            ).shap_explainer
-        elif base in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
-            base_variant = ExplainerVariant(explainer_type=base)
-            base_expl = build_explainer_for_variant(
-                device,
-                shap_cfg,
-                base_variant,
-                connector,
-                embedding_cfg=embedding_cfg,
-                concrete_num_samples=concrete_num_samples,
-                concrete_fraction=concrete_fraction,
-            ).shap_explainer
-        else:
-            raise ValueError(f"Unsupported hierarchical_base: {variant.hierarchical_base}")
-
-        k = int(variant.hierarchical_k or 10)
-        shap_explainer = HierarchicalExplainer(shap_explainer=base_expl, k=k)
 
     else:
         raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
