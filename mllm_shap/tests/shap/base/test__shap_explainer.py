@@ -149,7 +149,7 @@ class TestBaseShapExplainer:
                 verbose=True,
             )
 
-    @patch("mllm_shap.shap.base.explainer.ExplainerCache.create")
+    @patch("mllm_shap.connectors.base.explainer_cache.ExplainerCache.create")
     def test_save_to_cache_creates_new_cache(
         self,
         mock_create: MagicMock,
