@@ -332,7 +332,9 @@
 <dt>Info:</dt><dd><p>Initial step in this explainer due to performance and stability issues is not
 purely random sampling - random samples are drawn with pre-defined member
 within them. This guarantees that initialization step will cover all entries
-within <cite>(number of players) * (number of players + 1) * initial_num_samples</cite> calls.</p>
+within <cite>(number of players) * (number of players + 1) * initial_num_samples</cite> calls.
+If no <cite>:attr:initial_num_samples</cite> or <cite>:attr:initial_fraction</cite> is provided,
+a default formula is used - <cite>max(2, ceil(total_num_splits / (2 * n * n)))</cite>.</p>
 </dd>
 </dl>
 <div class="admonition warning">

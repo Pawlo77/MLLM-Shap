@@ -322,6 +322,8 @@
 <span class="sd">        purely random sampling - random samples are drawn with pre-defined member</span>
 <span class="sd">        within them. This guarantees that initialization step will cover all entries</span>
 <span class="sd">        within `(number of players) * (number of players + 1) * initial_num_samples` calls.</span>
+<span class="sd">        If no `:attr:initial_num_samples` or `:attr:initial_fraction` is provided,</span>
+<span class="sd">        a default formula is used - `max(2, ceil(total_num_splits / (2 * n * n)))`.</span>
 
 <span class="sd">    Warning:</span>
 <span class="sd">        This explainer requires the source chat to have at least one non-user turn</span>
