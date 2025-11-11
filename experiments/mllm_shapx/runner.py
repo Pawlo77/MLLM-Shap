@@ -211,6 +211,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     # ---- selection policy: scan ALL rows after start_index (maybe shuffled), break after matched == target
     text_col = choose_prompt_text_column(df)
     is_text_only = cfg.connector == ConnectorType.TRANSFORMERS_TEXT.value
+    is_neyman = run.variant.explainer_type == ExplainerType.NEYMAN.value
     token_filter = ExcludePunctuationTokensFilter()
 
     min_t = cfg.selection.min_prompt_tokens
@@ -273,6 +274,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             audio_bytes=audio_bytes,
             text_only=is_text_only,
             token_filter=token_filter,
+            is_neyman=is_neyman
         )
 
         # Ensure masks/tokens ready
