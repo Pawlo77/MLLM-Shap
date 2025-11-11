@@ -211,7 +211,6 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     # ---- selection policy: scan ALL rows after start_index (maybe shuffled), break after matched == target
     text_col = choose_prompt_text_column(df)
     is_text_only = cfg.connector == ConnectorType.TRANSFORMERS_TEXT.value
-    is_neyman = run.variant.explainer_type == ExplainerType.NEYMAN.value
     token_filter = ExcludePunctuationTokensFilter()
 
     min_t = cfg.selection.min_prompt_tokens
@@ -273,8 +272,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             user_text=user_text,
             audio_bytes=audio_bytes,
             text_only=is_text_only,
-            token_filter=token_filter,
-            is_neyman=is_neyman
+            token_filter=token_filter
         )
 
         # Ensure masks/tokens ready
@@ -326,6 +324,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             progress_bar=True,
         )
         runtime_sec = time.time() - t0
+        n_calls = explainer.total_n_calls
 
         # Parity check
         n_post = int(MasksManager(getattr(result, "base_chat", chat)).n)
@@ -345,6 +344,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             "language": row.get("language", "unknown"),
             "original_language": row.get("original_language", "unknown"),
             "runtime_sec": float(runtime_sec),
+            "n_calls": n_calls,
             "prompt_text": user_text,
             "attr_summary": modality,
             "conversation": conv_json,
