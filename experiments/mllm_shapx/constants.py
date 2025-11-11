@@ -7,13 +7,21 @@ from enum import StrEnum, Enum
 class ExplainerType(StrEnum):
     """Explainer type strings."""
     EXACT = "exact"
-    MC = "mc"
+    LIMITED_MC = "limited_mc"
+    STANDARD_MC = "standard_mc"
+    HIERARCHICAL = "hierarchical"
 
 
-class ModelKind(Enum):
+class ConnectorType(Enum):
     """Available model backends/connectors."""
     LIQUID_AUDIO = "liquid_audio"
     TRANSFORMERS_TEXT = "hf_text"
+
+
+class SimilarityType(StrEnum):
+    """Similarity metric options."""
+    COSINE = "CosineSimilarity"
+    TFIDF_COSINE = "TfIdfCosineSimilarity"
 
 
 class TextCol(StrEnum):

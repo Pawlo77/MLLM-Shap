@@ -20,13 +20,14 @@ from mllm_shap.shap.normalizers import (
     IdentityNormalizer,
     PowerShiftNormalizer,
 )
+from mllm_shap.shap.similarity import CosineSimilarity, TfIdfCosineSimilarity
 
 from .constants import (
-    DEFAULT_SIMILARITY,
     DEFAULT_SPLIT,
     DEFAULT_SUBSET,
     ExplainerType,
-    ModelKind
+    ConnectorType,
+    SimilarityType
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ class SelectionConfig:
     shuffle_seed: Optional[int] = 0
     start_index: int = 0
     max_prompt_tokens: Optional[int] = None
+    min_prompt_tokens: Optional[int] = None
 
 
 @dataclass
@@ -78,7 +80,7 @@ class ShapConfig:
     mode: str = "CONTEXTUAL"      # maps to mllm_shap.shap.enums.Mode
     normalizer: str = "AbsSumNormalizer"
     reducer: str = "MeanReducer"
-    similarity: str = DEFAULT_SIMILARITY
+    similarity: str = SimilarityType.TFIDF_COSINE.value
 
 
 @dataclass
@@ -91,10 +93,23 @@ class ExplainerVariant:
         * num_samples: list[int] (each entry yields a run)
         * fractions:   list[float] in (0, 1] (each entry yields a run)
     """
-    explainer_type: str = ExplainerType.MC.value
+    explainer_type: str = ExplainerType.LIMITED_MC.value
     num_samples: Optional[List[int]] = None
     fractions: Optional[List[float]] = None
     name: Optional[str] = None
+    hierarchical_k: Optional[int] = None
+    hierarchical_base: Optional[str] = None
+
+
+@dataclass
+class EmbeddingConfig:
+    """Optional external embedding model (CustomEmbedding)."""
+    model_id: Optional[str] = None
+    revision: Optional[str] = None
+    max_length: int = 64
+    batch_size: int = 64
+    l2_normalize: bool = True
+    local_files_only: bool = False
 
 
 @dataclass
@@ -104,12 +119,13 @@ class ExperimentSet:
     experiment_set_id: str
     output_root: str = "experiments_output"
     device: Optional[str] = None  # "cuda"|"cpu"|None (auto)
-    model_kind: str = ModelKind.LIQUID_AUDIO.value
+    connector: str = ConnectorType.LIQUID_AUDIO.value
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     selection: SelectionConfig = field(default_factory=SelectionConfig)
     wandb: WandBConfig = field(default_factory=WandBConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     shap: ShapConfig = field(default_factory=ShapConfig)
+    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     experiments: List[ExplainerVariant] = field(default_factory=list)
 
     @staticmethod
@@ -139,6 +155,11 @@ REDUCER_MAP = {
     "ZeroReducer": ZeroReducer,
 }
 
+SIMILARITY_MAP = {
+    SimilarityType.COSINE.value: CosineSimilarity,
+    SimilarityType.TFIDF_COSINE.value: TfIdfCosineSimilarity,
+}
+
 
 # ---------------------------
 # PARSING & VALIDATION
@@ -156,13 +177,14 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
     wb = _subdict(raw, "wandb")
     gen = _subdict(raw, "generation")
     shp = _subdict(raw, "shap")
+    emb = _subdict(raw, "embedding")
 
     experiments_raw = raw.get("experiments", []) or []
     exps: List[ExplainerVariant] = []
     for e in experiments_raw:
         exps.append(
             ExplainerVariant(
-                explainer_type=e.get("explainer_type", ExplainerType.MC.value),
+                explainer_type=e.get("explainer_type", ExplainerType.LIMITED_MC.value),
                 num_samples=e.get("num_samples"),
                 fractions=e.get("fractions"),
                 name=e.get("name"),
@@ -173,7 +195,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
         experiment_set_id=raw["experiment_set_id"],
         output_root=raw.get("output_root", "experiments_output"),
         device=raw.get("device"),
-        model_kind=raw.get("model_kind", ModelKind.LIQUID_AUDIO.value),
+        connector=raw.get("connector", ConnectorType.LIQUID_AUDIO.value),
         dataset=DatasetConfig(
             subset=ds.get("subset", DEFAULT_SUBSET),
             split=ds.get("split", DEFAULT_SPLIT),
@@ -185,6 +207,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             shuffle_seed=sel.get("shuffle_seed", 0),
             start_index=sel.get("start_index", 0),
             max_prompt_tokens=sel.get("max_prompt_tokens"),
+            min_prompt_tokens=sel.get("min_prompt_tokens"),
         ),
         wandb=WandBConfig(
             enabled=wb.get("enabled", True),
@@ -202,13 +225,21 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             mode=shp.get("mode", "CONTEXTUAL"),
             normalizer=shp.get("normalizer", "AbsSumNormalizer"),
             reducer=shp.get("reducer", "MeanReducer"),
-            similarity=shp.get("similarity", DEFAULT_SIMILARITY),
+            similarity=shp.get("similarity", SimilarityType.TFIDF_COSINE.value),
+        ),
+        embedding=EmbeddingConfig(
+            model_id=emb.get("model_id"),
+            revision=emb.get("revision"),
+            max_length=int(emb.get("max_length", 64)),
+            batch_size=int(emb.get("batch_size", 64)),
+            l2_normalize=bool(emb.get("l2_normalize", True)),
+            local_files_only=bool(emb.get("local_files_only", False)),
         ),
         experiments=exps,
     )
 
 
-def validate_config(cfg: ExperimentSet) -> List[str]:
+def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-many-statements
     """Return a list of human-readable problems (empty = valid)."""
     errs: List[str] = []
 
@@ -225,6 +256,8 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
             errs.append("selection.start_index must be >= 0.")
         if cfg.selection.max_prompt_tokens is not None and cfg.selection.max_prompt_tokens <= 0:
             errs.append("selection.max_prompt_tokens must be positive if provided.")
+        if cfg.selection.min_prompt_tokens is not None and cfg.selection.min_prompt_tokens <= 0:
+            errs.append("selection.min_prompt_tokens must be positive if provided.")
 
     def _validate_wandb() -> None:
         if cfg.wandb.mode is not None and cfg.wandb.mode not in ("online", "offline", "disabled"):
@@ -237,22 +270,27 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
             errs.append(f"Unknown shap.normalizer: {cfg.shap.normalizer}")
         if cfg.shap.reducer not in REDUCER_MAP:
             errs.append(f"Unknown shap.reducer: {cfg.shap.reducer}")
-        if cfg.shap.similarity != DEFAULT_SIMILARITY:
-            errs.append(f"Only {DEFAULT_SIMILARITY} is supported currently.")
+        if cfg.shap.similarity not in (SimilarityType.COSINE.value, SimilarityType.TFIDF_COSINE.value):
+            errs.append("shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'.")
 
-    def _validate_variants() -> None:
+    def _validate_variants() -> None:  # pylint: disable=too-many-branches
         if not cfg.experiments:
             errs.append("experiments must contain at least one variant.")
             return
-        if cfg.model_kind not in (mk.value for mk in ModelKind):
-            kinds = ", ".join(mk.value for mk in ModelKind)
-            errs.append(f"model_kind must be one of: {kinds}.")
+        if cfg.connector not in (mk.value for mk in ConnectorType):
+            kinds = ", ".join(mk.value for mk in ConnectorType)
+            errs.append(f"connector must be one of: {kinds}.")
         for i, exp in enumerate(cfg.experiments):
             t = exp.explainer_type.lower()
-            if t not in (ExplainerType.EXACT.value, ExplainerType.MC.value):
-                errs.append(f"experiments[{i}].explainer_type must be 'exact' or 'mc'.")
+            allowed = {e.value for e in ExplainerType}
+            if t not in allowed:
+                errs.append(f"experiments[{i}].explainer_type must be {sorted(allowed)}.")
                 continue
-            if t == ExplainerType.MC.value:
+            wants_mc_knobs = t in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value) or (
+                t == ExplainerType.HIERARCHICAL.value and (exp.hierarchical_base or "").lower()
+                in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value)
+            )
+            if wants_mc_knobs:
                 if not exp.num_samples and not exp.fractions:
                     errs.append(f"experiments[{i}]: MC requires num_samples or fractions.")
                 if exp.num_samples is not None:
@@ -271,6 +309,8 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
                     bad = [f for f in exp.fractions if not 0.0 < float(f) <= 1.0]
                     if bad:
                         errs.append(f"experiments[{i}].fractions must be in (0,1]; bad: {bad}")
+            if t == ExplainerType.HIERARCHICAL.value and exp.hierarchical_k is not None and exp.hierarchical_k <= 0:
+                errs.append(f"experiments[{i}].hierarchical_k must be positive if provided.")
 
     _validate_dataset()
     _validate_selection()

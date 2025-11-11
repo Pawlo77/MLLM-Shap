@@ -54,3 +54,22 @@ def log_metrics(run: Optional[Any], metrics: Dict[str, Any]) -> None:
     wb = importlib.import_module("wandb")
     log = getattr(wb, "log")
     log(metrics)
+
+
+def wandb_log_dir_incremental(
+    run: Optional[Any],
+    dir_path: Path,
+    artifact_name: str,
+    artifact_type: str,
+    metadata: Dict[str, Any],
+) -> None:
+    """Snapshot a whole directory into a *single* artifact name after each sample.
+    Each call creates a new artifact version under the same name; W&B deduplicates unchanged files.
+    """
+    if run is None:
+        return
+    wb = importlib.import_module("wandb")
+    artifact = getattr(wb, "Artifact")
+    art = artifact(name=artifact_name, type=artifact_type, metadata=metadata)
+    art.add_dir(str(dir_path))
+    run.log_artifact(art, aliases=["latest"])
