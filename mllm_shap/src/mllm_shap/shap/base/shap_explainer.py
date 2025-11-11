@@ -181,6 +181,7 @@ class BaseShapExplainer(ABC):
         """
         num_splits = self._get_num_splits(mask_manager.n)
         get_next_split = self._get_next_split
+        allow_mask_duplicates = self.allow_mask_duplicates
 
         class _MasksGenerator(MaskGenerator):
             """Generator class for masks."""
@@ -206,7 +207,7 @@ class BaseShapExplainer(ABC):
                         continue
 
                     new_mask_hash = mask_manager.get_hash(new_mask)
-                    if mask_manager.seen(mask_hash=new_mask_hash):
+                    if not allow_mask_duplicates and mask_manager.seen(mask_hash=new_mask_hash):
                         logger.debug("Generated duplicate mask, skipping.")
                         continue
 

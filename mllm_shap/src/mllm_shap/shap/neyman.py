@@ -112,6 +112,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         Raises:
             ValueError: If sampling parameters are invalid.
         """
+        kwargs["allow_mask_duplicates"] = True
         super().__init__(*args, **kwargs)
 
         if initial_num_samples is None and initial_fraction is None:
@@ -260,7 +261,6 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         )
 
     def _get_masks_generator(self, *args: Any, **kwargs: Any) -> Any:
-        kwargs["only_unique"] = False
         # won't cause issues as we force `Role.ASSISTANT` presence in chat
         kwargs["allow_full_or_empty"] = True
         return super()._get_masks_generator(*args, **kwargs)
@@ -311,12 +311,18 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         C = self._C[:, 1:]
 
         positive_mask = M > 0
-        if not torch.all(positive_mask):
-            raise RuntimeError(
-                "Some entries in M matrix are zero. They are all expected to be >= `initial_num_splits`."
-            )
+        if self.__step == _Step.NEYMAN_ALLOCATION:
+            if not torch.all(positive_mask):
+                raise RuntimeError(
+                    "Some entries in M matrix are zero. They are all expected to be >= `initial_num_splits`."
+                )
+            return torch.sum(C / M, dim=1) / M.shape[0]
 
-        return torch.sum(C / M, dim=1) / M.shape[0]
+        # it is not guaranteed especially with small budget
+        non_zero_mask = M > 0
+        ratio = torch.zeros_like(C)
+        ratio[non_zero_mask] = C[non_zero_mask] / M[non_zero_mask]
+        return torch.sum(ratio, dim=1) / M.shape[0]
 
     @lru_cache(maxsize=1)
     def __get_start(self) -> int:
