@@ -12,6 +12,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Experiments
+wandb/
+shared*
+
 # Distribution / packaging
 .Python
 build/
