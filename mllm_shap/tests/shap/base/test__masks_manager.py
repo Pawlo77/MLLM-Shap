@@ -107,3 +107,73 @@ class TestMasksManager:
         """Should raise ValueError if both mask and mask_hash are None."""
         with pytest.raises(ValueError, match="Either mask or mask_hash must be provided"):
             _ = manager._MasksManager__get_mask_hash()
+
+    def test_mark_seen_with_mask_argument(self, manager: MasksManager) -> None:
+        """Marking by mask tensor should register hash."""
+        mask = torch.tensor([False, True, True, True, False], dtype=torch.bool)
+        manager.mark_seen(mask=mask)
+        assert manager.seen(mask=mask)
+
+    def test_seen_returns_false_for_untracked_mask(self, manager: MasksManager) -> None:
+        """Unseen mask should be reported as not present."""
+        mask = torch.tensor([True, True, False, False, True], dtype=torch.bool)
+        assert not manager.seen(mask=mask)
+
+    def test_mark_seen_is_idempotent(self, manager: MasksManager) -> None:
+        """Repeated registrations should not duplicate hashes."""
+        mask = torch.tensor([True, False, False, True, True], dtype=torch.bool)
+        manager.mark_seen(mask=mask)
+        size_after_first = len(manager._seen_masks)
+        manager.mark_seen(mask=mask)
+        assert len(manager._seen_masks) == size_after_first
+
+    def test_prepare_mask_accepts_1d_split(self, manager: MasksManager) -> None:
+        """1D split tensors should be expanded correctly."""
+        device = torch.device("cpu")
+        split = torch.tensor([True, False], dtype=torch.bool)
+        result = manager.prepare_mask(split=split, device=device)
+        assert result is not None
+        assert result[manager.shap_values_mask].tolist() == [True, False]
+
+    def test_prepare_mask_preserves_dtype_and_device(self, manager: MasksManager) -> None:
+        """Returned mask keeps boolean dtype on the provided device."""
+        device = torch.device("cpu")
+        split = torch.tensor([[False, True]], dtype=torch.bool)
+        result = manager.prepare_mask(split=split, device=device)
+        assert result is not None
+        assert result.dtype is torch.bool
+        assert result.device == device
+
+    def test_get_initial_mask_marks_single_entry(self, chat: BaseMllmChat) -> None:
+        """Initial mask should align with shap mask positions."""
+        manager = MasksManager(chat=chat)
+        mask = manager.get_initial_mask(device=torch.device("cpu"))
+        assert torch.equal(mask[manager.shap_values_mask], torch.ones(manager.n, dtype=torch.bool))
+        assert torch.equal(
+            mask[~manager.shap_values_mask], torch.ones(manager.target_length - manager.n, dtype=torch.bool)
+        )
+
+    def test_get_initial_mask_raises_when_prepare_returns_none(
+        self, manager: MasksManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """If prepare_mask fails, get_initial_mask should raise."""
+
+        def _fail_prepare(split: torch.Tensor, device: torch.device) -> torch.Tensor | None:
+            del split, device
+            return None
+
+        monkeypatch.setattr(manager, "prepare_mask", _fail_prepare)
+        with pytest.raises(ValueError, match="Starting mask cannot be None"):
+            _ = manager.get_initial_mask(device=torch.device("cpu"))
+
+    def test_get_mask_hash_prefers_explicit_hash(self, manager: MasksManager) -> None:
+        """Providing mask_hash should short-circuit mask computation."""
+        mask = torch.tensor([True, False, False, True, False], dtype=torch.bool)
+        forced_hash = 123456
+        result = manager._MasksManager__get_mask_hash(mask=mask, mask_hash=forced_hash)
+        assert result == forced_hash
+
+    def test_get_hash_returns_stable_value(self, manager: MasksManager) -> None:
+        """Repeated calls to get_hash should be deterministic."""
+        mask = torch.tensor([False, True, False, True, False], dtype=torch.bool)
+        assert manager.get_hash(mask) == manager.get_hash(mask)

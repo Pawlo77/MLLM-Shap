@@ -5,7 +5,7 @@ from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.base.model_response import ModelResponse
 from mllm_shap.connectors.enums import ModalityFlag, Role
-from mllm_shap.shap.base.explainer import BaseShapExplainer
+from mllm_shap.shap.base.shap_explainer import BaseShapExplainer
 from torch import Tensor
 
 

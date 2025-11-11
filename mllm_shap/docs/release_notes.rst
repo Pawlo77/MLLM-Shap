@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+Version 0.1.6
+-------------
+* Includes fixes for complementary-based explainers to ensure correct SHAP value computations.
+* Improved documentation and added more comprehensive tests for all modules.
+* Small fixes for bugs discovered in previous versions during production use.
+* Ensures minimal fraction is respected in `HierarchicalExplainer` when using importance sampling.
+
 Version 0.1.5
 -------------
 * Added `ComplementaryNeymanShapExplainer`, a new explainer leveraging Neyman allocation for more efficient sampling.

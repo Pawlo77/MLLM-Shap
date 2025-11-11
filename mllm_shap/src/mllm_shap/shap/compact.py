@@ -7,7 +7,8 @@ from typing import Any
 
 from ..connectors.base.chat import BaseMllmChat
 from ..utils.logger import get_logger
-from .base.explainer import BaseShapExplainer, BaseExplainer
+from .base.explainer import BaseExplainer
+from .base.shap_explainer import BaseShapExplainer
 from .explainer_result import ExplainerResult
 from .precise import PreciseShapExplainer
 
@@ -16,7 +17,14 @@ logger: Logger = get_logger(__name__)
 
 # pylint: disable=too-few-public-methods
 class Explainer(BaseExplainer):
-    """Convenience client class for SHAP explanation."""
+    """
+    Convenience client class for SHAP explanation.
+
+    It generates the full response from the model
+    and then uses the provided SHAP explainer to compute SHAP values.
+
+    Uses :class:`PreciseShapExplainer` as the default SHAP explainer.
+    """
 
     def __init__(
         self,

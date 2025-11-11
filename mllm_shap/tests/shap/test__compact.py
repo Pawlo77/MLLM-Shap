@@ -1,11 +1,13 @@
 """Unit tests for mllm_shap.shap.compact module."""
 
+from typing import Any
+
 import pytest
 import torch
 from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.base.model_response import ModelResponse
-from mllm_shap.shap.base.explainer import BaseShapExplainer
+from mllm_shap.shap.base.shap_explainer import BaseShapExplainer
 from mllm_shap.shap.compact import Explainer, ExplainerResult
 from mllm_shap.shap.base.explainer import _ExplainerConfig
 from mllm_shap.shap.precise import PreciseShapExplainer
@@ -138,8 +140,9 @@ class TestExplainer:
         class DummyModelWithTrack(DummyModel):
             def generate(self, **kwargs):
                 model_called["called"] = kwargs
+                chat_arg = kwargs.get("chat", dummy_chat)
                 return ModelResponse(
-                    chat=dummy_chat,
+                    chat=chat_arg,
                     generated_text_tokens=torch.tensor([1]),
                     generated_audio_tokens=torch.tensor([]),
                     generated_modality_flag=torch.tensor([False]),
@@ -153,5 +156,128 @@ class TestExplainer:
         assert isinstance(result, ExplainerResult)
         assert "called" in shap_called
         assert "called" in model_called
+        called_chat = model_called["called"]["chat"]
+        assert isinstance(called_chat, DummyChat)
+        assert called_chat.input_tokens_num > 0
+        assert model_called["called"]["keep_history"] is True
+        assert model_called["called"]["arg1"] == 1
         assert isinstance(result.full_chat, BaseMllmChat)
         assert isinstance(result.history, list)
+
+    def test_duplicate_keys_between_kwargs_raise_error(
+        self,
+        explainer: Explainer,
+        dummy_chat: BaseMllmChat,
+    ) -> None:
+        """Should raise when generation and explanation kwargs share a key."""
+        with pytest.raises(ValueError, match="Duplicate keys"):
+            explainer(chat=dummy_chat, generation_kwargs={"shared": 1}, shared=2)
+
+    def test_history_and_total_calls_propagated(self, dummy_chat: BaseMllmChat) -> None:
+        """Explainer should forward kwargs, history, and call counts from SHAP explainer."""
+
+        class TrackingShapExplainer(BaseShapExplainer):
+            """Stub SHAP explainer recording call parameters."""
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.last_call: dict[str, Any] | None = None
+
+            def __call__(
+                self,
+                model: BaseMllmModel,
+                source_chat: BaseMllmChat,
+                response: ModelResponse,
+                progress_bar: bool = True,
+                verbose: bool = False,
+                n_generator_jobs: int = 1,
+                **kwargs: Any,
+            ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]]:
+                self.last_call = {
+                    "model": model,
+                    "source_chat": source_chat,
+                    "response": response,
+                    "progress_bar": progress_bar,
+                    "verbose": verbose,
+                    "n_generator_jobs": n_generator_jobs,
+                    **kwargs,
+                }
+                self.total_n_calls = 7
+                history_entry = (
+                    torch.ones(1, dtype=torch.bool),
+                    42,
+                    None,
+                    response,
+                )
+                return [history_entry]
+
+            def _get_num_splits(self, n: int) -> int:
+                return 0
+
+            def _get_next_split(
+                self,
+                n: int,
+                device: torch.device,
+                generated_masks_num: int,
+                existing_masks: list[Tensor] | None = None,
+            ) -> Tensor | None:
+                return None
+
+            def _calculate_shap_values(
+                self,
+                masks: Tensor,
+                similarities: Tensor,
+                device: torch.device,
+            ) -> Tensor:
+                return torch.zeros(0)
+
+        class DummyModelAcceptingKwargs(DummyModel):
+            """Dummy model variant that records generation kwargs."""
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.last_generate_kwargs: dict[str, Any] | None = None
+
+            def generate(
+                self,
+                chat: BaseMllmChat,
+                max_new_tokens: int = 128,
+                model_config=None,
+                keep_history: bool = False,
+                **kwargs: Any,
+            ) -> ModelResponse:
+                self.last_generate_kwargs = {
+                    "chat": chat,
+                    "max_new_tokens": max_new_tokens,
+                    "model_config": model_config,
+                    "keep_history": keep_history,
+                    **kwargs,
+                }
+                return super().generate(
+                    chat=chat,
+                    max_new_tokens=max_new_tokens,
+                    model_config=model_config,
+                    keep_history=keep_history,
+                )
+
+        shap = TrackingShapExplainer()
+        model_with_kwargs = DummyModelAcceptingKwargs()
+        expl = Explainer(model=model_with_kwargs, shap_explainer=shap)
+
+        result = expl(
+            chat=dummy_chat,
+            generation_kwargs={"alpha": 1},
+            beta=2,
+        )
+
+        assert shap.last_call is not None
+        assert shap.last_call["model"] is model_with_kwargs
+        assert shap.last_call["source_chat"] is dummy_chat
+        assert "response" in shap.last_call
+        assert shap.last_call["alpha"] == 1
+        assert shap.last_call["beta"] == 2
+        assert result.history is not None and len(result.history) == 1
+        assert result.total_n_calls == 7
+        assert expl.total_n_calls == 7
+        assert model_with_kwargs.last_generate_kwargs is not None
+        assert model_with_kwargs.last_generate_kwargs["alpha"] == 1

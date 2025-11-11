@@ -6,7 +6,7 @@ import torch
 from torch import Tensor
 
 from ..utils.logger import get_logger
-from .base.approx import BaseComplementaryShapApproximation
+from .base.complementary import BaseComplementaryShapApproximation
 
 logger: Logger = get_logger(__name__)
 
@@ -30,10 +30,12 @@ class ComplementaryShapExplainer(BaseComplementaryShapApproximation):
         similarities = similarities[1:]
         self._calculate_C_matrix(masks=masks, similarities=similarities, device=device)
 
+        # exclude zero-mask column
         M = self._M[:, 1:]
         C = self._C[:, 1:]
 
-        non_zero_mask = M != 0
+        # it is not guaranteed especially with small budget
+        non_zero_mask = M > 0
         ratio = torch.zeros_like(C)
         ratio[non_zero_mask] = C[non_zero_mask] / M[non_zero_mask]
         return torch.sum(ratio, dim=1) / M.shape[0]
