@@ -103,10 +103,8 @@ class HierarchicalExplainer(BaseExplainer):
 
         self.mode = mode
 
-        if (
-            use_importance_sampling
-            and not isinstance(self.shap_explainer, BaseShapApproximation)
-            or cast(BaseShapApproximation, self.shap_explainer).fraction is None
+        if use_importance_sampling and (
+            not isinstance(self.shap_explainer, BaseShapApproximation) or self.shap_explainer.fraction is None
         ):
             raise ValueError(
                 "use_importance_sampling is True, but shap_explainer does not support fraction-based approximation."
@@ -199,7 +197,10 @@ class HierarchicalExplainer(BaseExplainer):
             if base_fraction is None:
                 raise RuntimeError("shap_explainer fraction is None, cannot use importance sampling.")
 
-            new_fraction = max(self.importance_sampling_min_fraction, min(1.0, base_fraction * importance))
+            new_fraction = max(
+                self.importance_sampling_min_fraction,
+                min(1.0, base_fraction * importance),
+            )
             cast(BaseShapApproximation, self.shap_explainer).fraction = new_fraction
             logger.debug(
                 "Setting SHAP explainer fraction to %.4f based on importance %.4f.",
