@@ -168,7 +168,7 @@ class HierarchicalExplainer(BaseExplainer):
         if shap_values_mask is not None:
             # no need to explain a single token
             if shap_values_mask.sum().item() == 1:
-                r = torch.zeros_like(shap_values_mask)
+                r = torch.zeros_like(shap_values_mask, dtype=torch.float)
                 r[shap_values_mask] = 1.0
                 return r
             chat.external_shap_values_mask = shap_values_mask
@@ -182,7 +182,7 @@ class HierarchicalExplainer(BaseExplainer):
             n_groups = group_ids.max().item()
             # no need to explain a single group of one token
             if n_groups == 1:
-                r = torch.zeros_like(group_ids, dtype=torch.float)
+                r = torch.full_like(group_ids, fill_value=float("nan"), dtype=torch.float)
                 r[group_ids == 1] = 1.0
                 return r
             logger.debug(
@@ -415,7 +415,7 @@ class HierarchicalExplainer(BaseExplainer):
 
             # call for each group recursively
             for group_id in range(1, n_groups):
-                group_mask = chat.shap_values_mask & (group_ids == group_id)
+                group_mask = group_ids == group_id
                 group_shap_values = self.__compute(
                     chat=chat,
                     response=response,
@@ -513,8 +513,6 @@ class HierarchicalExplainer(BaseExplainer):
         # Map back to full-length tensor
         group_ids[mask] = cumulative
         group_ids[~mask] = 0  # keep masked-out tokens at 0
-        print(mask)
-        print(group_ids)
 
         return group_ids
 
