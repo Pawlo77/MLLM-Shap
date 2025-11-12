@@ -260,7 +260,6 @@ class HierarchicalExplainer(BaseExplainer):
 
         start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
         subgroups_num = self.__get_subgroups_num(n=n)
-        subgroup_size = math.ceil(n / subgroups_num)
 
         logger.debug(
             "Computing SHAP values for group [%d:%d] of size %d with %d subgroups.",
@@ -270,7 +269,7 @@ class HierarchicalExplainer(BaseExplainer):
             subgroups_num,
         )
 
-        if subgroups_num == 1:  # base case - group size <= k
+        if subgroups_num <= 1:  # base case - group size <= k
             r = self.__calculate_group_normalized_shap_values(
                 chat=chat,
                 response=response,
@@ -281,6 +280,7 @@ class HierarchicalExplainer(BaseExplainer):
             )
             return r
 
+        subgroup_size = math.ceil(n / subgroups_num)
         group_ids = torch.zeros_like(group_mask, dtype=torch.long)
         group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(  # noqa: E203
             n=n, k=subgroup_size
