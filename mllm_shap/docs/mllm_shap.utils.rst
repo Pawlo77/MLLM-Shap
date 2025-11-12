@@ -1,11 +1,6 @@
 mllm\_shap.utils package
 ========================
 
-.. automodule:: mllm_shap.utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Submodules
 ----------
 
@@ -37,6 +32,14 @@ mllm\_shap.utils.other module
 -----------------------------
 
 .. automodule:: mllm_shap.utils.other
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.utils
    :members:
    :show-inheritance:
    :undoc-members:
