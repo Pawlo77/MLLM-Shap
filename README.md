@@ -15,7 +15,7 @@ git push origin --tags
 
 #### Updating docs for new modules
 
-From `~/mllm_shap` directory:
+From `~/mllm_shap` directory (might require deletion of existing mllm_shap*.rst files in `docs` first):
 
 ```bash
 sphinx-apidoc -o docs/ src
