@@ -342,7 +342,7 @@ class HierarchicalExplainer(BaseExplainer):
             chat=chat,
             explainer_hash=hash(self.shap_explainer),
             responses=[],
-            masks=torch.empty((0, chat.input_tokens_num), dtype=torch.bool),
+            masks=torch.empty((0, chat.input_tokens_num), dtype=torch.bool, device=chat.torch_device),
             normalized_values=normalized_shap_values,
             shap_values_mask=shap_values_mask,
         )
