@@ -2,11 +2,11 @@
 #SBATCH -J mllm_shapx
 #SBATCH -A ganzha_23
 #SBATCH -p short,long
-#SBATCH --array=0-2%3
+#SBATCH --array=0-1%2
 #SBATCH --time=18:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --mem=30G
 #SBATCH --ntasks=1
 #SBATCH --output=logs/%x_%A_%a.out
 #SBATCH --error=logs/%x_%A_%a.err
@@ -17,7 +17,6 @@ WORKDIR="$HOME/projects/MLLM-Shap/experiments"
 CONFIG_DIR="mllm_shapx/configs/package_exp"
 
 CONFIGS=(
-  "$CONFIG_DIR/mc.json"
   "$CONFIG_DIR/complementary.json"
   "$CONFIG_DIR/exact.json"
 )
