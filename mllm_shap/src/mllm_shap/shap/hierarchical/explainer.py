@@ -474,7 +474,8 @@ class HierarchicalExplainer(BaseExplainer):
             include_role: Whether to consider token roles when determining groups.
         Returns:
             Tensor: Group IDs for explainable tokens. Tokens with different modalities
-            or roles will be assigned separate groups even if contiguous.
+            or roles will be assigned separate groups even if contiguous. Tokens
+            where mask is False will have group ID 0.
         Example:
             For `include_role=True` and the following token properties:
 
@@ -506,8 +507,14 @@ class HierarchicalExplainer(BaseExplainer):
             group_mask |= token_roles != prev_role
         group_start = mask & group_mask
 
-        # Assign cumulative group IDs
-        group_ids[mask] = torch.cumsum(group_start[mask].int(), dim=0)
+        explainable_starts = group_start[mask]
+        cumulative = torch.cumsum(explainable_starts.int(), dim=0)
+
+        # Map back to full-length tensor
+        group_ids[mask] = cumulative
+        group_ids[~mask] = 0  # keep masked-out tokens at 0
+        print(mask)
+        print(group_ids)
 
         return group_ids
 
