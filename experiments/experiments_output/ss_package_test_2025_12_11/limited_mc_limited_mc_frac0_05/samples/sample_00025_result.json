@@ -1,0 +1,174 @@
+{
+  "row_index": 25,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 26.437212467193604,
+  "n_calls": 25,
+  "prompt_text": "['Who created the South Beach Diet?']",
+  "attr_summary": {
+    "abs_sum_text": 0.999999888241291,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Who",
+          " created",
+          " the",
+          " South",
+          " Beach",
+          " Diet",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.14403071999549866,
+          0.15955978631973267,
+          0.08053658902645111,
+          0.10743068903684616,
+          0.05943717062473297,
+          0.18864919245243073,
+          0.16717851161956787,
+          0.05563873052597046,
+          0.037538498640060425
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " South",
+          " Beach",
+          " Diet",
+          " was",
+          " created",
+          " by",
+          " Dr",
+          ".",
+          " Arthur",
+          " Ag",
+          "at",
+          "ston",
+          ",",
+          " a",
+          " card",
+          "iologist",
+          ",",
+          " in",
+          " 1994",
+          ".",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

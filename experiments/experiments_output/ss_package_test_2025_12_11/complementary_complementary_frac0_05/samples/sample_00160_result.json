@@ -1,0 +1,174 @@
+{
+  "row_index": 160,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 34.46831035614014,
+  "n_calls": 24,
+  "prompt_text": "['How to build a snowman.']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999180436134,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "How",
+          " to",
+          " build",
+          " a",
+          " snow",
+          "man",
+          ".'",
+          "]"
+        ],
+        "shap_values": [
+          0.11902465671300888,
+          0.1288033425807953,
+          -0.12125753611326218,
+          0.14467665553092957,
+          0.0653420016169548,
+          0.09542011469602585,
+          0.1014457494020462,
+          -0.12492810934782028,
+          -0.09910175204277039
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " To",
+          " build",
+          " a",
+          " snow",
+          "man",
+          ",",
+          " you",
+          " need",
+          " to",
+          " follow",
+          " these",
+          " steps",
+          ":",
+          "\n",
+          "\n",
+          "-",
+          " Find",
+          " a",
+          " spot",
+          " with",
+          " enough",
+          " snow"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

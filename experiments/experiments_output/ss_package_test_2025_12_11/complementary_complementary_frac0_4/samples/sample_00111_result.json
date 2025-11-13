@@ -1,0 +1,177 @@
+{
+  "row_index": 111,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 508.76279067993164,
+  "n_calls": 408,
+  "prompt_text": "['Does AI useful to predict day trading?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999823048711,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Does",
+          " AI",
+          " useful",
+          " to",
+          " predict",
+          " day",
+          " trading",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.18682162463665009,
+          -0.055601757019758224,
+          0.21580033004283905,
+          -0.030232876539230347,
+          0.015602790750563145,
+          0.03622669354081154,
+          0.015544254332780838,
+          0.11631020903587341,
+          0.03954817354679108,
+          -0.28831127285957336
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "AI",
+          " can",
+          " be",
+          " useful",
+          " in",
+          " predicting",
+          " day",
+          " trading",
+          ",",
+          " but",
+          " it",
+          " is",
+          " not",
+          " fool",
+          "proof",
+          ".",
+          " AI",
+          " algorithms",
+          " can",
+          " analyze",
+          " large",
+          " amounts",
+          " of",
+          " data"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

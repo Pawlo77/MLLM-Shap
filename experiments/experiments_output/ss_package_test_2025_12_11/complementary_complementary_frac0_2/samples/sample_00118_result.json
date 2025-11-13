@@ -1,0 +1,153 @@
+{
+  "row_index": 118,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 255.35000562667847,
+  "n_calls": 204,
+  "prompt_text": "['When was the Castle Bravo test performed?']",
+  "attr_summary": {
+    "abs_sum_text": 1.000000026077032,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "When",
+          " was",
+          " the",
+          " Castle",
+          " Bravo",
+          " test",
+          " performed",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.18582867085933685,
+          0.03708329424262047,
+          -0.09484094381332397,
+          0.01891338638961315,
+          0.1942831575870514,
+          0.15212468802928925,
+          0.09191251546144485,
+          0.06495515257120132,
+          0.14140522480010986,
+          -0.018652992323040962
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Output",
+          ":",
+          " The",
+          " Castle",
+          " Bravo",
+          " test",
+          " was",
+          " performed",
+          " on",
+          " March",
+          " 1",
+          ",",
+          " 1954",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "row_index": 234,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 69.20098900794983,
+  "n_calls": 50,
+  "prompt_text": "['What is the Infinite Banking Concept?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999515712261,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "What",
+          " is",
+          " the",
+          " Infinite",
+          " Banking",
+          " Concept",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.029168087989091873,
+          0.15606938302516937,
+          0.07284324616193771,
+          0.048287492245435715,
+          0.26505348086357117,
+          0.05478856340050697,
+          0.20312166213989258,
+          -0.10558334738016129,
+          0.06508468836545944
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " Infinite",
+          " Banking",
+          " Concept",
+          " is",
+          " a",
+          " financial",
+          " strategy",
+          " that",
+          " allows",
+          " you",
+          " to",
+          " grow",
+          " your",
+          " wealth",
+          " without",
+          " having",
+          " to",
+          " rely",
+          " on",
+          " traditional",
+          " banking"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

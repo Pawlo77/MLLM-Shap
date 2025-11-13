@@ -1,0 +1,174 @@
+{
+  "row_index": 58,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 274.24853920936584,
+  "n_calls": 204,
+  "prompt_text": "['List of NovaLogic games.']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999948777258,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "List",
+          " of",
+          " Nova",
+          "Log",
+          "ic",
+          " games",
+          ".'",
+          "]"
+        ],
+        "shap_values": [
+          0.15590474009513855,
+          0.10886922478675842,
+          0.09947305917739868,
+          0.24057991802692413,
+          0.16012771427631378,
+          -0.004738847259432077,
+          0.07070375978946686,
+          -0.12472279369831085,
+          0.03487993776798248
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "\n",
+          "==",
+          " Steps",
+          " ==",
+          "\n",
+          "#",
+          "  ",
+          "Go",
+          " to",
+          " the",
+          " Nova",
+          "Log",
+          "ic",
+          " website",
+          ".",
+          "\n",
+          "#",
+          "  ",
+          "Click",
+          " on",
+          " the",
+          " \"",
+          "Games",
+          "\""
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "row_index": 110,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 238.19108057022095,
+  "n_calls": 106,
+  "prompt_text": "['Why is heavy metal called heavy metal?']",
+  "attr_summary": {
+    "abs_sum_text": 1.0000000353902578,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Why",
+          " is",
+          " heavy",
+          " metal",
+          " called",
+          " heavy",
+          " metal",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.11432743072509766,
+          0.15321284532546997,
+          0.11807986348867416,
+          0.05834049731492996,
+          0.18803097307682037,
+          0.10747838765382767,
+          0.10650593042373657,
+          0.0018661459907889366,
+          0.1370120793581009,
+          -0.015145882032811642
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " Heavy",
+          " metal",
+          " is",
+          " called",
+          " heavy",
+          " metal",
+          " because",
+          " it",
+          " has",
+          " a",
+          " high",
+          " density",
+          " and",
+          " a",
+          " high",
+          " atomic",
+          " mass",
+          ".",
+          " It",
+          " is",
+          " also",
+          " often"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

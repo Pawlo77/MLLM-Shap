@@ -1,0 +1,153 @@
+{
+  "row_index": 99,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 158.20169734954834,
+  "n_calls": 34,
+  "prompt_text": "['Which is the sixth commandment?']",
+  "attr_summary": {
+    "abs_sum_text": 1.000000037252903,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Which",
+          " is",
+          " the",
+          " sixth",
+          " command",
+          "ment",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.23918141424655914,
+          0.21624910831451416,
+          0.0637727901339531,
+          -0.01790638267993927,
+          0.010983174666762352,
+          0.17076708376407623,
+          0.23888032138347626,
+          0.020921211689710617,
+          -0.021338550373911858
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " sixth",
+          " command",
+          "ment",
+          " is",
+          " \"",
+          "Hon",
+          "or",
+          " your",
+          " father",
+          " and",
+          " mother",
+          ".\"",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

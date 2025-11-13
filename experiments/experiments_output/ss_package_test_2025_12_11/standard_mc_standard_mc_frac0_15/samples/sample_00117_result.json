@@ -1,0 +1,177 @@
+{
+  "row_index": 117,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 191.58832454681396,
+  "n_calls": 153,
+  "prompt_text": "['But what has Buddhism done for society?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999580904841,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "But",
+          " what",
+          " has",
+          " Buddhism",
+          " done",
+          " for",
+          " society",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.043992772698402405,
+          0.07154611498117447,
+          0.07613206654787064,
+          0.128519207239151,
+          0.17940466105937958,
+          0.16684480011463165,
+          0.10960163921117783,
+          0.15350405871868134,
+          0.012066851370036602,
+          -0.05838778614997864
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "I",
+          " think",
+          " that",
+          " Buddhism",
+          " has",
+          " done",
+          " a",
+          " lot",
+          " for",
+          " society",
+          ".",
+          " It",
+          " has",
+          " helped",
+          " people",
+          " to",
+          " be",
+          " more",
+          " compassionate",
+          ",",
+          " more",
+          " understanding",
+          ",",
+          " more"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

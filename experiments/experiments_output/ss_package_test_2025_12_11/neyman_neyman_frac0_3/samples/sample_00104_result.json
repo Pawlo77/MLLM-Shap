@@ -1,0 +1,174 @@
+{
+  "row_index": 104,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 195.78384852409363,
+  "n_calls": 62,
+  "prompt_text": "['When will Wisconsin be temperate?']",
+  "attr_summary": {
+    "abs_sum_text": 1.000000050291419,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "When",
+          " will",
+          " Wisconsin",
+          " be",
+          " temper",
+          "ate",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.13562121987342834,
+          0.12237362563610077,
+          0.12199556827545166,
+          0.18097208440303802,
+          0.11170873045921326,
+          0.12642937898635864,
+          0.03411608934402466,
+          0.15123286843299866,
+          0.015550484880805016
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " Wisconsin",
+          " is",
+          " a",
+          " state",
+          " in",
+          " the",
+          " Mid",
+          "western",
+          " region",
+          " of",
+          " the",
+          " United",
+          " States",
+          ",",
+          " known",
+          " for",
+          " its",
+          " cold",
+          " winters",
+          " and",
+          " warm",
+          " summers"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

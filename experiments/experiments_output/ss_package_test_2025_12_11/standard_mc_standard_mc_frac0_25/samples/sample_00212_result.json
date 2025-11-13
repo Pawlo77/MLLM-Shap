@@ -1,0 +1,153 @@
+{
+  "row_index": 212,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 330.02889466285706,
+  "n_calls": 255,
+  "prompt_text": "['Do you know how to speak German?']",
+  "attr_summary": {
+    "abs_sum_text": 1.000000054598786,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Do",
+          " you",
+          " know",
+          " how",
+          " to",
+          " speak",
+          " German",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.2248784452676773,
+          0.12761104106903076,
+          0.12934476137161255,
+          0.004898844752460718,
+          -0.034527044743299484,
+          0.000670146313495934,
+          0.09827377647161484,
+          0.13737209141254425,
+          0.18291792273521423,
+          -0.05950598046183586
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " Yes",
+          ",",
+          " I",
+          " do",
+          ".",
+          " I",
+          " can",
+          " speak",
+          " German",
+          " flu",
+          "ently",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

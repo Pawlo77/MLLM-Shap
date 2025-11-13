@@ -1,0 +1,177 @@
+{
+  "row_index": 101,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 456.04724526405334,
+  "n_calls": 358,
+  "prompt_text": "['What are the ways to control unemployment?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999683350325,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "What",
+          " are",
+          " the",
+          " ways",
+          " to",
+          " control",
+          " unemployment",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.13797199726104736,
+          0.11567632108926773,
+          0.13743025064468384,
+          -0.009008822962641716,
+          0.18431629240512848,
+          0.018296552821993828,
+          0.09634437412023544,
+          0.08421310037374496,
+          0.197830468416214,
+          -0.01891178824007511
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " There",
+          " are",
+          " several",
+          " ways",
+          " to",
+          " control",
+          " unemployment",
+          ",",
+          " including",
+          ":",
+          "\n",
+          "\n",
+          "1",
+          ".",
+          " Government",
+          " intervention",
+          ":",
+          " Governments",
+          " can",
+          " implement",
+          " policies",
+          " such"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}
