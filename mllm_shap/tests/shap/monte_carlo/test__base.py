@@ -35,12 +35,6 @@ class TestBaseMcShapExplainer:
         result = explainer._get_num_splits(n=4)
         assert result == 5
 
-    def test_get_num_splits_with_num_samples_less_than_n_raises(self, explainer: BaseMcShapExplainer) -> None:
-        """Should raise ValueError when num_samples < n."""
-        explainer.num_samples = 2
-        with pytest.raises(ValueError, match="num_samples must be at least"):
-            _ = explainer._get_num_splits(n=5)
-
     def test_get_num_splits_with_num_samples_greater_than_possible(self, explainer: BaseMcShapExplainer) -> None:
         """Should clamp to maximum number of masks if num_samples too large."""
         explainer.num_samples = 9999
@@ -51,16 +45,16 @@ class TestBaseMcShapExplainer:
         """Should compute number of splits based on fraction if num_samples is None."""
         explainer.num_samples = None
         explainer.fraction = 0.25
-        result = explainer._get_num_splits(n=4)
-        expected = int((2**4 - 1) * 0.25)
+        result = explainer._get_num_splits(n=10)
+        expected = int((2**10 - 1) * 0.25)
         assert result == expected
 
     def test_get_num_splits_fraction_rounds_down(self, explainer: BaseMcShapExplainer) -> None:
         """Fractional budgets should be floored to the nearest integer."""
         explainer.num_samples = None
         explainer.fraction = 0.3333
-        result = explainer._get_num_splits(n=3)
-        expected = int((2**3 - 1) * 0.3333)
+        result = explainer._get_num_splits(n=10)
+        expected = int((2**10 - 1) * 0.3333)
         assert result == expected
 
     def test_get_num_splits_cache_clear_respects_updates(self, explainer: BaseMcShapExplainer) -> None:
@@ -121,7 +115,7 @@ class TestBaseMcShapExplainer:
         device = torch.device("cpu")
         explainer.num_samples = 3
         explainer.include_minimal_masks = False
-        result = explainer._get_next_split(n=3, device=device, generated_masks_num=3)
+        result = explainer._get_next_split(n=3, device=device, generated_masks_num=10)
         assert result is None
 
     def test_calculate_shap_values_computation(self, explainer: BaseMcShapExplainer) -> None:

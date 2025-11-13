@@ -70,9 +70,9 @@ class TestComplementaryShapExplainerNumSplits:
     def test_num_splits_cache_depends_on_configuration(self) -> None:
         """Different sampling settings should produce different cached values."""
         explainer = DummyComplementaryExplainer(num_samples=None, fraction=0.5)
-        first = explainer._get_num_splits(n=3)
-        other = DummyComplementaryExplainer(num_samples=6)
-        second = other._get_num_splits(n=3)
+        first = explainer._get_num_splits(n=10)
+        other = DummyComplementaryExplainer(num_samples=22)
+        second = other._get_num_splits(n=10)
         assert first != second
 
 
