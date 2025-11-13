@@ -457,7 +457,7 @@ class HierarchicalExplainer(BaseExplainer):
 
         # calculate fist level SHAP values
         response_with_cache = deepcopy(response)
-        if self.first_layer_explainer is not None:  # business-aware first layer explainer
+        if self.first_layer_explainer is None:  # business-aware first layer explainer
             normalized_shap_values = self.__calculate_group_normalized_shap_values(
                 chat=chat,
                 response=response_with_cache,
@@ -467,7 +467,7 @@ class HierarchicalExplainer(BaseExplainer):
             )
         else:  # separate first-layer explainer
             response_to_be_explained = deepcopy(response)
-            cast(BaseShapExplainer, self.first_layer_explainer)(
+            self.first_layer_explainer(
                 model=self.model,
                 source_chat=chat,
                 response=response_to_be_explained,
