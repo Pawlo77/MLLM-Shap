@@ -466,6 +466,7 @@ class HierarchicalExplainer(BaseExplainer):
                 **explanation_kwargs,
             )
         else:  # separate first-layer explainer
+            logger.debug("Calculating first layer explanation using separate explainer.")
             response_to_be_explained = deepcopy(response)
             self.first_layer_explainer(
                 model=self.model,
@@ -478,6 +479,10 @@ class HierarchicalExplainer(BaseExplainer):
                 Tensor,
                 response_to_be_explained.chat.cache.normalized_values,  # type: ignore[union-attr]
             )
+            self.n_calls += 1
+            self.total_n_calls += self.first_layer_explainer.total_n_calls
+            if self._progress_bar is not None:
+                self._progress_bar.update(self.first_layer_explainer.total_n_calls)
 
             normalized_shap_values = torch.full_like(group_ids_spltted, fill_value=float("nan"), dtype=torch.float)
             # set SHAP values per group as sum of all tokens in the group
