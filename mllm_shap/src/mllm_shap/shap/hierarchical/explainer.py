@@ -74,6 +74,9 @@ class HierarchicalExplainer(BaseExplainer):
     use_importance_sampling: bool
     """Whether to use importance for setting sampling budget (for each group)."""
 
+    use_first_level_groups: bool
+    """Whether to use first level groups based on modalities and roles."""
+
     importance_sampling_min_fraction: float
     """Minimum fraction for importance sampling."""
 
@@ -91,6 +94,7 @@ class HierarchicalExplainer(BaseExplainer):
         k: int = 10,
         use_importance_sampling: bool = False,
         importance_sampling_min_fraction: float = 0.1,
+        use_first_level_groups: bool = True,
         **kwargs: Any,
     ) -> None:
         """
@@ -105,6 +109,7 @@ class HierarchicalExplainer(BaseExplainer):
             use_importance_sampling: Whether to use importance for setting sampling budget (for each group).
                 Applicable only if `shap_explainer` supports fraction-based sampling.
             importance_sampling_min_fraction: Minimum fraction for importance sampling.
+            use_first_level_groups: Whether to use first level groups based on modalities and roles.
             kwargs: Additional keyword arguments.
         Raises:
             ValueError: If k is less than 1 or not an integer.
@@ -138,6 +143,8 @@ class HierarchicalExplainer(BaseExplainer):
         ):
             raise ValueError("importance_sampling_min_fraction must be in (0.0, 1.0].")
         self.importance_sampling_min_fraction = importance_sampling_min_fraction
+
+        self.use_first_level_groups = use_first_level_groups
 
     def __get_subgroups_num(self, n: int) -> int:
         """
@@ -309,7 +316,6 @@ class HierarchicalExplainer(BaseExplainer):
             n=n, k=subgroup_size
         )  # noqa: E203
 
-        # calculate SHAP values for this level
         normalized_shap_values = self.__calculate_group_normalized_shap_values(
             chat=chat,
             response=response,
@@ -318,6 +324,7 @@ class HierarchicalExplainer(BaseExplainer):
             importance=importance,
             **explanation_kwargs,
         )
+
         computation_graph = GraphNode(shap_values=normalized_shap_values, children=[], group_ids=group_ids)
 
         # calculate SHAP values for next levels
@@ -381,6 +388,7 @@ class HierarchicalExplainer(BaseExplainer):
             shap_values_mask=shap_values_mask,
         )
 
+    # pylint: disable=too-many-statements
     def __call__(
         self,
         *_: Any,
@@ -419,11 +427,12 @@ class HierarchicalExplainer(BaseExplainer):
             )
         t0 = time()
 
+        group_mask = chat.shap_values_mask
         if self.mode == Mode.TEXT:
             normalized_shap_values, self.computation_graph = self.__compute(
                 chat=chat,
                 response=response,
-                group_mask=chat.shap_values_mask,
+                group_mask=group_mask,
                 generation_kwargs=generation_kwargs,
                 **explanation_kwargs,
             )
@@ -442,8 +451,8 @@ class HierarchicalExplainer(BaseExplainer):
             global_offset = 0
             group_ids_spltted = torch.zeros_like(group_ids, dtype=torch.long)
             for group_id in range(1, n_groups):
-                group_mask = group_ids == group_id
-                start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
+                sub_group_mask = group_ids == group_id
+                start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(sub_group_mask)
                 subgroup_size = math.ceil(n / self.__get_subgroups_num(n=n))
                 group_ids_spltted[start_idx : end_idx + 1] = (  # noqa: E203
                     HierarchicalExplainer.__repeated_buckets(n=n, k=subgroup_size) + global_offset
@@ -453,15 +462,21 @@ class HierarchicalExplainer(BaseExplainer):
 
             logger.info("Total number of groups at first level: %d", n_groups)
 
-            # calculate fist level SHAP values
+            # calculate SHAP values for this level, if use_first_level_groups is True
             response_with_cache = deepcopy(response)
-            normalized_shap_values = self.__calculate_group_normalized_shap_values(
-                chat=chat,
-                response=response_with_cache,
-                group_ids=group_ids_spltted,
-                generation_kwargs=generation_kwargs,
-                **explanation_kwargs,
-            )
+            if self.use_first_level_groups:
+                logger.debug("Explaining first level groups")
+                normalized_shap_values = self.__calculate_group_normalized_shap_values(
+                    chat=chat,
+                    response=response_with_cache,
+                    group_ids=group_ids_spltted,
+                    generation_kwargs=generation_kwargs,
+                    **explanation_kwargs,
+                )
+            else:
+                normalized_shap_values = torch.full_like(group_mask, fill_value=float("nan"), dtype=torch.float)
+                normalized_shap_values[group_mask] = 1.0
+
             self.computation_graph = GraphNode(
                 shap_values=normalized_shap_values,
                 children=[],
@@ -470,8 +485,8 @@ class HierarchicalExplainer(BaseExplainer):
 
             # call for each group recursively
             for group_id in range(1, n_groups):
-                group_mask = group_ids_spltted == group_id
-                sv = normalized_shap_values[group_mask][0].item()
+                sub_group_mask = group_ids_spltted == group_id
+                sv = normalized_shap_values[sub_group_mask][0].item()
                 if sv == 0:
                     logger.debug(
                         "Skipping group %d explanation as its SHAP value is zero.",
@@ -483,12 +498,12 @@ class HierarchicalExplainer(BaseExplainer):
                 group_shap_values, subgroup_computation_graph = self.__compute(
                     chat=chat,
                     response=response,
-                    group_mask=group_mask,
+                    group_mask=sub_group_mask,
                     generation_kwargs=generation_kwargs,
                     importance=sv,
                     **explanation_kwargs,
                 )
-                normalized_shap_values[group_mask] *= group_shap_values[group_mask]
+                normalized_shap_values[sub_group_mask] *= group_shap_values[sub_group_mask]
                 self.computation_graph.children.append(subgroup_computation_graph)  # type: ignore[union-attr]
 
         logger.debug("Explanation took %.2f seconds.", time() - t0)
@@ -496,6 +511,11 @@ class HierarchicalExplainer(BaseExplainer):
         if self._progress_bar is not None:
             self._progress_bar.close()
             self._progress_bar = None
+
+        # re-normalize as all entries from first level groups were given equal weight
+        # use normalizer from underlying explainer for simplicity and consistency
+        if self.use_first_level_groups:
+            normalized_shap_values[chat.shap_values_mask] = self.shap_explainer.normalizer(chat.shap_values_mask)
 
         full_chat = cast(BaseMllmChat, response.chat)
         self.__save_to_cache(
