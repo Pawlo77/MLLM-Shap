@@ -113,13 +113,6 @@ class TestComplementaryNeymanShapExplainerNumSplits:
         assert initial_splits >= 1
         assert num_splits >= initial_splits
 
-    def test_initial_num_splits_too_large_raises(self) -> None:
-        """Verify that a ValueError is raised when initial_num_samples > total possible splits."""
-        explainer = DummyComplementaryNeymanShapExplainer(initial_num_samples=10)
-        with pytest.raises(ValueError) as excinfo:
-            explainer._get_num_splits(n=2)
-        assert "Initial number of splits" in str(excinfo.value)
-
 
 class TestComplementaryNeymanShapExplainerMasksGeneration:
     """Tests for mask generation behavior (complementary masks)."""

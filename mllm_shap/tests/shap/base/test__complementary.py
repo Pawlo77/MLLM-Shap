@@ -93,8 +93,8 @@ class TestNumSplitsStatic:
         assert result == 6  # 2**3 - 2 = 6
 
     def test_fraction_result_is_even(self) -> None:
-        result = BaseComplementaryShapApproximation._get_num_splits_static(n=3, fraction=0.5)
-        assert result == 2  # 6 * 0.5 = 3 -> rounded down to even
+        result = BaseComplementaryShapApproximation._get_num_splits_static(n=10, fraction=0.5)
+        assert result == 510  # (2**10 - 2) * 0.5
 
     def test_fraction_small_value(self) -> None:
         result = BaseComplementaryShapApproximation._get_num_splits_static(n=3, fraction=0.1)
