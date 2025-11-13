@@ -437,14 +437,17 @@ class HierarchicalExplainer(BaseExplainer):
             )
             n_groups = int(group_ids.max().item()) + 1
 
+            # further split large groups to smaller one
+            global_offset = 0
             group_ids_spltted = torch.zeros_like(group_ids, dtype=torch.long)
             for group_id in range(1, n_groups):
                 group_mask = group_ids == group_id
                 start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
                 subgroup_size = math.ceil(n / self.__get_subgroups_num(n=n))
-                group_ids_spltted[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(  # noqa: E203
-                    n=n, k=subgroup_size
-                )  # noqa: E203
+                group_ids_spltted[start_idx : end_idx + 1] = (  # noqa: E203
+                    HierarchicalExplainer.__repeated_buckets(n=n, k=subgroup_size) + global_offset
+                )
+                global_offset += int(group_ids_spltted[start_idx : end_idx + 1].max().item()) + 1  # noqa: E203
             n_groups = int(group_ids_spltted.max().item()) + 1
 
             logger.info("Total number of groups at first level: %d", n_groups)
