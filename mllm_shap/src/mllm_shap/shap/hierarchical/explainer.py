@@ -436,6 +436,7 @@ class HierarchicalExplainer(BaseExplainer):
                 chat=chat, include_role=(self.mode == Mode.MULTI_MODAL_MULTI_USER)
             )
             n_groups = int(group_ids.max().item()) + 1
+            logger.debug("Initial number of groups at first level: %d", n_groups - 1)
 
             # further split large groups to smaller one
             global_offset = 0
@@ -457,7 +458,7 @@ class HierarchicalExplainer(BaseExplainer):
             normalized_shap_values = self.__calculate_group_normalized_shap_values(
                 chat=chat,
                 response=response_with_cache,
-                group_ids=group_ids,
+                group_ids=group_ids_spltted,
                 generation_kwargs=generation_kwargs,
                 **explanation_kwargs,
             )
