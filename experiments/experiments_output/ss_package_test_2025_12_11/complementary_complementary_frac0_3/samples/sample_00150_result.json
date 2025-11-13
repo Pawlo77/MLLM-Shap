@@ -1,0 +1,177 @@
+{
+  "row_index": 150,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 391.8225874900818,
+  "n_calls": 306,
+  "prompt_text": "['How large is the region of Macedonia?']",
+  "attr_summary": {
+    "abs_sum_text": 0.999999932013452,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "How",
+          " large",
+          " is",
+          " the",
+          " region",
+          " of",
+          " Macedonia",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.20028047263622284,
+          0.06866325438022614,
+          -0.14081571996212006,
+          0.03857581689953804,
+          -0.005202955566346645,
+          0.1069926917552948,
+          -0.09498051553964615,
+          0.24045835435390472,
+          0.03179815784096718,
+          0.07223199307918549
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " region",
+          " of",
+          " Macedonia",
+          " is",
+          " located",
+          " in",
+          " the",
+          " southeastern",
+          " part",
+          " of",
+          " Europe",
+          ",",
+          " b",
+          "ordered",
+          " by",
+          " Greece",
+          ",",
+          " Albania",
+          ",",
+          " Kosovo",
+          ","
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

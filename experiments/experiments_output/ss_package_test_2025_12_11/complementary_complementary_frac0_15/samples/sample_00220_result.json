@@ -1,0 +1,159 @@
+{
+  "row_index": 220,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 180.28195333480835,
+  "n_calls": 152,
+  "prompt_text": "[\"What is the Navy's military mascot?\"]",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999217689037,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "[\"",
+          "What",
+          " is",
+          " the",
+          " Navy",
+          "'s",
+          " military",
+          " mascot",
+          "?\"",
+          "]"
+        ],
+        "shap_values": [
+          0.07833966612815857,
+          0.12256381660699844,
+          0.11039280146360397,
+          0.08466440439224243,
+          0.09837647527456284,
+          0.11432622373104095,
+          0.05036930367350578,
+          0.12486742436885834,
+          -0.15300124883651733,
+          -0.06309855729341507
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " Navy",
+          "'s",
+          " military",
+          " mascot",
+          " is",
+          " a",
+          " seal",
+          " named",
+          " \"",
+          "S",
+          "eal",
+          "y",
+          ".\"",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

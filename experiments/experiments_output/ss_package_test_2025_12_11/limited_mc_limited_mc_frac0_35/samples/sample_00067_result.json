@@ -1,0 +1,138 @@
+{
+  "row_index": 67,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 244.11342000961304,
+  "n_calls": 178,
+  "prompt_text": "['When were the 76ers formed?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999478459358,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "When",
+          " were",
+          " the",
+          " 76",
+          "ers",
+          " formed",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.12543727457523346,
+          0.06527342647314072,
+          0.20909741520881653,
+          0.07479143142700195,
+          0.1570194512605667,
+          0.1253361850976944,
+          0.07567090541124344,
+          0.07268233597278595,
+          0.09469152241945267
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " 76",
+          "ers",
+          " were",
+          " formed",
+          " in",
+          " 1946",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

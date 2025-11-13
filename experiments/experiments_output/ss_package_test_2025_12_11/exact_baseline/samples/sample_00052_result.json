@@ -1,0 +1,174 @@
+{
+  "row_index": 52,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 530.2543623447418,
+  "n_calls": 510,
+  "prompt_text": "['What do they speak in Brittany?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999739229679,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "What",
+          " do",
+          " they",
+          " speak",
+          " in",
+          " Brittany",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.16536465287208557,
+          0.08802688866853714,
+          0.07703904807567596,
+          0.18661151826381683,
+          0.17113548517227173,
+          0.06914515048265457,
+          0.17524251341819763,
+          0.05789228901267052,
+          -0.009542427957057953
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " They",
+          " speak",
+          " Bre",
+          "ton",
+          ",",
+          " a",
+          " Celtic",
+          " language",
+          " that",
+          " is",
+          " part",
+          " of",
+          " the",
+          " Romance",
+          " family",
+          ".",
+          " It",
+          " is",
+          " similar",
+          " to",
+          " French",
+          ","
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

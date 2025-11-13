@@ -1,0 +1,165 @@
+{
+  "row_index": 140,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 190.67398238182068,
+  "n_calls": 152,
+  "prompt_text": "['When was the surrender of Japan signed?']",
+  "attr_summary": {
+    "abs_sum_text": 1.000000011175871,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "When",
+          " was",
+          " the",
+          " surrender",
+          " of",
+          " Japan",
+          " signed",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.12064588814973831,
+          0.09115202724933624,
+          0.045202333480119705,
+          0.049101822078228,
+          0.12256427109241486,
+          0.11294837296009064,
+          0.11698693037033081,
+          0.11013363301753998,
+          0.15448373556137085,
+          -0.07678099721670151
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " The",
+          " surrender",
+          " of",
+          " Japan",
+          " was",
+          " signed",
+          " on",
+          " September",
+          " 2",
+          ",",
+          " 1945",
+          ",",
+          " in",
+          " Tokyo",
+          " Bay",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

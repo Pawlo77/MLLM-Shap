@@ -1,0 +1,162 @@
+{
+  "row_index": 95,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 428.4460988044739,
+  "n_calls": 356,
+  "prompt_text": "['Where can we find fish fillet?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999580904841,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Where",
+          " can",
+          " we",
+          " find",
+          " fish",
+          " fil",
+          "let",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.3484320044517517,
+          0.06608414649963379,
+          0.07423146069049835,
+          -0.013248874805867672,
+          -0.06342180073261261,
+          0.054576724767684937,
+          -0.20044536888599396,
+          0.017250530421733856,
+          0.11850196123123169,
+          0.04380708560347557
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " I",
+          "'m",
+          " sorry",
+          ",",
+          " I",
+          " don",
+          "'t",
+          " know",
+          " where",
+          " to",
+          " find",
+          " fish",
+          " fil",
+          "let",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

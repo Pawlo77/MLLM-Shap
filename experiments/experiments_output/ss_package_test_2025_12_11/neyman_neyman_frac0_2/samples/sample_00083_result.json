@@ -1,0 +1,174 @@
+{
+  "row_index": 83,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 119.60669684410095,
+  "n_calls": 10,
+  "prompt_text": "['What is Gremolata?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999962747097,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "What",
+          " is",
+          " G",
+          "rem",
+          "ol",
+          "ata",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.07675457000732422,
+          0.16421867907047272,
+          0.08401987701654434,
+          0.15765058994293213,
+          0.1335117071866989,
+          0.12580230832099915,
+          0.09224411100149155,
+          0.13176283240318298,
+          -0.034035321325063705
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " G",
+          "rem",
+          "ol",
+          "ata",
+          " is",
+          " a",
+          " sauce",
+          " made",
+          " from",
+          " fresh",
+          " herbs",
+          ",",
+          " garlic",
+          ",",
+          " and",
+          " olive",
+          " oil",
+          ".",
+          " It",
+          " is",
+          " typically",
+          " used"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

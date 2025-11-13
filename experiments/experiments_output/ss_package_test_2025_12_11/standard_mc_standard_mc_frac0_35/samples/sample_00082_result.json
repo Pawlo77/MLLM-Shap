@@ -1,0 +1,150 @@
+{
+  "row_index": 82,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 412.8220579624176,
+  "n_calls": 358,
+  "prompt_text": "['When did South Korea become a republic?']",
+  "attr_summary": {
+    "abs_sum_text": 1.0000000428408384,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "When",
+          " did",
+          " South",
+          " Korea",
+          " become",
+          " a",
+          " republic",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.17526361346244812,
+          0.03684033825993538,
+          0.19249974191188812,
+          0.09071434289216995,
+          0.03979691490530968,
+          0.11745182424783707,
+          0.052780140191316605,
+          0.08987993746995926,
+          0.18261370062828064,
+          -0.02215948887169361
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " South",
+          " Korea",
+          " became",
+          " a",
+          " republic",
+          " on",
+          " August",
+          " 15",
+          ",",
+          " 1948",
+          ".",
+          "\n",
+          "<|endoftext|>"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

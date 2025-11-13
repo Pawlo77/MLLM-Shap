@@ -1,0 +1,177 @@
+{
+  "row_index": 141,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 239.87223601341248,
+  "n_calls": 204,
+  "prompt_text": "['How can I fix a leaking roof?']",
+  "attr_summary": {
+    "abs_sum_text": 0.999999969266355,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "How",
+          " can",
+          " I",
+          " fix",
+          " a",
+          " leaking",
+          " roof",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.15125896036624908,
+          0.1413404941558838,
+          0.046549297869205475,
+          0.00919867679476738,
+          0.18158972263336182,
+          -0.004363573156297207,
+          0.14313316345214844,
+          0.1422426700592041,
+          0.14124786853790283,
+          -0.039075542241334915
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " To",
+          " fix",
+          " a",
+          " leaking",
+          " roof",
+          ",",
+          " you",
+          " will",
+          " need",
+          " to",
+          " identify",
+          " the",
+          " source",
+          " of",
+          " the",
+          " leak",
+          " and",
+          " the",
+          " type",
+          " of",
+          " roof",
+          " you"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

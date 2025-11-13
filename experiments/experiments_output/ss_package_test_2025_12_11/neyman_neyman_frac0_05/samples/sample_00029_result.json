@@ -1,0 +1,174 @@
+{
+  "row_index": 29,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 17.691787242889404,
+  "n_calls": 24,
+  "prompt_text": "['How would you characterize fast food?']",
+  "attr_summary": {
+    "abs_sum_text": 0.999999925494194,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 9,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "How",
+          " would",
+          " you",
+          " characterize",
+          " fast",
+          " food",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.0870889201760292,
+          0.07503249496221542,
+          0.1425689458847046,
+          0.07798829674720764,
+          0.1430136263370514,
+          0.13973480463027954,
+          0.13045617938041687,
+          0.04607932269573212,
+          0.15803733468055725
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "Assistant",
+          ":",
+          " I",
+          " would",
+          " characterize",
+          " fast",
+          " food",
+          " as",
+          " a",
+          " type",
+          " of",
+          " cuisine",
+          " that",
+          " is",
+          " prepared",
+          " and",
+          " served",
+          " quickly",
+          ",",
+          " often",
+          " in",
+          " restaurants",
+          " or",
+          " drive"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "row_index": 32,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 41.34099984169006,
+  "n_calls": 50,
+  "prompt_text": "['Who first developed attachment theory in psychology?']",
+  "attr_summary": {
+    "abs_sum_text": 0.9999999925494194,
+    "abs_sum_audio": 0.0,
+    "frac_text": 1.0,
+    "frac_audio": 0.0,
+    "count_text_tokens": 10,
+    "count_audio_segments": 0
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " ass",
+          "itant",
+          "."
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          "['",
+          "Who",
+          " first",
+          " developed",
+          " attachment",
+          " theory",
+          " in",
+          " psychology",
+          "?'",
+          "]"
+        ],
+        "shap_values": [
+          0.13955415785312653,
+          0.06528711318969727,
+          0.1261405348777771,
+          0.07404084503650665,
+          0.12170880287885666,
+          0.10673875361680984,
+          0.11177237331867218,
+          0.09668546915054321,
+          0.08384737372398376,
+          0.0742245689034462
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          "\n",
+          "A",
+          ":",
+          " The",
+          " first",
+          " person",
+          " to",
+          " develop",
+          " attachment",
+          " theory",
+          " in",
+          " psychology",
+          " was",
+          " John",
+          " Bowl",
+          "by",
+          ",",
+          " a",
+          " British",
+          " psychologist",
+          " who",
+          " studied",
+          " the",
+          " effects",
+          " of"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  ]
+}
