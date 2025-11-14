@@ -6,12 +6,11 @@ using Monte Carlo sampling techniques. They differ from standard
 Monte Carlo methods by including first-order-omission masks,
 that is masks omitting exactly one feature (parametrizable).
 
+First-order-omission masks are masks that omit exactly one feature from the set.
+
 - :class:`LimitedMcShapExplainer` implements a limited Monte Carlo sampling
-    approach that avoids drawing the same mask more than once, which helps
-    to better cover the feature space within a limited number of samples.
-- :class:`StandardMcShapExplainer` implements the standard Monte Carlo
-    sampling approach, allowing for repeated masks as per true Monte Carlo
-    sampling methodology.
+    that always includes first-order-omission masks.
+- :class:`StandardMcShapExplainer` does not include first-order-omission masks.
 - :func:`approximate_budget` is a utility function to estimate the number
     of samples required to achieve a desired error bound with a specified
     confidence level using Hoeffding's inequality.
