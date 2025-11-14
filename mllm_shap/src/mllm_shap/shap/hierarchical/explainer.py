@@ -158,7 +158,8 @@ class HierarchicalExplainer(BaseExplainer):
             if not isinstance(first_layer_explainer, BaseShapExplainer):
                 raise ValueError("first_layer_explainer must be an instance of BaseShapExplainer.")
             if (
-                not shap_explainer.normalizer.__class__ == first_layer_explainer.normalizer.__class__  # type: ignore[union-attr] # pylint: disable=line-too-long # noqa: E501
+                not shap_explainer.normalizer.__class__  # type: ignore[union-attr]
+                == first_layer_explainer.normalizer.__class__
             ):
                 logger.warning(
                     (
@@ -281,8 +282,7 @@ class HierarchicalExplainer(BaseExplainer):
         if self._progress_bar is not None:
             self._progress_bar.update(self.shap_explainer.total_n_calls)
 
-        cache = cast(ExplainerCache, response.chat.cache)  # type: ignore[union-attr]
-        return cache.normalized_values[: cache.n]  # do not return for response tokens
+        return HierarchicalExplainer.__extract_normalized_shap_values(response=response)
 
     # pylint: disable=too-many-locals
     def __compute(
@@ -475,16 +475,16 @@ class HierarchicalExplainer(BaseExplainer):
                 **(first_layer_explanation_kwargs or {}),
                 **(generation_kwargs or {}),
             )
-            response_normalized_values = cast(
-                Tensor,
-                response_to_be_explained.chat.cache.normalized_values,  # type: ignore[union-attr]
+            response_normalized_values = HierarchicalExplainer.__extract_normalized_shap_values(
+                response=response_to_be_explained
             )
+
             self.n_calls += 1
             self.total_n_calls += self.first_layer_explainer.total_n_calls
             if self._progress_bar is not None:
                 self._progress_bar.update(self.first_layer_explainer.total_n_calls)
 
-            normalized_shap_values = torch.full_like(group_ids_spltted, fill_value=float("nan"), dtype=torch.float)
+            normalized_shap_values = torch.full_like(response_normalized_values, fill_value=float("nan"))
             # set SHAP values per group as sum of all tokens in the group
             for group_id in range(1, n_groups):
                 group_mask = group_ids_spltted == group_id
@@ -689,3 +689,18 @@ class HierarchicalExplainer(BaseExplainer):
         x = torch.arange(1, reps + 1).repeat_interleave(k)
         # Trim to exact length n
         return x[:n]
+
+    @staticmethod
+    def __extract_normalized_shap_values(
+        response: ModelResponse,
+    ) -> Tensor:
+        """
+        Extract normalized SHAP values from the response cache.
+
+        Args:
+            response: The model response containing the cache.
+        Returns:
+            A tensor containing the normalized SHAP values for explainable tokens.
+        """
+        cache = cast(ExplainerCache, response.chat.cache)  # type: ignore[union-attr]
+        return cache.normalized_values[: cache.n]  # do not return for response tokens
