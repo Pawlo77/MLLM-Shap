@@ -16,7 +16,7 @@ SHAP explainers module.
 
 from .compact import Explainer
 from .monte_carlo import LimitedMcShapExplainer as McShapExplainer
-from .complementary import ComplementaryShapExplainer
+from .complementary import LimitedComplementaryShapExplainer as ComplementaryShapExplainer
 from .neyman import ComplementaryNeymanShapExplainer
 from .precise import PreciseShapExplainer
 from .hierarchical import HierarchicalExplainer

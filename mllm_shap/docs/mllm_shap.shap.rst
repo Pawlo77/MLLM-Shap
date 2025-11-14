@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    mllm_shap.shap.base
+   mllm_shap.shap.complementary
    mllm_shap.shap.hierarchical
    mllm_shap.shap.monte_carlo
 
@@ -18,14 +19,6 @@ mllm\_shap.shap.compact module
 ------------------------------
 
 .. automodule:: mllm_shap.shap.compact
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-mllm\_shap.shap.complementary module
-------------------------------------
-
-.. automodule:: mllm_shap.shap.complementary
    :members:
    :show-inheritance:
    :undoc-members:

@@ -2,10 +2,10 @@
 
 import pytest
 import torch
-from mllm_shap.shap.complementary import ComplementaryShapExplainer
+from mllm_shap.shap.complementary._base import BaseComplementaryShapExplainer as ComplementaryShapExplainer
 from mllm_shap.shap.base._masks_manager import MasksManager
 from torch import Tensor
-from ..dummy import DummyChat
+from ...dummy import DummyChat
 
 
 class DummyComplementaryExplainer(ComplementaryShapExplainer):
