@@ -46,6 +46,7 @@ class TransformersCausalText(BaseMllmModel):
         _model = AutoModelForCausalLM.from_pretrained(
             CONFIG.repo_id,
             revision=CONFIG.revision,
+            load_in_4bit=True,
         )  # nosec: B615
         model = cast(PreTrainedModel, _model)
         model.to(device)  # type: ignore[arg-type]
