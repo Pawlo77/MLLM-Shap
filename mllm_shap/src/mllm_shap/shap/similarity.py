@@ -127,4 +127,4 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
                 self.__tokenize_map[key] = self.__tokenize_counter
                 self.__tokenize_counter += 1
             result.append(self.__tokenize_map[key])
-        return torch.tensor(result, device=tensor.device)
+        return Tensor(result)
