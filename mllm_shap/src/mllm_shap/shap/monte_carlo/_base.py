@@ -21,8 +21,10 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
     def _get_num_splits(self, n: int) -> int:
         if self.num_samples is not None:
             if self.num_samples == -1:
-                # Minimal: only single-feature masks and empty mask
-                return n + 1
+                if self.include_minimal_masks:
+                    # Minimal: only single-feature masks and empty mask
+                    return n + 1
+                raise ValueError("num_samples cannot be -1 when include_minimal_masks is False.")
             if self.num_samples < n + 1:
                 logger.warning(
                     (
