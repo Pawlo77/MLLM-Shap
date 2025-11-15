@@ -11,7 +11,6 @@ from typing import Any, cast
 import torch
 from torch import Tensor
 from tqdm.auto import tqdm
-from pydantic import BaseModel, ConfigDict
 
 from ...connectors.base.explainer_cache import ExplainerCache
 from ...connectors.base.chat import BaseMllmChat
@@ -25,26 +24,9 @@ from ..explainer_result import ExplainerResult
 from ..precise import PreciseShapExplainer
 from ..normalizers import MinMaxNormalizer
 from .enums import Mode
+from .graph import GraphNode
 
 logger: Logger = get_logger(__name__)
-
-
-class GraphNode(BaseModel):
-    """Node in the hierarchical explanation computation graph."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    shap_values: Tensor | None = None
-    """SHAP values for the group represented by this node."""
-
-    children: list["GraphNode"] | None = None
-    """ Child nodes representing subgroups. """
-
-    group_ids: Tensor | None = None
-    """Group IDs tensor if applicable."""
-
-    group_mask: Tensor | None = None
-    """Group mask tensor if applicable."""
 
 
 # pylint: disable=too-few-public-methods,too-many-instance-attributes
@@ -180,6 +162,18 @@ class HierarchicalExplainer(BaseExplainer):
         """
         return math.ceil(math.log(n, self.k))
 
+    def __update_progress(self, explainer: BaseShapExplainer) -> None:
+        """
+        Update progress based on the given explainer's call count.
+
+        Args:
+            explainer: The explainer instance whose call count is used to update progress.
+        """
+        self.n_calls += 1
+        self.total_n_calls += explainer.total_n_calls
+        if self._progress_bar is not None:
+            self._progress_bar.update(explainer.total_n_calls)
+
     # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __calculate_group_normalized_shap_values(
         self,
@@ -277,11 +271,7 @@ class HierarchicalExplainer(BaseExplainer):
         else:
             del chat.external_group_ids
 
-        self.n_calls += 1
-        self.total_n_calls += self.shap_explainer.total_n_calls
-        if self._progress_bar is not None:
-            self._progress_bar.update(self.shap_explainer.total_n_calls)
-
+        self.__update_progress(explainer=self.shap_explainer)
         return HierarchicalExplainer.__extract_normalized_shap_values(response=response)
 
     # pylint: disable=too-many-locals
@@ -292,8 +282,9 @@ class HierarchicalExplainer(BaseExplainer):
         group_mask: Tensor,
         generation_kwargs: dict[str, Any] | None = None,
         importance: float = 1.0,
+        _verbose: bool = False,
         **explanation_kwargs: Any,
-    ) -> tuple[Tensor, GraphNode]:
+    ) -> tuple[Tensor, GraphNode | None]:
         """
         Recursively compute hierarchical SHAP values for a given group.
 
@@ -302,15 +293,17 @@ class HierarchicalExplainer(BaseExplainer):
             response: The model response.
             group_mask: A boolean tensor indicating the group.
             generation_kwargs: Additional generation arguments.
-            explanation_kwargs: Additional explanation arguments.
             importance: Importance value for the group, used for sampling budget if
                 `use_importance_sampling` is True.
+            verbose: Whether to save computation graph details.
+            explanation_kwargs: Additional explanation arguments.
         Returns:
-            A tensor containing the hierarchical SHAP values for the group.
+            A tuple of tensor containing the hierarchical SHAP values for the group,
+            computation graph root or None if `verbose` is False.
         """
-
         start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
         subgroups_num = self.__get_subgroups_num(n=n)
+        computation_graph = None
 
         logger.debug(
             "Computing SHAP values for group [%d:%d] of size %d with %d subgroups.",
@@ -329,7 +322,8 @@ class HierarchicalExplainer(BaseExplainer):
                 importance=importance,
                 **explanation_kwargs,
             )
-            computation_graph = GraphNode(shap_values=r, children=[], group_mask=group_mask)
+            if _verbose:
+                computation_graph = GraphNode(shap_values=r.clone(), children=[], group_mask=group_mask.clone())
             return r, computation_graph
 
         subgroup_size = math.ceil(n / subgroups_num)
@@ -347,7 +341,11 @@ class HierarchicalExplainer(BaseExplainer):
             importance=importance,
             **explanation_kwargs,
         )
-        computation_graph = GraphNode(shap_values=normalized_shap_values, children=[], group_ids=group_ids)
+
+        if _verbose:
+            computation_graph = GraphNode(
+                shap_values=normalized_shap_values.clone(), children=[], group_ids=group_ids.clone()
+            )
 
         # calculate SHAP values for next levels
         for subgroup_id in range(1, subgroups_num + 1):
@@ -358,7 +356,8 @@ class HierarchicalExplainer(BaseExplainer):
                     "Skipping group %d explanation as its SHAP value is zero.",
                     subgroup_id,
                 )
-                computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
+                if _verbose:
+                    computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
                 continue
 
             subgroup_shap_values, subgroup_computation_graph = self.__compute(
@@ -370,7 +369,8 @@ class HierarchicalExplainer(BaseExplainer):
                 **explanation_kwargs,
             )
             normalized_shap_values[subgroup_mask] *= subgroup_shap_values[subgroup_mask]
-            computation_graph.children.append(subgroup_computation_graph)  # type: ignore[union-attr]
+            if _verbose:
+                computation_graph.children.append(subgroup_computation_graph)  # type: ignore
 
         return normalized_shap_values, computation_graph
 
@@ -416,6 +416,7 @@ class HierarchicalExplainer(BaseExplainer):
         response: ModelResponse,
         generation_kwargs: dict[str, Any] | None = None,
         first_layer_explanation_kwargs: dict[str, Any] | None = None,
+        _verbose: bool = False,
         **explanation_kwargs: Any,
     ) -> Tensor:
         """
@@ -426,6 +427,7 @@ class HierarchicalExplainer(BaseExplainer):
             response: The model response.
             generation_kwargs: Additional generation arguments.
             first_layer_explanation_kwargs: Additional explanation arguments for the first layer.
+            verbose: Whether to save computation graph details.
             explanation_kwargs: Additional explanation arguments.
         Returns:
             A tensor containing the hierarchical SHAP values for the group.
@@ -440,18 +442,18 @@ class HierarchicalExplainer(BaseExplainer):
         n_groups = int(group_ids.max().item()) + 1
         logger.debug("Initial number of groups at first level: %d", n_groups - 1)
 
-        # further split large groups to smaller one
+        # further split large groups to smaller ones
         global_offset = 0
-        group_ids_spltted = torch.zeros_like(group_ids, dtype=torch.long)
+        group_ids_split = torch.zeros_like(group_ids, dtype=torch.long)
         for group_id in range(1, n_groups):
             group_mask = group_ids == group_id
             start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
             subgroup_size = math.ceil(n / self.__get_subgroups_num(n=n))
-            group_ids_spltted[start_idx : end_idx + 1] = (  # noqa: E203
+            group_ids_split[start_idx : end_idx + 1] = (  # noqa: E203
                 HierarchicalExplainer.__repeated_buckets(n=n, k=subgroup_size) + global_offset
             )
-            global_offset += int(group_ids_spltted[start_idx : end_idx + 1].max().item()) + 1  # noqa: E203
-        n_groups = int(group_ids_spltted.max().item()) + 1
+            global_offset = int(group_ids_split[start_idx : end_idx + 1].max().item())  # noqa: E203
+        n_groups = int(group_ids_split.max().item()) + 1
 
         logger.info("Total number of groups at first level: %d", n_groups)
 
@@ -461,52 +463,50 @@ class HierarchicalExplainer(BaseExplainer):
             normalized_shap_values = self.__calculate_group_normalized_shap_values(
                 chat=chat,
                 response=response_with_cache,
-                group_ids=group_ids_spltted,
+                group_ids=group_ids_split,
                 generation_kwargs=generation_kwargs,
                 **explanation_kwargs,
             )
         else:  # separate first-layer explainer
             logger.debug("Calculating first layer explanation using separate explainer.")
-            response_to_be_explained = deepcopy(response)
             self.first_layer_explainer(
                 model=self.model,
                 source_chat=chat,
-                response=response_to_be_explained,
+                response=response_with_cache,
                 **(first_layer_explanation_kwargs or {}),
                 **(generation_kwargs or {}),
             )
-            response_normalized_values = HierarchicalExplainer.__extract_normalized_shap_values(
-                response=response_to_be_explained
-            )
 
-            self.n_calls += 1
-            self.total_n_calls += self.first_layer_explainer.total_n_calls
-            if self._progress_bar is not None:
-                self._progress_bar.update(self.first_layer_explainer.total_n_calls)
+            self.__update_progress(explainer=self.first_layer_explainer)
+            response_normalized_values = HierarchicalExplainer.__extract_normalized_shap_values(
+                response=response_with_cache
+            )
 
             normalized_shap_values = torch.full_like(response_normalized_values, fill_value=float("nan"))
             # set SHAP values per group as sum of all tokens in the group
             for group_id in range(1, n_groups):
-                group_mask = group_ids_spltted == group_id
+                group_mask = group_ids_split == group_id
                 sv = response_normalized_values[group_mask].sum().item()
                 normalized_shap_values[group_mask] = sv
 
-        self.computation_graph = GraphNode(
-            shap_values=normalized_shap_values,
-            children=[],
-            group_ids=group_ids,
-        )
+        if _verbose:
+            self.computation_graph = GraphNode(
+                shap_values=normalized_shap_values.clone(),
+                children=[],
+                group_ids=group_ids_split.clone(),
+            )
 
         # call for each group recursively
         for group_id in range(1, n_groups):
-            group_mask = group_ids_spltted == group_id
+            group_mask = group_ids_split == group_id
             sv = normalized_shap_values[group_mask][0].item()
             if sv == 0:
                 logger.debug(
                     "Skipping group %d explanation as its SHAP value is zero.",
                     group_id,
                 )
-                self.computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
+                if _verbose:
+                    self.computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
                 continue
 
             group_shap_values, subgroup_computation_graph = self.__compute(
@@ -518,7 +518,8 @@ class HierarchicalExplainer(BaseExplainer):
                 **explanation_kwargs,
             )
             normalized_shap_values[group_mask] *= group_shap_values[group_mask]
-            self.computation_graph.children.append(subgroup_computation_graph)  # type: ignore[union-attr]
+            if _verbose:
+                self.computation_graph.children.append(subgroup_computation_graph)  # type: ignore
 
         return normalized_shap_values
 
@@ -529,8 +530,24 @@ class HierarchicalExplainer(BaseExplainer):
         generation_kwargs: dict[str, Any] | None = None,
         progress_bar: bool = True,
         first_layer_explanation_kwargs: dict[str, Any] | None = None,
+        verbose: bool = False,
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
+        """
+        Generate explanation for the given chat using hierarchical SHAP approach.
+
+        Args:
+            chat: The chat instance to explain.
+            generation_kwargs: Additional generation arguments.
+            progress_bar: Whether to show a progress bar during explanation.
+            first_layer_explanation_kwargs: Additional explanation
+                arguments for the first layer explainer, if used.
+            verbose: Whether to save computation graph details.
+            explanation_kwargs: Additional explanation arguments to main SHAP explainer.
+        Returns:
+            An ExplainerResult containing the explanation results.
+        """
+
         generation_kwargs = generation_kwargs or {}
         # disable verbose logging in internal calls
         explanation_kwargs["verbose"] = False
@@ -567,6 +584,7 @@ class HierarchicalExplainer(BaseExplainer):
                 response=response,
                 group_mask=chat.shap_values_mask,
                 generation_kwargs=generation_kwargs,
+                _verbose=verbose,
                 **explanation_kwargs,
             )
         else:
@@ -575,6 +593,7 @@ class HierarchicalExplainer(BaseExplainer):
                 response=response,
                 generation_kwargs=generation_kwargs,
                 first_layer_explanation_kwargs=first_layer_explanation_kwargs,
+                _verbose=verbose,
                 **explanation_kwargs,
             )
 
