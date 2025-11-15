@@ -187,14 +187,6 @@ class TestComplementaryShapExplainerCalculateShapValues:
             dtype=torch.float32,
             device=device,
         )
-        explainer._C = torch.tensor(
-            [
-                [4, 0],
-                [0, 6],
-            ],
-            dtype=torch.float32,
-            device=device,
-        )
         explainer._zero_mask_skipped = True
         similarities = torch.tensor([1.0, 1.0, 2.0])
         with pytest.raises(ValueError, match="Masks are not complementary pairs"):
@@ -222,14 +214,6 @@ class TestComplementaryShapExplainerCalculateShapValues:
             dtype=torch.float32,
             device=device,
         )
-        explainer._C = torch.tensor(
-            [
-                [4, 0],
-                [0, 6],
-            ],
-            dtype=torch.float32,
-            device=device,
-        )
         explainer._zero_mask_skipped = True
         similarities = torch.tensor([1.0, 1.0, 2.0, 3.0])
         with pytest.raises(ValueError, match="Masks should be in complementary pairs"):
@@ -252,7 +236,7 @@ class TestComplementaryShapExplainerCalculateShapValues:
         explainer._zero_mask_skipped = True
         masks = torch.ones((2, 2), dtype=torch.bool)
         similarities = torch.ones(2)
-        with pytest.raises(RuntimeError, match="M matrix must be calculated before final calculations."):
+        with pytest.raises(RuntimeError, match="M matrix must be initialized"):
             _ = explainer._calculate_shap_values(masks, similarities, torch.device("cpu"))
 
     def test_result_matches_manual_computation(self) -> None:
