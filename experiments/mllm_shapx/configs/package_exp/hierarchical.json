@@ -51,14 +51,197 @@
   "experiments": [
     {
       "explainer_type": "hierarchical",
-      "name": "hier_neyman",
+      "name": "hier_limited_cc__fl_none",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_cc",
+        "shap_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_cc__fl_limited_cc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_cc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "limited_cc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_cc__fl_neyman",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_cc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "neyman",
+        "first_layer_fractions": [0.2],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_cc__fl_limited_mc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_cc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "limited_mc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_neyman__fl_none",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "neyman",
+        "shap_fractions": [0.2, 0.5],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_neyman__fl_limited_cc",
       "hierarchical": {
         "ks": [3, 5, 10],
         "shap_type": "neyman",
         "shap_fractions": [0.2, 0.5],
         "first_layer_type": "limited_cc",
-        "importance_min_fractions": [0.1],
-        "first_layer_num_samples": [-1]
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_neyman__fl_neyman",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "neyman",
+        "shap_fractions": [0.2, 0.5],
+        "first_layer_type": "neyman",
+        "first_layer_fractions": [0.2],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_neyman__fl_limited_mc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "neyman",
+        "shap_fractions": [0.2, 0.5],
+        "first_layer_type": "limited_mc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_mc__fl_none",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_mc",
+        "shap_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_mc__fl_limited_cc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_mc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "limited_cc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_mc__fl_neyman",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_mc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "neyman",
+        "first_layer_fractions": [0.2],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_limited_mc__fl_limited_mc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "limited_mc",
+        "shap_num_samples": [-1],
+        "first_layer_type": "limited_mc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_precise__fl_none",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "precise",
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_precise__fl_limited_cc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "precise",
+        "first_layer_type": "limited_cc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_precise__fl_neyman",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "precise",
+        "first_layer_type": "neyman",
+        "first_layer_fractions": [0.2],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
+      }
+    },
+
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_precise__fl_limited_mc",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "precise",
+        "first_layer_type": "limited_mc",
+        "first_layer_num_samples": [-1],
+        "importance_min_fractions": [0.1, 0.5, 1.0]
       }
     }
   ]

@@ -42,17 +42,24 @@ add `MLLM_SHAP_SRC` to `PYTHONPATH`).
 - Validate a config (syntax + light semantic checks):
 
   ```bash
-  python -m mllm_shapx.cli validate --config path/to/config.json [--check-dataset]
+  uv run python -m mllm_shapx.cli validate --config path/to/config.json [--check-dataset]
   ```
 
 - Run experiments defined in a config (sequentially expands variants):
 
   ```bash
-  python -m mllm_shapx.cli run --config path/to/config.json [--resume]
+  uv python -m mllm_shapx.cli run --config path/to/config.json [--resume]
   ```
 
 - `--resume` will attempt to continue a partially completed run using existing
   `checkpoint.json` files in the run folder.
+
+> Note: you can also chain runs via standard unix commands, e.g.:
+
+```bash
+uv python -m mllm_shapx.cli run --config configs/mc_minimal.json && \
+uv python -m mllm_shapx.cli run --config configs/single_sentence_grid.json
+```
 
 **Outputs**
 
