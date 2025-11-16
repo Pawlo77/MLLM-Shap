@@ -86,7 +86,7 @@ class ShapConfig:
 
 
 @dataclass
-class ExplainerVariant:
+class ExplainerVariant:  # pylint: disable=too-many-instance-attributes
     """
     One experiment variant.
 
@@ -98,10 +98,22 @@ class ExplainerVariant:
     """
     explainer_type: str = ExplainerType.LIMITED_MC.value
     num_samples: Optional[List[int]] = None
+    linear: Optional[List[float]] = None
     fractions: Optional[List[float]] = None
     name: Optional[str] = None
-    hierarchical_k: Optional[int] = None
-    hierarchical_base: Optional[str] = None
+    # hierarchical
+    hierarchical_ks: Optional[List[int]] = None   # list of k to sweep
+    # which inner SHAP to use at deeper levels
+    hierarchical_shap_type: Optional[str] = None
+    hierarchical_shap_num_samples: Optional[List[int]] = None
+    hierarchical_shap_fractions: Optional[List[float]] = None
+    # optional first-layer explainer
+    hierarchical_first_layer_type: Optional[str] = None
+    hierarchical_first_layer_num_samples: Optional[List[int]] = None
+    hierarchical_first_layer_fractions: Optional[List[float]] = None
+    # hierarchical sampling knobs
+    hierarchical_use_importance_sampling: bool = True
+    hierarchical_importance_min_fractions: Optional[List[float]] = None
 
 
 @dataclass
@@ -146,8 +158,8 @@ class ExperimentSet:
 NORMALIZER_MAP = {
     "AbsSumNormalizer": AbsSumNormalizer,
     "IdentityNormalizer": IdentityNormalizer,
-    "PowerShiftNormalizer": PowerShiftNormalizer,  # has argument 'power'
-    "MinMaxNormalizer": MinMaxNormalizer,          # NEW
+    "PowerShiftNormalizer": PowerShiftNormalizer,
+    "MinMaxNormalizer": MinMaxNormalizer,
 }
 
 REDUCER_MAP: Mapping[str, Callable[[], BaseEmbeddingReducer]] = {
@@ -186,14 +198,30 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
     experiments_raw = raw.get("experiments", []) or []
     exps: List[ExplainerVariant] = []
     for e in experiments_raw:
+        h = e.get("hierarchical", {}) or {}
         exps.append(
             ExplainerVariant(
                 explainer_type=e.get("explainer_type", ExplainerType.LIMITED_MC.value),
                 num_samples=e.get("num_samples"),
                 fractions=e.get("fractions"),
+                linear=e.get("linear"),
                 name=e.get("name"),
-                hierarchical_k=e.get("hierarchical_k"),
-                hierarchical_base=e.get("hierarchical_base"),
+                hierarchical_ks=e.get("hierarchical_ks", h.get("ks")),
+                hierarchical_shap_type=e.get("hierarchical_shap_type", h.get("shap_type")),
+                hierarchical_shap_num_samples=e.get("hierarchical_shap_num_samples", h.get("shap_num_samples")),
+                hierarchical_shap_fractions=e.get("hierarchical_shap_fractions", h.get("shap_fractions")),
+                hierarchical_first_layer_type=e.get("hierarchical_first_layer_type", h.get("first_layer_type")),
+                hierarchical_first_layer_num_samples=e.get("hierarchical_first_layer_num_samples",
+                                                           h.get("first_layer_num_samples")),
+                hierarchical_first_layer_fractions=e.get("hierarchical_first_layer_fractions",
+                                                         h.get("first_layer_fractions")),
+                hierarchical_use_importance_sampling=bool(
+                    e.get("hierarchical_use_importance_sampling",
+                          h.get("use_importance_sampling", True))
+                ),
+                hierarchical_importance_min_fractions=e.get(
+                    "hierarchical_importance_min_fractions", h.get("importance_min_fractions")
+                ),
             )
         )
 
@@ -279,7 +307,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
         if cfg.shap.similarity not in (SimilarityType.COSINE.value, SimilarityType.TFIDF_COSINE.value):
             errs.append("shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'.")
 
-    def _validate_variants() -> None:  # pylint: disable=too-many-branches
+    def _validate_variants() -> None:  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         if not cfg.experiments:
             errs.append("experiments must contain at least one variant.")
             return
@@ -297,18 +325,12 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             wants_mc_knobs = t in (
                 ExplainerType.LIMITED_MC.value,
                 ExplainerType.STANDARD_MC.value,
-                ExplainerType.COMPLEMENTARY.value,
-                ExplainerType.NEYMAN.value
-            ) or (
-                t == ExplainerType.HIERARCHICAL.value and (exp.hierarchical_base or "").lower()
-                in (ExplainerType.LIMITED_MC.value,
-                    ExplainerType.STANDARD_MC.value,
-                    ExplainerType.COMPLEMENTARY.value,
-                    ExplainerType.NEYMAN.value)
+                ExplainerType.LIMITED_CC.value,
+                ExplainerType.STANDARD_CC.value,
+                ExplainerType.NEYMAN.value,
             )
-
             if wants_mc_knobs:
-                if not exp.num_samples and not exp.fractions:
+                if not exp.num_samples and not exp.fractions and not exp.linear:
                     errs.append(f"experiments[{i}]: MC-like explainer requires num_samples or fractions.")
                 if exp.num_samples is not None:
                     if not isinstance(exp.num_samples, list) or not exp.num_samples:
@@ -322,12 +344,59 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                             errs.append(
                                 f"experiments[{i}].num_samples entries must be -1 or positive ints; bad: {bad_ns}"
                             )
-                if exp.fractions:
+                if exp.fractions is not None:
                     bad = [f for f in exp.fractions if not 0.0 < float(f) <= 1.0]
                     if bad:
                         errs.append(f"experiments[{i}].fractions must be in (0,1]; bad: {bad}")
-            if t == ExplainerType.HIERARCHICAL.value and exp.hierarchical_k is not None and exp.hierarchical_k <= 0:
-                errs.append(f"experiments[{i}].hierarchical_k must be positive if provided.")
+                if exp.linear is not None:
+                    bad = [lin for lin in exp.linear if not 0.0 < float(lin) <= 1.0]
+                    if bad:
+                        errs.append(f"experiments[{i}].linear must be in (0,1]; bad: {bad}")
+            if t == ExplainerType.HIERARCHICAL.value:
+                minimal_k: int = 2
+                # k
+                ks = exp.hierarchical_ks or []
+                if not ks:
+                    errs.append(f"experiments[{i}] hierarchical requires 'hierarchical_k' or 'hierarchical_ks'.")
+                else:
+                    badk = [k for k in ks if not isinstance(k, int) or k < minimal_k]
+                    if badk:
+                        errs.append(f"experiments[{i}] hierarchical k values must be integers >= 2; bad: {badk}")
+
+                # inner shap type
+                inner = (exp.hierarchical_shap_type or "").lower()
+                allowed_inner = {"precise", "limited_mc", "limited_cc", "standard_cc", "neyman"}
+                if inner and inner not in allowed_inner:
+                    errs.append(f"experiments[{i}] hierarchical_shap_type must be one of {sorted(allowed_inner)}.")
+
+                # importance sampling (fixed true as requested)
+                if not exp.hierarchical_use_importance_sampling:
+                    errs.append(f"experiments[{i}] hierarchical_use_importance_sampling must be True.")
+
+                # min fraction sweep
+                if exp.hierarchical_importance_min_fractions is not None:
+                    bad_imp = [f for f in exp.hierarchical_importance_min_fractions if not 0.0 < float(f) <= 1.0]
+                    if bad_imp:
+                        errs.append(
+                            f"experiments[{i}] hierarchical_importance_min_fractions must be in (0,1]; bad: {bad_imp}"
+                        )
+
+                # first-layer type
+                flt = (exp.hierarchical_first_layer_type or "none").lower()
+                allowed_first = {"none", "precise", "limited_mc", "limited_cc", "standard_cc", "neyman"}
+                if flt not in allowed_first:
+                    errs.append(
+                        f"experiments[{i}] hierarchical_first_layer_type must be one of "
+                        f"{sorted(allowed_first)}."
+                    )
+
+                # Warning: minmax normalizer
+                min_max_norm = "MinMaxNormalizer"
+                if cfg.shap.normalizer != min_max_norm:
+                    LOGGER.warning(
+                        "HierarchicalExplainer should be used with MinMaxNormalizer; you set %s.",
+                        cfg.shap.normalizer
+                    )
 
     _validate_dataset()
     _validate_selection()
