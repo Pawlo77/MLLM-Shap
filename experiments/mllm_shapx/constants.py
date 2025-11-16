@@ -9,7 +9,8 @@ class ExplainerType(StrEnum):
     EXACT = "exact"
     LIMITED_MC = "limited_mc"
     STANDARD_MC = "standard_mc"
-    COMPLEMENTARY = "complementary"
+    LIMITED_CC = "limited_cc"
+    STANDARD_CC = "standard_cc"
     NEYMAN = "neyman"
     HIERARCHICAL = "hierarchical"
 

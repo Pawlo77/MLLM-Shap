@@ -1,5 +1,5 @@
 {
-  "experiment_set_id": "ss_package_test_2025_12_11",
+  "experiment_set_id": "ss_package_test_2025_16_11",
   "output_root": "experiments_output",
   "device": "cuda",
   "connector": "hf_text",
@@ -34,7 +34,7 @@
 
   "shap": {
     "mode": "CONTEXTUAL",
-    "normalizer": "AbsSumNormalizer",
+    "normalizer": "MinMaxNormalizer",
     "reducer": "MeanReducer",
     "similarity": "TfIdfCosineSimilarity"
   },

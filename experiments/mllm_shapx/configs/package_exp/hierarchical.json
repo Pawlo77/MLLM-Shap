@@ -1,5 +1,5 @@
 {
-  "experiment_set_id": "ss_package_full_2025_11_09",
+  "experiment_set_id": "ss_package_test_2025_16_11",
   "output_root": "experiments_output",
   "device": "cuda",
   "connector": "hf_text",
@@ -12,11 +12,11 @@
   },
 
   "selection": {
-    "max_samples": 1,
+    "max_samples": 50,
     "shuffle_seed": 42,
     "start_index": 0,
     "max_prompt_tokens": 10,
-    "min_prompt_tokens": 10
+    "min_prompt_tokens": 9
   },
 
   "wandb": {
@@ -34,7 +34,7 @@
 
   "shap": {
     "mode": "CONTEXTUAL",
-    "normalizer": "AbsSumNormalizer",
+    "normalizer": "MinMaxNormalizer",
     "reducer": "MeanReducer",
     "similarity": "TfIdfCosineSimilarity"
   },
@@ -49,9 +49,17 @@
   },
 
   "experiments": [
-    { "explainer_type": "hierarchical", "hierarchical_k": 2, "hierarchical_base": "limited_mc",
-      "num_samples": [64], "name": "hier_limited_ns64_k2" },
-    { "explainer_type": "hierarchical", "hierarchical_k": 2, "hierarchical_base": "standard_mc",
-      "fractions": [0.5], "name": "hier_standard_frac05_k2" }
+    {
+      "explainer_type": "hierarchical",
+      "name": "hier_neyman",
+      "hierarchical": {
+        "ks": [3, 5, 10],
+        "shap_type": "neyman",
+        "shap_fractions": [0.2, 0.5],
+        "first_layer_type": "limited_cc",
+        "importance_min_fractions": [0.1],
+        "first_layer_num_samples": [-1]
+      }
+    }
   ]
 }

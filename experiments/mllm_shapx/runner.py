@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+import gc
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import cast, Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,8 @@ import torch
 from mllm_shap.connectors import ModelConfig
 from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
+from mllm_shap.shap.hierarchical import HierarchicalExplainer
+from mllm_shap.shap.neyman import ComplementaryNeymanShapExplainer
 
 from .config import ExperimentSet, ExplainerVariant
 from .data import (
@@ -37,14 +40,23 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class ExpandedVariant:
+class ExpandedVariant:  # pylint: disable=too-many-instance-attributes
     """A concrete materialization of a user-declared variant."""
 
     run_slug: str
     variant: ExplainerVariant
     fraction: Optional[float]
     num_samples: Optional[int]
-    base_variant: Optional[str] = None  # for hierarchical transparency
+    linear: Optional[float]
+    # hierarchical-specific
+    hier_k: Optional[int] = None
+    hier_shap_type: Optional[str] = None
+    hier_shap_num_samples: Optional[int] = None
+    hier_shap_fraction: Optional[float] = None
+    hier_first_layer_type: Optional[str] = None
+    hier_first_layer_num_samples: Optional[int] = None
+    hier_first_layer_fraction: Optional[float] = None
+    hier_importance_min_fraction: Optional[float] = None
 
 
 def pick_device(name: Optional[str]) -> torch.device:
@@ -54,7 +66,9 @@ def pick_device(name: Optional[str]) -> torch.device:
     return torch.device(name)
 
 
-def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: disable=too-many-branches
+def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+        cfg: ExperimentSet
+) -> List[ExpandedVariant]:
     """
     Materialize user-defined variants into concrete runs.
     - exact: single run
@@ -73,60 +87,109 @@ def expand_variants(cfg: ExperimentSet) -> List[ExpandedVariant]:  # pylint: dis
 
         if t == ExplainerType.EXACT.value:
             slug = v.name or ExplainerType.EXACT.value
-            out.append(ExpandedVariant(run_slug=slug, variant=v, fraction=None, num_samples=None))
+            out.append(ExpandedVariant(run_slug=slug, variant=v, fraction=None, num_samples=None, linear=None))
             continue
 
         if t in (ExplainerType.LIMITED_MC.value,
                  ExplainerType.STANDARD_MC.value,
-                 ExplainerType.COMPLEMENTARY.value,
+                 ExplainerType.LIMITED_CC.value,
+                 ExplainerType.STANDARD_CC.value,
                  ExplainerType.NEYMAN.value):
             if v.num_samples:
                 for ns in v.num_samples:
                     ns_i = int(ns)
                     suffix = f"{t}_ns{ns_i}"
                     slug = (v.name + "_" + suffix) if v.name else suffix
-                    out.append(ExpandedVariant(slug, v, None, ns_i))
+                    out.append(ExpandedVariant(slug, v, None, ns_i, None))
             if v.fractions:
                 for frac in v.fractions:
                     f = float(frac)
                     suffix = f"{t}_frac{str(f).replace('.', '_')}"
                     slug = (v.name + "_" + suffix) if v.name else suffix
-                    out.append(ExpandedVariant(slug, v, f, None))
+                    out.append(ExpandedVariant(slug, v, f, None, None))
+            if v.linear:
+                for lin in v.linear:
+                    lin = float(lin)
+                    suffix = f"{t}_lin{str(lin).replace('.', '_')}"
+                    slug = (v.name + "_" + suffix) if v.name else suffix
+                    out.append(ExpandedVariant(slug, v, None, None, lin))
             continue
 
         if t == ExplainerType.HIERARCHICAL.value:
-            base = (
-                v.hierarchical_base
-                or (ExplainerType.LIMITED_MC.value if (v.num_samples or v.fractions) else ExplainerType.EXACT.value)
-            ).lower()
+            none_str = "none"
+            ks = v.hierarchical_ks or []
+            if not ks:
+                ks = [10]  # safe default
 
-            if base == ExplainerType.EXACT.value:
-                slug = v.name or "hier_exact"
-                out.append(ExpandedVariant(slug, v, None, None, base_variant=base))
+            inner_type = (v.hierarchical_shap_type or "neyman").lower()
+            # inner param sweeps (exclusive-or style; if none provided, produce one AUTO run)
+            inner_ns = v.hierarchical_shap_num_samples or []
+            inner_fracs = v.hierarchical_shap_fractions or []
 
-            elif base in (
-                ExplainerType.LIMITED_MC.value,
-                ExplainerType.STANDARD_MC.value,
-                ExplainerType.COMPLEMENTARY.value,
-                ExplainerType.NEYMAN.value
-            ):
-                if v.num_samples:
-                    for ns in v.num_samples:
-                        ns_i = int(ns)
-                        suffix = f"hier_{base}_ns{ns_i}"
-                        slug = (v.name + "_" + suffix) if v.name else suffix
-                        out.append(ExpandedVariant(slug, v, None, ns_i, base_variant=base))
-                if v.fractions:
-                    for frac in v.fractions:
-                        f = float(frac)
-                        suffix = f"hier_{base}_frac{str(f).replace('.', '_')}"
-                        slug = (v.name + "_" + suffix) if v.name else suffix
-                        out.append(ExpandedVariant(slug, v, f, None, base_variant=base))
-                if not (v.num_samples or v.fractions):
-                    slug = v.name or f"hier_{base}"
-                    out.append(ExpandedVariant(slug, v, None, None, base_variant=base))
-            else:
-                raise ValueError(f"Unsupported hierarchical base: {base}")
+            # first-layer choices
+            fl_type = (v.hierarchical_first_layer_type or none_str).lower()
+            fl_ns = v.hierarchical_first_layer_num_samples or []
+            fl_fracs = v.hierarchical_first_layer_fractions or []
+
+            imp_min_fracs = v.hierarchical_importance_min_fractions or [0.1]
+
+            # normalize empty lists to [None] for cartesian product
+            def _nz(x: list[Any] | None) -> list[Any]:
+                """Return input list or [None] if empty."""
+                return x if x else [None]
+
+            for k in ks:  # pylint: disable=too-many-nested-blocks
+                for impmf in imp_min_fracs:
+                    for inn_ns in _nz(inner_ns):
+                        for inn_fr in _nz(inner_fracs):
+                            # if both None => AUTO for inner
+                            # now first-layer combos
+                            if fl_type == none_str:
+                                slug = f"hier_{inner_type}_k{k}_imp{str(impmf).replace('.', '_')}"
+                                if inn_ns is not None:
+                                    slug += f"_ns{inn_ns}"
+                                if inn_fr is not None:
+                                    slug += f"_frac{str(inn_fr).replace('.', '_')}"
+                                out.append(
+                                    ExpandedVariant(
+                                        run_slug=(v.name + "_" + slug) if v.name else slug,
+                                        variant=v,
+                                        fraction=None, num_samples=None, linear=None,
+                                        hier_k=int(k),
+                                        hier_shap_type=inner_type,
+                                        hier_shap_num_samples=int(inn_ns) if inn_ns is not None else None,
+                                        hier_shap_fraction=float(inn_fr) if inn_fr is not None else None,
+                                        hier_first_layer_type=none_str,
+                                        hier_importance_min_fraction=float(impmf),
+                                    )
+                                )
+                            else:
+                                for flns in _nz(fl_ns):
+                                    for flfr in _nz(fl_fracs):
+                                        slug = f"hier_{inner_type}_k{k}_imp{str(impmf).replace('.', '_')}_fl{fl_type}"
+                                        if inn_ns is not None:
+                                            slug += f"_ns{inn_ns}"
+                                        if inn_fr is not None:
+                                            slug += f"_frac{str(inn_fr).replace('.', '_')}"
+                                        if flns is not None:
+                                            slug += f"_flns{flns}"
+                                        if flfr is not None:
+                                            slug += f"_flfrac{str(flfr).replace('.', '_')}"
+                                        out.append(
+                                            ExpandedVariant(
+                                                run_slug=(v.name + "_" + slug) if v.name else slug,
+                                                variant=v,
+                                                fraction=None, num_samples=None, linear=None,
+                                                hier_k=int(k),
+                                                hier_shap_type=inner_type,
+                                                hier_shap_num_samples=int(inn_ns) if inn_ns is not None else None,
+                                                hier_shap_fraction=float(inn_fr) if inn_fr is not None else None,
+                                                hier_first_layer_type=fl_type,
+                                                hier_first_layer_num_samples=int(flns) if flns is not None else None,
+                                                hier_first_layer_fraction=float(flfr) if flfr is not None else None,
+                                                hier_importance_min_fraction=float(impmf),
+                                            )
+                                        )
             continue
 
         raise ValueError(f"Unsupported explainer_type: {v.explainer_type}")
@@ -143,6 +206,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     """Execute one concrete variant over the selected rows and persist all artifacts."""
     device = pick_device(cfg.device)
     run_dir = make_run_dir(cfg.output_root, cfg.experiment_set_id, run.run_slug)
+    torch.manual_seed(cfg.selection.shuffle_seed or 42)
 
     # ---- spec (saved once per variant)
     spec: Dict[str, Any] = {
@@ -153,8 +217,18 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             "explainer_type": run.variant.explainer_type,
             "num_samples": run.num_samples,
             "fraction": run.fraction,
-            "hierarchical_k": run.variant.hierarchical_k,
-            "hierarchical_base": run.base_variant or run.variant.hierarchical_base,
+            "linear": run.linear,
+            "hierarchical": {
+                "k": run.hier_k,
+                "shap_type": run.hier_shap_type,
+                "shap_num_samples": run.hier_shap_num_samples,
+                "shap_fraction": run.hier_shap_fraction,
+                "first_layer_type": run.hier_first_layer_type,
+                "first_layer_num_samples": run.hier_first_layer_num_samples,
+                "first_layer_fraction": run.hier_first_layer_fraction,
+                "use_importance_sampling": True,
+                "importance_min_fraction": run.hier_importance_min_fraction,
+            },
         },
         "dataset": cfg.dataset.__dict__,
         "selection": cfg.selection.__dict__,
@@ -204,8 +278,16 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         run.variant,
         cfg.connector,
         embedding_cfg=cfg.embedding,
-        concrete_num_samples=run.num_samples,
+        concrete_num_samples=123 if run.linear else run.num_samples,
         concrete_fraction=run.fraction,
+        hier_k=run.hier_k,
+        hier_shap_type=run.hier_shap_type,
+        hier_shap_num_samples=run.hier_shap_num_samples,
+        hier_shap_fraction=run.hier_shap_fraction,
+        hier_first_layer_type=run.hier_first_layer_type,
+        hier_first_layer_num_samples=run.hier_first_layer_num_samples,
+        hier_first_layer_fraction=run.hier_first_layer_fraction,
+        hier_importance_min_fraction=run.hier_importance_min_fraction,
     )
 
     # ---- selection policy: scan ALL rows after start_index (maybe shuffled), break after matched == target
@@ -311,6 +393,20 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         LOGGER.info("Running sample index %d for variant '%s'.", row_idx, run.run_slug)
         LOGGER.info(user_text)
 
+        if run.linear:
+            scaled_num_samples = int(run.linear * n_pre * n_pre)
+            scaled_num_samples = scaled_num_samples if scaled_num_samples % 2 == 0 else scaled_num_samples + 1
+            LOGGER.info("Using linear explainer with scaled num_samples=%d.", scaled_num_samples)
+            explainer = build_explainer_for_variant(
+                device,
+                cfg.shap,
+                run.variant,
+                cfg.connector,
+                embedding_cfg=cfg.embedding,
+                concrete_num_samples=scaled_num_samples,
+                concrete_fraction=run.fraction,
+            )
+
         generation_kwargs = {
             "max_new_tokens": int(cfg.generation.max_new_tokens),
             "model_config": ModelConfig(text_temperature=float(cfg.generation.text_temperature)),
@@ -350,6 +446,14 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             "conversation": conv_json,
         }
 
+        if run.variant.explainer_type == ExplainerType.HIERARCHICAL.value:
+            sample_result["num_levels"] = cast(HierarchicalExplainer, explainer).n_calls
+        elif run.variant.explainer_type == ExplainerType.NEYMAN.value:
+            neyman_explainer = cast(ComplementaryNeymanShapExplainer, explainer.shap_explainer)
+            # Access step count from neyman explainer
+            # pylint: disable=protected-access
+            sample_result["neyman_steps"] = neyman_explainer._ComplementaryNeymanShapExplainer__step
+
         sample_path = run_dir / "samples" / f"sample_{row_idx:05d}_result.json"
         save_json(sample_path, sample_result)
         if wb_run is not None:
@@ -380,6 +484,28 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         update_checkpoint(ckpt_path, ckpt, just_completed=row_idx, next_index=row_idx + 1)
         completed_set.add(row_idx)
         matched_ctr += 1
+
+        # ===== Aggressive GPU cleanup after each sample =====
+        # Clear the cache from the chat
+        if hasattr(result, 'full_chat') and result.full_chat.cache is not None:
+            result.full_chat.cache = None
+
+        # Clear history explicitly
+        if result.history is not None:
+            for mask, mask_hash, masked_chat, response in result.history:
+                del mask, mask_hash, masked_chat, response
+            del result.history
+
+        # Delete result object
+        del result
+
+        # Force garbage collection
+        gc.collect()
+
+        # Clear GPU cache if using CUDA
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
 
     # ---- aggregate summary
     summaries: List[Dict[str, Any]] = []
