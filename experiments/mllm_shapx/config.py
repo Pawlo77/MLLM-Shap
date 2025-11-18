@@ -349,9 +349,9 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                     if bad:
                         errs.append(f"experiments[{i}].fractions must be in (0,1]; bad: {bad}")
                 if exp.linear is not None:
-                    bad = [lin for lin in exp.linear if not 0.0 < float(lin) <= 1.0]
+                    bad = [lin for lin in exp.linear if not 0.0 < float(lin) <= 10.0]
                     if bad:
-                        errs.append(f"experiments[{i}].linear must be in (0,1]; bad: {bad}")
+                        errs.append(f"experiments[{i}].linear must be in (0,10]; bad: {bad}")
             if t == ExplainerType.HIERARCHICAL.value:
                 minimal_k: int = 2
                 # k
