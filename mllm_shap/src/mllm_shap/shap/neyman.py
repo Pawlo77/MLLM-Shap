@@ -64,6 +64,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_fraction: float | None
     """Initial fraction of samples to draw in the first step."""
 
+    initial_steps: int | None
+    """Number of initial steps performed in last call."""
+
     __use_default_initial_sampling_formula: bool = False
     """
     Whether to use default formula for initial sampling
@@ -138,6 +141,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__i = 0
         self.__j = 0
         self.__C_squared = None
+        self.initial_steps = 0
 
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
@@ -174,10 +178,19 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         # validate initial number of splits
         if initial_num_splits < 2:  # pylint: disable=magic-value-comparison
-            raise ValueError("Initial number of splits must be at least 2.")
-        if initial_num_splits > num_splits:
-            raise ValueError(
-                f"Initial number of splits {initial_num_splits} is larger than total number of splits {num_splits}."
+            logger.warning(
+                "Initial number of splits %d is less than 2. Setting it to 2.",
+                initial_num_splits,
+            )
+            initial_num_splits = 2
+
+        expected_initial_budget = initial_num_splits * n * (n + 1)
+        if expected_initial_budget > num_splits:
+            logger.warning(
+                "Estimated initial budget %d is larger than total number of splits %d. "
+                "This may lead to suboptimal performance.",
+                expected_initial_budget,
+                num_splits,
             )
         if initial_num_splits > math.ceil(num_splits * 0.2):
             logger.warning(
@@ -499,6 +512,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             similarities=similarities[1:],
             device=device,
         )
+
+        self.initial_steps = self.total_n_calls
+        logger.debug("Initial sampling step completed with %d calls.", self.initial_steps)
 
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:
