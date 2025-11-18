@@ -62,6 +62,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_fraction: float | None
     """Initial fraction of samples to draw in the first step."""
 
+    initial_steps: int | None
+    """Number of initial steps performed in last call."""
+
     __use_default_initial_sampling_formula: bool = False
     """
     Whether to use default formula for initial sampling
@@ -135,6 +138,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__i = 0
         self.__j = 0
         self.__C_squared = None
+        self.initial_steps = 0
 
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
@@ -500,6 +504,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             similarities=similarities[1:],
             device=device,
         )
+
+        self.initial_steps = self.total_n_calls
+        logger.debug("Initial sampling step completed with %d calls.", self.initial_steps)
 
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:
