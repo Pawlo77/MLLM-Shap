@@ -174,7 +174,20 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         # validate initial number of splits
         if initial_num_splits < 2:  # pylint: disable=magic-value-comparison
-            raise ValueError("Initial number of splits must be at least 2.")
+            logger.warning(
+                "Initial number of splits %d is less than 2. Setting it to 2.",
+                initial_num_splits,
+            )
+            initial_num_splits = 2
+
+        expected_initial_budget = initial_num_splits * n * (n + 1)
+        if expected_initial_budget > num_splits:
+            logger.warning(
+                "Estimated initial budget %d is larger than total number of splits %d. "
+                "This may lead to suboptimal performance.",
+                expected_initial_budget,
+                num_splits,
+            )
         if initial_num_splits > num_splits:
             raise ValueError(
                 f"Initial number of splits {initial_num_splits} is larger than total number of splits {num_splits}."
@@ -387,6 +400,110 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         return sigma
 
+    def _compute_prefix_shap(  # pylint: disable=too-many-arguments,too-many-locals
+        self,
+        *,
+        masks_tensor: Tensor,
+        similarities: Tensor,
+        source_chat: BaseMllmChat,
+        device: torch.device,
+        k_masks: int,
+    ) -> tuple[Tensor, Tensor]:
+        """
+        Compute raw and normalized SHAP for the first `k_masks` entries
+        (including the initial all-ones mask at index 0). Uses a local
+        M/C accumulation so results depend only on the prefix.
+        """
+        COMP_PAIRS_MIN = 3
+        if k_masks < COMP_PAIRS_MIN or ((k_masks - 1) % 2) != 0:
+            raise ValueError("k_masks must be >= 3 and (k_masks-1) must be even (full complementary pairs).")
+
+        expl_mask = source_chat.shap_values_mask
+        n = int(expl_mask.sum().item())
+
+        # local accumulators: (n, n+1), coalition sizes are 0..n
+        dtype = similarities.dtype if similarities.numel() > 0 else torch.float32
+        M_local = torch.zeros((n, n + 1), dtype=dtype, device=device)
+        C_local = torch.zeros((n, n + 1), dtype=dtype, device=device)
+
+        # take prefix excluding the initial all-ones mask
+        masks_pref = masks_tensor[1:k_masks, expl_mask]
+        sims_pref = similarities[: (k_masks - 1)]
+        m = (k_masks - 1) // 2
+
+        # accumulate complementary-pair contributions
+        for i in range(m):
+            S = masks_pref[2 * i]
+            NS = masks_pref[2 * i + 1]
+            if not torch.all(NS == ~S):
+                raise RuntimeError("Prefix masks are not complementary pairs.")
+
+            s_size = int(S.sum().item())
+            ns_size = n - s_size
+
+            u = sims_pref[2 * i] - sims_pref[2 * i + 1]
+
+            # counts per coalition size
+            M_local[:, s_size] += S.to(M_local.dtype)
+            M_local[:, ns_size] += NS.to(M_local.dtype)
+
+            # sum of complementary contributions
+            C_local[:, s_size] += S.to(C_local.dtype) * u
+            C_local[:, ns_size] += NS.to(C_local.dtype) * (-u)
+
+        # compute raw SHAP, exclude zero-mask column
+        M = M_local[:, 1:]
+        C = C_local[:, 1:]
+
+        positive = M > 0
+        ratio = torch.zeros_like(C)
+        ratio[positive] = C[positive] / M[positive]
+        raw_shap = torch.sum(ratio, dim=1) / M.shape[0]
+
+        # MinMax normalize over explainable tokens
+        v_min, v_max = torch.min(raw_shap), torch.max(raw_shap)
+        if float(v_max - v_min) > 0.0:
+            norm = (raw_shap - v_min) / (v_max - v_min)
+        else:
+            norm = torch.zeros_like(raw_shap)
+
+        return raw_shap.detach().cpu(), norm.detach().cpu()
+
+    def _build_trajectory(  # pylint: disable=too-many-arguments
+        self,
+        *,
+        masks_tensor: Tensor,
+        similarities: Tensor,
+        source_chat: BaseMllmChat,
+        device: torch.device,
+        initial_len_with_base: int,
+    ) -> list[dict[str, Any]]:
+        """
+        Recompute SHAP after every complementary pair (prefix of masks).
+        """
+        total = int(masks_tensor.shape[0])
+        traj: list[dict[str, Any]] = []
+
+        for k in range(3, total + 1, 2):  # initial (all-ones) + pairs
+            raw, norm = self._compute_prefix_shap(
+                masks_tensor=masks_tensor,
+                similarities=similarities,
+                source_chat=source_chat,
+                device=device,
+                k_masks=k,
+            )
+            num_pairs = (k - 1) // 2
+            traj.append(
+                {
+                    "num_masks": k - 1,  # excludes the initial all-ones mask
+                    "num_pairs": num_pairs,
+                    "stage": "initial" if k <= initial_len_with_base else "neyman",
+                    "shap": raw,  # raw SHAP over explainable tokens
+                    "normalized_shap": norm,  # min-max normalized over explainable tokens
+                }
+            )
+        return traj
+
     def __estimate_M_hat(self, n: int) -> None:
         """
         Estimate M_hat matrix for Neyman allocation.
@@ -436,6 +553,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         response: ModelResponse,
         progress_bar: bool = True,
         verbose: bool = False,
+        *,
+        return_trajectory: bool = False,
         **generate_kwargs: Any,
     ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None:
         generate_kwargs.pop("n_generator_jobs", None)  # not parallelizable
@@ -499,6 +618,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             similarities=similarities[1:],
             device=device,
         )
+        initial_len_with_base = len(masks)
 
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:
@@ -587,4 +707,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             normalized_shap_values=normalized_shap_values,
         )
 
-        return history
+        result = history
+        if return_trajectory:
+            trajectory = self._build_trajectory(
+                masks_tensor=masks_tensor,
+                similarities=similarities,
+                source_chat=source_chat,
+                device=device,
+                initial_len_with_base=initial_len_with_base,
+            )
+            return {"history": history, "trajectory": trajectory}  # type: ignore[return-value]
+
+        return result
