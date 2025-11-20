@@ -1,11 +1,6 @@
 mllm\_shap.connectors.base package
 ==================================
 
-.. automodule:: mllm_shap.connectors.base
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Submodules
 ----------
 
@@ -45,6 +40,22 @@ mllm\_shap.connectors.base.model module
 ---------------------------------------
 
 .. automodule:: mllm_shap.connectors.base.model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.connectors.base.model\_response module
+-------------------------------------------------
+
+.. automodule:: mllm_shap.connectors.base.model_response
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.connectors.base
    :members:
    :show-inheritance:
    :undoc-members:

@@ -1,11 +1,6 @@
 mllm\_shap.shap package
 =======================
 
-.. automodule:: mllm_shap.shap
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Subpackages
 -----------
 
@@ -13,6 +8,9 @@ Subpackages
    :maxdepth: 4
 
    mllm_shap.shap.base
+   mllm_shap.shap.complementary
+   mllm_shap.shap.hierarchical
+   mllm_shap.shap.monte_carlo
 
 Submodules
 ----------
@@ -41,10 +39,18 @@ mllm\_shap.shap.enums module
    :show-inheritance:
    :undoc-members:
 
-mllm\_shap.shap.monte\_carlo module
------------------------------------
+mllm\_shap.shap.explainer\_result module
+----------------------------------------
 
-.. automodule:: mllm_shap.shap.monte_carlo
+.. automodule:: mllm_shap.shap.explainer_result
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.neyman module
+-----------------------------
+
+.. automodule:: mllm_shap.shap.neyman
    :members:
    :show-inheritance:
    :undoc-members:
@@ -69,6 +75,14 @@ mllm\_shap.shap.similarity module
 ---------------------------------
 
 .. automodule:: mllm_shap.shap.similarity
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.shap
    :members:
    :show-inheritance:
    :undoc-members:

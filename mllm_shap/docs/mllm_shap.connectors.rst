@@ -1,11 +1,6 @@
 mllm\_shap.connectors package
 =============================
 
-.. automodule:: mllm_shap.connectors
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Subpackages
 -----------
 
@@ -38,6 +33,14 @@ mllm\_shap.connectors.filters module
 ------------------------------------
 
 .. automodule:: mllm_shap.connectors.filters
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.connectors
    :members:
    :show-inheritance:
    :undoc-members:

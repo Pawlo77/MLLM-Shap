@@ -39,6 +39,7 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
             n=n,
             num_samples=self.num_samples,
             fraction=self.fraction,
+            include_minimal_masks=self.include_minimal_masks,
         )
 
     def _initialize_state(self) -> None:
@@ -188,8 +189,14 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         num_samples: int | None = None,
         fraction: float | None = None,
         force_minimal: bool = True,
+        include_minimal_masks: bool = False,
     ) -> int:
         if num_samples is not None:
+            if num_samples == -1:
+                if include_minimal_masks:
+                    # Minimal: pairs of single-feature masks
+                    return 2 * n
+                raise ValueError("num_samples cannot be -1 when include_minimal_masks is False.")
             if force_minimal and num_samples < 2 * n:
                 raise ValueError("num_samples must be at least equal to the number of features times two.")
             if num_samples > (2**n - 2):
@@ -201,6 +208,16 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         # use fraction
         total_masks = int(2**n - 2)  # exclude all-ones and all-zeros mask
         r = int(total_masks * fraction)  # type: ignore[operator]
+        if r < 2 * n:
+            r = 2 * n  # minimal: pairs of single-feature masks
+            logger.warning(
+                (
+                    "Calculated number of samples (%d) is less than "
+                    "minimal required (%d). Using minimal number of samples."
+                ),
+                r,
+                2 * n,
+            )
         if r % 2 == 0:
             return r
         return r - 1  # ensure even number of samples

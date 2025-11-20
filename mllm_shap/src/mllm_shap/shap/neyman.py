@@ -64,6 +64,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_fraction: float | None
     """Initial fraction of samples to draw in the first step."""
 
+    initial_steps: int | None
+    """Number of initial steps performed in last call."""
+
+    use_standard_method: bool
+    """
+    Whether to use the standard method for initial sampling.
+    Default is False, which uses the modified method with pre-defined members.
+    """
+
     __use_default_initial_sampling_formula: bool = False
     """
     Whether to use default formula for initial sampling
@@ -99,6 +108,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         *args: Any,
         initial_num_samples: int | None = None,
         initial_fraction: float | None = None,
+        use_standard_method: bool = False,
         **kwargs: Any,
     ) -> None:
         """
@@ -108,6 +118,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             args: Positional arguments for the base class.
             initial_num_samples: Initial number of samples to draw in the first step.
             initial_fraction: Initial fraction of samples to draw in the first step.
+            use_standard_method: Whether to use the standard method for initial sampling.
+                Default is False, which uses the modified method with pre-defined members.
             kwargs: Keyword arguments for the base class.
         Raises:
             ValueError: If sampling parameters are invalid.
@@ -126,6 +138,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         self.initial_num_samples = initial_num_samples
         self.initial_fraction = initial_fraction
+        self.use_standard_method = use_standard_method
 
     def _initialize_state(self) -> None:
         """
@@ -138,6 +151,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__i = 0
         self.__j = 0
         self.__C_squared = None
+        self.initial_steps = 0
 
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
@@ -188,10 +202,6 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 expected_initial_budget,
                 num_splits,
             )
-        if initial_num_splits > num_splits:
-            raise ValueError(
-                f"Initial number of splits {initial_num_splits} is larger than total number of splits {num_splits}."
-            )
         if initial_num_splits > math.ceil(num_splits * 0.2):
             logger.warning(
                 "Initial number of splits %d is more than 20%% of total number of splits %d. "
@@ -232,6 +242,14 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 return None
             self._first_call = False
 
+            if self.use_standard_method:
+                return self._get_random_split(
+                    n=n,
+                    device=device,
+                    true_values_num=self.__j,
+                )
+
+            # our modified method with pre-defined members
             if not self._M[self.__i, self.__j] < self.__initial_num_splits:
                 raise RuntimeError("__update_M_position did not update position correctly.")
 
@@ -619,6 +637,9 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             device=device,
         )
         initial_len_with_base = len(masks)
+
+        self.initial_steps = self.total_n_calls
+        logger.debug("Initial sampling step completed with %d calls.", self.initial_steps)
 
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:
