@@ -67,6 +67,12 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_steps: int | None
     """Number of initial steps performed in last call."""
 
+    use_standard_method: bool
+    """
+    Whether to use the standard method for initial sampling.
+    Default is False, which uses the modified method with pre-defined members.
+    """
+
     __use_default_initial_sampling_formula: bool = False
     """
     Whether to use default formula for initial sampling
@@ -102,6 +108,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         *args: Any,
         initial_num_samples: int | None = None,
         initial_fraction: float | None = None,
+        use_standard_method: bool = False,
         **kwargs: Any,
     ) -> None:
         """
@@ -111,6 +118,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             args: Positional arguments for the base class.
             initial_num_samples: Initial number of samples to draw in the first step.
             initial_fraction: Initial fraction of samples to draw in the first step.
+            use_standard_method: Whether to use the standard method for initial sampling.
+                Default is False, which uses the modified method with pre-defined members.
             kwargs: Keyword arguments for the base class.
         Raises:
             ValueError: If sampling parameters are invalid.
@@ -129,6 +138,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         self.initial_num_samples = initial_num_samples
         self.initial_fraction = initial_fraction
+        self.use_standard_method = use_standard_method
 
     def _initialize_state(self) -> None:
         """
@@ -232,6 +242,14 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 return None
             self._first_call = False
 
+            if self.use_standard_method:
+                return self._get_random_split(
+                    n=n,
+                    device=device,
+                    true_values_num=self.__j,
+                )
+
+            # our modified method with pre-defined members
             if not self._M[self.__i, self.__j] < self.__initial_num_splits:
                 raise RuntimeError("__update_M_position did not update position correctly.")
 
