@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mllm_shap.shap.monte_carlo.standard &#8212; mllm-shap  documentation</title>
+    <title>mllm_shap.connectors.base.model_response &#8212; mllm-shap  documentation</title>
   
   
   
@@ -41,7 +41,7 @@
     <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/shap/monte_carlo/standard';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/connectors/base/model_response';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -253,7 +253,7 @@
     
     <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap.monte_carlo.standard</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.connectors.base.model_response</span></li>
   </ul>
 </nav>
 </div>
@@ -270,19 +270,40 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for mllm_shap.shap.monte_carlo.standard</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Standard Monte Carlo approximation SHAP explainer implementation.&quot;&quot;&quot;</span>
+  <h1>Source code for mllm_shap.connectors.base.model_response</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Model response wrapper module.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">._base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMcShapExplainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..base.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmChat</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
-<div class="viewcode-block" id="StandardMcShapExplainer">
-<a class="viewcode-back" href="../../../../mllm_shap.shap.monte_carlo.html#mllm_shap.shap.monte_carlo.standard.StandardMcShapExplainer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">StandardMcShapExplainer</span><span class="p">(</span><span class="n">BaseMcShapExplainer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard Monte Carlo SHAP Explainer.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ModelResponse">
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model response wrapper.</span>
+<span class="sd">    Used to standardize the output from different models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">include_minimal_masks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The updated chat with full history if keep_history was True.&quot;&quot;&quot;</span>
+
+    <span class="n">generated_text_tokens</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The generated text tokens.&quot;&quot;&quot;</span>
+
+    <span class="n">generated_audio_tokens</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The generated audio tokens.&quot;&quot;&quot;</span>
+
+    <span class="n">generated_modality_flag</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The modality flag for the generated tokens.&quot;&quot;&quot;</span></div>
 
 </pre></div>
 

@@ -310,7 +310,7 @@
 
 <span class="c1"># pylint: disable=too-few-public-methods,invalid-name,too-many-instance-attributes</span>
 <div class="viewcode-block" id="ComplementaryNeymanShapExplainer">
-<a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer">[docs]</a>
+<a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ComplementaryNeymanShapExplainer</span><span class="p">(</span><span class="n">BaseComplementaryShapApproximation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base Complementary Neyman SHAP implementation class</span>
@@ -338,6 +338,15 @@
 
     <span class="n">initial_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initial fraction of samples to draw in the first step.&quot;&quot;&quot;</span>
+
+    <span class="n">initial_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of initial steps performed in last call.&quot;&quot;&quot;</span>
+
+    <span class="n">use_standard_method</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Whether to use the standard method for initial sampling.</span>
+<span class="sd">    Default is False, which uses the modified method with pre-defined members.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">__use_default_initial_sampling_formula</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -374,6 +383,7 @@
         <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">initial_num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">initial_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_standard_method</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -383,6 +393,8 @@
 <span class="sd">            args: Positional arguments for the base class.</span>
 <span class="sd">            initial_num_samples: Initial number of samples to draw in the first step.</span>
 <span class="sd">            initial_fraction: Initial fraction of samples to draw in the first step.</span>
+<span class="sd">            use_standard_method: Whether to use the standard method for initial sampling.</span>
+<span class="sd">                Default is False, which uses the modified method with pre-defined members.</span>
 <span class="sd">            kwargs: Keyword arguments for the base class.</span>
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If sampling parameters are invalid.</span>
@@ -401,6 +413,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_num_samples</span> <span class="o">=</span> <span class="n">initial_num_samples</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_fraction</span> <span class="o">=</span> <span class="n">initial_fraction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_standard_method</span> <span class="o">=</span> <span class="n">use_standard_method</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -413,6 +426,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__j</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__C_squared</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_steps</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_num_splits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -449,10 +463,19 @@
 
         <span class="c1"># validate initial number of splits</span>
         <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Initial number of splits must be at least 2.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&gt;</span> <span class="n">num_splits</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Initial number of splits </span><span class="si">{</span><span class="n">initial_num_splits</span><span class="si">}</span><span class="s2"> is larger than total number of splits </span><span class="si">{</span><span class="n">num_splits</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Initial number of splits </span><span class="si">%d</span><span class="s2"> is less than 2. Setting it to 2.&quot;</span><span class="p">,</span>
+                <span class="n">initial_num_splits</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">initial_num_splits</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="n">expected_initial_budget</span> <span class="o">=</span> <span class="n">initial_num_splits</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">expected_initial_budget</span> <span class="o">&gt;</span> <span class="n">num_splits</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Estimated initial budget </span><span class="si">%d</span><span class="s2"> is larger than total number of splits </span><span class="si">%d</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;This may lead to suboptimal performance.&quot;</span><span class="p">,</span>
+                <span class="n">expected_initial_budget</span><span class="p">,</span>
+                <span class="n">num_splits</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">initial_num_splits</span> <span class="o">&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">num_splits</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
@@ -494,6 +517,14 @@
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_first_call</span> <span class="o">=</span> <span class="kc">False</span>
 
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_standard_method</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_random_split</span><span class="p">(</span>
+                    <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                    <span class="n">true_values_num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__j</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1"># our modified method with pre-defined members</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__initial_num_splits</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;__update_M_position did not update position correctly.&quot;</span><span class="p">)</span>
 
@@ -774,6 +805,9 @@
             <span class="n">similarities</span><span class="o">=</span><span class="n">similarities</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_n_calls</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initial sampling step completed with </span><span class="si">%d</span><span class="s2"> calls.&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_steps</span><span class="p">)</span>
 
         <span class="c1"># otherwise initial sampling exceeded entire budget</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__step</span> <span class="o">==</span> <span class="n">_Step</span><span class="o">.</span><span class="n">NEYMAN_ALLOCATION</span><span class="p">:</span>

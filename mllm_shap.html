@@ -231,6 +231,9 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="mllm_shap.shap.html">mllm_shap.shap package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.base.html">mllm_shap.shap.base package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.complementary.html">mllm_shap.shap.complementary package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.hierarchical.html">mllm_shap.shap.hierarchical package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html">mllm_shap.shap.monte_carlo package</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="mllm_shap.utils.html">mllm_shap.utils package</a></li>
@@ -291,85 +294,13 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-mllm_shap">
-<span id="mllm-shap-package"></span><h1>mllm_shap package<a class="headerlink" href="#module-mllm_shap" title="Link to this heading">#</a></h1>
-<p>MLLM-Shap: A library for SHAP (SHapley Additive exPlanations) values in Multi Modal Large Language Models.</p>
+  <section id="mllm-shap-package">
+<h1>mllm_shap package<a class="headerlink" href="#mllm-shap-package" title="Link to this heading">#</a></h1>
 <section id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="mllm_shap.connectors.html">mllm_shap.connectors package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio"><code class="docutils literal notranslate"><span class="pre">LiquidAudio</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.config"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.device</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.generate"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.generate()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_contextual_embeddings"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_contextual_embeddings()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_new_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_new_chat()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_static_embeddings"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_static_embeddings()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.history_tracking_mode"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.history_tracking_mode</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.model"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.processor"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.processor</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.AUDIO_IN_SHAPE"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.AUDIO_IN_SHAPE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.AUDIO_OUT_SHAPE"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.AUDIO_OUT_SHAPE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_ASSISTANT_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_ASSISTANT_TURN</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_SYSTEM_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_SYSTEM_TURN</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_USER_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_USER_TURN</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.START_MARK"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.START_MARK</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.add_audio"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.add_audio()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.add_text"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.add_text()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.append"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.append()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_empty_value"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_empty_value</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_no_system_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_no_system_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_no_system_mask_filtered"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_no_system_mask_filtered</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.cache"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.cache</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.decode_audio"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.decode_audio()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.decode_text"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.decode_text()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.device</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.empty_turn_sequences"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.empty_turn_sequences</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.end_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.end_turn()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_first_positions"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_first_positions</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_positive_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_positive_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_shap_values_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.from_chat()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.get_conversation"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.get_conversation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.input_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.input_tokens_num"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens_num</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.is_system_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.is_system_turn</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.model_inputs"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.model_inputs</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.new_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.new_turn()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.refresh"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.refresh()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.shap_values_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.speaker"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.speaker</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.system_roles_setup"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.system_roles_setup</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_no_system_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_no_system_mask</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_no_system_mask_filtered"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_no_system_mask_filtered</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_filter"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_filter</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_roles"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_roles</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_sequences_to_exclude"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_sequences_to_exclude</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_turns"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_turns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.tokens_modality_flag"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.tokens_modality_flag</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.torch_device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.torch_device</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.translate_groups_ids_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.translate_groups_ids_mask()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.turn_number"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.turn_number</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.validate_from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.validate_from_chat</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.audio_temperature"><code class="docutils literal notranslate"><span class="pre">ModelConfig.audio_temperature</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.audio_top_k"><code class="docutils literal notranslate"><span class="pre">ModelConfig.audio_top_k</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.text_temperature"><code class="docutils literal notranslate"><span class="pre">ModelConfig.text_temperature</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.text_top_k"><code class="docutils literal notranslate"><span class="pre">ModelConfig.text_top_k</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.base.html">mllm_shap.connectors.base package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#submodules">Submodules</a></li>
@@ -378,15 +309,16 @@
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#module-mllm_shap.connectors.base.explainer_cache">mllm_shap.connectors.base.explainer_cache module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#module-mllm_shap.connectors.base.filters">mllm_shap.connectors.base.filters module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#module-mllm_shap.connectors.base.model">mllm_shap.connectors.base.model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#module-mllm_shap.connectors.base.model_response">mllm_shap.connectors.base.model_response module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.base.html#module-mllm_shap.connectors.base">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.liquid.html">mllm_shap.connectors.liquid package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#mllm_shap.connectors.liquid.LiquidAudio"><code class="docutils literal notranslate"><span class="pre">LiquidAudio</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#mllm_shap.connectors.liquid.LiquidAudioChat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.chat">mllm_shap.connectors.liquid_audio.chat module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.config">mllm_shap.connectors.liquid_audio.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.model">mllm_shap.connectors.liquid_audio.model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.chat">mllm_shap.connectors.liquid.chat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.config">mllm_shap.connectors.liquid.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid.model">mllm_shap.connectors.liquid.model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.liquid.html#module-mllm_shap.connectors.liquid">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -493,72 +425,116 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.connectors.html#module-mllm_shap.connectors">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio"><code class="docutils literal notranslate"><span class="pre">LiquidAudio</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.config"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.generate"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.generate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_contextual_embeddings"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_contextual_embeddings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_new_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_new_chat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.get_static_embeddings"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.get_static_embeddings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.history_tracking_mode"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.history_tracking_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.model"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudio.processor"><code class="docutils literal notranslate"><span class="pre">LiquidAudio.processor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.AUDIO_IN_SHAPE"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.AUDIO_IN_SHAPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.AUDIO_OUT_SHAPE"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.AUDIO_OUT_SHAPE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_ASSISTANT_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_ASSISTANT_TURN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_SYSTEM_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_SYSTEM_TURN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.EMPTY_USER_TURN"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.EMPTY_USER_TURN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.START_MARK"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.START_MARK</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.add_audio"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.add_audio()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.add_text"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.add_text()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.append"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.append()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_empty_value"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_empty_value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_no_system_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_no_system_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.audio_tokens_no_system_mask_filtered"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.audio_tokens_no_system_mask_filtered</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.cache"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.cache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.decode_audio"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.decode_audio()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.decode_text"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.decode_text()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.empty_turn_sequences"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.empty_turn_sequences</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.end_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.end_turn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_first_positions"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_first_positions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_group_ids_positive_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_group_ids_positive_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.external_shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.external_shap_values_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.from_chat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.get_conversation"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.get_conversation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.input_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.input_tokens_num"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.input_tokens_num</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.is_system_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.is_system_turn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.model_inputs"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.model_inputs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.new_turn"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.new_turn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.refresh"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.refresh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.shap_values_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.shap_values_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.speaker"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.speaker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.system_roles_setup"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.system_roles_setup</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_no_system_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_no_system_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.text_tokens_no_system_mask_filtered"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.text_tokens_no_system_mask_filtered</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_filter"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_filter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_roles"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_roles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_sequences_to_exclude"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_sequences_to_exclude</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.token_turns"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.token_turns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.tokens_modality_flag"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.tokens_modality_flag</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.torch_device"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.torch_device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.translate_groups_ids_mask"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.translate_groups_ids_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.turn_number"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.turn_number</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.LiquidAudioChat.validate_from_chat"><code class="docutils literal notranslate"><span class="pre">LiquidAudioChat.validate_from_chat</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig"><code class="docutils literal notranslate"><span class="pre">ModelConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.audio_temperature"><code class="docutils literal notranslate"><span class="pre">ModelConfig.audio_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.audio_top_k"><code class="docutils literal notranslate"><span class="pre">ModelConfig.audio_top_k</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ModelConfig.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.text_temperature"><code class="docutils literal notranslate"><span class="pre">ModelConfig.text_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.ModelConfig.text_top_k"><code class="docutils literal notranslate"><span class="pre">ModelConfig.text_top_k</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mllm_shap.shap.html">mllm_shap.shap package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.allow_mask_duplicates</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_reducer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.fraction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.include_minimal_masks</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_fraction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_num_samples</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.mode</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.normalizer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.num_samples</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.similarity_measure</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.total_n_calls</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.allow_mask_duplicates</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.embedding_reducer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.fraction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.include_minimal_masks</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.mode</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.normalizer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.num_samples</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.similarity_measure</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer.total_n_calls</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">Explainer.total_n_calls</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.importance_sampling_min_fraction"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.importance_sampling_min_fraction</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.k"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.k</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.mode"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.mode</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.model"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.n_calls</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.shap_explainer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.total_n_calls</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.use_importance_sampling"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.use_importance_sampling</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.McShapExplainer"><code class="docutils literal notranslate"><span class="pre">McShapExplainer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.allow_mask_duplicates</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_reducer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.mode</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.normalizer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.similarity_measure</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.total_n_calls</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.base.html">mllm_shap.shap.base package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.approx">mllm_shap.shap.base.approx module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.complementary">mllm_shap.shap.base.complementary module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.embeddings">mllm_shap.shap.base.embeddings module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.explainer">mllm_shap.shap.base.explainer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.normalizers">mllm_shap.shap.base.normalizers module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.shap_explainer">mllm_shap.shap.base.shap_explainer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base.similarity">mllm_shap.shap.base.similarity module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.base.html#module-mllm_shap.shap.base">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.complementary.html">mllm_shap.shap.complementary package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.complementary.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.complementary.html#module-mllm_shap.shap.complementary.limited">mllm_shap.shap.complementary.limited module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.complementary.html#module-mllm_shap.shap.complementary.standard">mllm_shap.shap.complementary.standard module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.complementary.html#module-mllm_shap.shap.complementary">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.hierarchical.html">mllm_shap.shap.hierarchical package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.hierarchical.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.hierarchical.html#module-mllm_shap.shap.hierarchical.enums">mllm_shap.shap.hierarchical.enums module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.hierarchical.html#module-mllm_shap.shap.hierarchical.explainer">mllm_shap.shap.hierarchical.explainer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.hierarchical.html#module-mllm_shap.shap.hierarchical">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html">mllm_shap.shap.monte_carlo package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#module-mllm_shap.shap.monte_carlo.limited">mllm_shap.shap.monte_carlo.limited module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#module-mllm_shap.shap.monte_carlo.standard">mllm_shap.shap.monte_carlo.standard module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#module-mllm_shap.shap.monte_carlo.utils">mllm_shap.shap.monte_carlo.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.monte_carlo.html#module-mllm_shap.shap.monte_carlo">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -656,34 +632,35 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#module-mllm_shap.shap.monte_carlo">mllm_shap.shap.monte_carlo module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.allow_mask_duplicates</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_model</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.embedding_reducer</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.fraction</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.include_minimal_masks</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.normalizer</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.num_samples</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.similarity_measure</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.LimitedMcShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">LimitedMcShapExplainer.total_n_calls</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#module-mllm_shap.shap.explainer_result">mllm_shap.shap.explainer_result module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult"><code class="docutils literal notranslate"><span class="pre">ExplainerResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult.full_chat"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.full_chat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult.history"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.history</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult.model_config"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult.source_chat"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.source_chat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.explainer_result.ExplainerResult.total_n_calls"><code class="docutils literal notranslate"><span class="pre">ExplainerResult.total_n_calls</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.allow_mask_duplicates</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_model</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.embedding_reducer</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.fraction</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.include_minimal_masks</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.mode</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.normalizer</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.num_samples</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.similarity_measure</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.StandardMcShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">StandardMcShapExplainer.total_n_calls</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.monte_carlo.approximate_budget"><code class="docutils literal notranslate"><span class="pre">approximate_budget()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#module-mllm_shap.shap.neyman">mllm_shap.shap.neyman module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.fraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.include_minimal_masks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.initial_fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_fraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.initial_num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_num_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.initial_steps"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.normalizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.num_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.similarity_measure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.total_n_calls</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.neyman.ComplementaryNeymanShapExplainer.use_standard_method"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.use_standard_method</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#module-mllm_shap.shap.normalizers">mllm_shap.shap.normalizers module</a><ul>
@@ -724,6 +701,57 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.html#module-mllm_shap.shap">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.fraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.include_minimal_masks"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.include_minimal_masks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_fraction"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_fraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_num_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.initial_steps"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.initial_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.normalizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.num_samples"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.num_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.similarity_measure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.total_n_calls</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryNeymanShapExplainer.use_standard_method"><code class="docutils literal notranslate"><span class="pre">ComplementaryNeymanShapExplainer.use_standard_method</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.ComplementaryShapExplainer"><code class="docutils literal notranslate"><span class="pre">ComplementaryShapExplainer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer"><code class="docutils literal notranslate"><span class="pre">Explainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.model"><code class="docutils literal notranslate"><span class="pre">Explainer.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">Explainer.shap_explainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.Explainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">Explainer.total_n_calls</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.computation_graph"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.computation_graph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.first_layer_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.first_layer_explainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.importance_sampling_min_fraction"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.importance_sampling_min_fraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.k"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.k</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.mode"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.model"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.n_calls</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.shap_explainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.total_n_calls</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.HierarchicalExplainer.use_importance_sampling"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.use_importance_sampling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.McShapExplainer"><code class="docutils literal notranslate"><span class="pre">McShapExplainer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.embedding_model"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.embedding_reducer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.embedding_reducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.mode"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.normalizer"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.normalizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.similarity_measure"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.similarity_measure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.html#mllm_shap.shap.PreciseShapExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">PreciseShapExplainer.total_n_calls</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mllm_shap.utils.html">mllm_shap.utils package</a><ul>
@@ -755,10 +783,15 @@
 <li class="toctree-l3"><a class="reference internal" href="mllm_shap.utils.html#mllm_shap.utils.other.safe_mask_unsqueeze"><code class="docutils literal notranslate"><span class="pre">safe_mask_unsqueeze()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.utils.html#module-mllm_shap.utils">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </div>
+</section>
+<section id="module-mllm_shap">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mllm_shap" title="Link to this heading">#</a></h2>
+<p>MLLM-Shap: A library for SHAP (SHapley Additive exPlanations) values in Multi Modal Large Language Models.</p>
 </section>
 </section>
 
@@ -792,6 +825,7 @@
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap">Module contents</a></li>
 </ul>
   </nav></div>
 

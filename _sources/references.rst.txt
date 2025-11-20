@@ -6,4 +6,8 @@ explainability using SHAP values. Research paper and report is available at `arX
 
 Package is fully tested, including analysis of correctness on different approximations algorithms of SHAP values, available `here <https://github.com/Pawlo77/MLLM-Shap/tree/main/mllm_shap/tests/approximations>`_. Following image shows comparison of different SHAP approximations on same input and model - Liquid Audio LLM.
 
+.. warning::
+
+    Approximation methods might not work well with very small number of samples / input lengths, as many of them are limited from generating not unique masks. This might lead to "dead-locks" in sampling and wrong results.
+
 # TODO: add image
