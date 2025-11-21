@@ -8,8 +8,10 @@ SHAP explainers module.
 - :class:`McShapExplainer` is an alias for the limited Monte Carlo SHAP explainer.
 - :class:`ComplementaryShapExplainer` implements the complementary SHAP explainer
     that focuses on explaining the complementary contributions of features.
+    It is an alias for the limited complementary SHAP explainer.
 - :class:`ComplementaryNeymanShapExplainer` implements the complementary SHAP
     explainer using Neyman allocation for improved sample efficiency.
+    It is an alias for the limited complementary Neyman SHAP explainer.
 - :class:`HierarchicalExplainer` implements a hierarchical approach to SHAP
     value computation, allowing for significant speed-ups.
 """
@@ -17,7 +19,7 @@ SHAP explainers module.
 from .compact import Explainer
 from .monte_carlo import LimitedMcShapExplainer as McShapExplainer
 from .complementary import LimitedComplementaryShapExplainer as ComplementaryShapExplainer
-from .neyman import ComplementaryNeymanShapExplainer
+from .neyman import LimitedComplementaryNeymanShapExplainer as ComplementaryNeymanShapExplainer
 from .precise import PreciseShapExplainer
 from .hierarchical import HierarchicalExplainer
 
