@@ -29,6 +29,12 @@ class SimilarityType(StrEnum):
     EUCLIDEAN = "EuclideanSimilarity"
 
 
+class ModeType(StrEnum):
+    """Explanation modes."""
+    CONTEXTUAL = "CONTEXTUAL"
+    STATIC = "STATIC"
+
+
 class TextCol(StrEnum):
     """Text column options in dataset."""
     PROMPT = "prompt"
