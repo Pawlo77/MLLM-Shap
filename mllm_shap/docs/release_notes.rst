@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+Version 0.1.7
+-------------
+* Introduced `StandardComplementaryNeymanShapExplainer`, a new explainer that utilizes standard Neyman allocation for SHAP value estimation. Existing `ComplementaryNeymanShapExplainer` has been renamed to `LimitedComplementaryNeymanShapExplainer` to reflect its limited sampling strategy.
+* Internal refactoring and bug fixes to improve code maintainability and performance.
+
 Version 0.1.6
 -------------
 * Includes fixes for complementary-based explainers to ensure correct SHAP value computations.

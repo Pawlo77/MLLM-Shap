@@ -1,6 +1,6 @@
 # Similar to :class:`BaseShapExplainer`
 # pylint: disable=duplicate-code
-"""Complementary Neyman SHAP explainer implementation."""
+"""Base Complementary Neyman SHAP explainer implementation."""
 
 from enum import Enum
 import gc
@@ -12,15 +12,15 @@ from functools import lru_cache
 import torch
 from torch import Tensor
 
-from ..connectors.base.chat import BaseMllmChat
-from ..connectors.enums import SystemRolesSetup, Role
-from ..connectors.base.model import BaseMllmModel
-from ..connectors.base.model_response import ModelResponse
-from ..utils.logger import get_logger
-from .base._cache_manager import CacheManager
-from .base._masks_manager import MasksManager
-from .base._validators import BaseShapCallConfig
-from .base.complementary import BaseComplementaryShapApproximation
+from ...connectors.base.chat import BaseMllmChat
+from ...connectors.enums import SystemRolesSetup, Role
+from ...connectors.base.model import BaseMllmModel
+from ...connectors.base.model_response import ModelResponse
+from ...utils.logger import get_logger
+from ..base._cache_manager import CacheManager
+from ..base._masks_manager import MasksManager
+from ..base._validators import BaseShapCallConfig
+from ..base.complementary import BaseComplementaryShapApproximation
 
 logger: Logger = get_logger(__name__)
 
@@ -36,7 +36,7 @@ class _Step(int, Enum):
 
 
 # pylint: disable=too-few-public-methods,invalid-name,too-many-instance-attributes
-class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
+class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     """
     Base Complementary Neyman SHAP implementation class
 
@@ -67,7 +67,7 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     initial_steps: int | None
     """Number of initial steps performed in last call."""
 
-    use_standard_method: bool
+    use_standard_method: bool = False
     """
     Whether to use the standard method for initial sampling.
     Default is False, which uses the modified method with pre-defined members.
@@ -108,18 +108,15 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         *args: Any,
         initial_num_samples: int | None = None,
         initial_fraction: float | None = None,
-        use_standard_method: bool = False,
         **kwargs: Any,
     ) -> None:
         """
-        Initialize the ComplementaryNeymanShapExplainer.
+        Initialize the BaseComplementaryNeymanShapExplainer.
 
         Args:
             args: Positional arguments for the base class.
             initial_num_samples: Initial number of samples to draw in the first step.
             initial_fraction: Initial fraction of samples to draw in the first step.
-            use_standard_method: Whether to use the standard method for initial sampling.
-                Default is False, which uses the modified method with pre-defined members.
             kwargs: Keyword arguments for the base class.
         Raises:
             ValueError: If sampling parameters are invalid.
@@ -138,7 +135,6 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         self.initial_num_samples = initial_num_samples
         self.initial_fraction = initial_fraction
-        self.use_standard_method = use_standard_method
 
     def _initialize_state(self) -> None:
         """
