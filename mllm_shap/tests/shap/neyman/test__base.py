@@ -1,9 +1,9 @@
-"""Unit tests for ComplementaryNeymanShapExplainer class (updated)."""
+"""Unit tests for BaseComplementaryNeymanShapExplainer class (updated)."""
 
 import pytest
 import torch
 from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
-from mllm_shap.shap.neyman import ComplementaryNeymanShapExplainer
+from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 from torch import Tensor
 
 
@@ -28,7 +28,7 @@ class DummyResponse:
         self.chat = DummyChat()
 
 
-class DummyComplementaryNeymanShapExplainer(ComplementaryNeymanShapExplainer):
+class DummyBaseComplementaryNeymanShapExplainer(BaseComplementaryNeymanShapExplainer):
     """
     Concrete subclass used for testing. Overrides behavior that depends on
     external models / connectors to deterministic minimal behaviors.
@@ -95,33 +95,33 @@ class DummyComplementaryNeymanShapExplainer(ComplementaryNeymanShapExplainer):
                     self._C[idx, s_size] += 1.0
 
 
-class TestComplementaryNeymanShapExplainerNumSplits:
+class TestBaseComplementaryNeymanShapExplainerNumSplits:
     """Tests for the _get_num_splits() method."""
 
     @pytest.fixture
-    def explainer(self) -> DummyComplementaryNeymanShapExplainer:
+    def explainer(self) -> DummyBaseComplementaryNeymanShapExplainer:
         """Provide a default explainer fixture."""
-        return DummyComplementaryNeymanShapExplainer(initial_num_samples=2, initial_fraction=0.5)
+        return DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2, initial_fraction=0.5)
 
-    def test_num_splits_returns_integer(self, explainer: DummyComplementaryNeymanShapExplainer) -> None:
+    def test_num_splits_returns_integer(self, explainer: DummyBaseComplementaryNeymanShapExplainer) -> None:
         """Ensure _get_num_splits() returns a valid integer and sets initial splits."""
         num_splits = explainer._get_num_splits(n=5)
         assert isinstance(num_splits, int)
         # the initial number of splits is stored under a mangled name; read it defensively
-        initial_splits = getattr(explainer, "_ComplementaryNeymanShapExplainer__initial_num_splits", None)
+        initial_splits = getattr(explainer, "_BaseComplementaryNeymanShapExplainer__initial_num_splits", None)
         assert initial_splits is not None and isinstance(initial_splits, int)
         assert initial_splits >= 1
         assert num_splits >= initial_splits
 
 
-class TestComplementaryNeymanShapExplainerMasksGeneration:
+class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
     """Tests for mask generation behavior (complementary masks)."""
 
     @pytest.fixture
-    def explainer(self) -> DummyComplementaryNeymanShapExplainer:
-        return DummyComplementaryNeymanShapExplainer(initial_num_samples=2)
+    def explainer(self) -> DummyBaseComplementaryNeymanShapExplainer:
+        return DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
 
-    def test_complementary_mask_pair_generation(self, explainer: DummyComplementaryNeymanShapExplainer) -> None:
+    def test_complementary_mask_pair_generation(self, explainer: DummyBaseComplementaryNeymanShapExplainer) -> None:
         """
         Tests that masks produced by the masks generator come in complementary pairs.
         This uses the explainer's _get_masks_generator which is a thin wrapper around the base generator.
@@ -185,12 +185,12 @@ class TestComplementaryNeymanShapExplainerMasksGeneration:
         assert not manager.seen(mask_hash=h + 1)
 
 
-class TestComplementaryNeymanShapExplainerCalculateShapValues:
+class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
     """Tests for the _calculate_shap_values() method."""
 
     def test_shap_values_computation(self) -> None:
         """Check that SHAP value computation produces a tensor of the correct shape."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         # prepare M and C such that M[:, 1:] are non-zero
         explainer._M = torch.tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=torch.float32)
         explainer._C = torch.tensor([[0.0, 4.0, 6.0], [0.0, 2.0, 8.0], [0.0, 1.0, 1.0]], dtype=torch.float32)
@@ -205,7 +205,7 @@ class TestComplementaryNeymanShapExplainerCalculateShapValues:
 
     def test_raises_if_zero_mask_not_skipped(self) -> None:
         """Ensure a RuntimeError is raised when zero mask was not skipped."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         explainer._zero_mask_skipped = False
         explainer._M = torch.ones((3, 3), dtype=torch.float32) * 2.0
         explainer._C = torch.zeros_like(explainer._M)
@@ -217,7 +217,7 @@ class TestComplementaryNeymanShapExplainerCalculateShapValues:
 
     def test_calculate_C_matrix_updates_counts(self) -> None:
         """Ensure the test `_calculate_C_matrix` implementation increments counts at the expected indices."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         # set shapes compatible with masks: tokens=3, coalition sizes up to 2
         explainer._M = torch.ones((3, 3), dtype=torch.float32)
         explainer._C = torch.zeros_like(explainer._M)
@@ -235,7 +235,7 @@ class TestComplementaryNeymanShapExplainerCalculateShapValues:
 
     def test_calculate_C_matrix_with_zero_coalition(self) -> None:
         """When a mask row has no True entries, the contribution should be recorded at coalition size 0."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         explainer._M = torch.ones((2, 2), dtype=torch.float32)
         explainer._C = torch.zeros_like(explainer._M)
 
@@ -250,7 +250,7 @@ class TestComplementaryNeymanShapExplainerCalculateShapValues:
 
     def test_get_similarities_all_ones(self) -> None:
         """_get_similarities should return a tensor of ones with length equal to responses."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         responses = [DummyResponse() for _ in range(4)]
         sims = explainer._get_similarities(responses=responses)
         assert isinstance(sims, Tensor)
@@ -259,7 +259,7 @@ class TestComplementaryNeymanShapExplainerCalculateShapValues:
 
     def test_get_similarities_empty_responses(self) -> None:
         """When passed an empty list, _get_similarities should return an empty tensor."""
-        explainer = DummyComplementaryNeymanShapExplainer()
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
         sims = explainer._get_similarities(responses=[])
         assert isinstance(sims, Tensor)
         assert sims.numel() == 0
