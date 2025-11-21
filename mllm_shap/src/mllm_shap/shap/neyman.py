@@ -731,8 +731,8 @@ class ComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         result = history
         if return_trajectory:
             trajectory = self._build_trajectory(
-                masks_tensor=masks_tensor,
-                similarities=similarities,
+                masks_tensor=masks_tensor[2:],
+                similarities=similarities[3:],
                 source_chat=source_chat,
                 device=device,
                 initial_len_with_base=initial_len_with_base,

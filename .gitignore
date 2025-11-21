@@ -12,6 +12,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Experiments
+wandb/
+experiments_output/
+neyman_runs/
+
 # Distribution / packaging
 .Python
 build/
