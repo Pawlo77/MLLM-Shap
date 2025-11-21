@@ -15,6 +15,7 @@ __pycache__/
 # Experiments
 wandb/
 shared*
+neyman_runs/
 
 # Distribution / packaging
 .Python

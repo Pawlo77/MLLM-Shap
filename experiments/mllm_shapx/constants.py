@@ -11,7 +11,8 @@ class ExplainerType(StrEnum):
     STANDARD_MC = "standard_mc"
     LIMITED_CC = "limited_cc"
     STANDARD_CC = "standard_cc"
-    NEYMAN = "neyman"
+    LIMITED_NEYMAN = "limited_neyman"
+    STANDARD_NEYMAN = "standard_neyman"
     HIERARCHICAL = "hierarchical"
 
 
@@ -25,6 +26,7 @@ class SimilarityType(StrEnum):
     """Similarity metric options."""
     COSINE = "CosineSimilarity"
     TFIDF_COSINE = "TfIdfCosineSimilarity"
+    EUCLIDEAN = "EuclideanSimilarity"
 
 
 class TextCol(StrEnum):

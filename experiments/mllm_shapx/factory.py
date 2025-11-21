@@ -13,10 +13,11 @@ from mllm_shap.connectors.enums import (
     SystemRolesSetup,
 )
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
-from mllm_shap.shap import Explainer, ComplementaryNeymanShapExplainer
+from mllm_shap.shap import Explainer
 from mllm_shap.shap.base.shap_explainer import BaseShapExplainer
 from mllm_shap.shap.monte_carlo import LimitedMcShapExplainer, StandardMcShapExplainer
 from mllm_shap.shap.complementary import LimitedComplementaryShapExplainer, StandardComplementaryShapExplainer
+from mllm_shap.shap.neyman import LimitedComplementaryNeymanShapExplainer, StandardComplementaryNeymanShapExplainer
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.enums import Mode
 from mllm_shap.shap.hierarchical.enums import Mode as HierMode
@@ -77,7 +78,8 @@ _PRECISE_TYPE = "precise"
 _LIMITED_MC_TYPE = "limited_mc"
 _LIMITED_CC_TYPE = "limited_cc"
 _STANDARD_CC_TYPE = "standard_cc"
-_NEYMAN_TYPE = "neyman"
+_LIMITED_NEYMAN_TYPE = "limited_neyman"
+_STANDARD_NEYMAN_TYPE = "standard_neyman"
 
 
 def _build_inner_shap(  # pylint: disable=too-many-branches
@@ -110,13 +112,20 @@ def _build_inner_shap(  # pylint: disable=too-many-branches
         else:
             _maybe_add_fraction(kw, fraction)
         return StandardComplementaryShapExplainer(**kw)
-    if w == _NEYMAN_TYPE:
+    if w == _LIMITED_NEYMAN_TYPE:
         kw = dict(common)
         if num_samples is not None:
             kw["num_samples"] = int(num_samples)
         else:
             _maybe_add_fraction(kw, fraction)
-        return ComplementaryNeymanShapExplainer(**kw)
+        return LimitedComplementaryNeymanShapExplainer(**kw)
+    if w == _STANDARD_NEYMAN_TYPE:
+        kw = dict(common)
+        if num_samples is not None:
+            kw["num_samples"] = int(num_samples)
+        else:
+            _maybe_add_fraction(kw, fraction)
+        return StandardComplementaryNeymanShapExplainer(**kw)
     raise ValueError(f"Unknown inner SHAP type: {which}")
 
 
@@ -192,18 +201,26 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
             _maybe_add_fraction(kw, concrete_fraction)
         return Explainer(model=model, shap_explainer=ctor(**kw))
 
-    if t == ExplainerType.NEYMAN.value:
+    if t == ExplainerType.LIMITED_NEYMAN.value:
         kw = _common_kwargs()
         if concrete_num_samples is not None:
             kw["num_samples"] = int(concrete_num_samples)
         else:
             _maybe_add_fraction(kw, concrete_fraction)
-        return Explainer(model=model, shap_explainer=ComplementaryNeymanShapExplainer(**kw))
+        return Explainer(model=model, shap_explainer=LimitedComplementaryNeymanShapExplainer(**kw))
+
+    if t == ExplainerType.STANDARD_NEYMAN.value:
+        kw = _common_kwargs()
+        if concrete_num_samples is not None:
+            kw["num_samples"] = int(concrete_num_samples)
+        else:
+            _maybe_add_fraction(kw, concrete_fraction)
+        return Explainer(model=model, shap_explainer=StandardComplementaryNeymanShapExplainer(**kw))
 
     if t == ExplainerType.HIERARCHICAL.value:
         none_str = "none"
         # inner shap
-        inner_type = (hier_shap_type or _NEYMAN_TYPE).lower()
+        inner_type = (hier_shap_type or _LIMITED_NEYMAN_TYPE).lower()
         inner = _build_inner_shap(
             which=inner_type,
             common=_common_kwargs(),

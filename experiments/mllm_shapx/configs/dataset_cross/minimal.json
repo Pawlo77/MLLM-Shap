@@ -24,7 +24,7 @@
     "project": "mllm-shap-audio-text",
     "group": "single_sentence",
     "mode": "online",
-    "tags": ["single_sentence", "text-only", "full-suite", "package-tests"]
+    "tags": ["single_sentence", "text-only", "linear_tests"]
   },
 
   "generation": {
