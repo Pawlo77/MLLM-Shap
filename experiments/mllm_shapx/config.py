@@ -29,7 +29,8 @@ from .constants import (
     DEFAULT_SUBSET,
     ExplainerType,
     ConnectorType,
-    SimilarityType
+    SimilarityType,
+    ModeType
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class GenerationConfig:
 @dataclass
 class ShapConfig:
     """SHAP-wide knobs that are shared across explainers."""
-    mode: str = "CONTEXTUAL"      # maps to mllm_shap.shap.enums.Mode
+    mode: str = ModeType.CONTEXTUAL.value
     normalizer: str = "AbsSumNormalizer"
     reducer: str = "MeanReducer"
     similarity: str = SimilarityType.TFIDF_COSINE.value
@@ -257,7 +258,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             text_temperature=gen.get("text_temperature", 0.2),
         ),
         shap=ShapConfig(
-            mode=shp.get("mode", "CONTEXTUAL"),
+            mode=shp.get("mode", ModeType.CONTEXTUAL.value),
             normalizer=shp.get("normalizer", "AbsSumNormalizer"),
             reducer=shp.get("reducer", "MeanReducer"),
             similarity=shp.get("similarity", SimilarityType.TFIDF_COSINE.value),
@@ -299,7 +300,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             errs.append("wandb.mode must be one of: online | offline | disabled.")
 
     def _validate_shap() -> None:
-        if cfg.shap.mode not in ("CONTEXTUAL",):
+        if cfg.shap.mode not in (ModeType.CONTEXTUAL.value, ModeType.STATIC.value):
             errs.append("shap.mode must be 'CONTEXTUAL'.")
         if cfg.shap.normalizer not in NORMALIZER_MAP:
             errs.append(f"Unknown shap.normalizer: {cfg.shap.normalizer}")
