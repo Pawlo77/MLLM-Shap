@@ -22,7 +22,7 @@ from mllm_shap.shap.normalizers import (
     PowerShiftNormalizer,
     MinMaxNormalizer,
 )
-from mllm_shap.shap.similarity import CosineSimilarity, TfIdfCosineSimilarity
+from mllm_shap.shap.similarity import CosineSimilarity, TfIdfCosineSimilarity, EuclideanSimilarity
 
 from .constants import (
     DEFAULT_SPLIT,
@@ -174,6 +174,7 @@ REDUCER_MAP: Mapping[str, Callable[[], BaseEmbeddingReducer]] = {
 SIMILARITY_MAP = {
     SimilarityType.COSINE.value: CosineSimilarity,
     SimilarityType.TFIDF_COSINE.value: TfIdfCosineSimilarity,
+    SimilarityType.EUCLIDEAN.value: EuclideanSimilarity,
 }
 
 # ---------------------------
@@ -304,7 +305,9 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             errs.append(f"Unknown shap.normalizer: {cfg.shap.normalizer}")
         if cfg.shap.reducer not in REDUCER_MAP:
             errs.append(f"Unknown shap.reducer: {cfg.shap.reducer}")
-        if cfg.shap.similarity not in (SimilarityType.COSINE.value, SimilarityType.TFIDF_COSINE.value):
+        if cfg.shap.similarity not in (SimilarityType.COSINE.value,
+                                       SimilarityType.TFIDF_COSINE.value,
+                                       SimilarityType.EUCLIDEAN.value):
             errs.append("shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'.")
 
     def _validate_variants() -> None:  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
@@ -327,7 +330,8 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                 ExplainerType.STANDARD_MC.value,
                 ExplainerType.LIMITED_CC.value,
                 ExplainerType.STANDARD_CC.value,
-                ExplainerType.NEYMAN.value,
+                ExplainerType.LIMITED_NEYMAN.value,
+                ExplainerType.STANDARD_NEYMAN.value,
             )
             if wants_mc_knobs:
                 if not exp.num_samples and not exp.fractions and not exp.linear:
@@ -365,7 +369,12 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
 
                 # inner shap type
                 inner = (exp.hierarchical_shap_type or "").lower()
-                allowed_inner = {"precise", "limited_mc", "limited_cc", "standard_cc", "neyman"}
+                allowed_inner = {"precise",
+                                 "limited_mc",
+                                 "limited_cc",
+                                 "standard_cc",
+                                 "limited_neyman",
+                                 "standard_neyman"}
                 if inner and inner not in allowed_inner:
                     errs.append(f"experiments[{i}] hierarchical_shap_type must be one of {sorted(allowed_inner)}.")
 
@@ -383,7 +392,13 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
 
                 # first-layer type
                 flt = (exp.hierarchical_first_layer_type or "none").lower()
-                allowed_first = {"none", "precise", "limited_mc", "limited_cc", "standard_cc", "neyman"}
+                allowed_first = {"none",
+                                 "precise",
+                                 "limited_mc",
+                                 "limited_cc",
+                                 "standard_cc",
+                                 "limited_neyman",
+                                 "standard_neyman"}
                 if flt not in allowed_first:
                     errs.append(
                         f"experiments[{i}] hierarchical_first_layer_type must be one of "

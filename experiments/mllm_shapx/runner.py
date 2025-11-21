@@ -17,7 +17,7 @@ from mllm_shap.connectors import ModelConfig
 from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
-from mllm_shap.shap.neyman import ComplementaryNeymanShapExplainer
+from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 
 from .config import ExperimentSet, ExplainerVariant
 from .data import (
@@ -94,7 +94,8 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
                  ExplainerType.STANDARD_MC.value,
                  ExplainerType.LIMITED_CC.value,
                  ExplainerType.STANDARD_CC.value,
-                 ExplainerType.NEYMAN.value):
+                 ExplainerType.LIMITED_NEYMAN.value,
+                 ExplainerType.STANDARD_NEYMAN.value):
             if v.num_samples:
                 for ns in v.num_samples:
                     ns_i = int(ns)
@@ -121,7 +122,7 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
             if not ks:
                 ks = [10]  # safe default
 
-            inner_type = (v.hierarchical_shap_type or "neyman").lower()
+            inner_type = (v.hierarchical_shap_type or "limited_neyman").lower()
             # inner param sweeps (exclusive-or style; if none provided, produce one AUTO run)
             inner_ns = v.hierarchical_shap_num_samples or []
             inner_fracs = v.hierarchical_shap_fractions or []
@@ -448,11 +449,12 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         if run.variant.explainer_type == ExplainerType.HIERARCHICAL.value:
             sample_result["num_levels"] = cast(HierarchicalExplainer, explainer).n_calls
-        elif run.variant.explainer_type == ExplainerType.NEYMAN.value:
-            neyman_explainer = cast(ComplementaryNeymanShapExplainer, explainer.shap_explainer)
+        elif run.variant.explainer_type in (ExplainerType.LIMITED_NEYMAN.value,
+                                            ExplainerType.STANDARD_NEYMAN.value):
+            neyman_explainer = cast(BaseComplementaryNeymanShapExplainer, explainer.shap_explainer)
             # Access step count from neyman explainer
             # pylint: disable=protected-access
-            sample_result["neyman_steps"] = neyman_explainer._ComplementaryNeymanShapExplainer__step
+            sample_result["neyman_steps"] = neyman_explainer._BaseComplementaryNeymanShapExplainer__step
 
         sample_path = run_dir / "samples" / f"sample_{row_idx:05d}_result.json"
         save_json(sample_path, sample_result)
