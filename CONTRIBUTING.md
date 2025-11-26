@@ -36,8 +36,7 @@ MLLM-Shap/
 │  │  └─ mllm_shap/           # MLLM SHAP package
 │  ├─ LICENSE                 # package license
 │  ├─ MANIFEST.in             # package manifest
-│  ├─ pyproject.toml          #
-package-specific deps + settings
+│  ├─ pyproject.toml          # package-specific deps + settings
 │  ├─ pytest.ini              # test configuration
 │  └─ README.md               # package overview
 ├─ examples/                 # user-facing notebooks and quickstarts

@@ -11,7 +11,8 @@ FIGURES_DIR: str = os.path.join(ROOT_DIR, "figures")
 
 def main() -> None:
     """Generate a word cloud image from a text file using a question mark mask."""
-    text = open(os.path.join(ROOT_DIR, "words.txt")).read()
+    with open(os.path.join(ROOT_DIR, "words.txt")) as f:
+        text = f.read()
     mask = np.array(Image.open(os.path.join(FIGURES_DIR, "question_mark.png")))
 
     wc = WordCloud(
