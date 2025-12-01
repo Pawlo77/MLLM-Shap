@@ -46,6 +46,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
     """Number of audio codebooks used for audio output tokens."""
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "proc",  # processor - large, read-only
+        "_logger",
+    })
 
     # for each element x in _audio_map:
     #     x > 0 -> index in audio_out + 1
@@ -175,7 +179,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             if frame_start >= t_frames:
                 break
 
-        final_audio_in_frame_mask = torch.cat(frame_mask_list, dim=0)
+        if len(frame_mask_list) > 0:
+            final_audio_in_frame_mask = torch.cat(frame_mask_list, dim=0)
+        else:
+            final_audio_in_frame_mask = torch.empty(0, dtype=torch.bool, device=new_instance.torch_device)
 
         new_instance.audio_in = safe_mask(
             new_instance.audio_in,

@@ -1,12 +1,13 @@
-"""Chat state for text-only Transformers causal models."""
+"""Chat state for mock model used for debugging."""
 
 import warnings
 from copy import deepcopy
 from functools import cached_property
+import logging
+import os
 
 import torch
 from torch import Tensor
-
 from transformers import PreTrainedTokenizerBase
 
 from ...utils.other import safe_mask
@@ -15,11 +16,12 @@ from ..base.filters import TokenFilter
 from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role, SystemRolesSetup
 
 
-class TransformersTextChat(BaseMllmChat):
+class MockChat(BaseMllmChat):
     """
-    Chat state for text-only causal LMs.
+    Chat state for mock model used for debugging.
 
     Stores only TEXT token IDs. AUDIO is unsupported and will warn+no-op.
+    Returns placeholder tokens without actual model inference.
     """
 
     tokenizer: PreTrainedTokenizerBase
@@ -27,7 +29,8 @@ class TransformersTextChat(BaseMllmChat):
     _TWO_DIMS: int = 2
     _SINGLE_BATCH: int = 1
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
-        "tokenizer",  # Large read-only object, safe to share across copies
+        "tokenizer",
+        "_logger",
     })
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -48,6 +51,9 @@ class TransformersTextChat(BaseMllmChat):
             system_roles_setup=system_roles_setup,
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
+        # debug logger and memory toggle
+        self._logger = logging.getLogger(__name__)
+        self._debug_memory = bool(os.getenv("MLLM_SHAP_DEBUG_MEMORY"))
 
     def apply_text_mask(self, text_mask_relative: Tensor) -> None:
         """Apply a relative text mask to this chat instance (public on purpose)."""
@@ -62,14 +68,11 @@ class TransformersTextChat(BaseMllmChat):
         full_mask: Tensor,
         text_mask_relative: Tensor,
         audio_mask_relative: Tensor,   # unused (no audio)
-        chat: "TransformersTextChat",  # type: ignore[override]
-    ) -> "TransformersTextChat":
-        new_instance: "TransformersTextChat" = deepcopy(chat)
+        chat: "MockChat",  # type: ignore[override]
+    ) -> "MockChat":
+
+        new_instance = deepcopy(chat)
         new_instance.apply_text_mask(text_mask_relative)
-
-        # full input token mask affects only text here
-        # token_roles/turns are handled in BaseMllmChat._after_add via refresh()
-
         return new_instance
 
     @cached_property
@@ -117,7 +120,7 @@ class TransformersTextChat(BaseMllmChat):
 
     def _add_audio(self, waveform: Tensor, sample_rate: int) -> int:  # pragma: no cover
         warnings.warn(
-            "Audio input is not supported by the TransformersText connector. Ignoring provided audio.",
+            "Audio input is not supported by the Mock connector. Ignoring provided audio.",
             stacklevel=2,
         )
         return 0
@@ -138,7 +141,7 @@ class TransformersTextChat(BaseMllmChat):
             return 0, 0
 
         # Expect [1, T]; accept other simple shapes
-        if text.dim() == self._TWO_DIMS and text.shape[0] == self._TWO_DIMS:
+        if text.dim() == self._TWO_DIMS and text.shape[0] == self._SINGLE_BATCH:
             text = text.squeeze(0)
         elif text.dim() == 0:
             text = text.unsqueeze(0)
@@ -149,7 +152,7 @@ class TransformersTextChat(BaseMllmChat):
         start = self._text_ids.shape[0]
         self._text_ids = torch.cat([self._text_ids, text], dim=0)
 
-        # IMPORTANT: In text-only path there are no audio tokens; BaseMllmChat won’t refresh caches.
+        # IMPORTANT: In text-only path there are no audio tokens; BaseMllmChat won't refresh caches.
         # Do it here to keep tokens_modality_flag / input_tokens in sync with masks.
         self.refresh(full=True)
 
