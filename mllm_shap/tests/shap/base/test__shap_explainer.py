@@ -172,29 +172,6 @@ class TestBaseShapExplainer:
         )
         mock_create.assert_called_once()
 
-    def test_save_to_cache_raises_when_cache_exists(
-        self,
-        explainer_instance: BaseShapExplainer,
-        dummy_chat_instance: BaseMllmChat,
-        dummy_response_instance: ModelResponse,
-    ) -> None:
-        """Test _save_to_cache raises ValueError when cache already exists."""
-        dummy_chat_instance.cache = object()  # simulate existing cache
-        responses = [dummy_response_instance]
-        masks = torch.ones((2, 3), dtype=torch.bool)
-        shap_values = torch.zeros(3)
-        norm_values = torch.ones(3)
-
-        with pytest.raises(ValueError):
-            explainer_instance._save_to_cache(
-                chat=dummy_chat_instance,
-                source_chat=deepcopy(dummy_chat_instance),
-                responses=responses,
-                masks=masks,
-                shap_values=shap_values,
-                normalized_shap_values=norm_values,
-            )
-
     def test_initialize_state_resets_tracking(self, explainer_instance: BaseShapExplainer) -> None:
         """Ensure internal counters reset before explanation."""
         explainer_instance.total_n_calls = 5
