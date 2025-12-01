@@ -30,6 +30,22 @@ from ._generate_responses import generate_responses
 logger: Logger = get_logger(__name__)
 
 
+def minmax_normalize(values: Tensor) -> Tensor:
+    """
+    Apply min-max normalization to a tensor.
+
+    Args:
+        values: The tensor to normalize.
+    Returns:
+        The normalized tensor with values in [0, 1] range.
+        If all values are the same, returns zeros.
+    """
+    v_min, v_max = torch.min(values), torch.max(values)
+    if float(v_max - v_min) > 0.0:
+        return (values - v_min) / (v_max - v_min)
+    return torch.zeros_like(values)
+
+
 class NotEnoughTokensToExplainError(Exception):
     """Raised when there are not enough tokens to explain in the chat."""
 
@@ -411,6 +427,8 @@ class BaseShapExplainer(ABC):
         response: ModelResponse,
         progress_bar: bool = True,
         verbose: bool = False,
+        *,
+        return_trajectory: bool = False,
         n_generator_jobs: int = 1,
         **generate_kwargs: Any,
     ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None:
@@ -423,6 +441,8 @@ class BaseShapExplainer(ABC):
             response: The model response generated from source_chat.
             progress_bar: Whether to display a progress bar during processing.
             verbose: Whether to save data generated during processing.
+            return_trajectory: Whether to return SHAP trajectory data.
+                Subclasses may use this to return intermediate results.
             n_generator_jobs: Number of parallel calls to the model's generate method.
             generate_kwargs: Additional keyword arguments for the model's generate method.
         Returns:
@@ -435,6 +455,7 @@ class BaseShapExplainer(ABC):
                 empty chats.
             ValueError: If existing cache is invalid.
         """
+        _ = return_trajectory  # Used by subclasses for trajectory tracking
         __config = BaseShapCallConfig(
             model=model,
             source_chat=source_chat,
