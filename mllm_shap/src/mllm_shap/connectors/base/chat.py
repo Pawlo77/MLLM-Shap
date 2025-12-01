@@ -69,6 +69,12 @@ class BaseMllmChat(ABC):
 
     __external_shap_values_mask: Tensor | None = None
     __external_group_ids: Tensor | None = None
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "system_roles_setup",
+        "_system_roles",
+        "empty_turn_sequences",
+        "token_sequences_to_exclude",
+    })
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
@@ -1098,21 +1104,31 @@ class BaseMllmChat(ABC):
     def __deepcopy__(self, memo: Any) -> "BaseMllmChat":
         """
         Create a deep copy of the chat instance.
-        with updated reference to copied chat within :attr:`shap`.
+        Shares read-only attributes and updates reference to copied chat within :attr:`cache`.
         """
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
 
+        # Get shared attributes from class hierarchy
+        shared_attrs = set()
+        for klass in cls.__mro__:
+            if hasattr(klass, "_SHARED_ATTRIBUTES"):
+                shared_attrs.update(klass._SHARED_ATTRIBUTES)
+
         for k, v in self.__dict__.items():
-            if k == "_BaseChat__shap":  # pylint: disable=magic-value-comparison
+            if k == "_BaseMllmChat__shap":  # pylint: disable=magic-value-comparison
                 shap = self.cache
                 if shap is not None:
-                    # mock chat for deepcopy
                     shap.chat = None  # type: ignore[assignment]
                     new_shap = deepcopy(shap, memo)
                     new_shap.chat = result
                     setattr(result, k, new_shap)
+                else:
+                    setattr(result, k, None)
+            elif k in shared_attrs:
+                # Share reference instead of copying
+                setattr(result, k, v)
             else:
                 setattr(result, k, deepcopy(v, memo))
         return result
