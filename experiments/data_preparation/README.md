@@ -24,4 +24,4 @@ All datasets created here are uploaded to [HuggingFace Datasets](https://hugging
 ### 🗣️ Sample Usage
 [`overview.ipynb`](./overview.ipynb)
 - Showcase how to use one of the created datasets with *HuggingFace*
-- Dataset card is [here](https://huggingface.co/datasets/Pawlo77/mllm-swap)
+- Dataset card is [here](https://huggingface.co/datasets/Pawlo77/mllm-shap)
