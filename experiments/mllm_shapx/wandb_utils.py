@@ -4,10 +4,10 @@ from __future__ import annotations
 import os
 import importlib
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .config import WandBConfig
-from .constants import WandbMode
+from .constants import WandbMode, InputModality, OutputModality
 
 
 def wandb_init_if_enabled(cfg: WandBConfig, run_name: str, run_config: Dict[str, Any]) -> Optional[Any]:
@@ -73,3 +73,145 @@ def wandb_log_dir_incremental(
     art = artifact(name=artifact_name, type=artifact_type, metadata=metadata)
     art.add_dir(str(dir_path))
     run.log_artifact(art, aliases=["latest"])
+
+
+def log_audio_artifacts(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    run: Optional[Any],
+    audio_dir: Path,
+    input_modality: InputModality,
+    output_modality: OutputModality,
+    sample_id: str,
+    sample_rate: int = 24_000,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> None:
+    """
+    Log audio artifacts to WandB.
+
+    Args:
+        run: WandB run instance.
+        audio_dir: Directory containing audio files.
+        input_modality: Input modality used.
+        output_modality: Output modality used.
+        sample_id: Sample identifier.
+        sample_rate: Audio sample rate.
+        metadata: Additional metadata to log.
+    """
+    if run is None:
+        return
+
+    audio_dir = Path(audio_dir)
+    if not audio_dir.exists():
+        return
+
+    wb = importlib.import_module("wandb")
+    audio_cls = getattr(wb, "Audio")
+    log_fn = getattr(wb, "log")
+
+    audio_files = list(audio_dir.glob("*.wav")) + list(audio_dir.glob("*.mp3"))
+
+    for audio_file in audio_files:
+        try:
+            audio = audio_cls(
+                str(audio_file),
+                caption=f"{sample_id}: {audio_file.stem}",
+                sample_rate=sample_rate,
+            )
+
+            # Determine if input or output
+            is_input = "input" in audio_file.stem.lower()  # pylint: disable=magic-value-comparison
+            key = f"audio/{sample_id}/{'input' if is_input else 'output'}"
+
+            log_fn({key: audio})
+        except Exception:  # pylint: disable=broad-except
+            print("Failed to log audio file:", audio_file)
+            continue
+
+    # Log metadata
+    if metadata:
+        log_fn({
+            f"audio_metadata/{sample_id}": {
+                "input_modality": input_modality.value,
+                "output_modality": output_modality.value,
+                **metadata,
+            }
+        })
+
+
+def log_audio_files(
+    run: Optional[Any],
+    audio_files: List[Path],
+    sample_id: str,
+    sample_rate: int = 24_000,
+) -> None:
+    """
+    Log specific audio files to WandB.
+
+    Args:
+        run: WandB run instance.
+        audio_files: List of audio file paths.
+        sample_id: Sample identifier.
+        sample_rate: Audio sample rate.
+    """
+    if run is None:
+        return
+
+    wb = importlib.import_module("wandb")
+    audio_cls = getattr(wb, "Audio")
+    log_fn = getattr(wb, "log")
+
+    for audio_file in audio_files:
+        audio_file = Path(audio_file)
+        if not audio_file.exists():
+            continue
+
+        try:
+            audio = audio_cls(
+                str(audio_file),
+                caption=f"{sample_id}: {audio_file.stem}",
+                sample_rate=sample_rate,
+            )
+
+            is_input = "input" in audio_file.stem.lower()  # pylint: disable=magic-value-comparison
+            key = f"audio/{sample_id}/{'input' if is_input else 'output'}"
+
+            log_fn({key: audio})
+        except Exception:  # pylint: disable=broad-except
+            print("Failed to log audio file:", audio_file)
+            continue
+
+
+def create_audio_artifact(
+    run: Optional[Any],
+    audio_dir: Path,
+    artifact_name: str,
+    artifact_type: str = "audio",
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Optional[Any]:
+    """
+    Create a WandB artifact containing audio files.
+
+    Args:
+        run: WandB run instance.
+        audio_dir: Directory containing audio files.
+        artifact_name: Name for the artifact.
+        artifact_type: Type of artifact.
+        metadata: Optional metadata for the artifact.
+
+    Returns:
+        WandB Artifact or None if not available.
+    """
+    if run is None:
+        return None
+
+    audio_dir = Path(audio_dir)
+    if not audio_dir.exists():
+        return None
+
+    wb = importlib.import_module("wandb")
+    artifact_cls = getattr(wb, "Artifact")
+
+    art = artifact_cls(name=artifact_name, type=artifact_type, metadata=metadata or {})
+    art.add_dir(str(audio_dir))
+    run.log_artifact(art)
+
+    return art

@@ -30,27 +30,43 @@ from mllm_shap.shap.neyman import (
 from mllm_shap.shap.precise import PreciseShapExplainer
 from mllm_shap.shap.similarity import TfIdfCosineSimilarity
 
-from .config import (
-    NORMALIZER_MAP,
-    REDUCER_MAP,
-    SIMILARITY_MAP,
-    ExplainerVariant,
-    ShapConfig,
-)
-from .constants import ConnectorType, ExplainerType
+from .config import NORMALIZER_MAP, REDUCER_MAP, ExplainerVariant, ShapConfig, SIMILARITY_MAP
+from .constants import ExplainerType, ConnectorType, InputModality, OutputModality
 
 
-def _build_model(device: torch.device, connector: str) -> Any:
-    """Construct the selected connector."""
+def _build_model(
+    device: torch.device,
+    connector: str,
+    output_modality: OutputModality = OutputModality.TEXT,
+) -> Any:
+    """
+    Construct the selected connector with appropriate history tracking mode.
+
+    Args:
+        device: Torch device to use.
+        connector: Connector type string.
+        output_modality: Output modality (TEXT or AUDIO).
+
+    Returns:
+        Configured model connector.
+    """
+    # Determine history tracking mode based on output modality
+    if output_modality == OutputModality.AUDIO:
+        tracking_mode = ModelHistoryTrackingMode.AUDIO
+    else:
+        tracking_mode = ModelHistoryTrackingMode.TEXT
+
     if connector == ConnectorType.TRANSFORMERS_TEXT.value:
+        if output_modality == OutputModality.AUDIO:
+            raise ValueError("TransformersCausalText connector does not support audio output.")
         return TransformersCausalText(
             device=device,
-            history_tracking_mode=ModelHistoryTrackingMode.TEXT,
+            history_tracking_mode=tracking_mode,
         )
     # default: LiquidAudio
     return LiquidAudio(
         device=device,
-        history_tracking_mode=ModelHistoryTrackingMode.TEXT_AUDIO,
+        history_tracking_mode=tracking_mode,
     )
 
 
@@ -147,6 +163,7 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     connector: str,
     *,
     embedding_cfg: Any | None,
+    output_modality: OutputModality = OutputModality.TEXT,
     concrete_num_samples: int | None = None,
     concrete_fraction: float | None = None,
     hier_k: Optional[int] = None,
@@ -162,6 +179,24 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     Create (model + shap_explainer) wrapped in Explainer.
     - complementary: MC-like; pass through num_samples/fraction
     - neyman: AUTO mode; explicitly pass neither num_samples nor fraction
+
+    Args:
+        device: Torch device to use.
+        shap_cfg: SHAP configuration.
+        variant: Explainer variant configuration.
+        connector: Connector type string.
+        embedding_cfg: External embedding configuration.
+        output_modality: Output modality (TEXT or AUDIO) - controls history tracking mode.
+        concrete_num_samples: Concrete number of samples to use (overrides fraction).
+        concrete_fraction: Concrete fraction of samples to use (if num_samples is None).
+        hier_k: For hierarchical explainer, number of top-K users to consider.
+        hier_shap_type: For hierarchical explainer, inner SHAP type.
+        hier_shap_num_samples: For hierarchical explainer, inner SHAP num_samples.
+        hier_shap_fraction: For hierarchical explainer, inner SHAP fraction.
+        hier_first_layer_type: For hierarchical explainer, first-layer SHAP type.
+        hier_first_layer_num_samples: For hierarchical explainer, first-layer SHAP num_samples.
+        hier_first_layer_fraction: For hierarchical explainer, first-layer SHAP fraction.
+        hier_importance_min_fraction: For hierarchical explainer, min fraction for importance sampling.
     """
     mode = Mode[shap_cfg.mode]
     normalizer_cls = NORMALIZER_MAP[shap_cfg.normalizer]
@@ -171,7 +206,7 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     reducer = REDUCER_MAP[shap_cfg.reducer]()
     similarity = similarity_cls()
 
-    model = _build_model(device=device, connector=connector)
+    model = _build_model(device=device, connector=connector, output_modality=output_modality)
     external_emb = _build_external_embedding(model, embedding_cfg, device)
 
     def _common_kwargs() -> Dict[str, Any]:
@@ -279,16 +314,27 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
 
 def build_chat(  # pylint: disable=too-many-arguments
     model: Any,
-    user_text: str,
+    user_text: str | None,
     audio_bytes: bytes | None,
-    text_only: bool = False,
+    input_modality: InputModality = InputModality.TEXT,
     *,
     token_filter: Any | None = None,
 ) -> Any:
-    """Prepare a chat turn with the given text+audio for the LiquidAudio model."""
+    """
+    Prepare a chat turn with the given input modality for the model.
+
+    Args:
+        model: The model instance.
+        user_text: Text input (used for TEXT modality or as prompt for audio).
+        audio_bytes: Audio content bytes (used for AUDIO_MALE/AUDIO_FEMALE modalities).
+        input_modality: The input modality to use (TEXT, AUDIO_MALE, or AUDIO_FEMALE).
+        token_filter: Optional token filter.
+
+    Returns:
+        Configured chat instance.
+    """
     tf = token_filter or ExcludePunctuationTokensFilter()
 
-    chat = None
     chat = model.get_new_chat(
         system_roles_setup=SystemRolesSetup.SYSTEM_ASSISTANT,
         token_filter=tf,
@@ -297,10 +343,16 @@ def build_chat(  # pylint: disable=too-many-arguments
     chat.add_text("You are a helpful assistant.")
     chat.end_turn()
     chat.new_turn(Role.USER)
-    chat.add_text(user_text)
 
-    if not text_only and audio_bytes is not None:
-        chat.add_audio(audio_bytes)
+    if input_modality == InputModality.TEXT:
+        # Text-only input
+        if user_text:
+            chat.add_text(user_text)
+    elif input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
+        if audio_bytes is not None:
+            chat.add_audio(audio_bytes)
+        else:
+            raise ValueError(f"Audio bytes required for input modality: {input_modality}")
 
     chat.end_turn()
     chat.refresh(full=True)

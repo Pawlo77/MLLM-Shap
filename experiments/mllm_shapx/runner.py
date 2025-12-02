@@ -21,13 +21,14 @@ from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 
 from .config import ExperimentSet, ExplainerVariant
-from .constants import AudioCol, ConnectorType, ExplainerType
 from .data import (
     choose_prompt_text_column,
     iter_rows_for_selection,
 )
+from .constants import AudioCol, ExplainerType, InputModality
 from .factory import build_chat, build_explainer_for_variant
 from .serialization import compute_modality_summary, serialize_conversation
+from .audio_utils import serialize_result_with_audio
 from .storage import (
     existing_completed_from_disk,
     load_checkpoint,
@@ -40,6 +41,7 @@ from .wandb_utils import (
     wandb_init_if_enabled,
     wandb_log_artifact,
     wandb_log_dir_incremental,
+    log_audio_artifacts,
 )
 
 LOGGER: Logger = logging.getLogger(__name__)
@@ -258,6 +260,10 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         "experiment_set_id": cfg.experiment_set_id,
         "run_slug": run.run_slug,
         "connector": cfg.connector,
+        "modality": {
+            "input_modality": cfg.modality.input_modality,
+            "output_modality": cfg.modality.output_modality,
+        },
         "variant": {
             "explainer_type": run.variant.explainer_type,
             "num_samples": run.num_samples,
@@ -318,6 +324,10 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         run_config=run_config,
     )
 
+    # ---- modality settings
+    input_modality = cfg.modality.get_input_modality()
+    output_modality = cfg.modality.get_output_modality()
+
     # ---- explainer
     explainer = build_explainer_for_variant(
         device,
@@ -325,6 +335,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         run.variant,
         cfg.connector,
         embedding_cfg=cfg.embedding,
+        output_modality=output_modality,
         concrete_num_samples=123 if run.linear else run.num_samples,
         concrete_fraction=run.fraction,
         hier_k=run.hier_k,
@@ -339,7 +350,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
     # ---- selection policy: scan ALL rows after start_index (maybe shuffled), break after matched == target
     text_col = choose_prompt_text_column(df)
-    is_text_only = cfg.connector == ConnectorType.TRANSFORMERS_TEXT.value
+    is_text_only = input_modality == InputModality.TEXT
     token_filter = ExcludePunctuationTokensFilter()
 
     min_t = cfg.selection.min_prompt_tokens
@@ -381,17 +392,18 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         scanned_ctr += 1
 
-        # Audio column resolution
+        # Audio column resolution based on input modality
         audio_bytes: Optional[bytes] = None
-        if not is_text_only:
+        if input_modality == InputModality.AUDIO_MALE:
             if AudioCol.MALE.value in row:
                 audio_bytes = row[AudioCol.MALE.value][0]
-            elif AudioCol.FEMALE.value in row:
+            else:
+                raise KeyError(f"Expected '{AudioCol.MALE.value}' in row for audio_male input modality.")
+        elif input_modality == InputModality.AUDIO_FEMALE:
+            if AudioCol.FEMALE.value in row:
                 audio_bytes = row[AudioCol.FEMALE.value][0]
             else:
-                raise KeyError(
-                    "Expected 'audio__male' or 'audio__female' in row for audio model."
-                )
+                raise KeyError(f"Expected '{AudioCol.FEMALE.value}' in row for audio_female input modality.")
 
         # Prompt resolution
         v = row[text_col]
@@ -404,8 +416,8 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             explainer.model,
             user_text=user_text,
             audio_bytes=audio_bytes,
-            text_only=is_text_only,
-            token_filter=token_filter,
+            input_modality=input_modality,
+            token_filter=token_filter
         )
 
         # Ensure masks/tokens ready
@@ -465,6 +477,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
                 run.variant,
                 cfg.connector,
                 embedding_cfg=cfg.embedding,
+                output_modality=output_modality,
                 concrete_num_samples=scaled_num_samples,
                 concrete_fraction=run.fraction,
             )
@@ -498,19 +511,43 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         # ---- serialize + metrics
         conv = result.full_chat.get_conversation()
-        modality = compute_modality_summary(conv)
+        modality_summary = compute_modality_summary(conv)
         conv_json = serialize_conversation(conv)
 
-        sample_result = {
+        sample_result: Dict[str, Any] = {
             "row_index": int(row_idx),
             "language": row.get("language", "unknown"),
             "original_language": row.get("original_language", "unknown"),
             "runtime_sec": float(runtime_sec),
             "n_calls": n_calls,
             "prompt_text": user_text,
-            "attr_summary": modality,
+            "input_modality": input_modality.value,
+            "output_modality": output_modality.value,
+            "attr_summary": modality_summary,
             "conversation": conv_json,
         }
+
+        # ---- audio artifacts
+        audio_artifacts_dir = run_dir / "audio" / f"sample_{row_idx:05d}"
+        audio_info = serialize_result_with_audio(
+            result=result,
+            output_dir=audio_artifacts_dir,
+            input_audio_bytes=audio_bytes,
+            input_modality=input_modality,
+            output_modality=output_modality,
+            sample_id=f"sample_{row_idx:05d}",
+        )
+        if audio_info.get("input_audio") or audio_info.get("output_audio"):
+            sample_result["audio_artifacts"] = audio_info
+            # Log audio to WandB
+            if wb_run is not None:
+                log_audio_artifacts(
+                    wb_run,
+                    audio_artifacts_dir,
+                    input_modality,
+                    output_modality,
+                    f"sample_{row_idx:05d}",
+                )
 
         if run.variant.explainer_type == ExplainerType.HIERARCHICAL.value:
             sample_result["num_levels"] = cast(HierarchicalExplainer, explainer).n_calls
@@ -543,13 +580,15 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             {
                 "progress/sample_index": row_idx,
                 "timing/runtime_sec": runtime_sec,
-                "attr/abs_sum_text": modality["abs_sum_text"],
-                "attr/abs_sum_audio": modality["abs_sum_audio"],
-                "attr/frac_text": modality["frac_text"],
-                "attr/frac_audio": modality["frac_audio"],
-                "counts/text_tokens": modality["count_text_tokens"],
-                "counts/audio_segments": modality["count_audio_segments"],
+                "attr/abs_sum_text": modality_summary["abs_sum_text"],
+                "attr/abs_sum_audio": modality_summary["abs_sum_audio"],
+                "attr/frac_text": modality_summary["frac_text"],
+                "attr/frac_audio": modality_summary["frac_audio"],
+                "counts/text_tokens": modality_summary["count_text_tokens"],
+                "counts/audio_segments": modality_summary["count_audio_segments"],
                 "meta/language": row.get("language", "unknown"),
+                "meta/input_modality": input_modality.value,
+                "meta/output_modality": output_modality.value,
             },
         )
 
