@@ -1,4 +1,5 @@
 """Dataset loading, row selection, and optional prompt token filtering utilities."""
+
 from __future__ import annotations
 
 import importlib
@@ -8,7 +9,8 @@ from typing import Any, Dict, Iterable, Tuple
 
 import pandas as pd
 from huggingface_hub import hf_hub_download
-from .constants import TextCol, TRUE_JSON
+
+from .constants import TRUE_JSON, TextCol
 
 
 def load_single_sentence_df(
@@ -36,7 +38,10 @@ def choose_prompt_text_column(df: pd.DataFrame) -> str:
 
 
 def iter_rows_for_selection(
-    df: pd.DataFrame, start_index: int, max_samples: int | None, shuffle_seed: int | None
+    df: pd.DataFrame,
+    start_index: int,
+    max_samples: int | None,
+    shuffle_seed: int | None,
 ) -> Iterable[Tuple[int, Dict[str, Any]]]:
     """
     Yield (row_index, row_dict) with optional deterministic shuffling and slicing.
@@ -60,7 +65,9 @@ def get_hf_text_tokenizer() -> Any:
     transformers = importlib.import_module("transformers")
     repo_id = getattr(cfg_mod, "CONFIG").repo_id
     revision = getattr(cfg_mod, "CONFIG").revision
-    return getattr(transformers, "AutoTokenizer").from_pretrained(repo_id, revision=revision)  # nosec B615
+    return getattr(transformers, "AutoTokenizer").from_pretrained(
+        repo_id, revision=revision
+    )  # nosec B615
 
 
 def filter_df_by_max_prompt_tokens(
@@ -69,6 +76,7 @@ def filter_df_by_max_prompt_tokens(
     """
     Return (filtered_df, total_matching_count) where rows are limited to prompts with <= max_tokens.
     """
+
     def _first_text(row: Any) -> str:
         v = row[text_col]
         return v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
@@ -89,6 +97,7 @@ def filter_df_by_min_prompt_tokens(
     """
     Return (filtered_df, total_matching_count) where rows are limited to prompts with >= min_tokens.
     """
+
     def _first_text(row: Any) -> str:
         v = row[text_col]
         return v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")

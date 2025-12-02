@@ -1,4 +1,5 @@
 """Conversation serialization and summarization helpers."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -8,6 +9,7 @@ import torch
 
 
 def _safe_primitive(x: Any) -> Any:
+    """Convert x to a JSON-safe primitive, handling special cases."""
     if isinstance(x, (bytes, bytearray, memoryview)):
         return {"_binary": True, "num_bytes": len(x)}
     if isinstance(x, np.generic):
@@ -31,12 +33,16 @@ def serialize_conversation(conv: Any) -> List[List[Dict[str, Any]]]:
             shap_vals = getattr(entry, "shap_values", None)
             if shap_vals is not None:
                 shap_vals = [
-                    None if (isinstance(v, float) and (np.isnan(v) or np.isinf(v))) else float(v)
+                    None
+                    if (isinstance(v, float) and (np.isnan(v) or np.isinf(v)))
+                    else float(v)
                     for v in shap_vals
                 ]
             out_turn.append(
                 {
-                    "content_type": _safe_primitive(getattr(entry, "content_type", None)),
+                    "content_type": _safe_primitive(
+                        getattr(entry, "content_type", None)
+                    ),
                     "roles": _safe_primitive(getattr(entry, "roles", None)),
                     "content": content,
                     "shap_values": shap_vals,
@@ -59,7 +65,10 @@ def compute_modality_summary(conv: Any) -> Dict[str, Any]:
             if shap_vals is None:
                 continue
             modality = "text" if getattr(entry, "content_type", None) == 0 else "audio"
-            arr = np.array([v for v in shap_vals if not (isinstance(v, float) and np.isnan(v))], dtype=float)
+            arr = np.array(
+                [v for v in shap_vals if not (isinstance(v, float) and np.isnan(v))],
+                dtype=float,
+            )
             modality_abs_sum[modality] += float(np.abs(arr).sum())
             modality_counts[modality] += int(arr.size)
 

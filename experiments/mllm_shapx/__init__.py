@@ -1,4 +1,5 @@
-"""mllm_shapx – SHAP experiment runner."""
+"""mllm_shapx - SHAP experiment runner."""
+
 __all__ = [
     "config",
     "data",

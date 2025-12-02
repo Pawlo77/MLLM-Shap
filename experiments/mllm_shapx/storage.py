@@ -1,9 +1,10 @@
 """Filesystem helpers for runs, checkpoints, and JSON I/O."""
+
 from __future__ import annotations
 
 import json
-import time
 import logging
+import time
 from pathlib import Path
 from typing import Any, Dict, cast
 
@@ -73,5 +74,7 @@ def existing_completed_from_disk(run_dir: Path) -> set[int]:
             num = int(p.stem.split("_")[1])
             done.add(num)
         except (ValueError, IndexError):
-            logging.getLogger(__name__).debug("Ignoring filename that does not match pattern: %s", p.name)
+            logging.getLogger(__name__).debug(
+                "Ignoring filename that does not match pattern: %s", p.name
+            )
     return done
