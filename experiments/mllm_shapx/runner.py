@@ -1,30 +1,31 @@
+# pylint: disable=duplicate-code
 """Core orchestration: expand variants and execute runs."""
 
 from __future__ import annotations
 
-import json
 import gc
+import json
 import logging
 import time
 from dataclasses import dataclass
-from typing import cast, Any, Dict, List, Optional
+from logging import Logger
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
 import torch
-
 from mllm_shap.connectors import ModelConfig
-from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
+from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 
 from .config import ExperimentSet, ExplainerVariant
+from .constants import AudioCol, ConnectorType, ExplainerType
 from .data import (
     choose_prompt_text_column,
     iter_rows_for_selection,
 )
-from .constants import AudioCol, ConnectorType, ExplainerType
 from .factory import build_chat, build_explainer_for_variant
 from .serialization import compute_modality_summary, serialize_conversation
 from .storage import (
@@ -34,9 +35,14 @@ from .storage import (
     save_json,
     update_checkpoint,
 )
-from .wandb_utils import log_metrics, wandb_init_if_enabled, wandb_log_artifact, wandb_log_dir_incremental
+from .wandb_utils import (
+    log_metrics,
+    wandb_init_if_enabled,
+    wandb_log_artifact,
+    wandb_log_dir_incremental,
+)
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -62,12 +68,14 @@ class ExpandedVariant:  # pylint: disable=too-many-instance-attributes
 def pick_device(name: Optional[str]) -> torch.device:
     """Resolve the torch device preference."""
     if name is None:
-        return torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        return (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
     return torch.device(name)
 
 
 def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
-        cfg: ExperimentSet
+    cfg: ExperimentSet,
 ) -> List[ExpandedVariant]:
     """
     Materialize user-defined variants into concrete runs.
@@ -87,15 +95,25 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
 
         if t == ExplainerType.EXACT.value:
             slug = v.name or ExplainerType.EXACT.value
-            out.append(ExpandedVariant(run_slug=slug, variant=v, fraction=None, num_samples=None, linear=None))
+            out.append(
+                ExpandedVariant(
+                    run_slug=slug,
+                    variant=v,
+                    fraction=None,
+                    num_samples=None,
+                    linear=None,
+                )
+            )
             continue
 
-        if t in (ExplainerType.LIMITED_MC.value,
-                 ExplainerType.STANDARD_MC.value,
-                 ExplainerType.LIMITED_CC.value,
-                 ExplainerType.STANDARD_CC.value,
-                 ExplainerType.LIMITED_NEYMAN.value,
-                 ExplainerType.STANDARD_NEYMAN.value):
+        if t in (
+            ExplainerType.LIMITED_MC.value,
+            ExplainerType.STANDARD_MC.value,
+            ExplainerType.LIMITED_CC.value,
+            ExplainerType.STANDARD_CC.value,
+            ExplainerType.LIMITED_NEYMAN.value,
+            ExplainerType.STANDARD_NEYMAN.value,
+        ):
             if v.num_samples:
                 for ns in v.num_samples:
                     ns_i = int(ns)
@@ -153,13 +171,21 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
                                     slug += f"_frac{str(inn_fr).replace('.', '_')}"
                                 out.append(
                                     ExpandedVariant(
-                                        run_slug=(v.name + "_" + slug) if v.name else slug,
+                                        run_slug=(v.name + "_" + slug)
+                                        if v.name
+                                        else slug,
                                         variant=v,
-                                        fraction=None, num_samples=None, linear=None,
+                                        fraction=None,
+                                        num_samples=None,
+                                        linear=None,
                                         hier_k=int(k),
                                         hier_shap_type=inner_type,
-                                        hier_shap_num_samples=int(inn_ns) if inn_ns is not None else None,
-                                        hier_shap_fraction=float(inn_fr) if inn_fr is not None else None,
+                                        hier_shap_num_samples=int(inn_ns)
+                                        if inn_ns is not None
+                                        else None,
+                                        hier_shap_fraction=float(inn_fr)
+                                        if inn_fr is not None
+                                        else None,
                                         hier_first_layer_type=none_str,
                                         hier_importance_min_fraction=float(impmf),
                                     )
@@ -171,24 +197,42 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
                                         if inn_ns is not None:
                                             slug += f"_ns{inn_ns}"
                                         if inn_fr is not None:
-                                            slug += f"_frac{str(inn_fr).replace('.', '_')}"
+                                            slug += (
+                                                f"_frac{str(inn_fr).replace('.', '_')}"
+                                            )
                                         if flns is not None:
                                             slug += f"_flns{flns}"
                                         if flfr is not None:
-                                            slug += f"_flfrac{str(flfr).replace('.', '_')}"
+                                            slug += (
+                                                f"_flfrac{str(flfr).replace('.', '_')}"
+                                            )
                                         out.append(
                                             ExpandedVariant(
-                                                run_slug=(v.name + "_" + slug) if v.name else slug,
+                                                run_slug=(v.name + "_" + slug)
+                                                if v.name
+                                                else slug,
                                                 variant=v,
-                                                fraction=None, num_samples=None, linear=None,
+                                                fraction=None,
+                                                num_samples=None,
+                                                linear=None,
                                                 hier_k=int(k),
                                                 hier_shap_type=inner_type,
-                                                hier_shap_num_samples=int(inn_ns) if inn_ns is not None else None,
-                                                hier_shap_fraction=float(inn_fr) if inn_fr is not None else None,
+                                                hier_shap_num_samples=int(inn_ns)
+                                                if inn_ns is not None
+                                                else None,
+                                                hier_shap_fraction=float(inn_fr)
+                                                if inn_fr is not None
+                                                else None,
                                                 hier_first_layer_type=fl_type,
-                                                hier_first_layer_num_samples=int(flns) if flns is not None else None,
-                                                hier_first_layer_fraction=float(flfr) if flfr is not None else None,
-                                                hier_importance_min_fraction=float(impmf),
+                                                hier_first_layer_num_samples=int(flns)
+                                                if flns is not None
+                                                else None,
+                                                hier_first_layer_fraction=float(flfr)
+                                                if flfr is not None
+                                                else None,
+                                                hier_importance_min_fraction=float(
+                                                    impmf
+                                                ),
                                             )
                                         )
             continue
@@ -246,7 +290,9 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
     if resume:
         already = existing_completed_from_disk(run_dir)
-        ckpt["completed_indices"] = sorted(set(ckpt["completed_indices"]).union(already))
+        ckpt["completed_indices"] = sorted(
+            set(ckpt["completed_indices"]).union(already)
+        )
         ckpt.setdefault("next_index", 0)
         LOGGER.info(
             "Resuming run '%s': %d completed samples found on disk.",
@@ -343,11 +389,15 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             elif AudioCol.FEMALE.value in row:
                 audio_bytes = row[AudioCol.FEMALE.value][0]
             else:
-                raise KeyError("Expected 'audio__male' or 'audio__female' in row for audio model.")
+                raise KeyError(
+                    "Expected 'audio__male' or 'audio__female' in row for audio model."
+                )
 
         # Prompt resolution
         v = row[text_col]
-        user_text = v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
+        user_text = (
+            v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
+        )
 
         # Build the SAME chat that will be passed to the explainer
         chat = build_chat(
@@ -355,7 +405,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             user_text=user_text,
             audio_bytes=audio_bytes,
             text_only=is_text_only,
-            token_filter=token_filter
+            token_filter=token_filter,
         )
 
         # Ensure masks/tokens ready
@@ -374,7 +424,10 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         input_tok = int(getattr(chat, "input_tokens_num", n_pre))
         LOGGER.info(
             "At filter: n=%d | mask_sum=%d | input_tokens=%d | filter=%s",
-            n_pre, mask_sum, input_tok, type(token_filter).__name__ if token_filter else "None",
+            n_pre,
+            mask_sum,
+            input_tok,
+            type(token_filter).__name__ if token_filter else "None",
         )
 
         # Count rows that satisfy min bound (for logging parity)
@@ -384,7 +437,9 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         # Apply bounds (only meaningful for text-only)
         in_bounds = True
         if is_text_only:
-            if (min_t is not None and n_pre < int(min_t)) or (max_t is not None and n_pre > int(max_t)):
+            if (min_t is not None and n_pre < int(min_t)) or (
+                max_t is not None and n_pre > int(max_t)
+            ):
                 in_bounds = False
 
         if not in_bounds:
@@ -396,8 +451,14 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         if run.linear:
             scaled_num_samples = int(run.linear * n_pre * n_pre)
-            scaled_num_samples = scaled_num_samples if scaled_num_samples % 2 == 0 else scaled_num_samples + 1
-            LOGGER.info("Using linear explainer with scaled num_samples=%d.", scaled_num_samples)
+            scaled_num_samples = (
+                scaled_num_samples
+                if scaled_num_samples % 2 == 0
+                else scaled_num_samples + 1
+            )
+            LOGGER.info(
+                "Using linear explainer with scaled num_samples=%d.", scaled_num_samples
+            )
             explainer = build_explainer_for_variant(
                 device,
                 cfg.shap,
@@ -410,7 +471,9 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         generation_kwargs = {
             "max_new_tokens": int(cfg.generation.max_new_tokens),
-            "model_config": ModelConfig(text_temperature=float(cfg.generation.text_temperature)),
+            "model_config": ModelConfig(
+                text_temperature=float(cfg.generation.text_temperature)
+            ),
         }
 
         t0 = time.time()
@@ -428,7 +491,9 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         if n_post != n_pre:
             LOGGER.warning(
                 "Explainable-token drift detected: pre=%d post=%d (row=%d).",
-                n_pre, n_post, row_idx
+                n_pre,
+                n_post,
+                row_idx,
             )
 
         # ---- serialize + metrics
@@ -449,12 +514,18 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         if run.variant.explainer_type == ExplainerType.HIERARCHICAL.value:
             sample_result["num_levels"] = cast(HierarchicalExplainer, explainer).n_calls
-        elif run.variant.explainer_type in (ExplainerType.LIMITED_NEYMAN.value,
-                                            ExplainerType.STANDARD_NEYMAN.value):
-            neyman_explainer = cast(BaseComplementaryNeymanShapExplainer, explainer.shap_explainer)
+        elif run.variant.explainer_type in (
+            ExplainerType.LIMITED_NEYMAN.value,
+            ExplainerType.STANDARD_NEYMAN.value,
+        ):
+            neyman_explainer = cast(
+                BaseComplementaryNeymanShapExplainer, explainer.shap_explainer
+            )
             # Access step count from neyman explainer
             # pylint: disable=protected-access
-            sample_result["neyman_steps"] = neyman_explainer._BaseComplementaryNeymanShapExplainer__step
+            sample_result["neyman_steps"] = (
+                neyman_explainer._BaseComplementaryNeymanShapExplainer__step
+            )
 
         sample_path = run_dir / "samples" / f"sample_{row_idx:05d}_result.json"
         save_json(sample_path, sample_result)
@@ -483,13 +554,15 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         )
 
         # checkpoint after each sample
-        update_checkpoint(ckpt_path, ckpt, just_completed=row_idx, next_index=row_idx + 1)
+        update_checkpoint(
+            ckpt_path, ckpt, just_completed=row_idx, next_index=row_idx + 1
+        )
         completed_set.add(row_idx)
         matched_ctr += 1
 
         # ===== Aggressive GPU cleanup after each sample =====
         # Clear the cache from the chat
-        if hasattr(result, 'full_chat') and result.full_chat.cache is not None:
+        if hasattr(result, "full_chat") and result.full_chat.cache is not None:
             result.full_chat.cache = None
 
         # Clear history explicitly
@@ -541,14 +614,18 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
     if is_text_only and (min_t is not None):
         LOGGER.info(
             "Explainable-token filter: >= %d tokens matched %d / %d rows.",
-            int(min_t), ge_min_ctr, scanned_ctr
+            int(min_t),
+            ge_min_ctr,
+            scanned_ctr,
         )
     if is_text_only and (max_t is not None):
         # Matched both bounds; denominator = rows that met the min bound
         denom = ge_min_ctr if min_t is not None else scanned_ctr
         LOGGER.info(
             "Explainable-token filter: <= %d tokens matched %d / %d rows.",
-            int(max_t), matched_ctr, denom
+            int(max_t),
+            matched_ctr,
+            denom,
         )
 
     # ---- W&B artifact

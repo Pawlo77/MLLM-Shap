@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, cast
 
 import torch
-
 from mllm_shap.connectors import LiquidAudio, TransformersCausalText
 from mllm_shap.connectors.enums import (
     ModelHistoryTrackingMode,
@@ -15,18 +14,30 @@ from mllm_shap.connectors.enums import (
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 from mllm_shap.shap import Explainer
 from mllm_shap.shap.base.shap_explainer import BaseShapExplainer
-from mllm_shap.shap.monte_carlo import LimitedMcShapExplainer, StandardMcShapExplainer
-from mllm_shap.shap.complementary import LimitedComplementaryShapExplainer, StandardComplementaryShapExplainer
-from mllm_shap.shap.neyman import LimitedComplementaryNeymanShapExplainer, StandardComplementaryNeymanShapExplainer
-from mllm_shap.shap.hierarchical import HierarchicalExplainer
+from mllm_shap.shap.complementary import (
+    LimitedComplementaryShapExplainer,
+    StandardComplementaryShapExplainer,
+)
+from mllm_shap.shap.embeddings import CustomEmbedding
 from mllm_shap.shap.enums import Mode
+from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.hierarchical.enums import Mode as HierMode
+from mllm_shap.shap.monte_carlo import LimitedMcShapExplainer, StandardMcShapExplainer
+from mllm_shap.shap.neyman import (
+    LimitedComplementaryNeymanShapExplainer,
+    StandardComplementaryNeymanShapExplainer,
+)
 from mllm_shap.shap.precise import PreciseShapExplainer
 from mllm_shap.shap.similarity import TfIdfCosineSimilarity
-from mllm_shap.shap.embeddings import CustomEmbedding
 
-from .config import NORMALIZER_MAP, REDUCER_MAP, ExplainerVariant, ShapConfig, SIMILARITY_MAP
-from .constants import ExplainerType, ConnectorType
+from .config import (
+    NORMALIZER_MAP,
+    REDUCER_MAP,
+    SIMILARITY_MAP,
+    ExplainerVariant,
+    ShapConfig,
+)
+from .constants import ConnectorType, ExplainerType
 
 
 def _build_model(device: torch.device, connector: str) -> Any:
@@ -177,12 +188,16 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     t = variant.explainer_type.lower()
 
     if t == ExplainerType.EXACT.value:
-        return Explainer(model=model, shap_explainer=PreciseShapExplainer(**_common_kwargs()))
+        return Explainer(
+            model=model, shap_explainer=PreciseShapExplainer(**_common_kwargs())
+        )
 
     if t in (ExplainerType.LIMITED_MC.value, ExplainerType.STANDARD_MC.value):
-        mc_ctor: Type[Any] = (LimitedMcShapExplainer
-                              if t == ExplainerType.LIMITED_MC.value
-                              else StandardMcShapExplainer)
+        mc_ctor: Type[Any] = (
+            LimitedMcShapExplainer
+            if t == ExplainerType.LIMITED_MC.value
+            else StandardMcShapExplainer
+        )
         kw = _common_kwargs()
         if concrete_num_samples is not None:
             kw["num_samples"] = int(concrete_num_samples)
@@ -191,9 +206,11 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
         return Explainer(model=model, shap_explainer=mc_ctor(**kw))
 
     if t in (ExplainerType.LIMITED_CC.value, ExplainerType.STANDARD_CC.value):
-        ctor: Type[Any] = (LimitedComplementaryShapExplainer
-                           if t == ExplainerType.LIMITED_CC.value
-                           else StandardComplementaryShapExplainer)
+        ctor: Type[Any] = (
+            LimitedComplementaryShapExplainer
+            if t == ExplainerType.LIMITED_CC.value
+            else StandardComplementaryShapExplainer
+        )
         kw = _common_kwargs()
         if concrete_num_samples is not None:
             kw["num_samples"] = int(concrete_num_samples)
@@ -207,7 +224,9 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
             kw["num_samples"] = int(concrete_num_samples)
         else:
             _maybe_add_fraction(kw, concrete_fraction)
-        return Explainer(model=model, shap_explainer=LimitedComplementaryNeymanShapExplainer(**kw))
+        return Explainer(
+            model=model, shap_explainer=LimitedComplementaryNeymanShapExplainer(**kw)
+        )
 
     if t == ExplainerType.STANDARD_NEYMAN.value:
         kw = _common_kwargs()
@@ -215,7 +234,9 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
             kw["num_samples"] = int(concrete_num_samples)
         else:
             _maybe_add_fraction(kw, concrete_fraction)
-        return Explainer(model=model, shap_explainer=StandardComplementaryNeymanShapExplainer(**kw))
+        return Explainer(
+            model=model, shap_explainer=StandardComplementaryNeymanShapExplainer(**kw)
+        )
 
     if t == ExplainerType.HIERARCHICAL.value:
         none_str = "none"
@@ -238,14 +259,19 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
                 fraction=hier_first_layer_fraction,
             )
 
-        return HierarchicalExplainer(
-            model=model,
-            shap_explainer=inner,
-            first_layer_explainer=first_layer,
-            mode=HierMode.MULTI_MODAL_MULTI_USER,
-            k=int(hier_k or 10),
-            use_importance_sampling=True,
-            importance_sampling_min_fraction=float(hier_importance_min_fraction or 0.1),
+        return cast(
+            Explainer,
+            HierarchicalExplainer(
+                model=model,
+                shap_explainer=inner,
+                first_layer_explainer=first_layer,
+                mode=HierMode.MULTI_MODAL_MULTI_USER,
+                k=int(hier_k or 10),
+                use_importance_sampling=True,
+                importance_sampling_min_fraction=float(
+                    hier_importance_min_fraction or 0.1
+                ),
+            ),
         )
 
     raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
@@ -268,7 +294,7 @@ def build_chat(  # pylint: disable=too-many-arguments
         token_filter=tf,
     )
     chat.new_turn(Role.ASSISTANT)
-    chat.add_text("You are a helpful assitant.")
+    chat.add_text("You are a helpful assistant.")
     chat.end_turn()
     chat.new_turn(Role.USER)
     chat.add_text(user_text)

@@ -46,10 +46,16 @@ def download_model(
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Download a pinned Hugging Face model snapshot locally.")
-    p.add_argument("--repo-id", required=True, help="HF repo id, e.g. intfloat/e5-base-v2")
+    p = argparse.ArgumentParser(
+        description="Download a pinned Hugging Face model snapshot locally."
+    )
+    p.add_argument(
+        "--repo-id", required=True, help="HF repo id, e.g. intfloat/e5-base-v2"
+    )
     p.add_argument("--revision", required=True, help="40-hex commit SHA (immutable)")
-    p.add_argument("--dest", default=None, help="Destination directory (created if missing)")
+    p.add_argument(
+        "--dest", default=None, help="Destination directory (created if missing)"
+    )
     p.add_argument(
         "--allow-patterns",
         nargs="+",

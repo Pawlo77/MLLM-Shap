@@ -6,14 +6,16 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-import wandb  # pylint: disable=import-error
+import wandb
 
 if TYPE_CHECKING:
     from wandb.apis.public import Run
 
 # Regex to match the artifact naming convention defined in runner.py
 # Format: {experiment_set_id}__{run_slug}-{type}
-ARTIFACT_REGEX = re.compile(r"^(?P<set_id>.+?)__(?P<slug>.+?)-(?P<kind>samples|summary)$")
+ARTIFACT_REGEX = re.compile(
+    r"^(?P<set_id>.+?)__(?P<slug>.+?)-(?P<kind>samples|summary)$"
+)
 
 
 def reconstruct_spec(run: "Run", target_path: Path) -> None:
@@ -31,12 +33,12 @@ def reconstruct_spec(run: "Run", target_path: Path) -> None:
         spec_content = run.config
 
         # Remove internal wandb keys
-        spec_content = {k: v for k, v in spec_content.items() if not k.startswith('_')}
+        spec_content = {k: v for k, v in spec_content.items() if not k.startswith("_")}
 
         # Ensure directory exists
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(target_path, 'w', encoding='utf-8') as f:
+        with open(target_path, "w", encoding="utf-8") as f:
             json.dump(spec_content, f, indent=2)
     except (OSError, json.JSONDecodeError, AttributeError) as e:
         print(f"  [!] Failed to reconstruct spec.json: {e}")
@@ -48,17 +50,19 @@ def sync_artifacts(
 ) -> None:
     """Sync W&B Artifacts to Local Experiments Folder."""
 
-    api: Any = wandb.Api()  # type: ignore[attr-defined]
+    api: Any = wandb.Api()
     print(f"--- Syncing from {entity}/{project} to '{output_root}' ---")
 
     # We look for both 'samples' and 'summary' artifact types
-    artifact_types = ['samples', 'summary']
+    artifact_types = ["samples", "summary"]
 
     for art_type_name in artifact_types:
         try:
             # Fetch artifact type collection
-            art_type = api.artifact_type(type_name=art_type_name, project=f"{entity}/{project}")
-        except wandb.Error:  # type: ignore[attr-defined]
+            art_type = api.artifact_type(
+                type_name=art_type_name, project=f"{entity}/{project}"
+            )
+        except wandb.Error:
             print(f"No artifacts of type '{art_type_name}' found.")
             continue
 
@@ -79,7 +83,7 @@ def sync_artifacts(
             # Get the latest version of this artifact
             try:
                 artifact = api.artifact(f"{entity}/{project}/{collection.name}:latest")
-            except wandb.Error:  # type: ignore[attr-defined]
+            except wandb.Error:
                 print(f"  [!] Could not fetch latest artifact for {collection.name}")
                 continue
 
@@ -105,16 +109,24 @@ def sync_artifacts(
                 else:
                     # Fallback: Create empty spec if run no longer exists
                     print("  [!] Run not found. Creating empty spec.json.")
-                    with open(spec_path, 'w', encoding='utf-8') as f:
+                    with open(spec_path, "w", encoding="utf-8") as f:
                         json.dump({}, f)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Sync W&B artifacts to local experiments_output folder.")
+    parser = argparse.ArgumentParser(
+        description="Sync W&B artifacts to local experiments_output folder."
+    )
     parser.add_argument("--entity", required=True, help="W&B Entity (username or team)")
     parser.add_argument("--project", required=True, help="W&B Project name")
-    parser.add_argument("--output", default="experiments_output", help="Local root folder for experiments")
-    parser.add_argument("--filter", default=None, help="Optional: Filter by experiment_set_id")
+    parser.add_argument(
+        "--output",
+        default="experiments_output",
+        help="Local root folder for experiments",
+    )
+    parser.add_argument(
+        "--filter", default=None, help="Optional: Filter by experiment_set_id"
+    )
 
     args = parser.parse_args()
 

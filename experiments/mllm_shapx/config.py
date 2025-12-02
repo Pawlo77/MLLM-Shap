@@ -1,11 +1,12 @@
 """Configuration models, registries, parsing and validation."""
+
 from __future__ import annotations
 
 import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Mapping, Callable
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 from mllm_shap.shap.base.embeddings import BaseEmbeddingReducer
 from mllm_shap.shap.embeddings import (
@@ -19,18 +20,22 @@ from mllm_shap.shap.embeddings import (
 from mllm_shap.shap.normalizers import (
     AbsSumNormalizer,
     IdentityNormalizer,
-    PowerShiftNormalizer,
     MinMaxNormalizer,
+    PowerShiftNormalizer,
 )
-from mllm_shap.shap.similarity import CosineSimilarity, TfIdfCosineSimilarity, EuclideanSimilarity
+from mllm_shap.shap.similarity import (
+    CosineSimilarity,
+    EuclideanSimilarity,
+    TfIdfCosineSimilarity,
+)
 
 from .constants import (
     DEFAULT_SPLIT,
     DEFAULT_SUBSET,
-    ExplainerType,
     ConnectorType,
+    ExplainerType,
+    ModeType,
     SimilarityType,
-    ModeType
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -40,9 +45,11 @@ LOGGER = logging.getLogger(__name__)
 # CONFIG MODEL (dataclasses)
 # ---------------------------
 
+
 @dataclass
 class WandBConfig:
     """Weights & Biases configuration."""
+
     enabled: bool = True
     project: str = "mllm-shap"
     entity: Optional[str] = None
@@ -54,6 +61,7 @@ class WandBConfig:
 @dataclass
 class DatasetConfig:
     """Dataset location on Hugging Face Hub."""
+
     subset: str = "single_sentence"
     split: str = "test"
     revision: str = "refs/convert/parquet"
@@ -63,6 +71,7 @@ class DatasetConfig:
 @dataclass
 class SelectionConfig:
     """Row selection parameters."""
+
     max_samples: Optional[int] = None
     shuffle_seed: Optional[int] = 0
     start_index: int = 0
@@ -73,6 +82,7 @@ class SelectionConfig:
 @dataclass
 class GenerationConfig:
     """Model text generation knobs."""
+
     max_new_tokens: int = 32
     text_temperature: float = 0.2
 
@@ -80,6 +90,7 @@ class GenerationConfig:
 @dataclass
 class ShapConfig:
     """SHAP-wide knobs that are shared across explainers."""
+
     mode: str = ModeType.CONTEXTUAL.value
     normalizer: str = "AbsSumNormalizer"
     reducer: str = "MeanReducer"
@@ -97,13 +108,14 @@ class ExplainerVariant:  # pylint: disable=too-many-instance-attributes
         * fractions:   list[float] in (0, 1] (each entry yields a run)
     - 'neyman': ignores num_samples/fractions (auto mode).
     """
+
     explainer_type: str = ExplainerType.LIMITED_MC.value
     num_samples: Optional[List[int]] = None
     linear: Optional[List[float]] = None
     fractions: Optional[List[float]] = None
     name: Optional[str] = None
     # hierarchical
-    hierarchical_ks: Optional[List[int]] = None   # list of k to sweep
+    hierarchical_ks: Optional[List[int]] = None  # list of k to sweep
     # which inner SHAP to use at deeper levels
     hierarchical_shap_type: Optional[str] = None
     hierarchical_shap_num_samples: Optional[List[int]] = None
@@ -120,6 +132,7 @@ class ExplainerVariant:  # pylint: disable=too-many-instance-attributes
 @dataclass
 class EmbeddingConfig:
     """Optional external embedding model (CustomEmbedding)."""
+
     model_id: Optional[str] = None
     revision: Optional[str] = None
     max_length: int = 64
@@ -131,6 +144,7 @@ class EmbeddingConfig:
 @dataclass
 class ExperimentSet:
     """Top-level config for a set of experiment variants."""
+
     # pylint: disable=too-many-instance-attributes
     experiment_set_id: str
     output_root: str = "experiments_output"
@@ -150,6 +164,7 @@ class ExperimentSet:
         with open(path, "r", encoding="utf-8") as f:
             raw = json.load(f)
         return parse_experiment_set(raw)
+
 
 # ---------------------------
 # REGISTRIES
@@ -209,20 +224,34 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
                 linear=e.get("linear"),
                 name=e.get("name"),
                 hierarchical_ks=e.get("hierarchical_ks", h.get("ks")),
-                hierarchical_shap_type=e.get("hierarchical_shap_type", h.get("shap_type")),
-                hierarchical_shap_num_samples=e.get("hierarchical_shap_num_samples", h.get("shap_num_samples")),
-                hierarchical_shap_fractions=e.get("hierarchical_shap_fractions", h.get("shap_fractions")),
-                hierarchical_first_layer_type=e.get("hierarchical_first_layer_type", h.get("first_layer_type")),
-                hierarchical_first_layer_num_samples=e.get("hierarchical_first_layer_num_samples",
-                                                           h.get("first_layer_num_samples")),
-                hierarchical_first_layer_fractions=e.get("hierarchical_first_layer_fractions",
-                                                         h.get("first_layer_fractions")),
+                hierarchical_shap_type=e.get(
+                    "hierarchical_shap_type", h.get("shap_type")
+                ),
+                hierarchical_shap_num_samples=e.get(
+                    "hierarchical_shap_num_samples", h.get("shap_num_samples")
+                ),
+                hierarchical_shap_fractions=e.get(
+                    "hierarchical_shap_fractions", h.get("shap_fractions")
+                ),
+                hierarchical_first_layer_type=e.get(
+                    "hierarchical_first_layer_type", h.get("first_layer_type")
+                ),
+                hierarchical_first_layer_num_samples=e.get(
+                    "hierarchical_first_layer_num_samples",
+                    h.get("first_layer_num_samples"),
+                ),
+                hierarchical_first_layer_fractions=e.get(
+                    "hierarchical_first_layer_fractions", h.get("first_layer_fractions")
+                ),
                 hierarchical_use_importance_sampling=bool(
-                    e.get("hierarchical_use_importance_sampling",
-                          h.get("use_importance_sampling", True))
+                    e.get(
+                        "hierarchical_use_importance_sampling",
+                        h.get("use_importance_sampling", True),
+                    )
                 ),
                 hierarchical_importance_min_fractions=e.get(
-                    "hierarchical_importance_min_fractions", h.get("importance_min_fractions")
+                    "hierarchical_importance_min_fractions",
+                    h.get("importance_min_fractions"),
                 ),
             )
         )
@@ -290,13 +319,23 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             errs.append("selection.max_samples must be positive or null.")
         if cfg.selection.start_index < 0:
             errs.append("selection.start_index must be >= 0.")
-        if cfg.selection.max_prompt_tokens is not None and cfg.selection.max_prompt_tokens <= 0:
+        if (
+            cfg.selection.max_prompt_tokens is not None
+            and cfg.selection.max_prompt_tokens <= 0
+        ):
             errs.append("selection.max_prompt_tokens must be positive if provided.")
-        if cfg.selection.min_prompt_tokens is not None and cfg.selection.min_prompt_tokens <= 0:
+        if (
+            cfg.selection.min_prompt_tokens is not None
+            and cfg.selection.min_prompt_tokens <= 0
+        ):
             errs.append("selection.min_prompt_tokens must be positive if provided.")
 
     def _validate_wandb() -> None:
-        if cfg.wandb.mode is not None and cfg.wandb.mode not in ("online", "offline", "disabled"):
+        if cfg.wandb.mode is not None and cfg.wandb.mode not in (
+            "online",
+            "offline",
+            "disabled",
+        ):
             errs.append("wandb.mode must be one of: online | offline | disabled.")
 
     def _validate_shap() -> None:
@@ -306,10 +345,14 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             errs.append(f"Unknown shap.normalizer: {cfg.shap.normalizer}")
         if cfg.shap.reducer not in REDUCER_MAP:
             errs.append(f"Unknown shap.reducer: {cfg.shap.reducer}")
-        if cfg.shap.similarity not in (SimilarityType.COSINE.value,
-                                       SimilarityType.TFIDF_COSINE.value,
-                                       SimilarityType.EUCLIDEAN.value):
-            errs.append("shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'.")
+        if cfg.shap.similarity not in (
+            SimilarityType.COSINE.value,
+            SimilarityType.TFIDF_COSINE.value,
+            SimilarityType.EUCLIDEAN.value,
+        ):
+            errs.append(
+                "shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'."
+            )
 
     def _validate_variants() -> None:  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         if not cfg.experiments:
@@ -322,7 +365,9 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             t = exp.explainer_type.lower()
             allowed = {e.value for e in ExplainerType}
             if t not in allowed:
-                errs.append(f"experiments[{i}].explainer_type must be {sorted(allowed)}.")
+                errs.append(
+                    f"experiments[{i}].explainer_type must be {sorted(allowed)}."
+                )
                 continue
 
             # MC-like knobs required for: limited_mc, standard_mc, complementary
@@ -336,13 +381,18 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             )
             if wants_mc_knobs:
                 if not exp.num_samples and not exp.fractions and not exp.linear:
-                    errs.append(f"experiments[{i}]: MC-like explainer requires num_samples or fractions.")
+                    errs.append(
+                        f"experiments[{i}]: MC-like explainer requires num_samples or fractions."
+                    )
                 if exp.num_samples is not None:
                     if not isinstance(exp.num_samples, list) or not exp.num_samples:
-                        errs.append(f"experiments[{i}].num_samples must be a non-empty list of ints.")
+                        errs.append(
+                            f"experiments[{i}].num_samples must be a non-empty list of ints."
+                        )
                     else:
                         bad_ns = [
-                            ns for ns in exp.num_samples
+                            ns
+                            for ns in exp.num_samples
                             if not isinstance(ns, int) or (ns != -1 and ns <= 0)
                         ]
                         if bad_ns:
@@ -352,40 +402,58 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                 if exp.fractions is not None:
                     bad = [f for f in exp.fractions if not 0.0 < float(f) <= 1.0]
                     if bad:
-                        errs.append(f"experiments[{i}].fractions must be in (0,1]; bad: {bad}")
+                        errs.append(
+                            f"experiments[{i}].fractions must be in (0,1]; bad: {bad}"
+                        )
                 if exp.linear is not None:
                     bad = [lin for lin in exp.linear if not 0.0 < float(lin) <= 10.0]
                     if bad:
-                        errs.append(f"experiments[{i}].linear must be in (0,10]; bad: {bad}")
+                        errs.append(
+                            f"experiments[{i}].linear must be in (0,10]; bad: {bad}"
+                        )
             if t == ExplainerType.HIERARCHICAL.value:
                 minimal_k: int = 2
                 # k
                 ks = exp.hierarchical_ks or []
                 if not ks:
-                    errs.append(f"experiments[{i}] hierarchical requires 'hierarchical_k' or 'hierarchical_ks'.")
+                    errs.append(
+                        f"experiments[{i}] hierarchical requires 'hierarchical_k' or 'hierarchical_ks'."
+                    )
                 else:
                     badk = [k for k in ks if not isinstance(k, int) or k < minimal_k]
                     if badk:
-                        errs.append(f"experiments[{i}] hierarchical k values must be integers >= 2; bad: {badk}")
+                        errs.append(
+                            f"experiments[{i}] hierarchical k values must be integers >= 2; bad: {badk}"
+                        )
 
                 # inner shap type
                 inner = (exp.hierarchical_shap_type or "").lower()
-                allowed_inner = {"precise",
-                                 "limited_mc",
-                                 "limited_cc",
-                                 "standard_cc",
-                                 "limited_neyman",
-                                 "standard_neyman"}
+                allowed_inner = {
+                    "precise",
+                    "limited_mc",
+                    "limited_cc",
+                    "standard_cc",
+                    "limited_neyman",
+                    "standard_neyman",
+                }
                 if inner and inner not in allowed_inner:
-                    errs.append(f"experiments[{i}] hierarchical_shap_type must be one of {sorted(allowed_inner)}.")
+                    errs.append(
+                        f"experiments[{i}] hierarchical_shap_type must be one of {sorted(allowed_inner)}."
+                    )
 
                 # importance sampling (fixed true as requested)
                 if not exp.hierarchical_use_importance_sampling:
-                    errs.append(f"experiments[{i}] hierarchical_use_importance_sampling must be True.")
+                    errs.append(
+                        f"experiments[{i}] hierarchical_use_importance_sampling must be True."
+                    )
 
                 # min fraction sweep
                 if exp.hierarchical_importance_min_fractions is not None:
-                    bad_imp = [f for f in exp.hierarchical_importance_min_fractions if not 0.0 < float(f) <= 1.0]
+                    bad_imp = [
+                        f
+                        for f in exp.hierarchical_importance_min_fractions
+                        if not 0.0 < float(f) <= 1.0
+                    ]
                     if bad_imp:
                         errs.append(
                             f"experiments[{i}] hierarchical_importance_min_fractions must be in (0,1]; bad: {bad_imp}"
@@ -393,13 +461,15 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
 
                 # first-layer type
                 flt = (exp.hierarchical_first_layer_type or "none").lower()
-                allowed_first = {"none",
-                                 "precise",
-                                 "limited_mc",
-                                 "limited_cc",
-                                 "standard_cc",
-                                 "limited_neyman",
-                                 "standard_neyman"}
+                allowed_first = {
+                    "none",
+                    "precise",
+                    "limited_mc",
+                    "limited_cc",
+                    "standard_cc",
+                    "limited_neyman",
+                    "standard_neyman",
+                }
                 if flt not in allowed_first:
                     errs.append(
                         f"experiments[{i}] hierarchical_first_layer_type must be one of "
@@ -411,7 +481,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                 if cfg.shap.normalizer != min_max_norm:
                     LOGGER.warning(
                         "HierarchicalExplainer should be used with MinMaxNormalizer; you set %s.",
-                        cfg.shap.normalizer
+                        cfg.shap.normalizer,
                     )
 
     _validate_dataset()

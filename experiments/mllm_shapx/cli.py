@@ -1,4 +1,5 @@
 """CLI entrypoint for validation and running experiments."""
+
 from __future__ import annotations
 
 import argparse
@@ -40,7 +41,10 @@ def cmd_validate(args: argparse.Namespace) -> None:
     if args.check_dataset:
         try:
             _ = load_single_sentence_df(
-                cfg.dataset.repo_id, cfg.dataset.subset, cfg.dataset.split, cfg.dataset.revision
+                cfg.dataset.repo_id,
+                cfg.dataset.subset,
+                cfg.dataset.split,
+                cfg.dataset.revision,
             )
             print("✅ Dataset shard reachable & readable.")
         except Exception as ex:  # pylint: disable=broad-except
@@ -80,17 +84,29 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def build_argparser() -> argparse.ArgumentParser:
     """Construct the argument parser for the CLI."""
-    p = argparse.ArgumentParser(description="mllm_shap single_sentence experiment runner (exact & MC)")
+    p = argparse.ArgumentParser(
+        description="mllm_shap single_sentence experiment runner (exact & MC)"
+    )
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    v = sub.add_parser("validate", help="Validate a config (and optionally test dataset availability).")
+    v = sub.add_parser(
+        "validate", help="Validate a config (and optionally test dataset availability)."
+    )
     v.add_argument("--config", required=True, help="Path to JSON config.")
-    v.add_argument("--check-dataset", action="store_true", help="Try to download and read a parquet shard.")
+    v.add_argument(
+        "--check-dataset",
+        action="store_true",
+        help="Try to download and read a parquet shard.",
+    )
     v.set_defaults(func=cmd_validate)
 
     r = sub.add_parser("run", help="Run experiments defined in config.")
     r.add_argument("--config", required=True, help="Path to JSON config.")
-    r.add_argument("--resume", action="store_true", help="Resume from checkpoint/output if present.")
+    r.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from checkpoint/output if present.",
+    )
     r.set_defaults(func=cmd_run)
 
     return p

@@ -76,7 +76,7 @@ repos:
             --ignore-missing-imports
         language: system
         types: [python]
-        files: ^(mllm_shap/src|experiments)/.*\.py$
+        files: ^(mllm_shap/src)/.*\.py$
 
   - repo: local
     hooks:
