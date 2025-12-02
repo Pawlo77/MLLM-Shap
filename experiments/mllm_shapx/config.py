@@ -34,8 +34,10 @@ from .constants import (
     DEFAULT_SUBSET,
     ConnectorType,
     ExplainerType,
-    ModeType,
     SimilarityType,
+    ModeType,
+    InputModality,
+    OutputModality,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -85,6 +87,22 @@ class GenerationConfig:
 
     max_new_tokens: int = 32
     text_temperature: float = 0.2
+
+
+@dataclass
+class ModalityConfig:
+    """Configuration for input/output modalities."""
+
+    input_modality: str = InputModality.TEXT.value  # text, audio__male, audio__female
+    output_modality: str = OutputModality.TEXT.value  # text, audio
+
+    def get_input_modality(self) -> InputModality:
+        """Get InputModality enum from string value."""
+        return InputModality(self.input_modality)
+
+    def get_output_modality(self) -> OutputModality:
+        """Get OutputModality enum from string value."""
+        return OutputModality(self.output_modality)
 
 
 @dataclass
@@ -154,6 +172,7 @@ class ExperimentSet:
     selection: SelectionConfig = field(default_factory=SelectionConfig)
     wandb: WandBConfig = field(default_factory=WandBConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
+    modality: ModalityConfig = field(default_factory=ModalityConfig)
     shap: ShapConfig = field(default_factory=ShapConfig)
     embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     experiments: List[ExplainerVariant] = field(default_factory=list)
@@ -209,6 +228,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
     sel = _subdict(raw, "selection")
     wb = _subdict(raw, "wandb")
     gen = _subdict(raw, "generation")
+    mod = _subdict(raw, "modality")
     shp = _subdict(raw, "shap")
     emb = _subdict(raw, "embedding")
 
@@ -286,6 +306,10 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             max_new_tokens=gen.get("max_new_tokens", 32),
             text_temperature=gen.get("text_temperature", 0.2),
         ),
+        modality=ModalityConfig(
+            input_modality=mod.get("input_modality", InputModality.TEXT.value),
+            output_modality=mod.get("output_modality", OutputModality.TEXT.value),
+        ),
         shap=ShapConfig(
             mode=shp.get("mode", ModeType.CONTEXTUAL.value),
             normalizer=shp.get("normalizer", "AbsSumNormalizer"),
@@ -337,6 +361,22 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
             "disabled",
         ):
             errs.append("wandb.mode must be one of: online | offline | disabled.")
+
+    def _validate_modality() -> None:
+        valid_input = {m.value for m in InputModality}
+        valid_output = {m.value for m in OutputModality}
+
+        if cfg.modality.input_modality not in valid_input:
+            errs.append(f"modality.input_modality must be one of: {sorted(valid_input)}.")
+        if cfg.modality.output_modality not in valid_output:
+            errs.append(f"modality.output_modality must be one of: {sorted(valid_output)}.")
+
+        # TransformersCausalText connector only supports text output
+        if cfg.connector == ConnectorType.TRANSFORMERS_TEXT.value:
+            if cfg.modality.output_modality == OutputModality.AUDIO.value:
+                errs.append("TransformersCausalText connector does not support audio output.")
+            if cfg.modality.input_modality != InputModality.TEXT.value:
+                errs.append("TransformersCausalText connector only supports text input.")
 
     def _validate_shap() -> None:
         if cfg.shap.mode not in (ModeType.CONTEXTUAL.value, ModeType.STATIC.value):
@@ -487,6 +527,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
     _validate_dataset()
     _validate_selection()
     _validate_wandb()
+    _validate_modality()
     _validate_shap()
     _validate_variants()
     return errs

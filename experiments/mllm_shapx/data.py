@@ -19,6 +19,7 @@ def load_single_sentence_df(
     """Load the first parquet shard into a DataFrame with optional pin enforcement."""
     _ensure_pinned_revision(revision)
     filename = f"{subset}/{split}/0000.parquet"
+    print(f"Downloading dataset from HF Hub repo '{repo_id}', file '{filename}', revision '{revision}'")
     parquet_local_path = hf_hub_download(  # nosec B615
         repo_id=repo_id,
         filename=filename,
@@ -30,10 +31,10 @@ def load_single_sentence_df(
 
 def choose_prompt_text_column(df: pd.DataFrame) -> str:
     """Pick the correct text column (“prompt” preferred, fallback to “sentences”)."""
-    if TextCol.PROMPT.value in df.columns:
-        return TextCol.PROMPT.value
     if TextCol.SENTENCES.value in df.columns:
         return TextCol.SENTENCES.value
+    if TextCol.PROMPT.value in df.columns:
+        return TextCol.PROMPT.value
     raise KeyError("Neither 'prompt' nor 'sentences' column found in dataframe.")
 
 

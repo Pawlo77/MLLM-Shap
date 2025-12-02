@@ -25,6 +25,19 @@ class ConnectorType(Enum):
     TRANSFORMERS_TEXT = "hf_text"
 
 
+class InputModality(StrEnum):
+    """Input modality options."""
+    TEXT = "text"
+    AUDIO_MALE = "audio__male"
+    AUDIO_FEMALE = "audio__female"
+
+
+class OutputModality(StrEnum):
+    """Output modality options."""
+    TEXT = "text"
+    AUDIO = "audio"
+
+
 class SimilarityType(StrEnum):
     """Similarity metric options."""
 
