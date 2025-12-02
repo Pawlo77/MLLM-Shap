@@ -1,30 +1,28 @@
 # MLLM SHAP
 
-# Developer notes
+This is a monorepo for the MLLM SHAP project.
 
-More detailed commands are available in [contributing](./CONTRIBUTING.md).
+This file is a high-level guide: where to find the "crucial" READMEs and related documentation in this monorepo.
 
-#### Deploying
+For developers, please also see the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
-Deployment to PyPi is handled from github workflow automatically.
+# MLLM SHAP package
 
-```bash
-git tag vx.x.x main
-git push origin --tags
-```
+Available under [`mllm_shap/`](./mllm_shap/README.md) in the repository root. This is the main Python package for MLLM SHAP, containing the implementation of the algorithms, utilities, and core functionality, as well as it documentation and tests.
 
-#### Updating docs for new modules
+# MLLM SHAP examples
 
-From `~/mllm_shap` directory (might require deletion of existing mllm_shap*.rst files in `docs` first):
+Available under [`examples/`](./examples/README.md) in the repository root. This directory contains example scripts and Jupyter notebooks demonstrating how to use the MLLM SHAP package for various tasks.
 
-```bash
-sphinx-apidoc -o docs/ src
-```
+# Experiments
 
-This will generate `.rst` files with definition of new modules. To update and locally analyze their docs, do from `~/mllm_shap/docs` directory:
+Available under [`experiments/`](./experiments/README.md) in the repository root. This directory contains code and resources for experiments conducted in the project, including data preparation scripts and time approximation code.
 
-```bash
-make clean && make html
-```
-
-Home page file is `~/mllm_shap/docs/_build/html/index.html`
+# Quick Paths
+- Root README: [`./README.md`](./README.md)
+- Contributing: [`./CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Sphinx doc sources: [`./mllm_shap/docs/`](./mllm_shap/docs/)
+- Package sources: [`./src/mllm_shap/`](./src/mllm_shap/)
+- Examples: [`./examples/`](./examples/)
+- Experiments: [`./experiments/`](./experiments/)
+- Tests: [`./tests/`](./tests/)
