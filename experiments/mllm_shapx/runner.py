@@ -23,6 +23,7 @@ from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 from .config import ExperimentSet, ExplainerVariant
 from .data import (
     choose_prompt_text_column,
+    extract_texts_from_row,
     iter_rows_for_selection,
 )
 from .constants import AudioCol, ExplainerType, InputModality
@@ -393,29 +394,30 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         scanned_ctr += 1
 
         # Audio column resolution based on input modality
-        audio_bytes: Optional[bytes] = None
+        audio_bytes_list: Optional[list[bytes]] = None
         if input_modality == InputModality.AUDIO_MALE:
             if AudioCol.MALE.value in row:
-                audio_bytes = row[AudioCol.MALE.value][0]
+                audio_bytes_list = row[AudioCol.MALE.value]
+                if not isinstance(audio_bytes_list, list):
+                    audio_bytes_list = [audio_bytes_list]
             else:
                 raise KeyError(f"Expected '{AudioCol.MALE.value}' in row for audio_male input modality.")
         elif input_modality == InputModality.AUDIO_FEMALE:
             if AudioCol.FEMALE.value in row:
-                audio_bytes = row[AudioCol.FEMALE.value][0]
+                audio_bytes_list = row[AudioCol.FEMALE.value]
+                if not isinstance(audio_bytes_list, list):
+                    audio_bytes_list = [audio_bytes_list]
             else:
                 raise KeyError(f"Expected '{AudioCol.FEMALE.value}' in row for audio_female input modality.")
 
-        # Prompt resolution
-        v = row[text_col]
-        user_text = (
-            v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
-        )
+        # Prompt resolution - returns list of texts for multi-turn support
+        user_texts = extract_texts_from_row(row[text_col])
 
         # Build the SAME chat that will be passed to the explainer
         chat = build_chat(
             explainer.model,
-            user_text=user_text,
-            audio_bytes=audio_bytes,
+            user_texts=user_texts,
+            audio_bytes_list=audio_bytes_list,
             input_modality=input_modality,
             token_filter=token_filter
         )
@@ -459,7 +461,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         # ---- matched row: run explainer
         LOGGER.info("Running sample index %d for variant '%s'.", row_idx, run.run_slug)
-        LOGGER.info(user_text)
+        LOGGER.info(" | ".join(user_texts))
 
         if run.linear:
             scaled_num_samples = int(run.linear * n_pre * n_pre)
@@ -520,7 +522,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             "original_language": row.get("original_language", "unknown"),
             "runtime_sec": float(runtime_sec),
             "n_calls": n_calls,
-            "prompt_text": user_text,
+            "prompt_texts": user_texts,  # List of texts for multi-turn
             "input_modality": input_modality.value,
             "output_modality": output_modality.value,
             "attr_summary": modality_summary,
@@ -532,7 +534,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         audio_info = serialize_result_with_audio(
             result=result,
             output_dir=audio_artifacts_dir,
-            input_audio_bytes=audio_bytes,
+            input_audio_bytes=audio_bytes_list,
             input_modality=input_modality,
             output_modality=output_modality,
             sample_id=f"sample_{row_idx:05d}",

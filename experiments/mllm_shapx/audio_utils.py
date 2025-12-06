@@ -318,7 +318,7 @@ def save_input_audio(
 def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     result: Any,
     output_dir: Path,
-    input_audio_bytes: Optional[bytes] = None,
+    input_audio_bytes: Optional[bytes | list[bytes]] = None,
     input_modality: InputModality = InputModality.TEXT,
     output_modality: OutputModality = OutputModality.TEXT,
     sample_id: str = "sample",
@@ -330,7 +330,7 @@ def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-
     Args:
         result: ExplainerResult instance.
         output_dir: Directory to save artifacts.
-        input_audio_bytes: Original input audio bytes.
+        input_audio_bytes: Original input audio bytes (single or list for multi-turn).
         input_modality: Input modality used.
         output_modality: Output modality used.
         sample_id: Identifier for this sample.
@@ -348,15 +348,32 @@ def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-
         "output_modality": output_modality.value,
     }
 
-    # Save input audio if present
+    # Save input audio if present (handle both single bytes and list)
     if input_audio_bytes and input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
-        serialized["input_audio"] = save_input_audio(
-            input_audio_bytes,
-            input_modality,
-            audio_dir,
-            f"{sample_id}_input",
-            sample_rate,
-        )
+        # Normalize to list
+        audio_list = [input_audio_bytes] if isinstance(input_audio_bytes, bytes) else input_audio_bytes
+        if len(audio_list) == 1:
+            # Single audio - save with original naming
+            serialized["input_audio"] = save_input_audio(
+                audio_list[0],
+                input_modality,
+                audio_dir,
+                f"{sample_id}_input",
+                sample_rate,
+            )
+        else:
+            # Multiple audios - save each with index
+            serialized["input_audios"] = [
+                save_input_audio(
+                    audio,
+                    input_modality,
+                    audio_dir,
+                    f"{sample_id}_input_{i:02d}",
+                    sample_rate,
+                )
+                for i, audio in enumerate(audio_list)
+                if audio is not None
+            ]
 
     # Extract and save output audio if output modality is audio
     if output_modality == OutputModality.AUDIO and hasattr(result, "full_chat"):

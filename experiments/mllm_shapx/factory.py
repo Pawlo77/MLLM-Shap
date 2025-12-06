@@ -312,21 +312,23 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
 
 
-def build_chat(  # pylint: disable=too-many-arguments
+def build_chat(  # pylint: disable=too-many-arguments,too-many-branches
     model: Any,
-    user_text: str | None,
-    audio_bytes: bytes | None,
+    user_texts: str | list[str] | None,
+    audio_bytes_list: bytes | list[bytes] | None,
     input_modality: InputModality = InputModality.TEXT,
     *,
     token_filter: Any | None = None,
 ) -> Any:
     """
-    Prepare a chat turn with the given input modality for the model.
+    Prepare chat turns with the given input modality for the model.
+
+    Supports multi-turn conversations where each sentence/audio becomes a separate user turn.
 
     Args:
         model: The model instance.
-        user_text: Text input (used for TEXT modality or as prompt for audio).
-        audio_bytes: Audio content bytes (used for AUDIO_MALE/AUDIO_FEMALE modalities).
+        user_texts: Text input(s) - single string or list of strings for multi-turn.
+        audio_bytes_list: Audio content - single bytes or list of bytes for multi-turn.
         input_modality: The input modality to use (TEXT, AUDIO_MALE, or AUDIO_FEMALE).
         token_filter: Optional token filter.
 
@@ -342,18 +344,24 @@ def build_chat(  # pylint: disable=too-many-arguments
     chat.new_turn(Role.ASSISTANT)
     chat.add_text("You are a helpful assistant.")
     chat.end_turn()
-    chat.new_turn(Role.USER)
 
+    # Normalize inputs to lists for uniform handling
     if input_modality == InputModality.TEXT:
-        # Text-only input
-        if user_text:
-            chat.add_text(user_text)
+        texts = [user_texts] if isinstance(user_texts, str) else (user_texts or [""])
+        for text in texts:
+            if text and text.strip():
+                chat.new_turn(Role.USER)
+                chat.add_text(text)
+                chat.end_turn()
     elif input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
-        if audio_bytes is not None:
-            chat.add_audio(audio_bytes)
-        else:
+        if audio_bytes_list is None:
             raise ValueError(f"Audio bytes required for input modality: {input_modality}")
+        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else audio_bytes_list
+        for audio in audios:
+            if audio is not None:
+                chat.new_turn(Role.USER)
+                chat.add_audio(audio)
+                chat.end_turn()
 
-    chat.end_turn()
     chat.refresh(full=True)
     return chat
