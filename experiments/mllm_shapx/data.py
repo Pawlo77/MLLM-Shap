@@ -5,8 +5,9 @@ from __future__ import annotations
 import importlib
 import os
 import re
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
+import numpy
 import pandas as pd
 from huggingface_hub import hf_hub_download
 
@@ -30,12 +31,52 @@ def load_single_sentence_df(
 
 
 def choose_prompt_text_column(df: pd.DataFrame) -> str:
-    """Pick the correct text column (“prompt” preferred, fallback to “sentences”)."""
+    """Pick the correct text column ("prompt" preferred, fallback to "sentences")."""
     if TextCol.SENTENCES.value in df.columns:
         return TextCol.SENTENCES.value
     if TextCol.PROMPT.value in df.columns:
         return TextCol.PROMPT.value
     raise KeyError("Neither 'prompt' nor 'sentences' column found in dataframe.")
+
+
+def extract_texts_from_row(value: Any) -> List[str]:
+    """
+    Extract texts from a row value as a list, handling both single strings and lists.
+
+    For multi-sentence datasets, returns all sentences as separate list items.
+
+    Args:
+        value: The row value (either a string or list of strings).
+
+    Returns:
+        List of text strings (never empty - returns [""] for None/empty input).
+    """
+    if value is None:
+        return [""]
+    if isinstance(value, (list, numpy.ndarray)):
+        value = value.tolist() if isinstance(value, numpy.ndarray) else value
+        # Filter out None/empty strings
+        sentences = [str(s) for s in value if s is not None and str(s).strip()]
+        return sentences if sentences else [""]
+    text = str(value)
+    return [text] if text.strip() else [""]
+
+
+def extract_text_from_row(value: Any, separator: str = " ") -> str:
+    """
+    Extract text from a row value, handling both single strings and lists of sentences.
+
+    For multi-sentence datasets, concatenates all sentences with the given separator.
+
+    Args:
+        value: The row value (either a string or list of strings).
+        separator: String to use when joining multiple sentences (default: single space).
+
+    Returns:
+        The extracted/concatenated text string.
+    """
+    texts = extract_texts_from_row(value)
+    return separator.join(texts)
 
 
 def iter_rows_for_selection(
@@ -77,14 +118,9 @@ def filter_df_by_max_prompt_tokens(
     """
     Return (filtered_df, total_matching_count) where rows are limited to prompts with <= max_tokens.
     """
-
-    def _first_text(row: Any) -> str:
-        v = row[text_col]
-        return v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
-
     lengths = []
     for _, row in df.iterrows():
-        text = _first_text(row)
+        text = extract_text_from_row(row[text_col])
         ids = tokenizer.encode(text, add_special_tokens=True)
         lengths.append(len(ids))
     mask = pd.Series(lengths) <= int(max_tokens + 2)
@@ -98,14 +134,9 @@ def filter_df_by_min_prompt_tokens(
     """
     Return (filtered_df, total_matching_count) where rows are limited to prompts with >= min_tokens.
     """
-
-    def _first_text(row: Any) -> str:
-        v = row[text_col]
-        return v[0] if isinstance(v, list) and v else (str(v) if v is not None else "")
-
     lengths = []
     for _, row in df.iterrows():
-        text = _first_text(row)
+        text = extract_text_from_row(row[text_col])
         ids = tokenizer.encode(text, add_special_tokens=True)
         lengths.append(len(ids))
     mask = pd.Series(lengths) >= int(min_tokens - 2)

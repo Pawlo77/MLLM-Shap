@@ -73,7 +73,15 @@ class WandbMode(StrEnum):
     DISABLED = "disabled"
 
 
-DEFAULT_SUBSET = "single_sentence"
+class DatasetType(StrEnum):
+    """Dataset subset options."""
+
+    SINGLE_SENTENCE = "single_sentence"
+    MULTILINGUAL = "multi_lingual"
+    MULTI_SENTENCE = "multi_sentence"
+
+
+DEFAULT_SUBSET = DatasetType.SINGLE_SENTENCE.value
 DEFAULT_SPLIT = "test"
 DEFAULT_SIMILARITY = "CosineSimilarity"
 TRUE_JSON = "1"

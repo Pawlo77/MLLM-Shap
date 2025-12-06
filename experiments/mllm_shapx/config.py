@@ -38,6 +38,7 @@ from .constants import (
     ModeType,
     InputModality,
     OutputModality,
+    DatasetType
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -333,8 +334,14 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
     errs: List[str] = []
 
     def _validate_dataset() -> None:
-        if cfg.dataset.subset != DEFAULT_SUBSET:
-            errs.append(f"Only dataset.subset='{DEFAULT_SUBSET}' is supported.")
+        if cfg.dataset.subset not in (DatasetType.SINGLE_SENTENCE.value,
+                                      DatasetType.MULTILINGUAL.value,
+                                      DatasetType.MULTI_SENTENCE.value):
+            errs.append(
+                f"dataset.subset must be one of: {[DatasetType.SINGLE_SENTENCE.value,
+                                                   DatasetType.MULTILINGUAL.value,
+                                                   DatasetType.MULTI_SENTENCE.value]}."
+            )
         if cfg.dataset.split != DEFAULT_SPLIT:
             errs.append(f"Only dataset.split='{DEFAULT_SPLIT}' is supported.")
 
