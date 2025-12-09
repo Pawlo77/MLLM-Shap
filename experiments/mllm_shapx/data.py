@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy
 import pandas as pd
+from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 
 from .constants import TRUE_JSON, TextCol
@@ -28,6 +29,74 @@ def load_single_sentence_df(
         revision=revision,
     )
     return pd.read_parquet(parquet_local_path)
+
+
+def load_dataset_from_main(
+    repo_id: str,
+    subset: str | None,
+    split: str,
+    revision: str = "main",
+    trust_remote_code: bool = True,
+) -> pd.DataFrame:
+    """
+    Load dataset from HuggingFace using the datasets library (non-parquet).
+
+    This loads from the main branch (or specified revision) using the dataset's
+    native loading scripts, rather than the auto-converted parquet files.
+
+    Args:
+        repo_id: HuggingFace Hub repository ID (e.g., "Pawlo77/mllm-shap").
+        subset: Dataset subset/config name (can be None for datasets without subsets).
+        split: Dataset split (e.g., "train", "test").
+        revision: Git revision to load from (default: "main").
+        trust_remote_code: Whether to trust remote code in dataset scripts.
+
+    Returns:
+        DataFrame containing the loaded dataset.
+    """
+    print(
+        f"Loading dataset '{repo_id}', subset '{subset}', split '{split}', "
+        f"revision '{revision}' using datasets library"
+    )
+    _ensure_pinned_revision(revision)
+    dataset = load_dataset(  # nosec B615
+        repo_id,
+        name=subset,
+        split=split,
+        revision=revision,
+        trust_remote_code=trust_remote_code,
+    )
+    return dataset.to_pandas()
+
+
+def load_df(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    repo_id: str,
+    subset: str,
+    split: str,
+    revision: str,
+    use_parquet: bool = True,
+    trust_remote_code: bool = True,
+) -> pd.DataFrame:
+    """
+    Load dataset as DataFrame, choosing between parquet and main branch methods.
+
+    Args:
+        repo_id: HuggingFace Hub repository ID.
+        subset: Dataset subset/config name.
+        split: Dataset split.
+        revision: Git revision to load from.
+        use_parquet: If True, load from parquet files (refs/convert/parquet branch).
+                     If False, use datasets library to load from main/specified branch.
+        trust_remote_code: Whether to trust remote code (only used when use_parquet=False).
+
+    Returns:
+        DataFrame containing the loaded dataset.
+    """
+    if use_parquet:
+        return load_single_sentence_df(repo_id, subset, split, revision)
+    return load_dataset_from_main(
+        repo_id, subset, split, revision, trust_remote_code
+    )
 
 
 def choose_prompt_text_column(df: pd.DataFrame) -> str:

@@ -69,6 +69,8 @@ class DatasetConfig:
     split: str = "test"
     revision: str = "refs/convert/parquet"
     repo_id: str = "Pawlo77/mllm-shap"
+    use_parquet: bool = True  # If False, use datasets library to load from main branch
+    trust_remote_code: bool = True  # Only used when use_parquet=False
 
 
 @dataclass
@@ -287,6 +289,8 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             split=ds.get("split", DEFAULT_SPLIT),
             revision=ds.get("revision", "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf"),
             repo_id=ds.get("repo_id", "Pawlo77/mllm-shap"),
+            use_parquet=ds.get("use_parquet", True),
+            trust_remote_code=ds.get("trust_remote_code", True),
         ),
         selection=SelectionConfig(
             max_samples=sel.get("max_samples"),
