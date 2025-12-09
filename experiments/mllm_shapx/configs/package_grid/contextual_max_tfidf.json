@@ -7,8 +7,9 @@
   "dataset": {
     "subset": "single_sentence",
     "split": "test",
-    "revision": "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf",
-    "repo_id": "Pawlo77/mllm-shap"
+    "revision": "00cfa818c9f5531e976b418088616875952fef2b",
+    "repo_id": "Pawlo77/mllm-shap",
+    "use_parquet": false
   },
 
   "selection": {
