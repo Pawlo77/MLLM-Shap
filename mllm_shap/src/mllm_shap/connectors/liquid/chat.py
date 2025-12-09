@@ -109,7 +109,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         self._audio_map = torch.empty((0,), dtype=torch.long, device=self.torch_device)
 
     # assume `_{}` are protected methods from BaseMllmChat
-    # pylint: disable=too-many-locals,protected-access
+    # pylint: disable=too-many-locals,protected-access,too-many-branches,too-many-statements
     @classmethod
     def _set_new_instance(
         cls: type["LiquidAudioChat"],
@@ -161,28 +161,54 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         chunk = LiquidAudioChat.AUDIO_OUT_SHAPE  # 8
         t_frames = new_instance.audio_in.shape[1]
 
+        # Build frame mask respecting audio segment boundaries from audio_in_lens
+        # Each audio segment has its own length in audio_in_lens
         frame_mask_list: list[Tensor] = []
-        frame_start = 0
-        for keep_chunk in final_audio_in_relative:
-            keep_val = bool(keep_chunk.item())
-            frame_end = min(frame_start + chunk, t_frames)
-            length = frame_end - frame_start
-            frame_mask_list.append(
-                torch.full(
-                    (length,),
-                    fill_value=keep_val,
-                    dtype=torch.bool,
-                    device=new_instance.torch_device,
-                )
-            )
-            frame_start = frame_end
-            if frame_start >= t_frames:
-                break
+        token_idx = 0  # Index into final_audio_in_relative (token-level mask)
+
+        for seg_idx in range(chat.audio_in_lens.shape[0]):
+            seg_frame_count = int(chat.audio_in_lens[seg_idx].item())
+            # Number of tokens for this segment (ceiling division)
+            seg_token_count = (seg_frame_count + chunk - 1) // chunk
+
+            seg_frame_start = 0
+            for _ in range(seg_token_count):
+                if token_idx < len(final_audio_in_relative):
+                    keep_val = bool(final_audio_in_relative[token_idx].item())
+                else:
+                    keep_val = False
+                token_idx += 1
+
+                # How many frames does this token cover in this segment?
+                frames_for_token = min(chunk, seg_frame_count - seg_frame_start)
+                if frames_for_token > 0:
+                    frame_mask_list.append(
+                        torch.full(
+                            (frames_for_token,),
+                            fill_value=keep_val,
+                            dtype=torch.bool,
+                            device=new_instance.torch_device,
+                        )
+                    )
+                seg_frame_start += frames_for_token
 
         if len(frame_mask_list) > 0:
             final_audio_in_frame_mask = torch.cat(frame_mask_list, dim=0)
         else:
             final_audio_in_frame_mask = torch.empty(0, dtype=torch.bool, device=new_instance.torch_device)
+
+        # Ensure frame mask matches audio_in frames
+        if final_audio_in_frame_mask.shape[0] != t_frames:
+            # Pad or truncate to match
+            if final_audio_in_frame_mask.shape[0] < t_frames:
+                padding = torch.zeros(
+                    t_frames - final_audio_in_frame_mask.shape[0],
+                    dtype=torch.bool,
+                    device=new_instance.torch_device,
+                )
+                final_audio_in_frame_mask = torch.cat([final_audio_in_frame_mask, padding], dim=0)
+            else:
+                final_audio_in_frame_mask = final_audio_in_frame_mask[:t_frames]
 
         new_instance.audio_in = safe_mask(
             new_instance.audio_in,
@@ -194,12 +220,13 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             final_audio_out_relative,
         )
 
-        s = 0
+        # Update audio_in_lens based on kept frames per segment
+        frame_offset = 0
         for i in range(new_instance.audio_in_lens.shape[0]):
-            original_len = int(new_instance.audio_in_lens[i].item())
-            kept_tokens = final_audio_in_frame_mask[s: s + original_len].sum().item()
-            new_instance.audio_in_lens[i] = kept_tokens
-            s += original_len
+            original_len = int(chat.audio_in_lens[i].item())  # Use original chat's lens
+            kept_frames = final_audio_in_frame_mask[frame_offset: frame_offset + original_len].sum().item()
+            new_instance.audio_in_lens[i] = kept_frames
+            frame_offset += original_len
 
         new_instance.audio_in_lens = new_instance.audio_in_lens[new_instance.audio_in_lens > 0]
 
