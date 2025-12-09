@@ -37,10 +37,19 @@
     "mode": "CONTEXTUAL",
     "normalizer": "MinMaxNormalizer",
     "reducer": "MeanReducer",
-    "similarity": "CosineSimilarity"
+    "similarity": "TfIdfCosineSimilarity"
+  },
+
+  "embedding": {
+    "model_id": "intfloat/e5-small-v2",
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+    "max_length": 64,
+    "batch_size": 64,
+    "l2_normalize": true,
+    "local_files_only": false
   },
 
   "experiments": [
-    { "explainer_type": "limited_neyman",  "linear": [1.0], "name": "contextual_mean_cosine" }
+    { "explainer_type": "exact", "name": "exact_baseline" }
   ]
 }
