@@ -1,11 +1,11 @@
 {
-  "experiment_set_id": "multi_lingual_2025_06_12",
+  "experiment_set_id": "multi_sentence_2025_06_12",
   "output_root": "experiments_output",
   "device": "cuda",
   "connector": "liquid_audio",
 
   "dataset": {
-    "subset": "multi_lingual",
+    "subset": "multi_sentence",
     "split": "test",
     "revision": "848de83f24b94947a58a945c897b2f0eaed780b3",
     "repo_id": "mvishiu11/mllm-shap-new"
@@ -22,9 +22,9 @@
   "wandb": {
     "enabled": true,
     "project": "mllm-shap-audio-text",
-    "group": "multi_lingual",
+    "group": "multi_sentence",
     "mode": "online",
-    "tags": ["multi_lingual", "experiment"]
+    "tags": ["multi_sentence", "experiment"]
   },
 
   "generation": {
@@ -49,11 +49,11 @@
   },
 
   "modality": {
-    "input_modality": "audio__male",
+    "input_modality": "interleaved__audio_first__male",
     "output_modality": "text"
   },
 
   "experiments": [
-    { "explainer_type": "limited_neyman", "linear": [3.0], "name": "audio_male_text" }
+    { "explainer_type": "limited_neyman", "linear": [3.0], "name": "interleaved__audio_first__male_text" }
   ]
 }

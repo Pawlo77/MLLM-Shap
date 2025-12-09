@@ -49,7 +49,7 @@
   },
 
   "modality": {
-    "input_modality": "audio_male",
+    "input_modality": "audio__male",
     "output_modality": "text"
   },
 

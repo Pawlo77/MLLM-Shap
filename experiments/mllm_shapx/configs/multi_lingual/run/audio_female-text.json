@@ -49,7 +49,7 @@
   },
 
   "modality": {
-    "input_modality": "audio_female",
+    "input_modality": "audio__female",
     "output_modality": "text"
   },
 
