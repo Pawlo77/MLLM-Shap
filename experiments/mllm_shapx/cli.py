@@ -15,7 +15,7 @@ if _MLLM_SHAP_SRC and _MLLM_SHAP_SRC not in sys.path:
     sys.path.insert(0, _MLLM_SHAP_SRC)
 
 from .config import ExperimentSet, validate_config  # noqa: E402
-from .data import load_single_sentence_df  # noqa: E402
+from .data import load_df, load_single_sentence_df  # noqa: E402
 from .runner import expand_variants, run_single_sentence_variant  # noqa: E402
 
 
@@ -64,8 +64,13 @@ def cmd_run(args: argparse.Namespace) -> None:
             print("  -", e)
         sys.exit(2)
 
-    df: pd.DataFrame = load_single_sentence_df(
-        cfg.dataset.repo_id, cfg.dataset.subset, cfg.dataset.split, cfg.dataset.revision
+    df: pd.DataFrame = load_df(
+        cfg.dataset.repo_id,
+        cfg.dataset.subset,
+        cfg.dataset.split,
+        cfg.dataset.revision,
+        use_parquet=cfg.dataset.use_parquet,
+        trust_remote_code=cfg.dataset.trust_remote_code,
     )
     variants = expand_variants(cfg)
     if not variants:
