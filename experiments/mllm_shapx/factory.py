@@ -312,7 +312,24 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
 
 
-def build_chat(  # pylint: disable=too-many-arguments,too-many-branches
+# Interleaved modality groupings for easier checking
+INTERLEAVED_TEXT_FIRST_MODALITIES = (
+    InputModality.INTERLEAVED_TEXT_FIRST_MALE,
+    InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
+)
+INTERLEAVED_AUDIO_FIRST_MODALITIES = (
+    InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
+    InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
+)
+INTERLEAVED_MODALITIES = INTERLEAVED_TEXT_FIRST_MODALITIES + INTERLEAVED_AUDIO_FIRST_MODALITIES
+
+AUDIO_MODALITIES = (
+    InputModality.AUDIO_MALE,
+    InputModality.AUDIO_FEMALE,
+)
+
+
+def build_chat(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     model: Any,
     user_texts: str | list[str] | None,
     audio_bytes_list: bytes | list[bytes] | None,
@@ -323,13 +340,18 @@ def build_chat(  # pylint: disable=too-many-arguments,too-many-branches
     """
     Prepare chat turns with the given input modality for the model.
 
-    Supports multi-turn conversations where each sentence/audio becomes a separate user turn.
+    For TEXT modality: supports multi-turn conversations where each sentence becomes a separate user turn.
+    For AUDIO modality: all audio clips are concatenated into a single audio and added to one user turn
+                        (required for SHAP masking compatibility with the liquid_audio model).
+    For INTERLEAVED modalities: alternates between text and audio turns, starting with the specified type.
+                                Audio clips are concatenated per-turn to maintain SHAP compatibility.
 
     Args:
         model: The model instance.
         user_texts: Text input(s) - single string or list of strings for multi-turn.
-        audio_bytes_list: Audio content - single bytes or list of bytes for multi-turn.
-        input_modality: The input modality to use (TEXT, AUDIO_MALE, or AUDIO_FEMALE).
+        audio_bytes_list: Audio content - single bytes or list of bytes (will be concatenated for audio-only,
+                          or used per-turn for interleaved).
+        input_modality: The input modality to use.
         token_filter: Optional token filter.
 
     Returns:
@@ -347,21 +369,58 @@ def build_chat(  # pylint: disable=too-many-arguments,too-many-branches
 
     # Normalize inputs to lists for uniform handling
     if input_modality == InputModality.TEXT:
+        # For text: create separate user turns for each sentence
         texts = [user_texts] if isinstance(user_texts, str) else (user_texts or [""])
         for text in texts:
             if text and text.strip():
                 chat.new_turn(Role.USER)
                 chat.add_text(text)
                 chat.end_turn()
-    elif input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
+
+    elif input_modality in AUDIO_MODALITIES:
+        # For audio: add all clips to a single user turn
         if audio_bytes_list is None:
             raise ValueError(f"Audio bytes required for input modality: {input_modality}")
-        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else audio_bytes_list
-        for audio in audios:
-            if audio is not None:
-                chat.new_turn(Role.USER)
+
+        # Normalize to list and filter None values
+        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else list(audio_bytes_list)
+        audios = [a for a in audios if a is not None]
+
+        if audios:
+            chat.new_turn(Role.USER)
+            for audio in audios:
                 chat.add_audio(audio)
-                chat.end_turn()
+            chat.end_turn()
+
+    elif input_modality in INTERLEAVED_MODALITIES:
+        # Interleaved: alternate between text and audio in subsequent turns
+        # Each sentence uses EITHER text OR audio, alternating by index
+        if audio_bytes_list is None:
+            raise ValueError(f"Audio bytes required for input modality: {input_modality}")
+
+        # Normalize inputs
+        texts = [user_texts] if isinstance(user_texts, str) else list(user_texts or [])
+        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else list(audio_bytes_list)
+        audios = [a for a in audios if a is not None]
+
+        # Determine starting modality
+        text_first = input_modality in INTERLEAVED_TEXT_FIRST_MODALITIES
+
+        # Build interleaved turns - each sentence alternates between modalities
+        # text_first=True:  sentence 0 → text, sentence 1 → audio, sentence 2 → text, ...
+        # text_first=False: sentence 0 → audio, sentence 1 → text, sentence 2 → audio, ...
+        max_sentences = max(len(texts), len(audios))
+        chat.new_turn(Role.USER)
+        for i in range(max_sentences):
+            use_text = (i % 2 == 0) if text_first else (i % 2 == 1)
+
+            if use_text:
+                # This sentence uses text
+                if i < len(texts) and texts[i] and texts[i].strip():
+                    chat.add_text(texts[i])
+            elif i < len(audios) and audios[i] is not None:
+                chat.add_audio(audios[i])
+        chat.end_turn()
 
     chat.refresh(full=True)
     return chat

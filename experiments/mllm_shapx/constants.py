@@ -30,6 +30,11 @@ class InputModality(StrEnum):
     TEXT = "text"
     AUDIO_MALE = "audio__male"
     AUDIO_FEMALE = "audio__female"
+    # Interleaved modes: alternate between text and audio in subsequent turns
+    INTERLEAVED_TEXT_FIRST_MALE = "interleaved__text_first__male"
+    INTERLEAVED_TEXT_FIRST_FEMALE = "interleaved__text_first__female"
+    INTERLEAVED_AUDIO_FIRST_MALE = "interleaved__audio_first__male"
+    INTERLEAVED_AUDIO_FIRST_FEMALE = "interleaved__audio_first__female"
 
 
 class OutputModality(StrEnum):

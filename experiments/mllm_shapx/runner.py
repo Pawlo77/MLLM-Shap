@@ -395,20 +395,33 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
 
         # Audio column resolution based on input modality
         audio_bytes_list: Optional[list[bytes]] = None
-        if input_modality == InputModality.AUDIO_MALE:
+
+        # Determine which audio column to use based on modality
+        needs_male_audio = input_modality in (
+            InputModality.AUDIO_MALE,
+            InputModality.INTERLEAVED_TEXT_FIRST_MALE,
+            InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
+        )
+        needs_female_audio = input_modality in (
+            InputModality.AUDIO_FEMALE,
+            InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
+            InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
+        )
+
+        if needs_male_audio:
             if AudioCol.MALE.value in row:
                 audio_bytes_list = row[AudioCol.MALE.value]
-                if not isinstance(audio_bytes_list, list):
+                if not isinstance(audio_bytes_list, (list, np.ndarray)):
                     audio_bytes_list = [audio_bytes_list]
             else:
-                raise KeyError(f"Expected '{AudioCol.MALE.value}' in row for audio_male input modality.")
-        elif input_modality == InputModality.AUDIO_FEMALE:
+                raise KeyError(f"Expected '{AudioCol.MALE.value}' in row for {input_modality} input modality.")
+        elif needs_female_audio:
             if AudioCol.FEMALE.value in row:
                 audio_bytes_list = row[AudioCol.FEMALE.value]
-                if not isinstance(audio_bytes_list, list):
+                if not isinstance(audio_bytes_list, (list, np.ndarray)):
                     audio_bytes_list = [audio_bytes_list]
             else:
-                raise KeyError(f"Expected '{AudioCol.FEMALE.value}' in row for audio_female input modality.")
+                raise KeyError(f"Expected '{AudioCol.FEMALE.value}' in row for {input_modality} input modality.")
 
         # Prompt resolution - returns list of texts for multi-turn support
         user_texts = extract_texts_from_row(row[text_col])
