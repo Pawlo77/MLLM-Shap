@@ -299,127 +299,11 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-mllm_shap.utils.audio">
-<span id="mllm-shap-utils-audio-module"></span><h2>mllm_shap.utils.audio module<a class="headerlink" href="#module-mllm_shap.utils.audio" title="Link to this heading">#</a></h2>
-<p>Utility functions for audio processing and display.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="mllm_shap.utils.audio.TorchAudioHandler">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.audio.</span></span><span class="sig-name descname"><span class="pre">TorchAudioHandler</span></span><a class="reference internal" href="_modules/mllm_shap/utils/audio.html#TorchAudioHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.audio.TorchAudioHandler" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Utility class for handling audio content with TorchAudio.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.utils.audio.TorchAudioHandler.from_bytes">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio_content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mp3'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/audio.html#TorchAudioHandler.from_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.audio.TorchAudioHandler.from_bytes" title="Link to this definition">#</a></dt>
-<dd><p>Prepare audio content for processing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>audio_format</strong> – The format of the audio content (default is “mp3”).</p></li>
-<li><p><strong>audio_content</strong> – The audio content in bytes.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple containing the audio tensor and the sample rate.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mllm_shap.utils.audio.TorchAudioHandler.to_bytes">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">24000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mp3'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/audio.html#TorchAudioHandler.to_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.audio.TorchAudioHandler.to_bytes" title="Link to this definition">#</a></dt>
-<dd><p>Convert a waveform tensor back to audio bytes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>waveform</strong> – The audio waveform tensor.</p></li>
-<li><p><strong>sample_rate</strong> – The sample rate of the audio. Default is 24,000 Hz.</p></li>
-<li><p><strong>audio_format</strong> – The desired output format (default is “mp3”).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The audio content in bytes.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="mllm_shap.utils.audio.display_audio">
-<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.audio.</span></span><span class="sig-name descname"><span class="pre">display_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio_content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Audio</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/audio.html#display_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.audio.display_audio" title="Link to this definition">#</a></dt>
-<dd><p>Display audio content in a Jupyter notebook.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>audio_content</strong> – The audio content in bytes.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="mllm-shap-utils-audio-module">
+<h2>mllm_shap.utils.audio module<a class="headerlink" href="#mllm-shap-utils-audio-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-mllm_shap.utils.jupyter">
-<span id="mllm-shap-utils-jupyter-module"></span><h2>mllm_shap.utils.jupyter module<a class="headerlink" href="#module-mllm_shap.utils.jupyter" title="Link to this heading">#</a></h2>
-<p>Utility functions for Jupyter Notebook visualization.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="mllm_shap.utils.jupyter.display_shap_colors_df">
-<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.jupyter.</span></span><span class="sig-name descname"><span class="pre">display_shap_colors_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Shapley</span> <span class="pre">Value'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'coolwarm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Styler</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/jupyter.html#display_shap_colors_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.jupyter.display_shap_colors_df" title="Link to this definition">#</a></dt>
-<dd><p>Set background gradient colors for SHAP values in a DataFrame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> – DataFrame containing SHAP values.</p></li>
-<li><p><strong>shap_column_name</strong> – Name of the column with SHAP values.</p></li>
-<li><p><strong>cmap</strong> – Colormap to use for the gradient.</p></li>
-<li><p><strong>low</strong> – Minimum value for the gradient.</p></li>
-<li><p><strong>high</strong> – Maximum value for the gradient.</p></li>
-<li><p><strong>**kwargs</strong> – Additional arguments for pandas Styler.background_gradient.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Styled DataFrame with background gradient.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.Styler</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="mllm_shap.utils.jupyter.display_shap_colors_df_audio">
-<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.jupyter.</span></span><span class="sig-name descname"><span class="pre">display_shap_colors_df_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Audio'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Styler</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/jupyter.html#display_shap_colors_df_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.jupyter.display_shap_colors_df_audio" title="Link to this definition">#</a></dt>
-<dd><p>Set background gradient colors for SHAP values in a DataFrame with audio.
-Render audio in the specified audio column for jupyter notebooks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> – DataFrame containing SHAP values and audio.</p></li>
-<li><p><strong>audio_column_name</strong> – Name of the column with audio.</p></li>
-<li><p><strong>**kwargs</strong> – Additional arguments for display_shap_colors_df.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Styled DataFrame with background gradient.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.Styler</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="mllm_shap.utils.jupyter.plot_distribution">
-<span class="sig-prename descclassname"><span class="pre">mllm_shap.utils.jupyter.</span></span><span class="sig-name descname"><span class="pre">plot_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/utils/jupyter.html#plot_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.utils.jupyter.plot_distribution" title="Link to this definition">#</a></dt>
-<dd><p>Plot histogram of SHAP values distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> – Tensor of SHAP values.</p></li>
-<li><p><strong>bins</strong> – Number of bins for the histogram.</p></li>
-<li><p><strong>**kwargs</strong> – Additional arguments for matplotlib.pyplot.hist.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="mllm-shap-utils-jupyter-module">
+<h2>mllm_shap.utils.jupyter module<a class="headerlink" href="#mllm-shap-utils-jupyter-module" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-mllm_shap.utils.logger">
 <span id="mllm-shap-utils-logger-module"></span><h2>mllm_shap.utils.logger module<a class="headerlink" href="#module-mllm_shap.utils.logger" title="Link to this heading">#</a></h2>
@@ -571,21 +455,8 @@ tensor properties, and unsqueeze to maintain batch dimension.</p>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.utils.audio">mllm_shap.utils.audio module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.audio.TorchAudioHandler"><code class="docutils literal notranslate"><span class="pre">TorchAudioHandler</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.audio.TorchAudioHandler.from_bytes"><code class="docutils literal notranslate"><span class="pre">TorchAudioHandler.from_bytes()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.audio.TorchAudioHandler.to_bytes"><code class="docutils literal notranslate"><span class="pre">TorchAudioHandler.to_bytes()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.audio.display_audio"><code class="docutils literal notranslate"><span class="pre">display_audio()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.utils.jupyter">mllm_shap.utils.jupyter module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.jupyter.display_shap_colors_df"><code class="docutils literal notranslate"><span class="pre">display_shap_colors_df()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.jupyter.display_shap_colors_df_audio"><code class="docutils literal notranslate"><span class="pre">display_shap_colors_df_audio()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.jupyter.plot_distribution"><code class="docutils literal notranslate"><span class="pre">plot_distribution()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm-shap-utils-audio-module">mllm_shap.utils.audio module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm-shap-utils-jupyter-module">mllm_shap.utils.jupyter module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.utils.logger">mllm_shap.utils.logger module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.utils.logger.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
 </ul>
