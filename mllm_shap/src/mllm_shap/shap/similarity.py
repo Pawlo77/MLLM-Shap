@@ -47,9 +47,13 @@ class CosineSimilarity(BaseEmbeddingSimilarity):
             base: The base embedding tensor, shape [embedding_dim].
             other: The other embeddings tensor to compare against, shape [num_embeddings, embedding_dim].
         """
-        # normalize embeddings
-        base_norm = base / base.norm(dim=-1, keepdim=True)
-        other_norm = other / other.norm(dim=-1, keepdim=True)
+        # normalize embeddings with epsilon to avoid division by zero
+        eps = 1e-8
+        base_norm_val = base.norm(dim=-1, keepdim=True).clamp(min=eps)
+        other_norm_val = other.norm(dim=-1, keepdim=True).clamp(min=eps)
+
+        base_norm = base / base_norm_val
+        other_norm = other / other_norm_val
 
         return cast(Tensor, (other_norm * base_norm.unsqueeze(0)).sum(dim=-1))
 
@@ -127,4 +131,4 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
                 self.__tokenize_map[key] = self.__tokenize_counter
                 self.__tokenize_counter += 1
             result.append(self.__tokenize_map[key])
-        return torch.tensor(result, device=tensor.device)
+        return Tensor(result)

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-from mllm_shap.utils.audio import TorchAudioHandler, display_audio
+from mllm_shap.utils.audio import TorchAudioHandler, display_audio, TARGET_SAMPLE_RATE
 
 
 class TestDisplayAudio:
@@ -75,38 +75,65 @@ class TestTorchAudioHandler:
         with pytest.raises(Exception, match="read error"):
             TorchAudioHandler.from_bytes(b"invalid", audio_format="mp3")
 
-    @patch("mllm_shap.utils.audio.save")
-    def test_to_bytes_writes_and_returns_bytes(self, mock_save: MagicMock, dummy_waveform: torch.Tensor) -> None:
-        """Test that to_bytes calls torchaudio.save and returns byte data."""
+    @patch("mllm_shap.utils.audio.sf.write")
+    def test_to_bytes_wav_writes_and_returns_bytes(
+        self, mock_sf_write: MagicMock, dummy_waveform: torch.Tensor
+    ) -> None:
+        """WAV path uses soundfile.write to a buffer and returns its contents."""
 
-        def fake_save_side_effect(buffer, waveform, sr, format):
-            buffer.write(b"encoded_audio")
+        def fake_sf_write(buffer, data, sr, *, format, subtype):
+            # Validate basic invariants
+            assert format == "WAV"
+            assert subtype == "PCM_16"
+            assert sr == TARGET_SAMPLE_RATE
+            # Write sentinel bytes so we can assert on the output
+            assert hasattr(buffer, "write")
+            buffer.write(b"encoded_wav_bytes")
 
-        mock_save.side_effect = fake_save_side_effect
+        mock_sf_write.side_effect = fake_sf_write
 
-        result = TorchAudioHandler.to_bytes(dummy_waveform, sample_rate=24000, audio_format="mp3")
+        result = TorchAudioHandler.to_bytes(
+            dummy_waveform, sample_rate=TARGET_SAMPLE_RATE, audio_format="wav"
+        )
 
         assert isinstance(result, bytes)
-        assert b"encoded_audio" in result
-        mock_save.assert_called_once()
-        _, args, kwargs = mock_save.mock_calls[0]
-        assert args[1] is dummy_waveform
-        assert kwargs["format"] == "mp3"
+        assert b"encoded_wav_bytes" in result
+        # Ensure soundfile.write was called once
+        mock_sf_write.assert_called_once()
+        # Buffer was first positional arg
+        args, kwargs = mock_sf_write.call_args
+        assert isinstance(args[0], io.BytesIO)
 
-    @patch("mllm_shap.utils.audio.save")
-    def test_to_bytes_supports_custom_format(self, mock_save: MagicMock, dummy_waveform: torch.Tensor) -> None:
-        """Test that to_bytes works with non-default audio format."""
-        mock_save.side_effect = lambda buffer, waveform, sr, format: buffer.write(b"flac_bytes")
+    @patch("mllm_shap.utils.audio.AudioSegment")
+    def test_to_bytes_mp3_exports_via_pydub_and_returns_bytes(
+        self, mock_audio_segment_cls: MagicMock, dummy_waveform: torch.Tensor
+    ) -> None:
+        """MP3 path constructs an AudioSegment and exports with correct params."""
+        # Prepare a mock segment instance with export writing known bytes
+        mock_segment = MagicMock()
 
-        result = TorchAudioHandler.to_bytes(dummy_waveform, sample_rate=44100, audio_format="flac")
+        def fake_export(buffer, *, format, bitrate):
+            assert format == "mp3"
+            assert bitrate == "192k"
+            buffer.write(b"encoded_mp3_bytes")
 
-        assert b"flac_bytes" in result
-        mock_save.assert_called_once()
-        _, _, kwargs = mock_save.mock_calls[0]
-        assert kwargs["format"] == "flac"
+        mock_segment.export.side_effect = fake_export
+        mock_audio_segment_cls.return_value = mock_segment
 
-    @patch("mllm_shap.utils.audio.save", side_effect=Exception("Save failed"))
-    def test_to_bytes_raises_on_error(self, mock_save: MagicMock, dummy_waveform: torch.Tensor) -> None:
-        """Test that to_bytes raises exception if torchaudio.save fails."""
-        with pytest.raises(Exception, match="Save failed"):
-            TorchAudioHandler.to_bytes(dummy_waveform, sample_rate=16000, audio_format="mp3")
+        result = TorchAudioHandler.to_bytes(
+            dummy_waveform, sample_rate=24_000, audio_format="mp3"
+        )
+
+        # Returned bytes come from export buffer
+        assert isinstance(result, bytes)
+        assert result == b"encoded_mp3_bytes"
+
+        # Constructor was called with raw PCM16 bytes and correct metadata
+        # We only check keyword args that are set in the util.
+        _, kwargs = mock_audio_segment_cls.call_args
+        assert kwargs["frame_rate"] == 24_000
+        assert kwargs["sample_width"] == 2  # PCM16_SAMPLE_WIDTH_BYTES
+        assert kwargs["channels"] == 1      # MONO_CHANNELS
+
+        # Export was invoked once
+        mock_segment.export.assert_called_once()

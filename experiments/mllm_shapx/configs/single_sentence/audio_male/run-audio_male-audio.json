@@ -1,0 +1,59 @@
+{
+  "experiment_set_id": "single_sentence_2025_02_12",
+  "output_root": "experiments_output",
+  "device": "cuda",
+  "connector": "liquid_audio",
+
+  "dataset": {
+    "subset": "single_sentence",
+    "split": "test",
+    "revision": "848de83f24b94947a58a945c897b2f0eaed780b3",
+    "repo_id": "mvishiu11/mllm-shap-new"
+  },
+
+  "selection": {
+    "max_samples": 1000,
+    "shuffle_seed": 42,
+    "start_index": 0,
+    "max_prompt_tokens": 1000,
+    "min_prompt_tokens": 1
+  },
+
+  "wandb": {
+    "enabled": true,
+    "project": "mllm-shap-audio-text",
+    "group": "single_sentence",
+    "mode": "online",
+    "tags": ["single_sentence", "experiment"]
+  },
+
+  "generation": {
+    "max_new_tokens": 30,
+    "text_temperature": 0.0
+  },
+
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "MinMaxNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "TfIdfCosineSimilarity"
+  },
+
+  "embedding": {
+    "model_id": "intfloat/e5-small-v2",
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+    "max_length": 64,
+    "batch_size": 64,
+    "l2_normalize": true,
+    "local_files_only": false
+  },
+
+  "modality": {
+    "input_modality": "audio__male",
+    "output_modality": "audio"
+  },
+
+  "experiments": [
+    { "explainer_type": "limited_neyman", "linear": [3.0], "name": "audio_male_audio" }
+  ]
+}
