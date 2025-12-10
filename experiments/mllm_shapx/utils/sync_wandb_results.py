@@ -6,7 +6,11 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-import wandb
+try:
+    import wandb
+except ImportError:
+    print("[!] wandb not installed. Please install wandb to use this script.")
+    wandb = None
 
 if TYPE_CHECKING:
     from wandb.apis.public import Run
