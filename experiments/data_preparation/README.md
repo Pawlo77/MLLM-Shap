@@ -2,6 +2,8 @@
 
 This directory contains Jupyter notebooks for creating and processing datasets used in the experiments.
 
+All datasets created here are uploaded to [HuggingFace Datasets](https://huggingface.co/datasets/Pawlo77/mllm-swap).
+
 ## Available Notebooks
 
 ### 🎙️ Google TTS Demo
@@ -22,4 +24,4 @@ This directory contains Jupyter notebooks for creating and processing datasets u
 ### 🗣️ Sample Usage
 [`overview.ipynb`](./overview.ipynb)
 - Showcase how to use one of the created datasets with *HuggingFace*
-- Dataset card is [here](https://huggingface.co/datasets/Pawlo77/mllm-swap)
+- Dataset card is [here](https://huggingface.co/datasets/Pawlo77/mllm-shap)
