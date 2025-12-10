@@ -61,6 +61,7 @@ class Explainer(BaseExplainer):
         )
         logger.debug("Generation took %.2f seconds.", time() - t0)
 
+        del chat.cache  # free memory
         t0 = time()
         history = self.shap_explainer(
             model=self.model,

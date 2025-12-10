@@ -15,6 +15,7 @@ from ...utils.logger import get_logger
 logger: Logger = get_logger(__name__)
 
 
+# pylint: disable=duplicate-code
 class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
     """Generator for producing unique masks for SHAP explainability."""
 

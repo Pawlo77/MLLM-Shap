@@ -1,9 +1,10 @@
 """LiquidAudio chat state."""
 
+import math
 from copy import deepcopy
 from functools import cached_property
 from logging import Logger
-from typing import Any, Literal, cast
+from typing import Any, Literal, Iterable, cast
 
 import torch
 from liquid_audio import ChatState as _ChatState
@@ -45,6 +46,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
     """Number of audio codebooks used for audio output tokens."""
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "proc",  # processor - large, read-only
+        "_logger",
+    })
 
     # for each element x in _audio_map:
     #     x > 0 -> index in audio_out + 1
@@ -104,7 +109,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         self._audio_map = torch.empty((0,), dtype=torch.long, device=self.torch_device)
 
     # assume `_{}` are protected methods from BaseMllmChat
-    # pylint: disable=too-many-locals,protected-access
+    # pylint: disable=too-many-locals,protected-access,too-many-branches,too-many-statements
     @classmethod
     def _set_new_instance(
         cls: type["LiquidAudioChat"],
@@ -148,46 +153,94 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             chat._audio_map[chat._audio_map > 0][final_audio_out_relative] - removed_audio_out_relative_shift
         )
 
-        new_instance._audio_map = torch.cat([new_audio_map_in, new_audio_map_out], dim=0)
-
-        # repeat each audio in token LiquidAudioChat.AUDIO_OUT_SHAPE times for LiquidAudioChat.AUDIO_OUT_SHAPE codebooks
-        final_audio_in_relative_codebooks = torch.repeat_interleave(
-            final_audio_in_relative,
-            repeats=LiquidAudioChat.AUDIO_OUT_SHAPE,
+        new_instance._audio_map = torch.cat(
+            [new_audio_map_in, new_audio_map_out],
+            dim=0,
         )
+
+        chunk = LiquidAudioChat.AUDIO_OUT_SHAPE  # 8
+        t_frames = new_instance.audio_in.shape[1]
+
+        # Build frame mask respecting audio segment boundaries from audio_in_lens
+        # Each audio segment has its own length in audio_in_lens
+        frame_mask_list: list[Tensor] = []
+        token_idx = 0  # Index into final_audio_in_relative (token-level mask)
+
+        for seg_idx in range(chat.audio_in_lens.shape[0]):
+            seg_frame_count = int(chat.audio_in_lens[seg_idx].item())
+            # Number of tokens for this segment (ceiling division)
+            seg_token_count = (seg_frame_count + chunk - 1) // chunk
+
+            seg_frame_start = 0
+            for _ in range(seg_token_count):
+                if token_idx < len(final_audio_in_relative):
+                    keep_val = bool(final_audio_in_relative[token_idx].item())
+                else:
+                    keep_val = False
+                token_idx += 1
+
+                # How many frames does this token cover in this segment?
+                frames_for_token = min(chunk, seg_frame_count - seg_frame_start)
+                if frames_for_token > 0:
+                    frame_mask_list.append(
+                        torch.full(
+                            (frames_for_token,),
+                            fill_value=keep_val,
+                            dtype=torch.bool,
+                            device=new_instance.torch_device,
+                        )
+                    )
+                seg_frame_start += frames_for_token
+
+        if len(frame_mask_list) > 0:
+            final_audio_in_frame_mask = torch.cat(frame_mask_list, dim=0)
+        else:
+            final_audio_in_frame_mask = torch.empty(0, dtype=torch.bool, device=new_instance.torch_device)
+
+        # Ensure frame mask matches audio_in frames
+        if final_audio_in_frame_mask.shape[0] != t_frames:
+            # Pad or truncate to match
+            if final_audio_in_frame_mask.shape[0] < t_frames:
+                padding = torch.zeros(
+                    t_frames - final_audio_in_frame_mask.shape[0],
+                    dtype=torch.bool,
+                    device=new_instance.torch_device,
+                )
+                final_audio_in_frame_mask = torch.cat([final_audio_in_frame_mask, padding], dim=0)
+            else:
+                final_audio_in_frame_mask = final_audio_in_frame_mask[:t_frames]
+
         new_instance.audio_in = safe_mask(
             new_instance.audio_in,
-            final_audio_in_relative_codebooks,
+            final_audio_in_frame_mask,
         )
-        new_instance.audio_out = safe_mask(new_instance.audio_out, final_audio_out_relative)
 
-        # update audio in lens - tensor of audio tokens (codebook - aware)
-        # for each added audio sample
-        s = 0
+        new_instance.audio_out = safe_mask(
+            new_instance.audio_out,
+            final_audio_out_relative,
+        )
+
+        # Update audio_in_lens based on kept frames per segment
+        frame_offset = 0
         for i in range(new_instance.audio_in_lens.shape[0]):
-            original_len = int(new_instance.audio_in_lens[i].item())
-            # count how many audio in tokens are kept for this sample
-            kept_tokens = final_audio_in_relative_codebooks[s : s + original_len].sum().item()  # noqa: E203
-            new_instance.audio_in_lens[i] = kept_tokens
-            s += original_len
+            original_len = int(chat.audio_in_lens[i].item())  # Use original chat's lens
+            kept_frames = final_audio_in_frame_mask[frame_offset: frame_offset + original_len].sum().item()
+            new_instance.audio_in_lens[i] = kept_frames
+            frame_offset += original_len
+
         new_instance.audio_in_lens = new_instance.audio_in_lens[new_instance.audio_in_lens > 0]
 
-        # safety checks
         if chat.validate_from_chat:
             if new_instance._audio_map.shape[0] != audio_mask_relative.sum().item():
-                raise ValueError("audio_map shape does not match the number of audio tokens after filtering.")
-            if new_audio_map_in.shape[0] != final_audio_in_relative.sum().item():
-                raise ValueError("audio_map shape does not match the number of audio in tokens after filtering.")
-            if new_audio_map_out.shape[0] != final_audio_out_relative.sum().item():
-                raise ValueError("audio_map shape does not match the number of audio out tokens after filtering.")
-            indices = -new_instance._audio_map[new_instance._audio_map < 0] - 1
-            if indices.numel() > 0 and indices.max() >= new_instance.audio_in.shape[1]:
-                raise ValueError("audio_in indices in audio_map are out of bounds after filtering.")
-            indices = new_instance._audio_map[new_instance._audio_map > 0] - 1
-            if indices.numel() > 0 and indices.max() >= new_instance.audio_out.shape[1]:
-                raise ValueError("audio_out indices in audio_map are out of bounds after filtering.")
+                raise ValueError("audio_map shape does not match number of audio tokens after filtering.")
 
-        # filter out modality flag based on masks
+            indices_in = -new_instance._audio_map[new_instance._audio_map < 0] - 1
+            if indices_in.numel() > 0 and indices_in.max() >= new_instance.audio_in.shape[1]:
+                raise ValueError("audio_in index out of bounds after filtering.")
+
+            indices_out = new_instance._audio_map[new_instance._audio_map > 0] - 1
+            if indices_out.numel() > 0 and indices_out.max() >= new_instance.audio_out.shape[1]:
+                raise ValueError("audio_out index out of bounds after filtering.")
         new_instance.modality_flag = safe_mask(new_instance.modality_flag, full_mask)
 
         return new_instance
@@ -233,7 +286,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     def _decode_text(self, text_tokens: Tensor) -> str:
         return self.proc.text.decode(text_tokens)
 
-    def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:
+    def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:  # pylint: disable=too-many-branches
         if len(audio_tokens.shape) == 1:
             logger.debug("Decoding audio tokens based on indices from _audio_map.")
 
@@ -254,8 +307,40 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         if audio_tokens.shape[0] == LiquidAudioChat.AUDIO_OUT_SHAPE:
             logger.debug("Decoding audio out...")
 
-            # expects shape (B, K, T)
             mimi_codes = audio_tokens.unsqueeze(0)
+
+            # -validation/clamp of code indices
+            mimi_codes = mimi_codes.to(dtype=torch.long, device=self.torch_device, non_blocking=True)
+
+            # try to infer per-codebook sizes from quantizer internals
+            sizes: list[int] = []
+            try:
+                q = self.proc.mimi.quantizer
+                if hasattr(q, "vq") and hasattr(q.vq, "layers") and q.vq.layers is not None:
+                    for layer in cast(Iterable[Any], q.vq.layers):
+                        codebook = getattr(layer, "_codebook", None) or getattr(layer, "codebook", None)
+                        emb = getattr(codebook, "embedding", None)
+                        if emb is None:
+                            raise AttributeError("No embedding on codebook")
+                        sizes.append(int(emb.shape[0]))
+                else:
+                    # conservative fallback: assume 2048 entries per codebook
+                    sizes = [2048] * mimi_codes.shape[1]
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning("Could not introspect codebook sizes (%s). Falling back to 2048.", e)
+                sizes = [2048] * mimi_codes.shape[1]
+
+            num_codebooks = mimi_codes.shape[1]
+            for k in range(min(num_codebooks, len(sizes))):
+                n = sizes[k]
+                ck = mimi_codes[:, k, :]  # (B, T)
+                # detect OOR
+                if (ck >= n).any() or (ck < 0).any():
+                    mn = int(ck.min().item())
+                    mx = int(ck.max().item())
+                    logger.warning("Audio code OOR on codebook %d: min=%d max=%d valid=[0,%d). Clamping.", k, mn, mx, n)
+                    ck.clamp_(0, n - 1)
+
             return cast(Tensor, self.proc.mimi.decode(mimi_codes).squeeze(0))
 
         raise ValueError(
@@ -272,7 +357,11 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         starting_tokens_num = self.audio_in.shape[1]
         _ChatState.add_audio(self, waveform, sample_rate)
         # LiquidAudioChat.AUDIO_OUT_SHAPE codebooks
-        added_tokens_num = int(self.audio_in.shape[1] - starting_tokens_num) // LiquidAudioChat.AUDIO_OUT_SHAPE
+        # added_tokens_num = int(self.audio_in.shape[1] - starting_tokens_num) // LiquidAudioChat.AUDIO_OUT_SHAPE
+
+        delta_cols = int(self.audio_in.shape[1] - starting_tokens_num)
+
+        added_tokens_num = math.ceil(delta_cols / LiquidAudioChat.AUDIO_OUT_SHAPE)
 
         # update audio map
         self._audio_map = torch.cat(

@@ -1,0 +1,54 @@
+{
+  "experiment_set_id": "ss_linear_testing",
+  "output_root": "experiments_output",
+  "device": "cuda",
+  "connector": "hf_text",
+
+  "dataset": {
+    "subset": "single_sentence",
+    "split": "test",
+    "revision": "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf",
+    "repo_id": "Pawlo77/mllm-shap"
+  },
+
+  "selection": {
+    "max_samples": 5,
+    "shuffle_seed": 42,
+    "start_index": 0,
+    "max_prompt_tokens": 14,
+    "min_prompt_tokens": 14
+  },
+
+  "wandb": {
+    "enabled": true,
+    "project": "mllm-shap-audio-text",
+    "group": "single_sentence",
+    "mode": "online",
+    "tags": ["single_sentence", "text-only", "linear_tests"]
+  },
+
+  "generation": {
+    "max_new_tokens": 25,
+    "text_temperature": 0.0
+  },
+
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "MinMaxNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "TfIdfCosineSimilarity"
+  },
+
+  "embedding": {
+    "model_id": "intfloat/e5-small-v2",
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+    "max_length": 64,
+    "batch_size": 64,
+    "l2_normalize": true,
+    "local_files_only": false
+  },
+
+  "experiments": [
+    { "explainer_type": "exact", "name": "exact_baseline_14" }
+  ]
+}

@@ -66,14 +66,16 @@ class TestCosineSimilarity:
         base = torch.tensor([0.0, 0.0])
         others = torch.tensor([[1.0, 0.0]])
         out = similarity(base, others)
-        assert torch.isnan(out[0])
+        # Zero vectors are clamped for numerical stability, resulting in ~0 similarity
+        assert torch.allclose(out[0], torch.tensor(0.0), atol=1e-5)
 
     def test_zero_vector_others(self):
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 0.0])
         others = torch.tensor([[0.0, 0.0]])
         out = similarity(base, others)
-        assert torch.isnan(out[0])
+        # Zero vectors are clamped for numerical stability, resulting in ~0 similarity
+        assert torch.allclose(out[0], torch.tensor(0.0), atol=1e-5)
 
     def test_scaling_invariance(self):
         similarity = CosineSimilarity()
