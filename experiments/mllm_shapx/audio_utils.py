@@ -7,6 +7,7 @@ import io
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import numpy as np
 from torch import Tensor
 
 from .constants import InputModality, OutputModality
@@ -349,9 +350,13 @@ def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-
     }
 
     # Save input audio if present (handle both single bytes and list)
-    if input_audio_bytes and input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
+    # Check if input_audio_bytes is not None/empty (handle numpy arrays properly)
+    has_audio = input_audio_bytes is not None and (
+        not hasattr(input_audio_bytes, "__len__") or len(input_audio_bytes) > 0
+    )
+    if has_audio and input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
         # Normalize to list
-        audio_list = [input_audio_bytes] if isinstance(input_audio_bytes, bytes) else input_audio_bytes
+        audio_list = [input_audio_bytes] if isinstance(input_audio_bytes, (bytes, np.ndarray)) else input_audio_bytes
         if len(audio_list) == 1:
             # Single audio - save with original naming
             serialized["input_audio"] = save_input_audio(
