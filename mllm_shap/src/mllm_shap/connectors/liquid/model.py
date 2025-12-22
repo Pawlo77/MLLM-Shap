@@ -3,6 +3,7 @@
 import warnings
 from copy import deepcopy
 from typing import Any, cast
+from functools import partial
 
 import torch
 from liquid_audio import ChatState, LFM2AudioModel, LFM2AudioProcessor, LFMModality
@@ -35,7 +36,9 @@ class _PatchedLFM2AudioProcessor(LFM2AudioProcessor):
             ValueError: If device is not set.
         """
         if self.__device is None:
-            raise ValueError("Device not set. Please set the device before using the processor.")
+            raise ValueError(
+                "Device not set. Please set the device before using the processor."
+            )
         return self.__device
 
     @device.setter
@@ -84,7 +87,12 @@ class LiquidAudio(BaseMllmModel):
         kwargs = kwargs or {}
         kwargs["processor"] = self.processor
 
-        return LiquidAudioChat(*args, device=self.device, **kwargs)  # type: ignore[misc]
+        return LiquidAudioChat(
+            *args,
+            device=self.device,
+            get_new_chat_callable=partial(self.get_new_chat, *args, **kwargs),
+            **kwargs,
+        )  # type: ignore[misc]
 
     def generate(
         self,
@@ -142,7 +150,9 @@ class LiquidAudio(BaseMllmModel):
         if len(text_tokens) > 0:
             text_tokens_tensor = torch.stack(text_tokens, 1)
         else:
-            text_tokens_tensor = torch.empty((1, 0), dtype=torch.long, device=self.device)
+            text_tokens_tensor = torch.empty(
+                (1, 0), dtype=torch.long, device=self.device
+            )
         del text_tokens
 
         if len(audio_tokens) > 0:
@@ -158,7 +168,9 @@ class LiquidAudio(BaseMllmModel):
         modality_flag = torch.tensor(modality_out, device=self.device)
 
         if keep_history:
-            self._set_chat_history(chat, text_tokens_tensor, audio_tokens_tensor, modality_flag)
+            self._set_chat_history(
+                chat, text_tokens_tensor, audio_tokens_tensor, modality_flag
+            )
         return ModelResponse(
             chat=chat if keep_history else None,
             generated_text_tokens=text_tokens_tensor.squeeze(0),  # shape: [seq_len]
@@ -180,11 +192,15 @@ class LiquidAudio(BaseMllmModel):
                 response.generated_modality_flag,
             )
             # pylint: disable=protected-access # type: ignore[arg-type]
-            static_embeddings.append(self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0))
+            static_embeddings.append(
+                self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0)
+            )
 
         return static_embeddings
 
-    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+    def _get_contextual_embeddings(
+        self, static_embeddings: list[Tensor]
+    ) -> list[Tensor]:
         contextual_embeddings = []
 
         for emb in static_embeddings:
