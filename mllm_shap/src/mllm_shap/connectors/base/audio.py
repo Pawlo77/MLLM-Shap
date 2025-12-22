@@ -5,7 +5,7 @@ import warnings
 import wave
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import Dict, List, Tuple, Union, cast
+from typing import cast
 
 import librosa
 import numpy as np
@@ -15,6 +15,7 @@ from torchaudio.functional import forced_align
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 from transformers import logging as hf_logging
 
+from ...utils.audio import TorchAudioHandler
 from ...utils.logger import get_logger
 
 hf_logging.set_verbosity_error()  # type: ignore[no-untyped-call]
@@ -43,6 +44,9 @@ class AudioSegment:
     audio: bytes = field(default=b"")
     """Raw audio bytes for this segment."""
 
+    audio_format: str = field(default="wav")
+    """Audio format of the raw audio bytes."""
+
     @property
     def duration(self) -> float:
         """Duration of the segment in seconds."""
@@ -53,6 +57,21 @@ class AudioSegment:
         return (
             f"AudioSegment(token='{self.token}', start={self.start_time:.3f}, "
             f"end={self.end_time:.3f}, dur={self.duration:.3f}s)"
+        )
+
+    def __add__(self, other: "AudioSegment") -> "AudioSegment":
+        """Combine two AudioSegments into one."""
+        if self.token != other.token:
+            raise ValueError("Cannot combine AudioSegments with different tokens.")
+        combined_audio = self.audio + other.audio
+
+        return AudioSegment(
+            token=self.token,
+            start_time=min(self.start_time, other.start_time),
+            end_time=max(self.end_time, other.end_time),
+            confidence=(self.confidence + other.confidence) / 2,
+            audio=combined_audio,
+            audio_format=self.audio_format,
         )
 
 
@@ -219,7 +238,7 @@ class SpectrogramGuidedAligner:
 
     def __merge_tokens(
         self, alignment_path: torch.Tensor, blank_id: int
-    ) -> List[Tuple[int, int, int]]:
+    ) -> list[tuple[int, int, int]]:
         """
         Merges frame-level alignment into (token, start, end) spans.
 
@@ -227,7 +246,7 @@ class SpectrogramGuidedAligner:
             alignment_path: Tensor of token IDs aligned per frame.
             blank_id: ID of the blank token in CTC.
         Returns:
-            List of (token_id, start_frame, end_frame) tuples.
+            list of (token_id, start_frame, end_frame) tuples.
         """
         path = alignment_path.tolist()
 
@@ -247,30 +266,16 @@ class SpectrogramGuidedAligner:
 
         return spans
 
-    def __load_waveform_from_bytes(
-        self, audio_bytes: bytes
-    ) -> Tuple[torch.Tensor, int]:
-        """
-        Loads waveform from bytes.
-
-        Args:
-            audio_bytes: Raw audio data in bytes.
-        Returns:
-            Tuple of (waveform tensor, original sample rate).
-        """
-        waveform, original_sr = torchaudio.load(io.BytesIO(audio_bytes))
-        return waveform, original_sr
-
     def __prepare_transcript(
-        self, transcript: Union[str, List[str]]
-    ) -> Tuple[str, List[str], str, List[int]]:
+        self, transcript: str | list[str]
+    ) -> tuple[str, list[str], str, list[int]]:
         """
         Prepares the transcript for alignment.
 
         Args:
             transcript: Either a single string or a list of tokens.
         Returns:
-            Tuple containing full transcript, target segments, clean text, and valid token IDs.
+            tuple containing full transcript, target segments, clean text, and valid token IDs.
         """
         if isinstance(transcript, str):
             full_transcript = transcript
@@ -293,14 +298,14 @@ class SpectrogramGuidedAligner:
         return full_transcript, target_segments, clean_text, valid_tokens
 
     def __perform_forced_alignment(
-        self, waveform: torch.Tensor, original_sr: int, valid_tokens: List[int]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, waveform: torch.Tensor, original_sr: int, valid_tokens: list[int]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Performs forced alignment using Torchaudio's forced_align.
         Ensures CPU fallback for compatibility.
 
         Returns:
-            Tuple of (alignment_path, emission_log_probs).
+            tuple of (alignment_path, emission_log_probs).
         """
         emissions_gpu = self.__compute_emissions(waveform, original_sr).squeeze(0)
 
@@ -323,21 +328,21 @@ class SpectrogramGuidedAligner:
     # pylint: disable=too-many-locals
     def __refine_token_spans(
         self,
-        token_spans: List[Tuple[int, int, int]],
+        token_spans: list[tuple[int, int, int]],
         emissions_gpu: torch.Tensor,
         waveform: torch.Tensor,
         original_sr: int,
-    ) -> List[Dict[str, Union[str, float]]]:
+    ) -> list[dict[str, str | float]]:
         """
         Refines token boundary times using acoustic features.
 
         Args:
-            token_spans: List of (token_id, start_frame, end_frame) tuples.
+            token_spans: list of (token_id, start_frame, end_frame) tuples.
             emissions_gpu: Emission log-probabilities tensor.
             waveform: Audio waveform tensor.
             original_sr: Original sampling rate of the waveform.
         Returns:
-            List of refined character segments with start/end times and confidence.
+            list of refined character segments with start/end times and confidence.
         """
         ratio = waveform.size(1) / emissions_gpu.size(0)
         numpy_wave = waveform.cpu().numpy().squeeze()
@@ -364,17 +369,17 @@ class SpectrogramGuidedAligner:
 
     def __aggregate_chars_to_segments(
         self,
-        char_segments: List[Dict[str, Union[str, float]]],
-        target_segments: List[str],
-    ) -> List[AudioSegment]:
+        char_segments: list[dict[str, str | float]],
+        target_segments: list[str],
+    ) -> list[AudioSegment]:
         """
         Aggregates character-level alignment into the provided target segments.
 
         Args:
-            char_segments: List of character-level segments with timings.
-            target_segments: List of target tokens/words to align to.
+            char_segments: list of character-level segments with timings.
+            target_segments: list of target tokens/words to align to.
         Returns:
-            List of aggregated AudioSegment objects.
+            list of aggregated AudioSegment objects.
         """
         # Aggregate chars to words/tokens
         final_segments = []
@@ -421,6 +426,7 @@ class SpectrogramGuidedAligner:
                         start_time=cast(float, start_time),
                         end_time=cast(float, end_time),
                         confidence=avg_conf,
+                        audio_format="wav",
                     )
                 )
 
@@ -428,7 +434,7 @@ class SpectrogramGuidedAligner:
 
     def __attach_audio_to_segments(
         self,
-        final_segments: List[AudioSegment],
+        final_segments: list[AudioSegment],
         waveform: torch.Tensor,
         original_sr: int,
     ) -> None:
@@ -436,7 +442,7 @@ class SpectrogramGuidedAligner:
         Attaches raw audio bytes to each segment.
 
         Args:
-            final_segments: List of AudioSegment objects.
+            final_segments: list of AudioSegment objects.
             waveform: Audio waveform tensor.
             original_sr: Original sampling rate of the waveform.
         """
@@ -461,19 +467,33 @@ class SpectrogramGuidedAligner:
             seg.audio = self.__save_wav_mem(segment_tensor, original_sr)
 
     def __call__(
-        self, audio_bytes: bytes, transcript: Union[str, List[str]]
-    ) -> List[AudioSegment]:
+        self,
+        transcript: str | list[str],
+        audio_content: bytes | None = None,
+        waveform: torch.Tensor | None = None,
+        original_sr: int | None = None,
+        audio_format: str = "mp3",
+    ) -> list[AudioSegment]:
         """
         Main pipeline execution.
 
         Args:
-            audio_bytes: Raw audio data.
+            audio_content: Raw audio bytes.
             transcript: Either a single string (will be split by spaces)
                 OR a list of tokens/utterances to align to.
         Returns:
-            List of aligned AudioSegment objects.
+            list of aligned AudioSegment objects.
         """
-        waveform, original_sr = self.__load_waveform_from_bytes(audio_bytes)
+        if audio_content is None and (waveform is None or original_sr is None):
+            raise ValueError(
+                "Either audio_content or both waveform and original_sr must be provided."
+            )
+        if audio_content is not None:
+            waveform, original_sr = TorchAudioHandler.from_bytes(
+                audio_content, audio_format=audio_format
+            )
+        original_sr = cast(int, original_sr)
+        waveform = cast(torch.Tensor, waveform)
 
         _, target_segments, clean_text, valid_tokens = self.__prepare_transcript(
             transcript
