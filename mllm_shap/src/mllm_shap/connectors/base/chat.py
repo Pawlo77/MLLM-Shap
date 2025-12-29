@@ -77,6 +77,7 @@ class BaseMllmChat(ABC):
     _audio_added_in_last_turn: bool = False
     _system_roles: set[Role]
     _audio_segments: dict[int, list[AudioSegment]] | None = None
+    _audio_waveforms: dict[int, tuple[Tensor, int, str]] | None = None
 
     __shap: ExplainerCache | None = None
 
@@ -152,7 +153,7 @@ class BaseMllmChat(ABC):
             __config.empty_turn_sequences
         )
 
-    # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements,too-many-locals,too-many-nested-blocks
     @classmethod
     def from_chat(
         cls,
@@ -171,6 +172,7 @@ class BaseMllmChat(ABC):
             ValueError: If the mask size does not match the number of tokens in the chat,
                 or if the mask is all False,
                 or if all text tokens are filtered out.
+            RuntimeError: If audio segments are inconsistent with stored waveforms.
         """
         logger.debug("Creating new chat instance from existing chat with masks.")
 
@@ -226,6 +228,13 @@ class BaseMllmChat(ABC):
         if chat._audio_segments is not None:  # pylint: disable=protected-access
             new_instance = chat.get_new_chat_callable()
 
+            def _pcm16_roundtrip(wf: Tensor) -> Tensor:
+                """Match the historical WAV(PCM16) encode/decode quantization without allocating bytes."""
+                wf = wf.to(torch.float32)
+                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(-1.0, 1.0)
+                q = (wf * 32767.0).round().clamp_(-32768.0, 32767.0)
+                return (q / 32767.0).contiguous()
+
             for turn in range(1, chat.turn_number + 1):
                 turn_mask = chat.token_turns == turn
                 masked_turn_mask = turn_mask & mask
@@ -260,12 +269,50 @@ class BaseMllmChat(ABC):
                         new_audio_segments: list[AudioSegment] = [
                             chat._audio_segments[turn][i] for i in idxs.tolist()  # pylint: disable=protected-access
                         ]
-                        target_audio_format = new_audio_segments[0].audio_format
-                        full_segment = TorchAudioHandler.combine(new_audio_segments, target_audio_format)
-                        new_instance.add_audio(
-                            full_segment, target_audio_format
-                        )
-                    new_instance.end_turn()
+
+                        # Prefer slicing from the stored source waveform (one copy per turn)
+                        audio_waveforms = getattr(chat, "_audio_waveforms", None)
+                        if audio_waveforms is not None and turn in audio_waveforms:
+                            turn_waveform, turn_sr, _turn_fmt = audio_waveforms[turn]
+
+                            pieces: list[Tensor] = []
+                            for seg in new_audio_segments:
+                                if (
+                                    seg.start_sample is None
+                                    or seg.end_sample is None
+                                    or seg.sample_rate is None
+                                ):
+                                    raise RuntimeError(
+                                        "Audio segments missing sample indices; re-run alignment on this chat."
+                                    )
+                                if seg.sample_rate != turn_sr:
+                                    raise RuntimeError(
+                                        "Audio segment sample rate mismatch with stored waveform."
+                                    )
+                                pieces.append(turn_waveform[:, seg.start_sample : seg.end_sample])  # noqa: E203
+
+                            combined_waveform = (
+                                torch.cat(pieces, dim=1) if pieces else torch.empty((1, 0), dtype=turn_waveform.dtype)
+                            )
+                            combined_waveform = _pcm16_roundtrip(combined_waveform)
+
+                            # add_audio requires non-empty bytes, but will use _waveform/_sample_rate when provided
+                            target_audio_format = new_audio_segments[0].audio_format
+                            new_instance.add_audio(
+                                audio_content=b"\x00",
+                                audio_format=target_audio_format,
+                                _waveform=combined_waveform,
+                                _sample_rate=turn_sr,
+                                _internal=True,
+                            )
+                        else:
+                            # Backward-compatible fallback: combine stored per-segment bytes (more expensive)
+                            target_audio_format = new_audio_segments[0].audio_format
+                            full_segment = TorchAudioHandler.combine(
+                                new_audio_segments, target_audio_format
+                            )
+                            new_instance.add_audio(full_segment, target_audio_format)
+                        new_instance.end_turn()
 
         else:
             new_instance = cls._set_new_instance(
@@ -788,6 +835,12 @@ class BaseMllmChat(ABC):
         if self._audio_segments is None:
             self._audio_segments = {}
         self._audio_segments[self.turn_number] = new_segments
+
+        # Store the source waveform once per turn so SHAP masking can slice segments
+        if self._audio_waveforms is None:
+            self._audio_waveforms = {}
+        wf_cpu = waveform.detach().to(torch.float32).cpu().contiguous()
+        self._audio_waveforms[self.turn_number] = (wf_cpu, int(sample_rate), audio_format)
         logger.debug(
             "Added segments: %d (speaker=%s)",
             len(new_segments),
@@ -835,7 +888,6 @@ class BaseMllmChat(ABC):
             len(self._audio_segments[target_turn]),
             target_turn,
         )
-
 
     def append(
         self,

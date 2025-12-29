@@ -26,8 +26,12 @@ logger: Logger = get_logger(__name__)
 warnings.filterwarnings("ignore", message=".*forced_align has been deprecated.*")
 
 
+UNICODE_CATEGORY_NONSPACING_MARK = "Mn"
+ASCII_SPACE = " "
+
+
 @dataclass
-class AudioSegment:
+class AudioSegment:  # pylint: disable=too-many-instance-attributes
     """Represents a segment of audio aligned to a token/word."""
 
     token: str
@@ -47,6 +51,15 @@ class AudioSegment:
 
     audio_format: str = field(default="wav")
     """Audio format of the raw audio bytes."""
+
+    sample_rate: int | None = field(default=None, repr=False)
+    """Sample rate for `start_sample`/`end_sample` (if set)."""
+
+    start_sample: int | None = field(default=None, repr=False)
+    """Start sample index in the source waveform (if set)."""
+
+    end_sample: int | None = field(default=None, repr=False)
+    """End sample index in the source waveform (if set)."""
 
     @property
     def duration(self) -> float:
@@ -147,7 +160,9 @@ class SpectrogramGuidedAligner:
         # and filter out combining marks (diacritics)
         text_nfd = unicodedata.normalize("NFD", text)
         text_no_diacritics = "".join(
-            char for char in text_nfd if unicodedata.category(char) != "Mn"
+            char
+            for char in text_nfd
+            if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK
         )
         # Keep only alphanumeric characters and convert to uppercase
         return "".join(filter(str.isalnum, text_no_diacritics)).upper()
@@ -313,14 +328,16 @@ class SpectrogramGuidedAligner:
         # Strip diacritics while preserving spaces
         text_nfd = unicodedata.normalize("NFD", text_upper)
         text_no_diacritics = "".join(
-            char for char in text_nfd 
-            if unicodedata.category(char) != "Mn"  # Remove combining marks (diacritics)
+            char for char in text_nfd
+            if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
         )
         # Keep only alphanumeric and spaces
-        text_clean = "".join(c for c in text_no_diacritics if c.isalnum() or c == " ")
+        text_clean = "".join(
+            c for c in text_no_diacritics if c.isalnum() or c == ASCII_SPACE
+        )
         # Replace spaces with CTC separator
-        clean_text = text_clean.replace(" ", self.ctc_separator)
-        
+        clean_text = text_clean.replace(ASCII_SPACE, self.ctc_separator)
+
         valid_tokens = [
             self.processor.tokenizer.convert_tokens_to_ids(c)  # pylint: disable=no-member
             for c in clean_text
@@ -472,9 +489,11 @@ class SpectrogramGuidedAligner:
         final_segments: list[AudioSegment],
         waveform: torch.Tensor,
         original_sr: int,
+        *,
+        attach_audio: bool,
     ) -> None:
         """
-        Attaches raw audio bytes to each segment.
+        Attaches segment indices (always) and optionally raw audio bytes.
 
         Args:
             final_segments: list of AudioSegment objects.
@@ -497,6 +516,13 @@ class SpectrogramGuidedAligner:
             # Clamp boundaries
             start_sample = max(0, start_sample)
             end_sample = min(cpu_waveform.size(1), end_sample)
+
+            seg.sample_rate = original_sr
+            seg.start_sample = start_sample
+            seg.end_sample = end_sample
+
+            if not attach_audio:
+                continue
 
             segment_tensor = cpu_waveform[:, start_sample:end_sample]
             seg.audio = self.__save_wav_mem(segment_tensor, original_sr)
@@ -535,7 +561,10 @@ class SpectrogramGuidedAligner:
         original_sr = cast(int, original_sr)
         waveform = cast(torch.Tensor, waveform)
 
-        self.__attach_audio_to_segments(segments, waveform, original_sr)
+        # Materialize bytes on demand.
+        self.__attach_audio_to_segments(
+            segments, waveform, original_sr, attach_audio=True
+        )
 
     def __call__(
         self,
@@ -590,7 +619,10 @@ class SpectrogramGuidedAligner:
             refined_chars, target_segments
         )
 
-        if attach_audio:
-            self.__attach_audio_to_segments(final_segments, waveform, original_sr)
+        # Always set sample indices for downstream masking/slicing.
+        # Attach raw bytes only when requested.
+        self.__attach_audio_to_segments(
+            final_segments, waveform, original_sr, attach_audio=attach_audio
+        )
 
         return final_segments

@@ -227,7 +227,7 @@ class TestSpectrogramGuidedAlignerAlign:
             aligner,
             "_SpectrogramGuidedAligner__attach_audio_to_segments",
         )
-        attach_fn(segments, waveform, sr)
+        attach_fn(segments, waveform, sr, attach_audio=True)
 
         for seg in segments:
             assert isinstance(seg.audio, (bytes, bytearray))
@@ -338,34 +338,41 @@ class TestSpectrogramGuidedAlignerAlign:
         assert SpectrogramGuidedAligner.normalize_text("Núñez") == "NUNEZ"
         assert SpectrogramGuidedAligner.normalize_text("café") == "CAFE"
         assert SpectrogramGuidedAligner.normalize_text("naïve") == "NAIVE"
-        
+
         # Test with punctuation (should be removed)
         assert SpectrogramGuidedAligner.normalize_text("hello, world!") == "HELLOWORLD"
-        
+
         # Test with mixed case
         assert SpectrogramGuidedAligner.normalize_text("HeLLo WoRLd") == "HELLOWORLD"
-        
+
         # Test with spaces (should be removed by the method)
         assert SpectrogramGuidedAligner.normalize_text("hello world") == "HELLOWORLD"
 
     def test_prepare_transcript_handles_diacritics(self) -> None:
         """__prepare_transcript should strip diacritics for consistent alignment."""
         aligner = self._make_aligner_with_mocks()
-        
+
         # Mock the vocab to include expected characters
         vocab_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ|"
         aligner.vocab = {c: i for i, c in enumerate(vocab_chars)}
         aligner.ctc_separator = "|"
-        
+
         # Mock convert_tokens_to_ids to return the character index
         def mock_convert(c):
             return vocab_chars.index(c) if c in vocab_chars else -1
         aligner.processor.tokenizer.convert_tokens_to_ids = mock_convert
-        
+
         # Test transcript with diacritics
         transcript = "Vasco Núñez"
-        full_transcript, target_segments, clean_text, valid_tokens = aligner._SpectrogramGuidedAligner__prepare_transcript(transcript)  # pylint: disable=protected-access
-        
+        (
+            full_transcript,
+            target_segments,
+            clean_text,
+            valid_tokens,
+        ) = aligner._SpectrogramGuidedAligner__prepare_transcript(  # pylint: disable=protected-access
+            transcript
+        )
+
         # Verify normalization
         assert full_transcript == transcript
         assert target_segments == ["Vasco", "Núñez"]
@@ -374,4 +381,3 @@ class TestSpectrogramGuidedAlignerAlign:
         # valid_tokens should only include characters in vocab and all be integers
         assert all(isinstance(t, int) for t in valid_tokens)
         assert len(valid_tokens) == len("VASCO|NUNEZ")  # All characters should be valid
-
