@@ -141,11 +141,6 @@ class TestSpectrogramGuidedAlignerAlign:
         with (
             patch.object(
                 SpectrogramGuidedAligner,
-                "_SpectrogramGuidedAligner__load_waveform_from_bytes",
-                return_value=(dummy_waveform, dummy_sr),
-            ) as mock_load,
-            patch.object(
-                SpectrogramGuidedAligner,
                 "_SpectrogramGuidedAligner__prepare_transcript",
                 return_value=("AB", target_segments, "AB", dummy_tokens),
             ) as mock_prepare,
@@ -174,10 +169,15 @@ class TestSpectrogramGuidedAlignerAlign:
                 "_SpectrogramGuidedAligner__attach_audio_to_segments",
             ) as mock_attach,
         ):
-            out = aligner(b"fake-bytes", transcript="AB")
+            # Test with attach_audio=True by passing waveform directly
+            out = aligner(
+                transcript="AB",
+                waveform=dummy_waveform,
+                original_sr=dummy_sr,
+                attach_audio=True,
+            )
 
         # Pipeline wiring
-        mock_load.assert_called_once_with(b"fake-bytes")
         mock_prepare.assert_called_once()
         mock_align.assert_called_once()
         mock_merge.assert_called_once()
@@ -196,20 +196,17 @@ class TestSpectrogramGuidedAlignerAlign:
         dummy_waveform = torch.zeros(1, 8000)
         dummy_sr = 8_000
 
-        with (
-            patch.object(
-                SpectrogramGuidedAligner,
-                "_SpectrogramGuidedAligner__load_waveform_from_bytes",
-                return_value=(dummy_waveform, dummy_sr),
-            ),
-            patch.object(
-                SpectrogramGuidedAligner,
-                "_SpectrogramGuidedAligner__prepare_transcript",
-                side_effect=ValueError("Transcript contains no valid characters"),
-            ),
+        with patch.object(
+            SpectrogramGuidedAligner,
+            "_SpectrogramGuidedAligner__prepare_transcript",
+            side_effect=ValueError("Transcript contains no valid characters"),
         ):
             with pytest.raises(ValueError, match="no valid characters"):
-                aligner(b"invalid", transcript="@@@")
+                aligner(
+                    transcript="@@@",
+                    waveform=dummy_waveform,
+                    original_sr=dummy_sr,
+                )
 
     def test_attach_audio_to_segments_writes_non_empty_audio(self) -> None:
         """__attach_audio_to_segments should populate non-empty audio bytes for each segment."""
@@ -236,3 +233,102 @@ class TestSpectrogramGuidedAlignerAlign:
             assert isinstance(seg.audio, (bytes, bytearray))
             # At least some content should be written
             assert len(seg.audio) > 0
+
+    def test_align_without_attach_audio_returns_empty_audio_bytes(self) -> None:
+        """align with attach_audio=False (default) should return segments with empty audio bytes."""
+        aligner = self._make_aligner_with_mocks()
+
+        dummy_waveform = torch.zeros(1, 16000)
+        dummy_sr = 16_000
+        dummy_tokens = [1, 2, 3]
+        dummy_alignment = torch.tensor([1, 1, 2, 2, 3, 3])
+        dummy_emissions = torch.zeros(6, 4)
+
+        char_segments = [
+            {"char": "A", "start": 0.0, "end": 0.5, "confidence": 0.9},
+            {"char": "B", "start": 0.5, "end": 1.0, "confidence": 0.8},
+        ]
+        target_segments = ["AB"]
+        final_segments = [
+            AudioSegment(token="AB", start_time=0.0, end_time=1.0, confidence=0.85),
+        ]
+
+        with (
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__prepare_transcript",
+                return_value=("AB", target_segments, "AB", dummy_tokens),
+            ),
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__perform_forced_alignment",
+                return_value=(dummy_alignment, dummy_emissions),
+            ),
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__merge_tokens",
+                return_value=[(1, 0, 2), (2, 2, 4), (3, 4, 6)],
+            ),
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__refine_token_spans",
+                return_value=char_segments,
+            ),
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__aggregate_chars_to_segments",
+                return_value=final_segments,
+            ),
+            patch.object(
+                SpectrogramGuidedAligner,
+                "_SpectrogramGuidedAligner__attach_audio_to_segments",
+            ) as mock_attach,
+        ):
+            # Test with default attach_audio=False by passing waveform directly
+            out = aligner(
+                transcript="AB",
+                waveform=dummy_waveform,
+                original_sr=dummy_sr,
+            )
+
+        # __attach_audio_to_segments should NOT be called when attach_audio=False
+        mock_attach.assert_not_called()
+
+        # Segments should still be returned
+        assert out is final_segments
+        assert len(out) == 1
+        assert isinstance(out[0], AudioSegment)
+        # Audio bytes should be empty (default field value)
+        assert out[0].audio == b""
+
+    def test_attach_audio_to_segments_public_method(self) -> None:
+        """attach_audio_to_segments public method should attach audio to existing segments."""
+        aligner = self._make_aligner_with_mocks()
+
+        # Create segments without audio
+        segments = [
+            AudioSegment(token="hello", start_time=0.0, end_time=0.5, confidence=0.9),
+            AudioSegment(token="world", start_time=0.5, end_time=1.0, confidence=0.8),
+        ]
+
+        # Verify segments have no audio initially
+        for seg in segments:
+            assert seg.audio == b""
+
+        # Create dummy audio
+        sr = 16_000
+        num_samples = int(1.0 * sr)
+        waveform = torch.zeros(1, num_samples)
+
+        # Attach audio using public method
+        aligner.attach_audio_to_segments(
+            segments=segments,
+            waveform=waveform,
+            original_sr=sr,
+        )
+
+        # Verify audio was attached
+        for seg in segments:
+            assert isinstance(seg.audio, (bytes, bytearray))
+            assert len(seg.audio) > 0
+

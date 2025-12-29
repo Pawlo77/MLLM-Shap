@@ -466,6 +466,42 @@ class SpectrogramGuidedAligner:
             segment_tensor = cpu_waveform[:, start_sample:end_sample]
             seg.audio = self.__save_wav_mem(segment_tensor, original_sr)
 
+    def attach_audio_to_segments(
+        self,
+        segments: list[AudioSegment],
+        audio_content: bytes | None = None,
+        waveform: torch.Tensor | None = None,
+        original_sr: int | None = None,
+        audio_format: str = "mp3",
+    ) -> None:
+        """
+        Attach raw audio bytes to existing AudioSegment objects.
+
+        This is a helper method to materialize audio bytes for segments that were
+        created without audio attachment (i.e., with attach_audio=False).
+
+        Args:
+            segments: list of AudioSegment objects to attach audio to.
+            audio_content: Raw audio bytes. Either this or (waveform, original_sr) must be provided.
+            waveform: Audio waveform tensor. Either this and original_sr or audio_content must be provided.
+            original_sr: Original sampling rate of the waveform.
+            audio_format: Format of the audio content (default is "mp3").
+        Raises:
+            ValueError: If neither audio_content nor (waveform, original_sr) are provided.
+        """
+        if audio_content is None and (waveform is None or original_sr is None):
+            raise ValueError(
+                "Either audio_content or both waveform and original_sr must be provided."
+            )
+        if audio_content is not None:
+            waveform, original_sr = TorchAudioHandler.from_bytes(
+                audio_content, audio_format=audio_format
+            )
+        original_sr = cast(int, original_sr)
+        waveform = cast(torch.Tensor, waveform)
+
+        self.__attach_audio_to_segments(segments, waveform, original_sr)
+
     def __call__(
         self,
         transcript: str | list[str],
@@ -473,6 +509,7 @@ class SpectrogramGuidedAligner:
         waveform: torch.Tensor | None = None,
         original_sr: int | None = None,
         audio_format: str = "mp3",
+        attach_audio: bool = False,
     ) -> list[AudioSegment]:
         """
         Main pipeline execution.
@@ -481,6 +518,9 @@ class SpectrogramGuidedAligner:
             audio_content: Raw audio bytes.
             transcript: Either a single string (will be split by spaces)
                 OR a list of tokens/utterances to align to.
+            audio_format: Format of the audio content (default is "mp3").
+            attach_audio: Whether to attach raw audio bytes to each segment (default is False).
+                If False, segments will have empty audio bytes to save memory.
         Returns:
             list of aligned AudioSegment objects.
         """
@@ -515,6 +555,7 @@ class SpectrogramGuidedAligner:
             refined_chars, target_segments
         )
 
-        self.__attach_audio_to_segments(final_segments, waveform, original_sr)
+        if attach_audio:
+            self.__attach_audio_to_segments(final_segments, waveform, original_sr)
 
         return final_segments

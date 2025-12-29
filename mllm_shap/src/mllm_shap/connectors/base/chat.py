@@ -730,6 +730,7 @@ class BaseMllmChat(ABC):
         transcript: str | list[str],
         aligner: SpectrogramGuidedAligner,
         audio_format: str = "mp3",
+        attach_audio: bool = False,
     ) -> None:
         """
         Add audio content along with its transcript to the chat state.
@@ -739,6 +740,8 @@ class BaseMllmChat(ABC):
             transcript: The transcript of the audio content.
             aligner: The SpectrogramGuidedAligner instance for aligning audio and transcript.
             audio_format: The format of the audio content (default is "mp3").
+            attach_audio: Whether to attach raw audio bytes to each segment (default is False).
+                If False, segments will have empty audio bytes to save memory.
         Raises:
             ValueError: If audio_content is not non-empty bytes or transcript is not a non-empty string.
             RuntimeError: If an error occurs in the underlying connector implementation.
@@ -767,6 +770,7 @@ class BaseMllmChat(ABC):
             waveform=waveform,
             original_sr=sample_rate,
             audio_format=audio_format,
+            attach_audio=attach_audio,
         )
         if not new_segments:
             raise ValueError(
@@ -789,6 +793,49 @@ class BaseMllmChat(ABC):
             len(new_segments),
             self.speaker,
         )
+
+    def attach_audio_to_segments(
+        self,
+        aligner: SpectrogramGuidedAligner,
+        audio_content: bytes,
+        audio_format: str = "mp3",
+        turn_number: int | None = None,
+    ) -> None:
+        """
+        Attach raw audio bytes to segments for a specific turn.
+
+        This is a helper method to materialize audio bytes for segments that were
+        created without audio attachment (i.e., with attach_audio=False).
+
+        Args:
+            aligner: The SpectrogramGuidedAligner instance to use for attaching audio.
+            audio_content: The audio content in bytes.
+            audio_format: The format of the audio content (default is "mp3").
+            turn_number: The turn number to attach audio for. If None, uses the current turn.
+        Raises:
+            ValueError: If no audio segments exist for the specified turn.
+        """
+        if self._audio_segments is None:
+            raise ValueError("No audio segments exist in this chat.")
+
+        target_turn = turn_number if turn_number is not None else self.turn_number
+        if target_turn not in self._audio_segments:
+            raise ValueError(f"No audio segments exist for turn {target_turn}.")
+
+        waveform, sample_rate = TorchAudioHandler.from_bytes(
+            audio_content, audio_format=audio_format
+        )
+        aligner.attach_audio_to_segments(
+            segments=self._audio_segments[target_turn],
+            waveform=waveform,
+            original_sr=sample_rate,
+        )
+        logger.debug(
+            "Attached audio to %d segments in turn %d",
+            len(self._audio_segments[target_turn]),
+            target_turn,
+        )
+
 
     def append(
         self,
