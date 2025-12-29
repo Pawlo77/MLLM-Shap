@@ -1,12 +1,14 @@
 """Utility functions for audio processing and display."""
 
-from typing import TYPE_CHECKING
 from io import BytesIO
+from typing import TYPE_CHECKING
+
 import numpy as np
-import torch
 import soundfile as sf
-from torch import Tensor
+import torch
+import torchaudio.transforms as T
 from pydub import AudioSegment
+from torch import Tensor
 
 if TYPE_CHECKING:
     from IPython.display import Audio
@@ -36,7 +38,9 @@ class TorchAudioHandler:
     """Utility class for handling audio content with TorchAudio."""
 
     @staticmethod
-    def from_bytes(audio_content: bytes, audio_format: str = "mp3") -> tuple[Tensor, int]:
+    def from_bytes(
+        audio_content: bytes, audio_format: str = "mp3"
+    ) -> tuple[Tensor, int]:
         """
         Prepare audio content for processing.
 
@@ -123,3 +127,43 @@ class TorchAudioHandler:
             return buf.getvalue()
 
         raise ValueError(f"Unsupported audio_format: {audio_format!r}")
+
+    @staticmethod
+    def combine(
+        audio_segments: list[AudioSegment], target_audio_format: str = AUDIO_FORMAT_WAV
+    ) -> bytes:
+        """
+        Combine multiple AudioSegment instances into a single waveform tensor.
+
+        Args:
+            audio_segments: A list of AudioSegment instances.
+            target_audio_format: The desired audio format for the output (default is "wav").
+        Returns:
+            A bytes object containing the combined audio data.
+        """
+        waveforms: list[Tensor] = []
+        sample_rates: list[int] = []
+
+        for segment in audio_segments:
+            seg_waveform, seg_sr = TorchAudioHandler.from_bytes(
+                segment.audio, audio_format=segment.audio_format
+            )
+            waveforms.append(seg_waveform)
+            sample_rates.append(seg_sr)
+
+        if not waveforms:
+            return b""
+
+        # Resample if necessary and concatenate
+        target_sr = sample_rates[0]
+        resampled_waveforms: list[Tensor] = []
+        for wf, sr in zip(waveforms, sample_rates):
+            if sr != target_sr:
+                resampler = T.Resample(orig_freq=sr, new_freq=target_sr)
+                wf = resampler(wf)
+            resampled_waveforms.append(wf)
+
+        combined_waveform = torch.cat(resampled_waveforms, dim=1)
+        return TorchAudioHandler.to_bytes(
+            combined_waveform, sample_rate=target_sr, audio_format=target_audio_format
+        )

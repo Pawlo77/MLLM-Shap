@@ -1,5 +1,6 @@
 """Chat state for text-only Transformers causal models."""
 
+from collections.abc import Callable
 import warnings
 from copy import deepcopy
 from functools import cached_property
@@ -38,6 +39,7 @@ class TransformersTextChat(BaseMllmChat):
         empty_turn_sequences: set[str] | None = None,
         token_filter: TokenFilter | None = None,
         system_roles_setup: SystemRolesSetup | None = None,
+        get_new_chat_callable: Callable[..., "TransformersTextChat"] | None = None,
     ) -> None:
         empty_turn_sequences = empty_turn_sequences or set()
         self.tokenizer = tokenizer
@@ -46,6 +48,7 @@ class TransformersTextChat(BaseMllmChat):
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
+            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
 
