@@ -1,10 +1,11 @@
 """LiquidAudio chat state."""
 
 import math
+from collections.abc import Callable
 from copy import deepcopy
 from functools import cached_property
 from logging import Logger
-from typing import Any, Literal, Iterable, cast
+from typing import Any, Iterable, Literal, cast
 
 import torch
 from liquid_audio import ChatState as _ChatState
@@ -66,6 +67,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         empty_turn_sequences: set[str] | None = None,
         token_filter: TokenFilter | None = None,
         system_roles_setup: SystemRolesSetup | None = None,
+        get_new_chat_callable: Callable[..., "LiquidAudioChat"] | None = None,
         **liquid_kwargs: Any,
     ) -> None:
         """
@@ -98,6 +100,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
+            get_new_chat_callable=get_new_chat_callable  # type: ignore[arg-type]
         )
 
         # mark starting tokens as system
@@ -356,9 +359,6 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     def _add_audio(self, waveform: Tensor, sample_rate: int) -> int:
         starting_tokens_num = self.audio_in.shape[1]
         _ChatState.add_audio(self, waveform, sample_rate)
-        # LiquidAudioChat.AUDIO_OUT_SHAPE codebooks
-        # added_tokens_num = int(self.audio_in.shape[1] - starting_tokens_num) // LiquidAudioChat.AUDIO_OUT_SHAPE
-
         delta_cols = int(self.audio_in.shape[1] - starting_tokens_num)
 
         added_tokens_num = math.ceil(delta_cols / LiquidAudioChat.AUDIO_OUT_SHAPE)
