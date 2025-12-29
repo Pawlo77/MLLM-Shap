@@ -1,6 +1,7 @@
 """Spectrogram-Guided Forced Aligner using Wav2Vec2."""
 
 import io
+import unicodedata
 import warnings
 import wave
 from dataclasses import dataclass, field
@@ -128,6 +129,28 @@ class SpectrogramGuidedAligner:
 
         self.vocab = self.processor.tokenizer.get_vocab()  # pylint: disable=no-member
         self.blank_id = self.processor.tokenizer.pad_token_id or 0  # pylint: disable=no-member
+
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """
+        Normalize text for alignment by stripping diacritics and keeping only alphanumeric characters.
+
+        This normalization is applied consistently to both the transcript used for forced alignment
+        and the target segments used for aggregation to ensure matching.
+
+        Args:
+            text: The text to normalize.
+        Returns:
+            Normalized text (uppercase, no diacritics, only alphanumeric).
+        """
+        # Decompose Unicode characters (e.g., "ñ" -> "n" + combining tilde)
+        # and filter out combining marks (diacritics)
+        text_nfd = unicodedata.normalize("NFD", text)
+        text_no_diacritics = "".join(
+            char for char in text_nfd if unicodedata.category(char) != "Mn"
+        )
+        # Keep only alphanumeric characters and convert to uppercase
+        return "".join(filter(str.isalnum, text_no_diacritics)).upper()
 
     def __compute_emissions(
         self, waveform: torch.Tensor, original_sr: int
@@ -282,10 +305,22 @@ class SpectrogramGuidedAligner:
             target_segments = transcript.split()
         else:
             target_segments = transcript
-            full_transcript = "".join(transcript)
+            full_transcript = " ".join(transcript)
 
-        # Normalize text (UPPER) and handle separators
-        clean_text = full_transcript.upper().replace(" ", self.ctc_separator)
+        # Normalize text: strip diacritics, uppercase, keep alphanumeric + spaces
+        # Then replace spaces with CTC separator
+        text_upper = full_transcript.upper()
+        # Strip diacritics while preserving spaces
+        text_nfd = unicodedata.normalize("NFD", text_upper)
+        text_no_diacritics = "".join(
+            char for char in text_nfd 
+            if unicodedata.category(char) != "Mn"  # Remove combining marks (diacritics)
+        )
+        # Keep only alphanumeric and spaces
+        text_clean = "".join(c for c in text_no_diacritics if c.isalnum() or c == " ")
+        # Replace spaces with CTC separator
+        clean_text = text_clean.replace(" ", self.ctc_separator)
+        
         valid_tokens = [
             self.processor.tokenizer.convert_tokens_to_ids(c)  # pylint: disable=no-member
             for c in clean_text
@@ -386,8 +421,8 @@ class SpectrogramGuidedAligner:
         current_char_idx = 0
 
         for segment_text in target_segments:
-            # Normalize target segment for matching
-            clean_target = "".join(filter(str.isalnum, segment_text)).upper()
+            # Normalize target segment for matching - use the same normalization as __prepare_transcript
+            clean_target = self.normalize_text(segment_text)
 
             if not clean_target:
                 continue
