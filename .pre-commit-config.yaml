@@ -57,7 +57,7 @@ repos:
           pylint
             --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value
             --max-line-length=120
-            --disable=fixme
+            --disable=fixme,duplicate-code
         language: system
         types: [file, python]
         files: ^(mllm_shap/src|experiments)/.*\.py$
