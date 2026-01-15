@@ -24,11 +24,14 @@ EXPERIMENTS_DIR: str = os.path.abspath(
 )
 """Root directory for experiments output."""
 
-SINGLE_SENTENCE_EXPERIMENTS_DIR: str = os.path.join(EXPERIMENTS_DIR, "single_sentence")
+SINGLE_SENTENCE_EXPERIMENTS_DIR: str = os.path.join(
+    EXPERIMENTS_DIR, "single_sentence_2026_01_03"
+)
 """Single sentence experiments outputs directory."""
 
 CASES: dict[str, str] = {
     "T2T": "text_text_limited_neyman_lin3_0",
+    "T2S": "text_audio_limited_neyman_lin3_0",
     "SM2T": "audio_male_text_limited_neyman_lin3_0",
     "SM2S": "audio_male_audio_limited_neyman_lin3_0",
     "SF2T": "audio_female_text_limited_neyman_lin3_0",
@@ -211,9 +214,45 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
         & ~((ttest_summary["Mode_1"] == "S2S") & (ttest_summary["Mode_2"] == "SM2S"))
         & ~((ttest_summary["Mode_1"] == "S2T") & (ttest_summary["Mode_2"] == "SF2T"))
         & ~((ttest_summary["Mode_1"] == "S2T") & (ttest_summary["Mode_2"] == "SM2T"))
+        & ~(
+            (ttest_summary["Mode_1"] == "T2*")
+            & (ttest_summary["Mode_2"].isin(["T2T", "T2S", "*2T", "*2S"]))
+        )
+        & ~(
+            (ttest_summary["Mode_1"] == "S2*")
+            & (
+                ttest_summary["Mode_2"].isin(
+                    ["S2T", "S2S", "SM2T", "SM2S", "SF2T", "SF2S", "*2T", "*2S"]
+                )
+            )
+        )
+        & ~(
+            (ttest_summary["Mode_1"] == "*2T")
+            & (
+                ttest_summary["Mode_2"].isin(
+                    ["T2T", "S2T", "SM2T", "SF2T", "T2*", "S2*"]
+                )
+            )
+        )
+        & ~(
+            (ttest_summary["Mode_1"] == "*2S")
+            & (
+                ttest_summary["Mode_2"].isin(
+                    ["T2S", "S2S", "SM2S", "SF2S", "T2*", "S2*"]
+                )
+            )
+        )
     ]
 
     ttest_summary.set_index(["Mode_1", "Mode_2"], inplace=True)
+    ttest_summary["P_Value"] = (
+        ttest_summary["P_Value"]
+        .round(2)
+        .astype(str)
+        .map(lambda x: "<0.01" if x == "0.0" else x)
+    )
+    ttest_summary = ttest_summary.drop("ALL", level=0)
+
     return ttest_summary
 
 
@@ -248,3 +287,65 @@ def normalize_lengths(group: pd.DataFrame, col="sv_cumsum") -> pd.DataFrame:
     target_len = group[col].apply(len).max()
     group[col] = group[col].apply(lambda v: interpolate_cumsum(v, target_len))
     return group
+
+
+def plot_dist(
+    df: pd.DataFrame, hue_col: str, modes: str, hspace: float = -0.4, sv_col: str = "sv"
+) -> sns.displot:
+    """Create a distribution plot of shapley values for specified modes."""
+
+    g = sns.displot(
+        data=df[df["mode"].isin(modes)],
+        x=sv_col,
+        hue=hue_col,
+        row="mode",
+        row_order=modes,
+        kind="kde",
+        palette="Set2",
+        fill=True,
+        alpha=0.2,
+        aspect=4,
+        height=1.5,
+        common_norm=False,
+        facet_kws={"margin_titles": True},
+    )
+
+    g.set_titles(row_template="{row_name}", size=12, fontweight="bold")
+    g.set(yticks=[], ylabel="")
+    g.despine(left=True)
+    g.figure.subplots_adjust(hspace=hspace)
+    g.set_axis_labels("Shapley Value", "")
+
+
+def plot_attribution_trend(df: pd.DataFrame, n_bins: int = 100) -> None:
+    """Plot attribution trend by sentence position."""
+    df = df.copy()
+    df["pos_bin"] = pd.cut(df["normalized_position"], bins=n_bins, labels=False)
+    # Convert bin index back to 0-1 scale for plotting
+    df["bin_center"] = (df["pos_bin"] + 0.5) / n_bins
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(
+        data=df,
+        x="bin_center",
+        y="sv",
+        hue="mode",
+        palette="Set2",
+        errorbar=None,
+        linewidth=2.5,
+        alpha=0.85,
+    )
+
+    plt.title(
+        "Attribution Trend by Sentence Position", fontsize=14, fontweight="bold", pad=20
+    )
+    plt.ylabel("Mean Shapley Value", fontsize=12)
+    plt.xlabel("Relative Sentence Position", fontsize=12)
+
+    plt.xticks([0, 0.5, 1.0], ["Start\n(0%)", "Middle\n(50%)", "End\n(100%)"])
+    plt.xlim(0, 1)
+    sns.despine(trim=True)
+    plt.grid(axis="y", linestyle="--", alpha=0.3)
+    plt.legend(
+        bbox_to_anchor=(1.02, 1), loc="upper left", borderaxespad=0, title="Mode"
+    )
+    plt.tight_layout()
