@@ -130,7 +130,7 @@ repos:
           nbqa pylint
             --load-plugins=pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.magic_value
             --max-line-length=120
-            --disable=missing-module-docstring,wrong-import-position,pointless-statement,magic-value-comparison
+            --disable=missing-module-docstring,wrong-import-position,pointless-statement,magic-value-comparison,expression-not-assigned
         language: system
         types: [file]
         files: ^(mllm_shap/src|experiments)/.*\.ipynb$
