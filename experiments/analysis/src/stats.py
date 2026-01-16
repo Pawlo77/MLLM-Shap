@@ -3,76 +3,20 @@
 
 from itertools import combinations
 from typing import Any
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
-import spacy
 from scipy import stats
+from .transformations import calculate_normalized_entropy
 
-
-@lru_cache(maxsize=3)
-def get_nlp(language: str):
-    """Load the spaCy language model based on the specified language."""
-    if language == "en":
-        return spacy.load("en_core_web_sm")
-    if language == "fr":
-        return spacy.load("fr_core_news_sm")
-    if language == "es":
-        return spacy.load("es_core_news_sm")
-    raise ValueError(f"Unsupported language: {language}")
-
-
-def get_linguistic_stats(prompt: str, language: str = "en") -> dict[str, Any]:
-    """Get linguistic stats for prompt using spacy."""
-    nlp_prompt = get_nlp(language)(prompt)
-
-    return [
-        {
-            "text": t.text,
-            "dep": t.dep_,
-            "pos": t.pos_,
-            "children": len(list(t.children)),
-        }
-        for t in nlp_prompt
-    ]
-
-
-def map_subwords_to_tokens(
-    subwords: list[str], tokens_text: list[str], language: str = "en"
-) -> list[int]:
-    """Map subwords to token indices using cosine similarity of embeddings."""
-    nlp = get_nlp(language=language)
-
-    # Compute embeddings
-    processed_tokens = [nlp(t.strip()) for t in tokens_text]
-    token_vecs = np.array(
-        [
-            pt.vector if pt.vector.shape[0] > 0 else np.zeros(96) + 1e-9
-            for pt in processed_tokens
-        ]
-    )
-    processed_subwords = [nlp(s.strip()) for s in subwords]
-    subword_vecs = np.array(
-        [
-            ps.vector if ps.vector.shape[0] > 0 else np.zeros(96) + 1e-9
-            for ps in processed_subwords
-        ]
-    )
-
-    # Normalize for cosine similarity
-    token_vecs_norm = token_vecs / np.linalg.norm(token_vecs, axis=1, keepdims=True)
-    subword_vecs_norm = subword_vecs / np.linalg.norm(
-        subword_vecs, axis=1, keepdims=True
-    )
-
-    # Compute cosine similarity matrix (subwords x tokens)
-    sim_matrix = np.dot(subword_vecs_norm, token_vecs_norm.T)
-
-    # Map each subword to token with highest similarity
-    mapping = np.argmax(sim_matrix, axis=1)
-
-    return mapping.tolist()
+AGG_DICT: dict[str, Any] = {
+    "mean": "mean",
+    "gini": lambda x: calculate_gini(x),  # pylint: disable=unnecessary-lambda
+    "top_20_mass": lambda x: calculate_top_k_mass(x, 0.2),
+    "max": "max",
+    "entropy": calculate_normalized_entropy,
+}
+"""Aggregation functions for statistical analysis."""
 
 
 def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
@@ -100,9 +44,15 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
                 }
             )
         else:
-            print(f"Skipping t-test for {mode_a} vs {mode_b} due to insufficient or identical data.")
+            continue
+            # print(
+            #     f"Skipping t-test for {mode_a} vs {mode_b} due to insufficient or identical data."
+            # )
 
     results_df = pd.DataFrame(ttest_results)
+    if results_df.empty:
+        return results_df
+
     valid_tests_count = results_df["P_Value"].notna().sum()
 
     # Add a significance flag (Bonferroni correction)
@@ -125,26 +75,13 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
         & ~((m1 == "S2S") & (m2 == "SM2S"))
         & ~((m1 == "S2T") & (m2 == "SF2T"))
         & ~((m1 == "S2T") & (m2 == "SM2T"))
-        & ~(
-            (m1 == "T2*")
-            & (m2.isin(["T2T", "T2S", "*2T", "*2S"]))
-        )
+        & ~((m1 == "T2*") & (m2.isin(["T2T", "T2S", "*2T", "*2S"])))
         & ~(
             (m1 == "S2*")
-            & (
-                m2.isin(
-                    ["S2T", "S2S", "SM2T", "SM2S", "SF2T", "SF2S", "*2T", "*2S"]
-                )
-            )
+            & (m2.isin(["S2T", "S2S", "SM2T", "SM2S", "SF2T", "SF2S", "*2T", "*2S"]))
         )
-        & ~(
-            (m1 == "*2T")
-            & (m2.isin(["T2T", "S2T", "SM2T", "SF2T", "T2*", "S2*"]))
-        )
-        & ~(
-            (m1 == "*2S")
-            & (m2.isin(["T2S", "S2S", "SM2S", "SF2S", "T2*", "S2*"]))
-        )
+        & ~((m1 == "*2T") & (m2.isin(["T2T", "S2T", "SM2T", "SF2T", "T2*", "S2*"])))
+        & ~((m1 == "*2S") & (m2.isin(["T2S", "S2S", "SM2S", "SF2S", "T2*", "S2*"])))
     ]
 
     results_df.set_index(["Mode_1", "Mode_2"], inplace=True)
@@ -155,9 +92,12 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
         .map(lambda x: "<0.01" if x == "0.0" else x)
     )
     if isinstance(results_df.index, pd.MultiIndex):
-        results_df = results_df[results_df.index.get_level_values(0).map(lambda x: x[0] != "ALL")]
+        results_df = results_df[
+            results_df.index.get_level_values(0).map(lambda x: x[0] != "ALL")
+        ]
 
     return results_df
+
 
 def calculate_gini(array):
     """Calculate the Gini coefficient of a numpy array."""
@@ -173,7 +113,7 @@ def calculate_gini(array):
     array = np.sort(array)
     index = np.arange(1, array.shape[0] + 1)
     n = array.shape[0]
-    return ((np.sum((2 * index - n - 1) * array)) / (n * np.sum(array)))
+    return (np.sum((2 * index - n - 1) * array)) / (n * np.sum(array))
 
 
 def calculate_top_k_mass(array, k_fraction=0.2):
@@ -181,13 +121,37 @@ def calculate_top_k_mass(array, k_fraction=0.2):
     array = np.abs(np.array(array, dtype=float))
     if len(array) == 0:
         return 0.0
-    
+
     total_mass = np.sum(array)
     if total_mass == 0:
         return 0.0
-        
-    sorted_array = np.sort(array)[::-1] # descending
+
+    sorted_array = np.sort(array)[::-1]  # descending
     n_top = max(1, int(np.ceil(len(array) * k_fraction)))
     top_mass = np.sum(sorted_array[:n_top])
-    
+
     return top_mass / total_mass
+
+
+def perform_advanced_ttest(
+    source_df: pd.DataFrame,
+    grp_by_cols: list[str],
+    value_col: str = "sv",
+    unstack: list[str] | None = None,
+) -> pd.DataFrame:
+    """Perform t-tests within groups defined by grp_by_cols."""
+    results_list = []
+    grouped = source_df.groupby(grp_by_cols)[value_col]
+
+    for agg_name, agg_func in AGG_DICT.items():
+        agg_df = (
+            grouped.agg(agg_func)
+            .rename(agg_name)
+            .unstack(level=unstack or grp_by_cols[1:])
+        )
+        ttest_result = perform_ttest(agg_df)
+        ttest_result["metric"] = agg_name
+        results_list.append(ttest_result)
+
+    combined_results = pd.concat(results_list, ignore_index=False)
+    return combined_results.reset_index()
