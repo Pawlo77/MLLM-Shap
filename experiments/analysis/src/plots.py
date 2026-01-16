@@ -13,7 +13,6 @@ def plot_token_count_distribution(
     column: str = "count_text_tokens",
     plot_ax: plt.Axes | None = None,
     hue: str | None = None,
-    suffix: str = "",
     legend: bool = True,
 ) -> None:
     """Plot the distribution of text token counts."""
@@ -35,7 +34,7 @@ def plot_token_count_distribution(
     plot_ax.set_xlabel(f"Count of {column.replace('_', ' ').title()}", fontsize=12)
     plot_ax.set_ylabel("Percentage", fontsize=12)
     plot_ax.set_title(
-        f"Distribution of {column.replace('_', ' ').title()}{suffix} (%)",
+        "Distribution of Explainable Tokens (%) by Mode",
         fontsize=16,
         fontweight="bold",
     )
@@ -89,7 +88,7 @@ def plot_dist(
 
 
 def plot_attribution_trend(
-    df: pd.DataFrame, n_bins: int = 100, ax: plt.Axes | None = None, legend: bool = True
+    df: pd.DataFrame, n_bins: int = 100, ax: plt.Axes | None = None, legend: bool = True, suffix: str = ""
 ) -> None:
     """Plot attribution trend by sentence position."""
     df = df.copy()
@@ -116,7 +115,7 @@ def plot_attribution_trend(
     )
 
     ax.set_title(
-        "Attribution Trend by Sentence Position", fontsize=16, fontweight="bold", pad=20
+        f"Attribution Trend Over Sentence Position by Mode{suffix}", fontsize=16, fontweight="bold", pad=20
     )
     ax.set_ylabel("Mean Shapley Value", fontsize=12)
     ax.set_xlabel("Relative Sentence Position", fontsize=12)
