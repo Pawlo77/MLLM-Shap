@@ -40,24 +40,23 @@ def normalize_lengths(group: pd.DataFrame, col="sv_cumsum") -> pd.DataFrame:
 
 def calculate_normalized_entropy(sv_list: list) -> float:
     """Calculate Normalized Entropy of Shapley values.
-    
+
     Uses absolute values of Shapley values to treat negative and positive contributions
     as equally 'important' for the distribution shape.
     """
     sv_list = np.abs(np.array(sv_list, dtype=float))
-    
+
     # Normalize to probability distribution
     total = np.sum(sv_list)
     if total == 0:
-        return 1.0  # Uniformly zero (maximum uncertainty/flatness) or 0? 
-                    # If all are 0, it's perfectly flat -> max entropy
-    
+        return 1.0
+
     probs = sv_list / total
-    
+
     h_val = entropy(probs)
     n = len(sv_list)
     if n <= 1:
         return 0.0
-        
+
     max_entropy = np.log(n)
     return h_val / max_entropy

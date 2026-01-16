@@ -20,6 +20,9 @@ FIGURES_DIR: str = os.path.abspath(
 STATS_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "stats"))
 """Root directory for stats."""
 
+SV_COL: str = "sv"
+"""Column name for Shapley values."""
+
 
 def load_experiments_results(
     case: str,
@@ -91,3 +94,25 @@ def check_roles(row: pd.Series, target_col: str = "prompt_text_roles") -> bool:
 
     _mask = pd.isna(sv)
     return (roles[~_mask] == Role.USER).all()
+
+
+def get_all_modes_df(df: pd.DataFrame, additional_modes: list[str]) -> pd.DataFrame:
+    """Get DataFrame with all modes as rows."""
+    all_df = df.copy()
+    all_df["mode"] = "ALL"
+
+    for k in additional_modes:
+        k_df = df[df[k]].copy()
+        k_df["mode"] = k
+        all_df = pd.concat([all_df, k_df], ignore_index=True)
+
+    all_modes_results_df = pd.concat([df, all_df], ignore_index=True)
+    all_modes_results_df.drop(columns=additional_modes, inplace=True)
+
+    return all_modes_results_df
+
+
+def set_mode_category(df: pd.DataFrame, modes_order: list[str]) -> pd.DataFrame:
+    """Set mode column as categorical with specified order."""
+    df["mode"] = pd.Categorical(df["mode"], categories=modes_order, ordered=True)
+    return df
