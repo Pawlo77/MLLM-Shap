@@ -19,6 +19,7 @@ AGG_DICT: dict[str, Any] = {
 """Aggregation functions for statistical analysis."""
 
 
+# pylint: disable=too-many-locals
 def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
     """Perform paired t-tests between modes."""
     modes = comparison_data.columns.tolist()
@@ -30,7 +31,15 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
         if len(valid_pair) > 1 and not np.allclose(
             valid_pair[mode_a], valid_pair[mode_b]
         ):
+            diff = valid_pair[mode_a] - valid_pair[mode_b]
+            kurtosis = stats.kurtosis(diff)
+            _, p_norm = stats.shapiro(diff)
             t_stat, p_val = stats.ttest_rel(valid_pair[mode_a], valid_pair[mode_b])
+
+            diffs = valid_pair[mode_a] - valid_pair[mode_b]
+            mean_diff = np.mean(diffs)
+            sd_diff = np.std(diffs, ddof=1)
+            cohens_dz = mean_diff / sd_diff
 
             ttest_results.append(
                 {
@@ -41,6 +50,9 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
                     "Degrees_of_Freedom": len(valid_pair) - 1,
                     "Sample_Size": len(valid_pair),
                     "Mean_Diff": (valid_pair[mode_a] - valid_pair[mode_b]).mean(),
+                    "Kurtosis_Diff": kurtosis,
+                    "Shapiro_P": p_norm,
+                    "Cohens_dz": cohens_dz.round(2),
                 }
             )
         else:
@@ -62,6 +74,7 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
         )
     else:
         results_df["Significant_Adj"] = False
+    results_df["Shapiro_Significant"] = results_df["Shapiro_P"] < 0.05
 
     # Helper function to get the first element if it's a tuple, otherwise return the value itself
     def get_base_mode(val):
