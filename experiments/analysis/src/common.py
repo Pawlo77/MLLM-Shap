@@ -29,6 +29,7 @@ def load_experiments_results(
     cases: dict[str, str],
     experiments_dir: str,
     is_multi_lingual: bool = False,
+    strict: bool = True,
 ) -> pd.DataFrame:
     """Load experiment results for a given case."""
     case_dir = os.path.join(experiments_dir, cases[case])
@@ -63,9 +64,9 @@ def load_experiments_results(
     ].apply(lambda x: x[0][0]["roles"])
     experiments_test_df["model_response_roles"] = experiments_test_df[
         "conversation"
-    ].apply(lambda x: x[2][0]["roles"])
+    ].apply(lambda x: x[-1][0]["roles"])
 
-    if not (
+    if strict and not (
         experiments_test_df["row_index"].nunique() == len(experiments_test_df)
         and experiments_test_df["raw_system_prompt"].nunique() == 1
         and experiments_test_df["n_turns"].value_counts().nunique() == 1
