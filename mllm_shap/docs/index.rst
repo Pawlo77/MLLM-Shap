@@ -13,6 +13,8 @@ Important Links
 - :doc:`additional_notes`
 - :doc:`references`
 - :doc:`documentation`
+- :doc:`experiments_mllm_shapx`
+- :doc:`extension_gui`
 
 -----------------------------------
 
@@ -20,13 +22,6 @@ Getting Started
 ===============
 
 .. include:: getting_started.rst
-
------------------------------------
-
-Extension - GUI Visualization
-=============================
-
-.. include:: extension_gui.rst
 
 -----------------------------------
 
