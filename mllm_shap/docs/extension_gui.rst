@@ -120,13 +120,13 @@ From ``shap-mllm-explainer/web/``:
 Configuration
 -------------
 
-Frontend
-^^^^^^^^
+Frontend configuration
+^^^^^^^^^^^^^^^^^^^^^^
 
 - ``VITE_API_BASE_URL``: backend base URL (defaults to ``/api``)
 
-Backend
-^^^^^^^
+Backend configuration
+^^^^^^^^^^^^^^^^^^^^^
 
 - ``DATABASE_URL``: async SQLAlchemy URL (Compose uses ``postgresql+asyncpg://...``)
 - ``LOG_LEVEL``: log verbosity (e.g. ``INFO`` / ``DEBUG``)
