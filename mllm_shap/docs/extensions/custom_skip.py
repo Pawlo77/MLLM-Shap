@@ -4,7 +4,6 @@ for autodoc, including inherited members.
 """
 
 import inspect
-from pydantic import BaseModel
 
 KEYS_TO_SKIP = [
     # liquid audio
@@ -39,8 +38,6 @@ def custom_skip(app, what, name, obj, skip, options):
     for key in KEYS_TO_SKIP:
         if key in name:
             return True  # skip members containing specific keys
-    if issubclass(type(obj), BaseModel):
-        return True  # skip all pydantic BaseModel members
     if inspect.isfunction(obj) or inspect.ismethod(obj):
         for key in KEYS_TO_SKIP:
             if key in obj.__qualname__:
