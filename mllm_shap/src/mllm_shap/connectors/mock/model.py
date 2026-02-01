@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
 import logging
 import os
@@ -41,7 +41,7 @@ class Mock(BaseMllmModel):
         self._debug_memory = bool(os.getenv("MLLM_SHAP_DEBUG_MEMORY"))
 
         # Load a simple tokenizer for text encoding/decoding
-        tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
+        tokenizer = cast(Any, AutoTokenizer).from_pretrained(
             "gpt2",
             trust_remote_code=True,
         )  # nosec: B615

@@ -47,6 +47,8 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
     """Number of audio codebooks used for audio output tokens."""
+    _TWO_DIMS: int = 2
+    _SINGLE_BATCH: int = 1
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
         "proc",  # processor - large, read-only
         "_logger",
@@ -287,7 +289,17 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         return self._audio_map
 
     def _decode_text(self, text_tokens: Tensor) -> str:
-        return self.proc.text.decode(text_tokens)
+        # Processor decode may return list[str] for batched inputs; normalize to str.
+        tt = text_tokens
+        if tt.ndim == self._TWO_DIMS and tt.shape[0] == self._SINGLE_BATCH:
+            tt = tt[0]
+        elif tt.ndim > 1:
+            tt = tt.reshape(-1)
+
+        decoded = self.proc.text.decode(tt)
+        if isinstance(decoded, list):
+            return "".join(decoded)
+        return decoded
 
     def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:  # pylint: disable=too-many-branches
         if len(audio_tokens.shape) == 1:
