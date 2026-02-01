@@ -39,7 +39,7 @@ class TransformersCausalText(BaseMllmModel):
         if any(k in kwargs for k in forbidden):
             raise ValueError("Do not pass 'config', 'model', or 'processor'—they are set automatically.")
 
-        tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
+        tokenizer = cast(Any, AutoTokenizer).from_pretrained(
             CONFIG.repo_id,
             revision=CONFIG.revision,
         )  # nosec: B615 - pinned to immutable commit
@@ -47,7 +47,7 @@ class TransformersCausalText(BaseMllmModel):
             CONFIG.repo_id,
             revision=CONFIG.revision,
             load_in_4bit=True,
-        )  # nosec: B615  # type: ignore[no-untyped-call]
+        )  # nosec: B615
         model = cast(PreTrainedModel, _model)
         cast(Any, model).to(device)
         cast(Any, model).eval()
@@ -81,7 +81,7 @@ class TransformersCausalText(BaseMllmModel):
 
         gen_cfg = self.model.generation_config
         if not isinstance(gen_cfg, GenerationConfig):
-            gen_cfg = GenerationConfig()  # type: ignore[no-untyped-call]
+            gen_cfg = cast(Any, GenerationConfig)()
             setattr(self.model, "generation_config", gen_cfg)
         if getattr(gen_cfg, "pad_token_id", None) is None and self.processor.pad_token_id is not None:
             gen_cfg.pad_token_id = self.processor.pad_token_id
