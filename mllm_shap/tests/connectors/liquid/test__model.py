@@ -100,7 +100,17 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             **chat_kwargs: Any,
         ) -> None:
             dict.__init__(self)
-            BaseMllmChat.__init__(self, device=device, empty_turn_sequences=set())
+            BaseMllmChat.__init__(
+                self,
+                device=device,
+                empty_turn_sequences=set(),
+                get_new_chat_callable=lambda: ChatStub(
+                    device=device,
+                    processor=processor,
+                    codebooks=codebooks,
+                    **chat_kwargs,
+                ),
+            )
             self.device = device
             self.processor = processor
             self.codebooks = codebooks

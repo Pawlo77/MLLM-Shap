@@ -13,7 +13,7 @@ import numpy as np
 import torch
 import torchaudio
 from torchaudio.functional import forced_align
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+from transformers import PreTrainedTokenizerBase, Wav2Vec2ForCTC, Wav2Vec2Processor
 from transformers import logging as hf_logging
 
 from ...utils.audio import TorchAudioHandler
@@ -89,7 +89,7 @@ class AudioSegment:  # pylint: disable=too-many-instance-attributes
         )
 
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods,too-many-instance-attributes
 class SpectrogramGuidedAligner:
     """
     Spectrogram-Guided Forced Aligner using Wav2Vec2 and Torchaudio.
@@ -132,16 +132,23 @@ class SpectrogramGuidedAligner:
             self.processor = Wav2Vec2Processor.from_pretrained(  # nosec B615
                 model_name, revision=model_revision
             )  # type: ignore[no-untyped-call]
-            self.model = Wav2Vec2ForCTC.from_pretrained(  # nosec B615
-                model_name, revision=model_revision
-            ).to(device)
+            model = cast(
+                Wav2Vec2ForCTC,
+                Wav2Vec2ForCTC.from_pretrained(  # nosec B615
+                    model_name, revision=model_revision
+                ),
+            )
+            self.model = cast(Wav2Vec2ForCTC, model.to(device))  # type: ignore[arg-type]
         except OSError as e:
             raise ValueError(
                 f"Could not load '{model_name}'. Ensure it is a valid CTC model."
             ) from e
 
-        self.vocab = self.processor.tokenizer.get_vocab()  # pylint: disable=no-member
-        self.blank_id = self.processor.tokenizer.pad_token_id or 0  # pylint: disable=no-member
+        self.tokenizer = cast(
+            PreTrainedTokenizerBase, getattr(self.processor, "tokenizer")
+        )
+        self.vocab = self.tokenizer.get_vocab()
+        self.blank_id = self.tokenizer.pad_token_id or 0
 
     @staticmethod
     def normalize_text(text: str) -> str:
@@ -339,7 +346,7 @@ class SpectrogramGuidedAligner:
         clean_text = text_clean.replace(ASCII_SPACE, self.ctc_separator)
 
         valid_tokens = [
-            self.processor.tokenizer.convert_tokens_to_ids(c)  # pylint: disable=no-member
+            self.tokenizer.convert_tokens_to_ids(c)
             for c in clean_text
             if c in self.vocab
         ]
@@ -411,7 +418,7 @@ class SpectrogramGuidedAligner:
             r_start = self.__refine_boundary_smart(numpy_wave, original_sr, t_start)
             r_end = self.__refine_boundary_smart(numpy_wave, original_sr, t_end)
 
-            char = self.processor.tokenizer.convert_ids_to_tokens(sp_token)  # pylint: disable=no-member
+            char = self.tokenizer.convert_ids_to_tokens(sp_token)
 
             refined_chars.append(
                 {"char": char, "start": r_start, "end": r_end, "confidence": conf}
@@ -484,21 +491,21 @@ class SpectrogramGuidedAligner:
 
         return final_segments
 
-    def __attach_audio_to_segments(
+    def __set_segment_indices(
         self,
         final_segments: list[AudioSegment],
         waveform: torch.Tensor,
         original_sr: int,
-        *,
-        attach_audio: bool,
-    ) -> None:
+    ) -> torch.Tensor:
         """
-        Attaches segment indices (always) and optionally raw audio bytes.
+        Attach sample indices to segments based on timing information.
 
         Args:
             final_segments: list of AudioSegment objects.
             waveform: Audio waveform tensor.
             original_sr: Original sampling rate of the waveform.
+        Returns:
+            CPU waveform tensor in shape [channels, samples].
         """
         cpu_waveform = waveform.cpu()
         if cpu_waveform.dim() == 1:
@@ -521,10 +528,32 @@ class SpectrogramGuidedAligner:
             seg.start_sample = start_sample
             seg.end_sample = end_sample
 
-            if not attach_audio:
-                continue
+        return cpu_waveform
 
-            segment_tensor = cpu_waveform[:, start_sample:end_sample]
+    def __attach_audio_to_segments(
+        self,
+        final_segments: list[AudioSegment],
+        waveform: torch.Tensor,
+        original_sr: int,
+        attach_audio: bool = True,
+    ) -> None:
+        """
+        Attaches segment indices (always) and optionally raw audio bytes.
+
+        Args:
+            final_segments: list of AudioSegment objects.
+            waveform: Audio waveform tensor.
+            original_sr: Original sampling rate of the waveform.
+        """
+        cpu_waveform = self.__set_segment_indices(
+            final_segments, waveform, original_sr
+        )
+
+        if not attach_audio:
+            return
+
+        for seg in final_segments:
+            segment_tensor = cpu_waveform[:, seg.start_sample : seg.end_sample]  # noqa: E203
             seg.audio = self.__save_wav_mem(segment_tensor, original_sr)
 
     def attach_audio_to_segments(
@@ -619,10 +648,11 @@ class SpectrogramGuidedAligner:
             refined_chars, target_segments
         )
 
-        # Always set sample indices for downstream masking/slicing.
-        # Attach raw bytes only when requested.
-        self.__attach_audio_to_segments(
-            final_segments, waveform, original_sr, attach_audio=attach_audio
-        )
+        if attach_audio:
+            self.__attach_audio_to_segments(
+                final_segments, waveform, original_sr
+            )
+        else:
+            self.__set_segment_indices(final_segments, waveform, original_sr)
 
         return final_segments
