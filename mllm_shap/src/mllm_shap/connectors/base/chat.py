@@ -2,6 +2,7 @@
 """Base class for chat state management."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from copy import deepcopy
 from functools import cached_property
 from logging import Logger
@@ -10,8 +11,7 @@ from typing import Any, cast
 import torch
 from torch import Tensor
 
-from mllm_shap.utils.audio import TorchAudioHandler
-
+from ...utils.audio import TorchAudioHandler
 from ...utils.logger import get_logger
 from ...utils.other import raise_connector_error
 from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role, SystemRolesSetup
@@ -21,6 +21,7 @@ from .chat_entry import ChatEntry
 from .explainer_cache import ExplainerCache
 from .filters import TokenFilter
 from .model_response import ModelResponse
+from .audio import SpectrogramGuidedAligner, AudioSegment
 
 logger: Logger = get_logger(__name__)
 
@@ -31,7 +32,13 @@ class AllTextTokensFilteredOutError(ValueError):
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
 class BaseMllmChat(ABC):
-    """Base class for chat state management."""
+    """
+    Base class for chat state management.
+
+    Important: Audio tokens are always added for shap calculations.
+        When using audio segments, make sure they are only message within
+        their respective turns.
+    """
 
     token_filter: TokenFilter
     """The token filtering strategy."""
@@ -64,23 +71,33 @@ class BaseMllmChat(ABC):
     token_sequences_to_exclude: list[Tensor]
     """A list of token IDs to exclude from processing."""
 
+    get_new_chat_callable: Callable[..., "BaseMllmChat"]
+    """A callable to create a new chat instance."""
+
+    _audio_added_in_last_turn: bool = False
     _system_roles: set[Role]
+    _audio_segments: dict[int, list[AudioSegment]] | None = None
+    _audio_waveforms: dict[int, tuple[Tensor, int, str]] | None = None
+
     __shap: ExplainerCache | None = None
 
     __external_shap_values_mask: Tensor | None = None
     __external_group_ids: Tensor | None = None
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
-        "system_roles_setup",
-        "_system_roles",
-        "empty_turn_sequences",
-        "token_sequences_to_exclude",
-    })
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
+        {
+            "system_roles_setup",
+            "_system_roles",
+            "empty_turn_sequences",
+            "token_sequences_to_exclude",
+        }
+    )
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
         empty_turn_sequences: set[str],
+        get_new_chat_callable: Callable[..., "BaseMllmChat"],
         token_filter: TokenFilter | None = None,
         system_roles_setup: SystemRolesSetup | None = None,
     ) -> None:
@@ -90,6 +107,7 @@ class BaseMllmChat(ABC):
         Args:
             device: The device on which tensors are stored.
             empty_turn_sequences: A list of empty turn sequences (their text representations).
+            get_new_chat_callable: A callable to create a new chat instance.
             token_filter: The token filtering class.
             system_roles_setup: The setup for system roles.
                 Defaults to SystemRolesSetup.SYSTEM.
@@ -98,7 +116,9 @@ class BaseMllmChat(ABC):
         __config = BaseChatConfig(
             device=device,
             token_filter=token_filter if token_filter is not None else KeepAllTokens(),
-            system_roles_setup=system_roles_setup if system_roles_setup is not None else SystemRolesSetup.SYSTEM,
+            system_roles_setup=system_roles_setup
+            if system_roles_setup is not None
+            else SystemRolesSetup.SYSTEM,
             empty_turn_sequences=empty_turn_sequences,
         )
 
@@ -113,16 +133,27 @@ class BaseMllmChat(ABC):
         else:  # SystemRolesSetup.NONE
             self._system_roles = set()
 
-        self.text_tokens_no_system_mask = torch.zeros(0, dtype=torch.bool, device=device)
-        self.audio_tokens_no_system_mask = torch.zeros(0, dtype=torch.bool, device=device)
+        self.text_tokens_no_system_mask = torch.zeros(
+            0, dtype=torch.bool, device=device
+        )
+        self.audio_tokens_no_system_mask = torch.zeros(
+            0, dtype=torch.bool, device=device
+        )
+
+        self.get_new_chat_callable = get_new_chat_callable
 
         self.turn_number = 0
         self.token_turns = torch.zeros(0, dtype=torch.int16, device=device)
         self.token_roles = torch.zeros(0, dtype=torch.int8, device=device)
 
-        self.token_sequences_to_exclude = self._get_tokens_sequences_to_exclude(self.token_filter.phrases_to_exclude)
-        self.empty_turn_sequences = self._get_tokens_sequences_to_exclude(__config.empty_turn_sequences)
+        self.token_sequences_to_exclude = self._get_tokens_sequences_to_exclude(
+            self.token_filter.phrases_to_exclude
+        )
+        self.empty_turn_sequences = self._get_tokens_sequences_to_exclude(
+            __config.empty_turn_sequences
+        )
 
+    # pylint: disable=too-many-branches,too-many-statements,too-many-locals,too-many-nested-blocks
     @classmethod
     def from_chat(
         cls,
@@ -141,11 +172,14 @@ class BaseMllmChat(ABC):
             ValueError: If the mask size does not match the number of tokens in the chat,
                 or if the mask is all False,
                 or if all text tokens are filtered out.
+            RuntimeError: If audio segments are inconsistent with stored waveforms.
         """
         logger.debug("Creating new chat instance from existing chat with masks.")
 
         if mask.shape[0] != chat.input_tokens_num:
-            raise ValueError("Mask size does not match the number of tokens in the chat.")
+            raise ValueError(
+                "Mask size does not match the number of tokens in the chat."
+            )
         if not mask.any():
             raise ValueError("Mask cannot be all False.")
 
@@ -157,7 +191,9 @@ class BaseMllmChat(ABC):
 
         # filter out empty turn sequences
         new_chat_text_tokens = chat.text_tokens[text_mask_relative]
-        new_chat_text_tokens_mask = torch.ones_like(new_chat_text_tokens, dtype=torch.bool, device=chat.torch_device)
+        new_chat_text_tokens_mask = torch.ones_like(
+            new_chat_text_tokens, dtype=torch.bool, device=chat.torch_device
+        )
         for seq_tensor in chat.empty_turn_sequences:
             seq_len = seq_tensor.shape[0]
             # assume _detect is protected not private
@@ -172,7 +208,9 @@ class BaseMllmChat(ABC):
                 turn_mask = chat.token_turns == turn_number
 
                 audio_turn_mask = turn_mask[chat.audio_tokens_mask]
-                if audio_mask_relative[audio_turn_mask].any():  # there is still used audio in the turn
+                if audio_mask_relative[
+                    audio_turn_mask
+                ].any():  # there is still used audio in the turn
                     continue
 
                 new_chat_text_tokens_mask[idx : idx + seq_len] = False  # noqa: E203
@@ -182,19 +220,112 @@ class BaseMllmChat(ABC):
         mask[chat.text_tokens_mask] = text_mask_relative
 
         if not text_mask_relative.any():
-            raise AllTextTokensFilteredOutError("Resulting chat cannot have all text tokens filtered out.")
+            raise AllTextTokensFilteredOutError(
+                "Resulting chat cannot have all text tokens filtered out."
+            )
 
-        new_instance = cls._set_new_instance(
-            full_mask=mask,
-            text_mask_relative=text_mask_relative,
-            audio_mask_relative=audio_mask_relative,
-            chat=chat,
-        )
-        new_instance.refresh(full=True)
+        # slower version - retrace entire history
+        if chat._audio_segments is not None:  # pylint: disable=protected-access
+            new_instance = chat.get_new_chat_callable()
 
-        # dont propagate external masks / group ids
-        del new_instance.external_shap_values_mask
-        del new_instance.external_group_ids
+            def _pcm16_roundtrip(wf: Tensor) -> Tensor:
+                """Match the historical WAV(PCM16) encode/decode quantization without allocating bytes."""
+                wf = wf.to(torch.float32)
+                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(-1.0, 1.0)
+                q = (wf * 32767.0).round().clamp_(-32768.0, 32767.0)
+                return (q / 32767.0).contiguous()
+
+            for turn in range(1, chat.turn_number + 1):
+                turn_mask = chat.token_turns == turn
+                masked_turn_mask = turn_mask & mask
+
+                # text only turn
+                if turn not in chat._audio_segments:  # pylint: disable=protected-access
+                    logger.debug("From chat - text turn: %d", turn)
+                    text_turn_mask = masked_turn_mask & chat.text_tokens_mask
+                    text_turn_mask_relative = text_turn_mask[chat.text_tokens_mask]
+                    if text_turn_mask_relative.any():
+                        new_instance.new_turn(
+                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                        )
+                        text = chat.decode_text(
+                            chat.text_tokens[text_turn_mask_relative]
+                        )
+                        new_instance.add_text(text)
+                        new_instance.end_turn()
+
+                else:
+                    logger.debug("From chat - audio turn: %d", turn)
+                    audio_turn_mask = masked_turn_mask & chat.audio_tokens_mask
+                    # relative to turn not audio tokens
+                    audio_turn_mask_relative = audio_turn_mask[turn_mask]
+
+                    num_segments = len(chat._audio_segments[turn])  # pylint: disable=protected-access
+                    idxs = torch.where(audio_turn_mask_relative[:num_segments])[0]
+                    if idxs.numel():
+                        new_instance.new_turn(
+                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                        )
+                        new_audio_segments: list[AudioSegment] = [
+                            chat._audio_segments[turn][i] for i in idxs.tolist()  # pylint: disable=protected-access
+                        ]
+
+                        # Prefer slicing from the stored source waveform (one copy per turn)
+                        audio_waveforms = getattr(chat, "_audio_waveforms", None)
+                        if audio_waveforms is not None and turn in audio_waveforms:
+                            turn_waveform, turn_sr, _turn_fmt = audio_waveforms[turn]
+
+                            pieces: list[Tensor] = []
+                            for seg in new_audio_segments:
+                                if (
+                                    seg.start_sample is None
+                                    or seg.end_sample is None
+                                    or seg.sample_rate is None
+                                ):
+                                    raise RuntimeError(
+                                        "Audio segments missing sample indices; re-run alignment on this chat."
+                                    )
+                                if seg.sample_rate != turn_sr:
+                                    raise RuntimeError(
+                                        "Audio segment sample rate mismatch with stored waveform."
+                                    )
+                                pieces.append(turn_waveform[:, seg.start_sample : seg.end_sample])  # noqa: E203
+
+                            combined_waveform = (
+                                torch.cat(pieces, dim=1) if pieces else torch.empty((1, 0), dtype=turn_waveform.dtype)
+                            )
+                            combined_waveform = _pcm16_roundtrip(combined_waveform)
+
+                            # add_audio requires non-empty bytes, but will use _waveform/_sample_rate when provided
+                            target_audio_format = new_audio_segments[0].audio_format
+                            new_instance.add_audio(
+                                audio_content=b"\x00",
+                                audio_format=target_audio_format,
+                                _waveform=combined_waveform,
+                                _sample_rate=turn_sr,
+                                _internal=True,
+                            )
+                        else:
+                            # Backward-compatible fallback: combine stored per-segment bytes (more expensive)
+                            target_audio_format = new_audio_segments[0].audio_format
+                            full_segment = TorchAudioHandler.combine(
+                                new_audio_segments, target_audio_format
+                            )
+                            new_instance.add_audio(full_segment, target_audio_format)
+                        new_instance.end_turn()
+
+        else:
+            new_instance = cls._set_new_instance(
+                full_mask=mask,
+                text_mask_relative=text_mask_relative,
+                audio_mask_relative=audio_mask_relative,
+                chat=chat,
+            )
+            new_instance.refresh(full=True)
+
+            # dont propagate external masks / group ids
+            del new_instance.external_shap_values_mask
+            del new_instance.external_group_ids
 
         return new_instance
 
@@ -213,8 +344,14 @@ class BaseMllmChat(ABC):
         Raises:
             ValueError: If the explainer cache is for a different chat instance.
         """
-        if self.__shap is not None and value is not None and self.__shap.chat != value.chat:
-            raise ValueError("Cannot set explainer cache for a different chat instance.")
+        if (
+            self.__shap is not None
+            and value is not None
+            and self.__shap.chat != value.chat
+        ):
+            raise ValueError(
+                "Cannot set explainer cache for a different chat instance."
+            )
         self.__shap = value
 
     @cache.deleter
@@ -270,7 +407,9 @@ class BaseMllmChat(ABC):
 
         # filter out sequences to exclude
         for seq_tensor in self.token_sequences_to_exclude:
-            mask = self._detect(tokens=self.text_tokens, seq_tensor=seq_tensor, mask=mask, mark=True)
+            mask = self._detect(
+                tokens=self.text_tokens, seq_tensor=seq_tensor, mask=mask, mark=True
+            )
 
         return mask
 
@@ -305,7 +444,9 @@ class BaseMllmChat(ABC):
             ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.
         """
         if self.input_tokens_num != value.shape[0]:
-            raise ValueError("External SHAP values mask size does not match the number of tokens in the chat.")
+            raise ValueError(
+                "External SHAP values mask size does not match the number of tokens in the chat."
+            )
         self.__external_shap_values_mask = value
         self.refresh(shap=True)
 
@@ -344,7 +485,9 @@ class BaseMllmChat(ABC):
             ValueError: If the external group IDs size does not match the number of tokens in the chat.
         """
         if self.input_tokens_num != value.shape[0]:
-            raise ValueError("External group IDs size does not match the number of tokens in the chat.")
+            raise ValueError(
+                "External group IDs size does not match the number of tokens in the chat."
+            )
         self.__external_group_ids = value
         self.refresh(shap=True)
 
@@ -377,7 +520,9 @@ class BaseMllmChat(ABC):
         unique_ids, counts = torch.unique_consecutive(ids, return_counts=True)
 
         # Compute start indices for each run
-        start_positions = torch.cat([torch.tensor([0], device=ids.device), counts.cumsum(0)[:-1]])
+        start_positions = torch.cat(
+            [torch.tensor([0], device=ids.device), counts.cumsum(0)[:-1]]
+        )
 
         # Filter out group ID == 0
         mask = unique_ids != 0
@@ -408,20 +553,43 @@ class BaseMllmChat(ABC):
 
         Raises:
             ValueError: If the external SHAP values mask size does not match the number of tokens in the chat.
+            RuntimeError: If external_group_ids is set but has no positive IDs.
         """
-        mask = torch.zeros(self.input_tokens_num, dtype=torch.bool, device=self.torch_device)
+        mask = torch.zeros(
+            self.input_tokens_num, dtype=torch.bool, device=self.torch_device
+        )
 
         # set text tokens
         text_mask = self.text_tokens_mask
         mask[text_mask] = self.text_tokens_no_system_mask_filtered
 
         # set audio tokens
-        audio_mask = self.audio_tokens_mask
-        mask[audio_mask] = self.audio_tokens_no_system_mask_filtered
+        if self._audio_segments is None:
+            audio_mask = self.audio_tokens_mask
+            mask[audio_mask] = self.audio_tokens_no_system_mask_filtered
+        else:
+            for turn in range(1, self.turn_number + 1):
+                if turn not in self._audio_segments:
+                    continue
+                turn_mask = self.token_turns == turn
+                audio_turn_mask = turn_mask & self.audio_tokens_mask
+                num_audio_tokens = int(audio_turn_mask.sum().item())
+                num_segments = len(self._audio_segments[turn])
+                if num_audio_tokens < num_segments:
+                    raise RuntimeError(
+                        "Number of audio segments is larger then number of audio tokens in the turn."
+                    )
+
+                # mark number of audio segments as True for shap calculations
+                audio_indices = torch.where(audio_turn_mask)[0]
+                if audio_indices.numel() > 0:
+                    mask[audio_indices[:num_segments]] = True
 
         if self.external_group_ids is not None:
             # mark only tokens within positive groups ids, just first token in each group
-            new_mask = torch.zeros_like(mask, dtype=torch.bool, device=self.torch_device)
+            new_mask = torch.zeros_like(
+                mask, dtype=torch.bool, device=self.torch_device
+            )
             new_mask[self.external_group_ids_first_positions] = True
             mask = new_mask & mask
         elif self.external_shap_values_mask is not None:
@@ -494,8 +662,11 @@ class BaseMllmChat(ABC):
             RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if self.speaker is not None:
-            raise ValueError("Cannot start a new turn while another turn is active. Please end the current turn first.")
+            raise ValueError(
+                "Cannot start a new turn while another turn is active. Please end the current turn first."
+            )
         self.turn_number += 1
+        self._audio_added_in_last_turn = False
 
         # mark system messages
         self.speaker = Role.SYSTEM
@@ -554,6 +725,9 @@ class BaseMllmChat(ABC):
         self,
         audio_content: bytes,
         audio_format: str = "mp3",
+        _waveform: Tensor | None = None,
+        _sample_rate: int | None = None,
+        _internal: bool = False,
     ) -> None:
         """
         Add audio content to the chat state.
@@ -566,10 +740,28 @@ class BaseMllmChat(ABC):
             RuntimeError: If an error occurs in the underlying connector implementation.
         """
         if not isinstance(audio_content, bytes) or not audio_content:
-            raise ValueError(f"audio_content must be non-empty bytes, got {type(audio_content)}")
-        self._before_add()
+            raise ValueError(
+                f"audio_content must be non-empty bytes, got {type(audio_content)}"
+            )
+        if not _internal and self._audio_segments is not None:
+            raise ValueError(
+                "Cannot add audio without transcript when audio segments are set. "
+                "Please use add_audio_with_transcript method."
+            )
+        if self._audio_added_in_last_turn:
+            raise ValueError(
+                "Audio has already been added in the current turn. "
+                "Please start a new turn to add more audio."
+            )
 
-        waveform, sample_rate = TorchAudioHandler.from_bytes(audio_content, audio_format=audio_format)
+        if _waveform is not None and _sample_rate is not None:
+            waveform = _waveform
+            sample_rate = _sample_rate
+        else:
+            waveform, sample_rate = TorchAudioHandler.from_bytes(
+                audio_content, audio_format=audio_format
+            )
+
         n_tokens_added = raise_connector_error(self._add_audio, waveform, sample_rate)
         self._after_add(n_tokens_added, text_added=False)
 
@@ -577,6 +769,124 @@ class BaseMllmChat(ABC):
             "Added audio content of format: '%s' (speaker=%s)",
             audio_format,
             self.speaker,
+        )
+
+    def add_audio_with_transcript(
+        self,
+        audio_content: bytes,
+        transcript: str | list[str],
+        aligner: SpectrogramGuidedAligner,
+        audio_format: str = "mp3",
+        attach_audio: bool = False,
+    ) -> None:
+        """
+        Add audio content along with its transcript to the chat state.
+
+        Args:
+            audio_content: The audio content in bytes.
+            transcript: The transcript of the audio content.
+            aligner: The SpectrogramGuidedAligner instance for aligning audio and transcript.
+            audio_format: The format of the audio content (default is "mp3").
+            attach_audio: Whether to attach raw audio bytes to each segment (default is False).
+                If False, segments will have empty audio bytes to save memory.
+        Raises:
+            ValueError: If audio_content is not non-empty bytes or transcript is not a non-empty string.
+            RuntimeError: If an error occurs in the underlying connector implementation.
+        """
+        if not isinstance(transcript, (str, list)) or (
+            isinstance(transcript, str) and not transcript
+        ):
+            raise ValueError(
+                f"transcript must be a non-empty string or list of strings, got {type(transcript)}"
+            )
+        if not isinstance(aligner, SpectrogramGuidedAligner):
+            raise ValueError(
+                f"aligner must be an instance of SpectrogramGuidedAligner, got {type(aligner)}"
+            )
+        if self._audio_segments is None and len(self.audio_tokens_no_system_mask) > 0:
+            raise ValueError(
+                "Cannot add audio with transcript when audio segments are set using normal `add_audio` method. "
+                "Please use add_audio method."
+            )
+
+        waveform, sample_rate = TorchAudioHandler.from_bytes(
+            audio_content, audio_format=audio_format
+        )
+        new_segments = aligner(
+            transcript=transcript,
+            waveform=waveform,
+            original_sr=sample_rate,
+            audio_format=audio_format,
+            attach_audio=attach_audio,
+        )
+        if not new_segments:
+            raise ValueError(
+                "No audio segments were created from the provided audio content and transcript."
+            )
+
+        self.add_audio(
+            audio_content=audio_content,
+            audio_format=audio_format,
+            _waveform=waveform,
+            _sample_rate=sample_rate,
+            _internal=True,
+        )
+
+        if self._audio_segments is None:
+            self._audio_segments = {}
+        self._audio_segments[self.turn_number] = new_segments
+
+        # Store the source waveform once per turn so SHAP masking can slice segments
+        if self._audio_waveforms is None:
+            self._audio_waveforms = {}
+        wf_cpu = waveform.detach().to(torch.float32).cpu().contiguous()
+        self._audio_waveforms[self.turn_number] = (wf_cpu, int(sample_rate), audio_format)
+        logger.debug(
+            "Added segments: %d (speaker=%s)",
+            len(new_segments),
+            self.speaker,
+        )
+
+    def attach_audio_to_segments(
+        self,
+        aligner: SpectrogramGuidedAligner,
+        audio_content: bytes,
+        audio_format: str = "mp3",
+        turn_number: int | None = None,
+    ) -> None:
+        """
+        Attach raw audio bytes to segments for a specific turn.
+
+        This is a helper method to materialize audio bytes for segments that were
+        created without audio attachment (i.e., with attach_audio=False).
+
+        Args:
+            aligner: The SpectrogramGuidedAligner instance to use for attaching audio.
+            audio_content: The audio content in bytes.
+            audio_format: The format of the audio content (default is "mp3").
+            turn_number: The turn number to attach audio for. If None, uses the current turn.
+        Raises:
+            ValueError: If no audio segments exist for the specified turn.
+        """
+        if self._audio_segments is None:
+            raise ValueError("No audio segments exist in this chat.")
+
+        target_turn = turn_number if turn_number is not None else self.turn_number
+        if target_turn not in self._audio_segments:
+            raise ValueError(f"No audio segments exist for turn {target_turn}.")
+
+        waveform, sample_rate = TorchAudioHandler.from_bytes(
+            audio_content, audio_format=audio_format
+        )
+        aligner.attach_audio_to_segments(
+            segments=self._audio_segments[target_turn],
+            waveform=waveform,
+            original_sr=sample_rate,
+        )
+        logger.debug(
+            "Attached audio to %d segments in turn %d",
+            len(self._audio_segments[target_turn]),
+            target_turn,
         )
 
     def append(
@@ -642,7 +952,9 @@ class BaseMllmChat(ABC):
             text_tokens = torch.cat(text_tokens)
 
         with torch.no_grad():
-            logger.debug("Decoding text tokens (%d): %s", text_tokens.shape[0], text_tokens)
+            logger.debug(
+                "Decoding text tokens (%d): %s", text_tokens.shape[0], text_tokens
+            )
             return cast(str, raise_connector_error(self._decode_text, text_tokens))
 
     def decode_audio(
@@ -671,11 +983,15 @@ class BaseMllmChat(ABC):
             audio_tokens = torch.cat(audio_tokens)
 
         with torch.no_grad():
-            logger.debug("Decoding audio tokens (%d): %s", audio_tokens.shape[0], audio_tokens)
+            logger.debug(
+                "Decoding audio tokens (%d): %s", audio_tokens.shape[0], audio_tokens
+            )
             waveform = raise_connector_error(self._decode_audio, audio_tokens)
         if waveform is None:  # unable to decode
             return b""
-        return TorchAudioHandler.to_bytes(waveform.cpu(), sample_rate=sample_rate, audio_format=audio_format)
+        return TorchAudioHandler.to_bytes(
+            waveform.cpu(), sample_rate=sample_rate, audio_format=audio_format
+        )
 
     # pylint: disable=too-many-locals
     def get_conversation(self) -> list[list[ChatEntry]]:
@@ -685,6 +1001,8 @@ class BaseMllmChat(ABC):
         Returns:
             A list of turns, where each turn is a list of ChatEntry objects. `shap_values=None`
                 indicates that SHAP values are not yet available.
+        Raises:
+            NotImplementedError: If the chat contains audio segments.
         Example:
         ::
 
@@ -724,7 +1042,9 @@ class BaseMllmChat(ABC):
             # input_tokens is list, turns are contiguous
             turn_tokens = self.input_tokens[min_ : max_ + 1]  # noqa: E203
             turn_roles = self.token_roles[turn_mask]
-            shap_values_normalized: Tensor | None = self.cache.normalized_values[turn_mask] if self.cache else None
+            shap_values_normalized: Tensor | None = (
+                self.cache.normalized_values[turn_mask] if self.cache else None
+            )
 
             decoded: str | bytes
             last_modality: int | None = None
@@ -743,7 +1063,9 @@ class BaseMllmChat(ABC):
                             content_type=cast(ModalityFlag, last_modality).value,
                             roles=roles,
                             content=content,
-                            shap_values=shap_values if shap_values_normalized is not None else None,
+                            shap_values=shap_values
+                            if shap_values_normalized is not None
+                            else None,
                         )
                     )
                     content = []
@@ -771,7 +1093,9 @@ class BaseMllmChat(ABC):
                         content_type=cast(ModalityFlag, last_modality).value,
                         roles=roles,
                         content=content,
-                        shap_values=shap_values if shap_values_normalized is not None else None,
+                        shap_values=shap_values
+                        if shap_values_normalized is not None
+                        else None,
                     )
                 )
 
@@ -790,10 +1114,14 @@ class BaseMllmChat(ABC):
         """
         if self.external_group_ids is not None:
             # select groups ids included within a mask and mark all their tokens to True
-            groups_included = torch.where(mask[self.external_group_ids_first_positions])[0] + 1
+            groups_included = (
+                torch.where(mask[self.external_group_ids_first_positions])[0] + 1
+            )
             mask[torch.isin(self.external_group_ids, groups_included)] = True
             # remaining group ids are to be excluded, if they are in shap_values_mask
-            groups_excluded = torch.where(~mask[self.external_group_ids_first_positions])[0] + 1
+            groups_excluded = (
+                torch.where(~mask[self.external_group_ids_first_positions])[0] + 1
+            )
             mask[torch.isin(self.external_group_ids, groups_excluded)] = False
         return mask
 
@@ -902,7 +1230,9 @@ class BaseMllmChat(ABC):
         """Finalize the current turn in the chat state."""
 
     @abstractmethod
-    def _get_tokens_sequences_to_exclude(self, phrases_to_exclude: set[str]) -> list[Tensor]:
+    def _get_tokens_sequences_to_exclude(
+        self, phrases_to_exclude: set[str]
+    ) -> list[Tensor]:
         """
         Get the list of tensors representing token sequences to exclude from processing.
 
@@ -912,7 +1242,9 @@ class BaseMllmChat(ABC):
             A list of token sequences to exclude.
         """
 
-    def _extend_text_tokens_no_system_mask(self, num_tokens: int, is_user: bool) -> None:
+    def _extend_text_tokens_no_system_mask(
+        self, num_tokens: int, is_user: bool
+    ) -> None:
         """
         Extend the text_tokens_user_flags tensor.
 
@@ -927,7 +1259,9 @@ class BaseMllmChat(ABC):
             tensor_name="text_tokens_no_system_mask",
         )
 
-    def _extend_audio_tokens_no_system_mask(self, num_tokens: int, is_user: bool) -> None:
+    def _extend_audio_tokens_no_system_mask(
+        self, num_tokens: int, is_user: bool
+    ) -> None:
         """
         Extend the audio_tokens_user_flags tensor.
 
@@ -966,7 +1300,9 @@ class BaseMllmChat(ABC):
             ValueError: If there is no active speaker.
         """
         if self.speaker is None:
-            raise ValueError("Cannot extend token roles when there is no active speaker.")
+            raise ValueError(
+                "Cannot extend token roles when there is no active speaker."
+            )
 
         logger.debug("Extending token roles: %d", num_tokens)
         self.__extend_tensor(
@@ -987,7 +1323,9 @@ class BaseMllmChat(ABC):
         if self.external_shap_values_mask is not None:
             raise ValueError("Cannot add tokens when external_shap_values_mask is set.")
 
-    def _after_add(self, num_tokens: int, text_added: bool = True, refresh: bool = True) -> None:
+    def _after_add(
+        self, num_tokens: int, text_added: bool = True, refresh: bool = True
+    ) -> None:
         """
         Extend the masks tensor.
 
@@ -1005,7 +1343,10 @@ class BaseMllmChat(ABC):
         if text_added:
             self._extend_text_tokens_no_system_mask(num_tokens, not self.is_system_turn)
         else:
-            self._extend_audio_tokens_no_system_mask(num_tokens, not self.is_system_turn)
+            self._extend_audio_tokens_no_system_mask(
+                num_tokens, not self.is_system_turn
+            )
+            self._audio_added_in_last_turn = True
 
         # refresh cached property
         if refresh:
@@ -1063,7 +1404,9 @@ class BaseMllmChat(ABC):
             cast(Tensor, mask)[idx : idx + seq_len] = False  # noqa: E203
         return cast(Tensor, mask)
 
-    def __extend_tensor(self, num_tokens: int, fill_value: Any, tensor_name: str) -> None:
+    def __extend_tensor(
+        self, num_tokens: int, fill_value: Any, tensor_name: str
+    ) -> None:
         """
         Extend the specified tensor.
 

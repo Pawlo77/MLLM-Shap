@@ -16,6 +16,7 @@ class DummyChat(BaseMllmChat):
         super().__init__(
             device=torch.device("cpu"),
             empty_turn_sequences=set(),
+            get_new_chat_callable=lambda: DummyChat(num_tokens=0),
         )
 
         self._num_tokens = num_tokens

@@ -10,7 +10,7 @@ from torch import Tensor
 from .audio import display_audio
 
 
-def _audio_html(content: bytes) -> str:
+def audio_html(content: bytes) -> str:
     """
     Generate HTML representation for audio content.
 
@@ -58,7 +58,7 @@ def display_shap_colors_df_audio(df: pd.DataFrame, audio_column_name: str = "Aud
     Returns:
         pd.Styler: Styled DataFrame with background gradient.
     """
-    df[audio_column_name] = df[audio_column_name].apply(_audio_html)
+    df[audio_column_name] = df[audio_column_name].apply(audio_html)
 
     return display_shap_colors_df(df, **kwargs)
 
