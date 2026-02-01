@@ -14,17 +14,17 @@ Following example demonstrates how to use MLLM-SHAP to explain text generation f
 
    import torch
 
-   from audio_shap.connectors import LiquidAudio, ModelConfig
-   from audio_shap.connectors.enums import Role, SystemRolesSetup, ModelHistoryTrackingMode
-   from audio_shap.connectors.filters import ExcludePunctuationTokensFilter
+   from mllm_shap.connectors import LiquidAudio, ModelConfig
+   from mllm_shap.connectors.enums import Role, SystemRolesSetup, ModelHistoryTrackingMode
+   from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 
-   from audio_shap.shap import Explainer, MCSHAPExplainer
-   from audio_shap.shap.enums import Mode
-   from audio_shap.shap.embeddings import MeanReducer
-   from audio_shap.shap.similarity import CosineSimilarity
-   from audio_shap.shap.normalizers import PowerShiftNormalizer
+   from mllm_shap.shap import Explainer, McShapExplainer
+   from mllm_shap.shap.enums import Mode
+   from mllm_shap.shap.embeddings import MeanReducer
+   from mllm_shap.shap.similarity import CosineSimilarity
+   from mllm_shap.shap.normalizers import PowerShiftNormalizer
 
-   from audio_shap.utils.jupyter import display_shap_colors_df
+   from mllm_shap.utils.jupyter import display_shap_colors_df
 
    # set device and generation parameters
    device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu") # use GPU if available
@@ -33,8 +33,8 @@ Following example demonstrates how to use MLLM-SHAP to explain text generation f
 
    # load model and setup explainer
    model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.TEXT) # track and generate only text history
-   shap = MCSHAPExplainer(
-      num_samples=-1, # minimal number of samples for Monte Carlo SHAP (one vs all, linear complexity, very poor approximation)
+   shap = McShapExplainer(
+      num_samples=-1, # minimal number of samples for Monte Carlo SHAP (first order omissions and empty masks, linear complexity, very poor approximation)
       mode=Mode.CONTEXTUAL, # use contextual embeddings, default
       embedding_reducer=MeanReducer(), # use mean pooling to reduce token embeddings to single embedding per audio, default
       similarity_measure=CosineSimilarity(), # use cosine similarity to compare embeddings, default
@@ -76,7 +76,7 @@ This will produce an output similar to the following:
 
 .. image:: _static/example_text_result.png
    :alt: Simple Text Example Result
-   :width: 300px
+   :width: 30%
    :align: center
    :class: padded-image
 
@@ -119,8 +119,8 @@ Please refer to `the notebook <https://github.com/Pawlo77/MLLM-Shap/tree/main/ex
 
 .. code-block:: Python
 
-   from audio_shap.utils.audio import display_audio
-   from audio_shap.utils.jupyter import display_shap_colors_df_audio
+   from mllm_shap.utils.audio import display_audio
+   from mllm_shap.utils.jupyter import display_shap_colors_df_audio
 
    # load audio file
    model = LiquidAudio(device=device, history_tracking_mode=ModelHistoryTrackingMode.AUDIO) # track and generate only audio history
@@ -179,8 +179,25 @@ This will render pandas dataframe with audio players for each token, similar to:
 
 .. image:: _static/example_audio_result.png
    :alt: Simple Text Example Result
-   :width: 300px
+   :width: 50%
    :align: center
    :class: padded-image
 
 Note that each row corresponds to one audio token, therefore recording lengths are very short and might not make much sense individually, as many models decode single tokens different to sequence of the same tokens decoded together. Still, SHAP values indicate contribution of each token to the final model output.
+
+We can easily plot their distribution as well:
+
+.. code-block:: Python
+
+   sv = explained_chat.shap.normalized_values
+   sv = sv[~torch.isnan(sv)]
+
+   plot_distribution(sv, bins=30, color='skyblue', edgecolor='black')
+
+This will produce a histogram similar to the following:
+
+.. image:: _static/example_shap_dist.png
+   :alt: SHAP Values Distribution
+   :width: 40%
+   :align: center
+   :class: padded-image

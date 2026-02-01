@@ -1,0 +1,70 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{url}
+\usepackage{geometry}
+\usepackage{amsmath}
+
+\geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+}
+
+\title{\textbf{Wniosek o Grant Obliczeniowy PLGrid}}
+\author{Paweł Pozorski, Jakub Muszyński}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+\begin{center}
+\begin{tabular}{@{}p{0.28\textwidth} p{0.65\textwidth}@{}}
+\textbf{Tytuł projektu:} & Analiza wyjaśnialności multimodalnych i wielojęzycznych modeli językowych (MLLM) z wykorzystaniem wartości Shapleya \\[4pt]
+\textbf{Słowa kluczowe:} & XAI, MLLM, Shapley Values, NLP, Audio processing, Large Language Models, Explainability
+\end{tabular}
+\vspace{10pt}
+
+Celem projektu jest przeprowadzenie eksperymentalnej analizy wyjaśnialności (XAI) multimodalnych dużych modeli językowych (MLLM), przetwarzających zarówno tekst, jak i dźwięk. Badania stanowią kluczowy element pracy inżynierskiej realizowanej na Wydziale Matematyki i Nauk Informacyjnych Politechniki Warszawskiej.
+\end{center}
+\end{abstract}
+
+\section*{Założenia projektu}
+
+Projekt zakłada wykorzystanie autorskiego pakietu \texttt{mllm-shap} \footnote{\url{https://pawlo77.github.io/MLLM-Shap/}} do estymacji wartości Shapleya (SV) dla modeli typu \textit{audio-to-audio} oraz \textit{text-audio}. Głównym celem badawczym jest zrozumienie, w jaki sposób informacje pochodzące z różnych modalności (tekst vs dźwięk) oraz języków (angielski, hiszpański, francuski) wpływają na decyzje modelu w konwersacjach wieloturowych. Badania obejmą analizę wpływu modalności wejścia/wyjścia na ,,skupienie'' (\textit{focus}) modelu oraz ocenę stabilności metod aproksymacji SV (Monte Carlo, alokacja Neymana) w kontekście danych multimodalnych.
+
+\section*{Metodyka badań}
+
+Badania opierają się na metodach wyjaśnialności typu \textit{black-box}, traktując model jako wyrocznię (bez dostępu do gradientów). Do obliczania atrybucji wykorzystane zostaną wartości Shapleya. Ze względu na wykładniczą złożoność obliczeniową dokładnego SV ($O(2^n)$), w projekcie zastosowane zostaną zaawansowane metody aproksymacji oparte na próbkowaniu:
+
+\begin{enumerate} \item \textbf{Estymatory Monte Carlo:} Warianty Standard oraz Limited (z wymuszeniem oceny koalicji pierwszego rzędu -- \textit{first-order omission}). \item \textbf{Metoda Complementary Contributions (CC) z alokacją Neymana:} Wykorzystanie \textit{stratified sampling} w celu redukcji wariancji estymatora przy ograniczonym budżecie obliczeniowym. \end{enumerate}
+
+\noindent Eksperymenty zostaną przeprowadzone na przygotowanych podzbiorach danych \textbf{VoiceBench} oraz \textbf{InfinityInstruct} (warianty \textit{single-sentence}, \textit{multi-sentence}, \textit{multi-turn}), każdy z nich w okolicach $100$ rekordów. Budżet aproksymacji ustawiony zostanie na $4 n^2$ gdzie $n$ - ilość tokenów wejścia, dając maksymalnie $8,000$ requestów do modelu dla każdego wejścia. Badane modele to m.in. Qwen2.5-Omni-3B, Baichuan-Audio (7B) oraz LFM2-Audio-1.5B.
+
+\section*{Oprogramowanie}
+
+\begin{itemize} \item Język: Python 3.10+ \item Biblioteki ML/DL: PyTorch, Transformers (Hugging Face) \item Biblioteki pomocnicze: NumPy, Scikit-learn, Pandas \item Autorskie oprogramowanie: Pakiet \texttt{mllm-shap} (dostępne przez \texttt{pip install}). \end{itemize}
+
+\section*{Uzasadnienie zapotrzebowania na zasoby}
+
+Realizacja projektu wymaga znaczącej mocy obliczeniowej GPU ze względu na specyfikę metod wyjaśnialności opartych na wartościach Shapleya. Wyznaczenie atrybucji dla pojedynczej próbki danych wymaga wielokrotnego (rzędu setek lub tysięcy razy, w zależności od budżetu próbkowania) uruchomienia inferencji modelu dla różnych permutacji maskowania wejścia.
+
+Zgodnie ze wstępnymi estymacjami przeprowadzonymi na lokalnej stacji roboczej (Nvidia RTX 4080), przetworzenie jednego zapytania do modelu zajmuje okolice $2$ s. Planowane eksperymenty są zatem wymagające, ponieważ zakładają:
+
+\begin{itemize} \item Analizę wartości Shapleya w zależności od modalności i języka. Powoduje to konieczność wielokrotnej iteracji zbiorów danych. \item Użycie modeli o większej liczbie parametrów (np. Baichuan-Audio 7B), co wymaga kart GPU o dużej pamięci VRAM (klasy A100) dla efektywnego przetwarzania wsadowego (\textit{batching}) i uniknięcia błędów OOM (Out Of Memory). \end{itemize}
+
+Wstępne szacunki zasobów obliczeniowych dla budżetu $4 n^2$ oraz planowanych eksperymentów są następujące:
+\begin{itemize}
+    \item \textbf{single\_\_sentence}: $100$ próbek x $2$ modalności wyjścia x $3$ modalności wejścia per model. Dokładna liczba zapytań do modelu to $102,768$.
+    \item \textbf{multi\_\_sentence}: $100$ próbek x $4$ konfuguracje modalności wejścia. Dokładna liczba zapytań do modelu to $814,416$.
+    \item \textbf{multi\_\_lingual}: $108$ próbek x $3$ kofiguracje modalności wejścia. Dokładna liczba zapytań do modelu to $317,664$.
+\end{itemize}
+
+Łącznie daje to około $1,234,848$ zapytań do modelu. Przy średnim czasie przetwarzania $2$ s na zapytanie, całkowity czas obliczeń wynosi około $2,469,696$ s, czyli około $29$ dni ciągłej pracy na pojedynczym GPU. Każdy eksperyment musi zostać wykonany na $3$ różnych modelach, co daje łącznie około $87$ dni pracy na pojedynczym GPU. Jest to wersja optymisstyczna, ponieważ liczba tokenów audio może być większa niż tekstowych, oraz prędkość inferencji może się różnić w zależności od modelu i modalności wejścia (wybrane $2$ są dla modelu LFM2-Audio-1.5B z wejściem tekstowym).
+
+Dostęp do klastra obliczeniowego pozwoli na zrównoleglenie obliczeń dla różnych modeli i konfiguracji językowych, co jest niezbędne do ukończenia eksperymentów w ramach harmonogramu pracy dyplomowej.
+
+\end{document}

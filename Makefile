@@ -24,3 +24,6 @@ pre-commit:
 
 pre-commit-all:
 	uv run pre-commit run --all-files
+
+tests:
+	uv run pytest mllm_shap/tests/
