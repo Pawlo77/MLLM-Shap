@@ -140,7 +140,7 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
 
         self.tokenizer_decode = generation_tokenizer
 
-        self.emb_tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
+        self.emb_tokenizer = cast(Any, AutoTokenizer).from_pretrained(
             embed_model_id,
             revision=embed_revision,  # nosec: B615 - pinned commit
             local_files_only=local_files_only,
