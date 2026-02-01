@@ -2,6 +2,7 @@
 
 **MLLM-SHAP** is a Python package designed to **interpret the predictions of large language models (LLMs)** using **SHAP (SHapley Additive exPlanations)** values.
 It helps you understand the contribution of input features to model outputs, enabling **transparent and explainable AI workflows**.
+This work also has companion GUI visualization tools for easier interpretation of results, which is available at the official [shap-mllm-explainer](https://github.com/mvishiu11/shap-mllm-explainer) repository.
 
 ---
 
