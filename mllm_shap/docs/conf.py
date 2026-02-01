@@ -42,6 +42,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 autosectionlabel_prefix_document = True
 autodoc_inherit_docstrings = True
 
+autodoc_mock_imports = [
+    "pydub",
+]
+
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
