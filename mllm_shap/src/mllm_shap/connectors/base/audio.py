@@ -135,7 +135,7 @@ class SpectrogramGuidedAligner:
             model = Wav2Vec2ForCTC.from_pretrained(  # nosec B615
                 model_name, revision=model_revision
             )
-            self.model = cast(Wav2Vec2ForCTC, model.to(device))
+            self.model = cast(Wav2Vec2ForCTC, model.to(cast(Any, device)))
         except OSError as e:
             raise ValueError(
                 f"Could not load '{model_name}'. Ensure it is a valid CTC model."
