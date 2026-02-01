@@ -6,7 +6,7 @@ import warnings
 import wave
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import cast
+from typing import Any, cast
 
 import librosa
 import numpy as np
@@ -129,16 +129,13 @@ class SpectrogramGuidedAligner:
 
         logger.debug("Loading alignment model: %s on %s...", model_name, device)
         try:
-            self.processor = Wav2Vec2Processor.from_pretrained(  # nosec B615
+            self.processor = cast(Any, Wav2Vec2Processor).from_pretrained(  # nosec B615
                 model_name, revision=model_revision
-            )  # type: ignore[no-untyped-call]
-            model = cast(
-                Wav2Vec2ForCTC,
-                Wav2Vec2ForCTC.from_pretrained(  # nosec B615
-                    model_name, revision=model_revision
-                ),
             )
-            self.model = cast(Wav2Vec2ForCTC, model.to(device))  # type: ignore[arg-type]
+            model = Wav2Vec2ForCTC.from_pretrained(  # nosec B615
+                model_name, revision=model_revision
+            )
+            self.model = cast(Wav2Vec2ForCTC, model.to(device))
         except OSError as e:
             raise ValueError(
                 f"Could not load '{model_name}'. Ensure it is a valid CTC model."
@@ -346,7 +343,7 @@ class SpectrogramGuidedAligner:
         clean_text = text_clean.replace(ASCII_SPACE, self.ctc_separator)
 
         valid_tokens = [
-            self.tokenizer.convert_tokens_to_ids(c)
+            cast(int, self.tokenizer.convert_tokens_to_ids(c))
             for c in clean_text
             if c in self.vocab
         ]
@@ -406,7 +403,7 @@ class SpectrogramGuidedAligner:
         ratio = waveform.size(1) / emissions_gpu.size(0)
         numpy_wave = waveform.cpu().numpy().squeeze()
 
-        refined_chars = []
+        refined_chars: list[dict[str, str | float]] = []
         for sp_token, sp_start, sp_end in token_spans:
             t_start = (sp_start * ratio) / original_sr
             t_end = (sp_end * ratio) / original_sr
@@ -418,7 +415,7 @@ class SpectrogramGuidedAligner:
             r_start = self.__refine_boundary_smart(numpy_wave, original_sr, t_start)
             r_end = self.__refine_boundary_smart(numpy_wave, original_sr, t_end)
 
-            char = self.tokenizer.convert_ids_to_tokens(sp_token)
+            char = cast(str, self.tokenizer.convert_ids_to_tokens(sp_token))
 
             refined_chars.append(
                 {"char": char, "start": r_start, "end": r_end, "confidence": conf}
