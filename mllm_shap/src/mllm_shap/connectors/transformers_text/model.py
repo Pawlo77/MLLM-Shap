@@ -47,10 +47,10 @@ class TransformersCausalText(BaseMllmModel):
             CONFIG.repo_id,
             revision=CONFIG.revision,
             load_in_4bit=True,
-        )  # nosec: B615
+        )  # nosec: B615  # type: ignore[no-untyped-call]
         model = cast(PreTrainedModel, _model)
-        model.to(device)  # type: ignore[arg-type]
-        model.eval()  # type: ignore[no-untyped-call]
+        cast(Any, model).to(device)
+        cast(Any, model).eval()
 
         # Force text-only history tracking
         if self._KW_HISTORY_TRACKING_MODE in kwargs and \

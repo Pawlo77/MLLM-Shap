@@ -3,7 +3,7 @@
 """Embedding calculation and reduction strategies for SHAP explanations."""
 
 import re
-from typing import List, Sequence, cast
+from typing import Any, List, Sequence, cast
 
 from torch import Tensor
 import torch
@@ -151,8 +151,8 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
             local_files_only=local_files_only,
         )
         self.emb_model = cast(PreTrainedModel, _model)
-        self.emb_model.to(device)  # type: ignore[arg-type]
-        self.emb_model.eval()      # type: ignore[no-untyped-call]
+        cast(Any, self.emb_model).to(device)
+        cast(Any, self.emb_model).eval()
 
         self.device = device
         self.max_length = int(max_length)
@@ -177,9 +177,13 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
                 continue
 
             # Decode each token id to its text piece (keep specials to preserve alignment)
-            pieces: List[str] = [
-                self.tokenizer_decode.decode([int(tid)], skip_special_tokens=False) for tid in token_ids.tolist()
-            ]
+            pieces: List[str] = []
+            for tid in token_ids.tolist():
+                piece = self.tokenizer_decode.decode([int(tid)], skip_special_tokens=False)
+                if isinstance(piece, list):
+                    pieces.append("".join(piece))
+                else:
+                    pieces.append(piece)
 
             emb = self._embed_texts(pieces)  # [T, hidden]
             result.append(emb)
