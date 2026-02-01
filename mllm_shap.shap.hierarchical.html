@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'mllm_shap.shap.hierarchical';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -299,14 +299,338 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
 </section>
-<section id="mllm-shap-shap-hierarchical-enums-module">
-<h2>mllm_shap.shap.hierarchical.enums module<a class="headerlink" href="#mllm-shap-shap-hierarchical-enums-module" title="Link to this heading">#</a></h2>
+<section id="module-mllm_shap.shap.hierarchical.enums">
+<span id="mllm-shap-shap-hierarchical-enums-module"></span><h2>mllm_shap.shap.hierarchical.enums module<a class="headerlink" href="#module-mllm_shap.shap.hierarchical.enums" title="Link to this heading">#</a></h2>
+<p>Configuration for possible modes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.hierarchical.enums.</span></span><span class="sig-name descname"><span class="pre">Mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/hierarchical/enums.html#Mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Defines supported grouping modes.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Depending on mode, first level groups might be large -
+only <cite>TEXT</cite> mode guarantees small first level groups, as
+only then it is divided by size corresponding to
+log(number of tokens, k) formula. Other modes
+do not divide first level groups at all, therefore
+first level call will have cost of up to 2^(number of groups),
+depending on shap explainer algorithm used.m</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL">
+<span class="sig-name descname"><span class="pre">MULTI_MODAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL" title="Link to this definition">#</a></dt>
+<dd><p>Splits first level groups according to size and modalities.
+Results in moderate first level group sizes, but might mix
+different users’ inputs together. Cheapest mode for multimodal inputs.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL_MULTI_USER">
+<span class="sig-name descname"><span class="pre">MULTI_MODAL_MULTI_USER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL_MULTI_USER" title="Link to this definition">#</a></dt>
+<dd><p>Splits first level groups according to size, modalities, and users.
+Results in larger first level groups, but better preserves logical structure.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.TEXT">
+<span class="sig-name descname"><span class="pre">TEXT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.TEXT" title="Link to this definition">#</a></dt>
+<dd><p>Splits first level groups just by size, requires single modality.
+As most models always include system prompts, this restricts
+usage to text-only mode.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.as_integer_ratio">
+<span class="sig-name descname"><span class="pre">as_integer_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.as_integer_ratio" title="Link to this definition">#</a></dt>
+<dd><p>Return a pair of integers, whose ratio is equal to the original int.</p>
+<p>The ratio is in lowest terms and has a positive denominator.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">as_integer_ratio</span><span class="p">()</span>
+<span class="go">(10, 1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">as_integer_ratio</span><span class="p">()</span>
+<span class="go">(-10, 1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">as_integer_ratio</span><span class="p">()</span>
+<span class="go">(0, 1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.bit_count">
+<span class="sig-name descname"><span class="pre">bit_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.bit_count" title="Link to this definition">#</a></dt>
+<dd><p>Number of ones in the binary representation of the absolute value of self.</p>
+<p>Also known as the population count.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">bin</span><span class="p">(</span><span class="mi">13</span><span class="p">)</span>
+<span class="go">&#39;0b1101&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">13</span><span class="p">)</span><span class="o">.</span><span class="n">bit_count</span><span class="p">()</span>
+<span class="go">3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.bit_length">
+<span class="sig-name descname"><span class="pre">bit_length</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.bit_length" title="Link to this definition">#</a></dt>
+<dd><p>Number of bits necessary to represent self in binary.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">bin</span><span class="p">(</span><span class="mi">37</span><span class="p">)</span>
+<span class="go">&#39;0b100101&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">37</span><span class="p">)</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span>
+<span class="go">6</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.conjugate">
+<span class="sig-name descname"><span class="pre">conjugate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.conjugate" title="Link to this definition">#</a></dt>
+<dd><p>Returns self, the complex conjugate of any int.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.denominator">
+<span class="sig-name descname"><span class="pre">denominator</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.denominator" title="Link to this definition">#</a></dt>
+<dd><p>the denominator of a rational number in lowest terms</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.from_bytes">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bytes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'big'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">signed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.from_bytes" title="Link to this definition">#</a></dt>
+<dd><p>Return the integer represented by the given array of bytes.</p>
+<dl class="simple">
+<dt>bytes</dt><dd><p>Holds the array of bytes to convert.  The argument must either
+support the buffer protocol or be an iterable object producing bytes.
+Bytes and bytearray are examples of built-in objects that support the
+buffer protocol.</p>
+</dd>
+<dt>byteorder</dt><dd><p>The byte order used to represent the integer.  If byteorder is ‘big’,
+the most significant byte is at the beginning of the byte array.  If
+byteorder is ‘little’, the most significant byte is at the end of the
+byte array.  To request the native byte order of the host system, use
+<a href="#id1"><span class="problematic" id="id2">`</span></a>sys.byteorder’ as the byte order value.  Default is to use ‘big’.</p>
+</dd>
+<dt>signed</dt><dd><p>Indicates whether two’s complement is used to represent the integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.imag">
+<span class="sig-name descname"><span class="pre">imag</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.imag" title="Link to this definition">#</a></dt>
+<dd><p>the imaginary part of a complex number</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.is_integer">
+<span class="sig-name descname"><span class="pre">is_integer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.is_integer" title="Link to this definition">#</a></dt>
+<dd><p>Returns True. Exists for duck type compatibility with float.is_integer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.numerator">
+<span class="sig-name descname"><span class="pre">numerator</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.numerator" title="Link to this definition">#</a></dt>
+<dd><p>the numerator of a rational number in lowest terms</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.real">
+<span class="sig-name descname"><span class="pre">real</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.real" title="Link to this definition">#</a></dt>
+<dd><p>the real part of a complex number</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.enums.Mode.to_bytes">
+<span class="sig-name descname"><span class="pre">to_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">byteorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'big'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">signed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mllm_shap.shap.hierarchical.enums.Mode.to_bytes" title="Link to this definition">#</a></dt>
+<dd><p>Return an array of bytes representing an integer.</p>
+<dl class="simple">
+<dt>length</dt><dd><p>Length of bytes object to use.  An OverflowError is raised if the
+integer is not representable with the given number of bytes.  Default
+is length 1.</p>
+</dd>
+<dt>byteorder</dt><dd><p>The byte order used to represent the integer.  If byteorder is ‘big’,
+the most significant byte is at the beginning of the byte array.  If
+byteorder is ‘little’, the most significant byte is at the end of the
+byte array.  To request the native byte order of the host system, use
+<a href="#id3"><span class="problematic" id="id4">`</span></a>sys.byteorder’ as the byte order value.  Default is to use ‘big’.</p>
+</dd>
+<dt>signed</dt><dd><p>Determines whether two’s complement is used to represent the integer.
+If signed is False and a negative integer is given, an OverflowError
+is raised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="mllm-shap-shap-hierarchical-explainer-module">
-<h2>mllm_shap.shap.hierarchical.explainer module<a class="headerlink" href="#mllm-shap-shap-hierarchical-explainer-module" title="Link to this heading">#</a></h2>
+<section id="module-mllm_shap.shap.hierarchical.explainer">
+<span id="mllm-shap-shap-hierarchical-explainer-module"></span><h2>mllm_shap.shap.hierarchical.explainer module<a class="headerlink" href="#module-mllm_shap.shap.hierarchical.explainer" title="Link to this heading">#</a></h2>
+<p>Hierarchical SHAP explainer module.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.hierarchical.explainer.</span></span><span class="sig-name descname"><span class="pre">HierarchicalExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_layer_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.TEXT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_importance_sampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_sampling_min_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/hierarchical/explainer.html#HierarchicalExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer" title="mllm_shap.shap.base.explainer.BaseExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseExplainer</span></code></a></p>
+<p>SHAP explainer implementing hierarchical approach for speed-up.</p>
+<p>Groups are divided into subgroups recursively until the final group size.
+Groups cannot share different modalities (e.g., text and audio tokens).
+Uses an underlying SHAP explainer for group explanations.</p>
+<p>Should be used with SHAP explainers that normalize using <code class="xref py py-class docutils literal notranslate"><span class="pre">MinMaxNormalizer</span></code>.</p>
+<p>It has no history nor non-normalized shap values available. Refer to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Mode</span></code> for details on how groups are formed at the first level.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.computation_graph">
+<span class="sig-name descname"><span class="pre">computation_graph</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GraphNode</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.computation_graph" title="Link to this definition">#</a></dt>
+<dd><p>Computation graph for the last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.first_layer_explainer">
+<span class="sig-name descname"><span class="pre">first_layer_explainer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.first_layer_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance for the first layer.
+If provided, first layer explanation will be done using this explainer
+- it will be fitted with all explainable tokens. Calculated SV
+will be summed per group and used as first layer SHAP values.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.importance_sampling_min_fraction">
+<span class="sig-name descname"><span class="pre">importance_sampling_min_fraction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.importance_sampling_min_fraction" title="Link to this definition">#</a></dt>
+<dd><p>Minimum fraction for importance sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.k" title="Link to this definition">#</a></dt>
+<dd><p>Maximum final group size at each level.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The mode of the hierarchical explainer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.model" title="Link to this definition">#</a></dt>
+<dd><p>The model connector instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.n_calls">
+<span class="sig-name descname"><span class="pre">n_calls</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Number of internal SHAP explainer calls made for last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.shap_explainer">
+<span class="sig-name descname"><span class="pre">shap_explainer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.shap_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.total_n_calls">
+<span class="sig-name descname"><span class="pre">total_n_calls</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.total_n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Total number of MLLM calls made for last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.use_importance_sampling">
+<span class="sig-name descname"><span class="pre">use_importance_sampling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.use_importance_sampling" title="Link to this definition">#</a></dt>
+<dd><p>Whether to use importance for setting sampling budget (for each group).</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<section id="module-mllm_shap.shap.hierarchical">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mllm_shap.shap.hierarchical" title="Link to this heading">#</a></h2>
+<p>Module for hierarchical SHAP explainer.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer" title="mllm_shap.shap.hierarchical.HierarchicalExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a> - Hierarchical SHAP explainer class. It</dt><dd><p>builds a hierarchy of feature groups and computes SHAP values for each group
+level by level. Supports text-only mode with high efficiency and
+multimodal mode with moderate efficiency (that is, fixed first level
+size dependent on input structure).</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.hierarchical.</span></span><span class="sig-name descname"><span class="pre">HierarchicalExplainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shap_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_layer_explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.TEXT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_importance_sampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_sampling_min_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/hierarchical/explainer.html#HierarchicalExplainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.explainer.BaseExplainer" title="mllm_shap.shap.base.explainer.BaseExplainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseExplainer</span></code></a></p>
+<p>SHAP explainer implementing hierarchical approach for speed-up.</p>
+<p>Groups are divided into subgroups recursively until the final group size.
+Groups cannot share different modalities (e.g., text and audio tokens).
+Uses an underlying SHAP explainer for group explanations.</p>
+<p>Should be used with SHAP explainers that normalize using <code class="xref py py-class docutils literal notranslate"><span class="pre">MinMaxNormalizer</span></code>.</p>
+<p>It has no history nor non-normalized shap values available. Refer to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Mode</span></code> for details on how groups are formed at the first level.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.computation_graph">
+<span class="sig-name descname"><span class="pre">computation_graph</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GraphNode</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.computation_graph" title="Link to this definition">#</a></dt>
+<dd><p>Computation graph for the last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.first_layer_explainer">
+<span class="sig-name descname"><span class="pre">first_layer_explainer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.first_layer_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance for the first layer.
+If provided, first layer explanation will be done using this explainer
+- it will be fitted with all explainable tokens. Calculated SV
+will be summed per group and used as first layer SHAP values.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.importance_sampling_min_fraction">
+<span class="sig-name descname"><span class="pre">importance_sampling_min_fraction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.importance_sampling_min_fraction" title="Link to this definition">#</a></dt>
+<dd><p>Minimum fraction for importance sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.k" title="Link to this definition">#</a></dt>
+<dd><p>Maximum final group size at each level.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.mode">
+<span class="sig-name descname"><span class="pre">mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#mllm_shap.shap.hierarchical.enums.Mode" title="mllm_shap.shap.hierarchical.enums.Mode"><span class="pre">Mode</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.mode" title="Link to this definition">#</a></dt>
+<dd><p>The mode of the hierarchical explainer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.model" title="Link to this definition">#</a></dt>
+<dd><p>The model connector instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.n_calls">
+<span class="sig-name descname"><span class="pre">n_calls</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Number of internal SHAP explainer calls made for last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.shap_explainer">
+<span class="sig-name descname"><span class="pre">shap_explainer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer" title="mllm_shap.shap.base.shap_explainer.BaseShapExplainer"><span class="pre">BaseShapExplainer</span></a></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.shap_explainer" title="Link to this definition">#</a></dt>
+<dd><p>The SHAP explainer instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.total_n_calls">
+<span class="sig-name descname"><span class="pre">total_n_calls</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.total_n_calls" title="Link to this definition">#</a></dt>
+<dd><p>Total number of MLLM calls made for last explanation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.hierarchical.HierarchicalExplainer.use_importance_sampling">
+<span class="sig-name descname"><span class="pre">use_importance_sampling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.use_importance_sampling" title="Link to this definition">#</a></dt>
+<dd><p>Whether to use importance for setting sampling budget (for each group).</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 
@@ -340,9 +664,58 @@
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm-shap-shap-hierarchical-enums-module">mllm_shap.shap.hierarchical.enums module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm-shap-shap-hierarchical-explainer-module">mllm_shap.shap.hierarchical.explainer module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module contents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.hierarchical.enums">mllm_shap.shap.hierarchical.enums module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode"><code class="docutils literal notranslate"><span class="pre">Mode</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL"><code class="docutils literal notranslate"><span class="pre">Mode.MULTI_MODAL</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.MULTI_MODAL_MULTI_USER"><code class="docutils literal notranslate"><span class="pre">Mode.MULTI_MODAL_MULTI_USER</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.TEXT"><code class="docutils literal notranslate"><span class="pre">Mode.TEXT</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.as_integer_ratio"><code class="docutils literal notranslate"><span class="pre">Mode.as_integer_ratio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.bit_count"><code class="docutils literal notranslate"><span class="pre">Mode.bit_count()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.bit_length"><code class="docutils literal notranslate"><span class="pre">Mode.bit_length()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.conjugate"><code class="docutils literal notranslate"><span class="pre">Mode.conjugate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.denominator"><code class="docutils literal notranslate"><span class="pre">Mode.denominator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.from_bytes"><code class="docutils literal notranslate"><span class="pre">Mode.from_bytes()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.imag"><code class="docutils literal notranslate"><span class="pre">Mode.imag</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.is_integer"><code class="docutils literal notranslate"><span class="pre">Mode.is_integer()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.numerator"><code class="docutils literal notranslate"><span class="pre">Mode.numerator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.real"><code class="docutils literal notranslate"><span class="pre">Mode.real</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.enums.Mode.to_bytes"><code class="docutils literal notranslate"><span class="pre">Mode.to_bytes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.hierarchical.explainer">mllm_shap.shap.hierarchical.explainer module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.computation_graph"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.computation_graph</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.first_layer_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.first_layer_explainer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.importance_sampling_min_fraction"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.importance_sampling_min_fraction</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.k"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.k</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.mode"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.model"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.n_calls</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.shap_explainer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.total_n_calls</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.explainer.HierarchicalExplainer.use_importance_sampling"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.use_importance_sampling</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.hierarchical">Module contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.computation_graph"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.computation_graph</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.first_layer_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.first_layer_explainer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.importance_sampling_min_fraction"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.importance_sampling_min_fraction</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.k"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.k</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.mode"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.model"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.n_calls</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.shap_explainer"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.shap_explainer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.total_n_calls"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.total_n_calls</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.hierarchical.HierarchicalExplainer.use_importance_sampling"><code class="docutils literal notranslate"><span class="pre">HierarchicalExplainer.use_importance_sampling</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
@@ -389,7 +762,7 @@
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

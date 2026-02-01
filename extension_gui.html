@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>&lt;no title&gt; &#8212; mllm-shap  documentation</title>
+    <title>Companion GUI - SHAP Multi-Modal LLM Explainer &#8212; mllm-shap  documentation</title>
   
   
   
@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'extension_gui';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -255,7 +255,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">&lt;no title&gt;</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Companion GUI - SHAP Multi-Modal LLM Explainer</span></li>
   </ul>
 </nav>
 </div>
@@ -272,7 +272,143 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p># TODO</p>
+  <section id="companion-gui-shap-multi-modal-llm-explainer">
+<h1>Companion GUI - SHAP Multi-Modal LLM Explainer<a class="headerlink" href="#companion-gui-shap-multi-modal-llm-explainer" title="Link to this heading">#</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>Separate repository (<a class="github reference external" href="https://github.com/mvishiu11/shap-mllm-explainer">mvishiu11/shap-mllm-explainer</a>) contains a companion,
+GUI-first application for exploring token-level and audio time-series attributions produced by <code class="docutils literal notranslate"><span class="pre">mllm_shap</span></code>.</p>
+<p>The app is intentionally containerized (Docker Compose) to provide a reproducible,
+production-like environment.</p>
+</section>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h2>
+<p>The stack is composed of:</p>
+<ul class="simple">
+<li><p><strong>Frontend</strong>: React (Vite build), served by Nginx</p></li>
+<li><p><strong>Backend</strong>: FastAPI</p></li>
+<li><p><strong>Database</strong>: PostgreSQL (stores sessions and configuration snapshots)</p></li>
+</ul>
+<p>This can be seen on the following diagram:</p>
+<a class="padded-image reference internal image-reference" href="_images/arch_simple.png"><img alt="GUI Architecture Diagram" class="align-center padded-image" src="_images/arch_simple.png" style="width: 50%;" />
+</a>
+<p>At a high level, the frontend:</p>
+<ul class="simple">
+<li><p>loads a model/connector mode</p></li>
+<li><p>accepts text input and optional audio</p></li>
+<li><p>triggers explainability jobs</p></li>
+<li><p>displays attribution visualizations</p></li>
+<li><p>persists and reloads sessions</p></li>
+</ul>
+<p>The backend:</p>
+<ul class="simple">
+<li><p>validates inputs and model state</p></li>
+<li><p>runs inference and SHAP computation (via <code class="docutils literal notranslate"><span class="pre">mllm_shap</span></code>)</p></li>
+<li><p>exposes progress/cancel/logs for long-running jobs</p></li>
+<li><p>stores sessions in the database</p></li>
+</ul>
+<p>Some examples of the running GUI are shown below:</p>
+<a class="padded-image reference internal image-reference" href="_images/gui_screenshot.png"><img alt="GUI Example 1" class="align-center padded-image" src="_images/gui_screenshot.png" style="width: 70%;" />
+</a>
+<a class="padded-image reference internal image-reference" href="_images/gui_screenshot_audio.png"><img alt="GUI Example 2" class="align-center padded-image" src="_images/gui_screenshot_audio.png" style="width: 70%;" />
+</a>
+</section>
+<section id="running-the-application-docker-compose">
+<h2>Running the application (Docker Compose)<a class="headerlink" href="#running-the-application-docker-compose" title="Link to this heading">#</a></h2>
+<section id="cpu">
+<h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading">#</a></h3>
+<p>From <code class="docutils literal notranslate"><span class="pre">shap-mllm-explainer/</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>--build
+</pre></div>
+</div>
+<p>Open the UI:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">http://localhost</span></code></p></li>
+</ul>
+</section>
+<section id="gpu-optional">
+<h3>GPU (optional)<a class="headerlink" href="#gpu-optional" title="Link to this heading">#</a></h3>
+<p>Prerequisites on the host:</p>
+<ul class="simple">
+<li><p>NVIDIA driver installed and working (<code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> works)</p></li>
+<li><p>NVIDIA Container Toolkit configured for Docker</p></li>
+</ul>
+<p>Run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yaml<span class="w"> </span>-f<span class="w"> </span>docker-compose.gpu.yaml<span class="w"> </span>up<span class="w"> </span>--build
+</pre></div>
+</div>
+<p>Quick verification inside the backend container:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>backend<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(&#39;cuda_available=&#39;, torch.cuda.is_available()); print(&#39;torch_cuda=&#39;, torch.version.cuda)&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="local-development-without-docker">
+<h2>Local development (without Docker)<a class="headerlink" href="#local-development-without-docker" title="Link to this heading">#</a></h2>
+<section id="backend">
+<h3>Backend<a class="headerlink" href="#backend" title="Link to this heading">#</a></h3>
+<p>From <code class="docutils literal notranslate"><span class="pre">shap-mllm-explainer/backend/</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync<span class="w"> </span>--dev
+uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>app.main:app<span class="w"> </span>--reload<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+</pre></div>
+</div>
+</section>
+<section id="frontend">
+<h3>Frontend<a class="headerlink" href="#frontend" title="Link to this heading">#</a></h3>
+<p>From <code class="docutils literal notranslate"><span class="pre">shap-mllm-explainer/web/</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>i
+npm<span class="w"> </span>run<span class="w"> </span>dev
+</pre></div>
+</div>
+</section>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
+<section id="frontend-configuration">
+<h3>Frontend configuration<a class="headerlink" href="#frontend-configuration" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">VITE_API_BASE_URL</span></code>: backend base URL (defaults to <code class="docutils literal notranslate"><span class="pre">/api</span></code>)</p></li>
+</ul>
+</section>
+<section id="backend-configuration">
+<h3>Backend configuration<a class="headerlink" href="#backend-configuration" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DATABASE_URL</span></code>: async SQLAlchemy URL (Compose uses <code class="docutils literal notranslate"><span class="pre">postgresql+asyncpg://...</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LOG_LEVEL</span></code>: log verbosity (e.g. <code class="docutils literal notranslate"><span class="pre">INFO</span></code> / <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UV_PYTHON</span></code>: set in Compose to prevent <code class="docutils literal notranslate"><span class="pre">uv</span></code> from downloading another CPython inside the container</p></li>
+</ul>
+<p>Compose files to inspect:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">shap-mllm-explainer/docker-compose.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shap-mllm-explainer/docker-compose.gpu.yaml</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="backend-api-surface-high-level">
+<h2>Backend API surface (high level)<a class="headerlink" href="#backend-api-surface-high-level" title="Link to this heading">#</a></h2>
+<p>The backend exposes FastAPI routes under the <code class="docutils literal notranslate"><span class="pre">/api</span></code> prefix.</p>
+<p>General:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/health</span></code></p></li>
+</ul>
+<p>ML endpoints (<code class="docutils literal notranslate"><span class="pre">/api/ml</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/models/load</span></code> — load a supported connector/mode</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/predict</span></code> — run a prediction (text-only, or text+audio for LiquidAudio mode)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/explain</span></code> — start an explainability job (supports text and optional audio)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/progress/{job_id}</span></code> — progress reporting</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/cancel/{job_id}</span></code> — cooperative cancellation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/logs/{job_id}</span></code> — retrieve the last log lines from a job</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/telemetry</span></code> — runtime telemetry (CPU/RAM/process + GPU if available)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/diagnostics</span></code> — basic model/device diagnostics</p></li>
+</ul>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>Audio uploads are accepted only when the backend is running in LiquidAudio mode.</p></li>
+<li><p>Text-only mode rejects audio requests with a clear 400 response.</p></li>
+</ul>
+</section>
+</section>
 
 
                 </article>
@@ -302,9 +438,26 @@
     <i class="fa-solid fa-list"></i> On this page
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="simple visible nav section-nav flex-column">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-application-docker-compose">Running the application (Docker Compose)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu">CPU</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-optional">GPU (optional)</a></li>
 </ul>
-
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#local-development-without-docker">Local development (without Docker)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend">Backend</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frontend">Frontend</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frontend-configuration">Frontend configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-configuration">Backend configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-api-surface-high-level">Backend API surface (high level)</a></li>
+</ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
@@ -350,7 +503,7 @@
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>

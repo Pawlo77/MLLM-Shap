@@ -1,0 +1,22 @@
+{
+    "additional_notes": 0.015,
+    "documentation": 0.003,
+    "experiments_mllm_shapx": 0.023,
+    "extension_gui": 0.02,
+    "getting_started": 0.011,
+    "index": 0.025,
+    "mllm_shap": 0.01,
+    "mllm_shap.connectors": 1.381,
+    "mllm_shap.connectors.base": 0.969,
+    "mllm_shap.connectors.liquid": 0.624,
+    "mllm_shap.shap": 1.512,
+    "mllm_shap.shap.base": 0.4,
+    "mllm_shap.shap.complementary": 0.17,
+    "mllm_shap.shap.hierarchical": 0.172,
+    "mllm_shap.shap.monte_carlo": 0.181,
+    "mllm_shap.shap.neyman": 0.241,
+    "mllm_shap.utils": 0.232,
+    "modules": 0.002,
+    "references": 0.002,
+    "release_notes": 0.009
+}

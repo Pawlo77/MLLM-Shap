@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -251,7 +251,8 @@
   <section id="welcome-to-mllm-shap">
 <h1>Welcome to MLLM-SHAP<a class="headerlink" href="#welcome-to-mllm-shap" title="Link to this heading">#</a></h1>
 <p><strong>MLLM-SHAP</strong> is a Python package designed to <strong>interpret the predictions of large language models (LLMs)</strong> using <strong>SHAP (SHapley Additive exPlanations)</strong> values.
-It helps you understand the contribution of input features to model outputs, enabling <strong>transparent and explainable AI workflows</strong>.</p>
+It helps you understand the contribution of input features to model outputs, enabling <strong>transparent and explainable AI workflows</strong>.
+This work also has companion GUI visualization tools for easier interpretation of results, which is available at the official <a class="reference external" href="https://github.com/mvishiu11/shap-mllm-explainer">shap-mllm-explainer</a> repository.</p>
 <hr class="docutils" />
 <section id="key-features">
 <h2>✨ Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
@@ -289,6 +290,8 @@ It helps you understand the contribution of input features to model outputs, ena
 <li><p><a class="reference internal" href="additional_notes.html"><span class="doc">Additional Notes</span></a></p></li>
 <li><p><a class="reference internal" href="references.html"><span class="doc">References</span></a></p></li>
 <li><p><a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a></p></li>
+<li><p><a class="reference internal" href="experiments_mllm_shapx.html"><span class="doc">mllm_shapx - Experiments Runner</span></a></p></li>
+<li><p><a class="reference internal" href="extension_gui.html"><span class="doc">Companion GUI - SHAP Multi-Modal LLM Explainer</span></a></p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -365,7 +368,7 @@ It helps you understand the contribution of input features to model outputs, ena
 </pre></div>
 </div>
 <p>This will produce an output similar to the following:</p>
-<a class="padded-image reference internal image-reference" href="_images/example_text_result.png"><img alt="Simple Text Example Result" class="padded-image align-center" src="_images/example_text_result.png" style="width: 30%;" />
+<a class="padded-image reference internal image-reference" href="_images/example_text_result.png"><img alt="Simple Text Example Result" class="align-center padded-image" src="_images/example_text_result.png" style="width: 30%;" />
 </a>
 <p>Chat messages can be accessed in the following way:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
@@ -449,7 +452,7 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
 </pre></div>
 </div>
 <p>This will render pandas dataframe with audio players for each token, similar to:</p>
-<a class="padded-image reference internal image-reference" href="_images/example_audio_result.png"><img alt="Simple Text Example Result" class="padded-image align-center" src="_images/example_audio_result.png" style="width: 50%;" />
+<a class="padded-image reference internal image-reference" href="_images/example_audio_result.png"><img alt="Simple Text Example Result" class="align-center padded-image" src="_images/example_audio_result.png" style="width: 50%;" />
 </a>
 <p>Note that each row corresponds to one audio token, therefore recording lengths are very short and might not make much sense individually, as many models decode single tokens different to sequence of the same tokens decoded together. Still, SHAP values indicate contribution of each token to the final model output.</p>
 <p>We can easily plot their distribution as well:</p>
@@ -460,14 +463,9 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
 </pre></div>
 </div>
 <p>This will produce a histogram similar to the following:</p>
-<a class="padded-image reference internal image-reference" href="_images/example_shap_dist.png"><img alt="SHAP Values Distribution" class="padded-image align-center" src="_images/example_shap_dist.png" style="width: 40%;" />
+<a class="padded-image reference internal image-reference" href="_images/example_shap_dist.png"><img alt="SHAP Values Distribution" class="align-center padded-image" src="_images/example_shap_dist.png" style="width: 40%;" />
 </a>
 </section>
-</section>
-<hr class="docutils" />
-<section id="extension-gui-visualization">
-<h1>Extension - GUI Visualization<a class="headerlink" href="#extension-gui-visualization" title="Link to this heading">#</a></h1>
-<p># TODO</p>
 </section>
 <hr class="docutils" />
 <section id="indices-and-tables">
@@ -521,7 +519,6 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-audio">Working with Audio</a></li>
 </ul>
 </li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-gui-visualization">Extension - GUI Visualization</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and Tables</a></li>
 </ul>
 
@@ -570,7 +567,7 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
