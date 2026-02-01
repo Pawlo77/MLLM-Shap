@@ -100,11 +100,14 @@ class MockChat(BaseMllmChat):
         return torch.empty(0, dtype=torch.long, device=self.torch_device)
 
     def _decode_text(self, text_tokens: Tensor) -> str:
-        # Accept shape [T] or [1]; tokenizer handles lists
-        ids = text_tokens.detach().to("cpu").tolist()
-        if isinstance(ids, int):
-            ids = [ids]
-        return self.tokenizer.decode(ids, skip_special_tokens=False)
+        # Accept shape [T] or [1]; always return a single string.
+        flat = text_tokens.detach().to("cpu").reshape(-1)
+        raw_ids = flat.tolist()
+        ids: list[int] = [int(raw_ids)] if isinstance(raw_ids, int) else [int(x) for x in raw_ids]
+        decoded = self.tokenizer.decode(ids, skip_special_tokens=False)
+        if isinstance(decoded, list):
+            return "".join(decoded)
+        return decoded
 
     def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:  # pragma: no cover - unsupported
         return None  # decoding audio is impossible here
