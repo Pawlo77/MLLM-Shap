@@ -31,6 +31,22 @@ class Role(int, Enum):
     SYSTEM = 2
     """Represents system-level inputs or outputs."""
 
+    @classmethod
+    def from_ordinal(cls, ordinal: int) -> "Role":
+        """Creates a Role enum member from its ordinal value.
+
+        Args:
+            ordinal: The integer ordinal value of the role.
+        Returns:
+            The corresponding Role enum member.
+        Raises:
+            ValueError: If the ordinal does not correspond to any Role.
+        """
+        for role in cls:
+            if role.value == ordinal:
+                return role
+        raise ValueError(f"No Role found for ordinal {ordinal}.")
+
     def __str__(self) -> str:
         """Returns the role name as a string."""
         return self.name

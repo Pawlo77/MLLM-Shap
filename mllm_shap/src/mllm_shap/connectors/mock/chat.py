@@ -5,6 +5,7 @@ from copy import deepcopy
 from functools import cached_property
 import logging
 import os
+from collections.abc import Callable
 
 import torch
 from torch import Tensor
@@ -41,6 +42,7 @@ class MockChat(BaseMllmChat):
         empty_turn_sequences: set[str] | None = None,
         token_filter: TokenFilter | None = None,
         system_roles_setup: SystemRolesSetup | None = None,
+        get_new_chat_callable: Callable[..., "MockChat"] | None = None,
     ) -> None:
         empty_turn_sequences = empty_turn_sequences or set()
         self.tokenizer = tokenizer
@@ -49,6 +51,7 @@ class MockChat(BaseMllmChat):
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
+            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
         # debug logger and memory toggle
