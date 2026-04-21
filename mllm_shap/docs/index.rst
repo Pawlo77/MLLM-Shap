@@ -13,6 +13,7 @@ Important Links
 - :doc:`additional_notes`
 - :doc:`references`
 - :doc:`documentation`
+- :ref:`modindex` (API Reference)
 
 -----------------------------------
 
