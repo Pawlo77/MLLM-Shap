@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to MLLM-SHAP &#8212; mllm-shap  documentation</title>
+    <title>✨ Key Features &#8212; mllm-shap  documentation</title>
   
   
   
@@ -248,14 +248,24 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="welcome-to-mllm-shap">
-<h1>Welcome to MLLM-SHAP<a class="headerlink" href="#welcome-to-mllm-shap" title="Link to this heading">#</a></h1>
-<p><strong>MLLM-SHAP</strong> is a Python package designed to <strong>interpret the predictions of large language models (LLMs)</strong> using <strong>SHAP (SHapley Additive exPlanations)</strong> values.
+  <div align="center">
+  <h1>🌟 <code>mllm-shap</code> Package</h1>
+  <p>
+    <a href="https://pypi.org/project/mllm-shap/"><img src="https://img.shields.io/pypi/v/mllm-shap.svg" alt="PyPI"></a>
+    <a href="https://pypi.org/project/mllm-shap/"><img src="https://img.shields.io/pypi/pyversions/mllm-shap.svg" alt="Python"></a>
+    <a href="https://pawlo77.github.io/MLLM-Shap/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs"></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  </p>
+  <p>
+    <b>A robust toolkit for interpreting Large Language Models across multiple modalities.</b>
+  </p>
+</div>
+<p><strong>mllm-shap</strong> is a robust Python package designed to <strong>interpret the predictions of large language models (LLMs)</strong> using <strong>SHAP (SHapley Additive exPlanations)</strong> values.
 It helps you understand the contribution of input features to model outputs, enabling <strong>transparent and explainable AI workflows</strong>.
 This work also has companion GUI visualization tools for easier interpretation of results, which is available at the official <a class="reference external" href="https://github.com/mvishiu11/shap-mllm-explainer">shap-mllm-explainer</a> repository.</p>
 <hr class="docutils" />
 <section id="key-features">
-<h2>✨ Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h2>
+<h1>✨ Key Features<a class="headerlink" href="#key-features" title="Link to this heading">#</a></h1>
 <ul class="simple">
 <li><p>Integration with <strong>audio and text models</strong>, supporting multi-modal inputs and outputs.</p></li>
 <li><p>Flexible aggregation strategies: <em>mean</em>, <em>sum</em>, <em>max</em>, <em>min</em>, etc.</p></li>
@@ -263,24 +273,65 @@ This work also has companion GUI visualization tools for easier interpretation o
 <li><p>Customizable SHAP calculation algorithms: <em>exact</em>, <em>Monte Carlo approximations</em>, and more.</p></li>
 <li><p>Examples showcasing common explainability pipelines in <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/examples"><code class="docutils literal notranslate"><span class="pre">examples/</span></code></a> on the official GitHub repository.</p></li>
 </ul>
-</section>
 <hr class="docutils" />
+</section>
+<section id="installation">
+<h1>💾 Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
+<p>You can install <code class="docutils literal notranslate"><span class="pre">mllm-shap</span></code> directly via pip (<strong>v0.1.8+</strong> recommended):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mllm-shap
+</pre></div>
+</div>
+<p>Or install it from the source repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Pawlo77/MLLM-Shap.git
+<span class="nb">cd</span><span class="w"> </span>MLLM-Shap/mllm_shap
+pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p><em>Note: Core machine learning dependencies like <code class="docutils literal notranslate"><span class="pre">torch</span></code> and <code class="docutils literal notranslate"><span class="pre">transformers</span></code> should be installed in your environment.</em></p>
+<hr class="docutils" />
+</section>
+<section id="quick-start">
+<h1>🚀 Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h1>
+<p>Here is a minimal example demonstrating how to initialize an explainer and calculate early SHAP values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mllm_shap</span><span class="w"> </span><span class="kn">import</span> <span class="n">MllmShap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mllm_shap.shap</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactExplainer</span>
+<span class="c1"># Import your specific model connector (e.g., for LiquidAudio or similar models)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mllm_shap.connectors</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMConnector</span>
+
+<span class="c1"># 1. Initialize your model connector</span>
+<span class="n">connector</span> <span class="o">=</span> <span class="n">LLMConnector</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># 2. Set up the MLLM SHAP explainer with an exact calculation method</span>
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">MllmShap</span><span class="p">(</span>
+    <span class="n">connector</span><span class="o">=</span><span class="n">connector</span><span class="p">,</span>
+    <span class="n">explainer</span><span class="o">=</span><span class="n">ExactExplainer</span><span class="p">(),</span>
+    <span class="n">similarity_metric</span><span class="o">=</span><span class="s2">&quot;cosine&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># 3. Calculate SHAP values for an input string</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">explainer</span><span class="o">.</span><span class="n">explain</span><span class="p">(</span><span class="s2">&quot;Analyze this text structure.&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<hr class="docutils" />
+</section>
 <section id="visualization-examples">
-<h2>📊 Visualization &amp; Examples<a class="headerlink" href="#visualization-examples" title="Link to this heading">#</a></h2>
-<p>If you’re interested in GUI visualization of SHAP values, check out the section  <strong>Extension - GUI Visualization</strong> in the docs.</p>
+<h1>📊 Visualization &amp; Examples<a class="headerlink" href="#visualization-examples" title="Link to this heading">#</a></h1>
+<p>If you’re interested in GUI visualization of SHAP values, check out the section  <strong>Extension - GUI Visualization</strong> in the repository docs.</p>
 <p>For more advanced CLI usages, refer to:</p>
 <ul class="simple">
 <li><p>The <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/examples">official GitHub repository examples</a></p></li>
 <li><p>Or explore more advanced pipelines from exemplary <a class="reference external" href="https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments">research projects</a></p></li>
 </ul>
-</section>
 <hr class="docutils" />
-<section id="supported-llm-integrations">
-<h2>🤖 Supported LLM Integrations<a class="headerlink" href="#supported-llm-integrations" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/Liquid4All/liquid-audio/">Liquid-Audio</a></p></li>
-</ul>
-</section>
+<div align="center">
+  <h2>🤖 Supported LLM Integrations</h2>
+   <br>
+   <a href="https://github.com/Liquid4All/liquid-audio/">
+       <b>Liquid-Audio</b>
+   </a>
+   | More robust text, text-to-audio, and audio pipelines coming soon.
+</div>
 </section>
 <hr class="docutils" />
 <section id="important-links">
@@ -292,13 +343,14 @@ This work also has companion GUI visualization tools for easier interpretation o
 <li><p><a class="reference internal" href="documentation.html"><span class="doc">Documentation</span></a></p></li>
 <li><p><a class="reference internal" href="experiments_mllm_shapx.html"><span class="doc">mllm_shapx - Experiments Runner</span></a></p></li>
 <li><p><a class="reference internal" href="extension_gui.html"><span class="doc">Companion GUI - SHAP Multi-Modal LLM Explainer</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a> (API Reference)</p></li>
 </ul>
 </section>
 <hr class="docutils" />
 <section id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Installation<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mllm-shap
 </pre></div>
 </div>
@@ -506,15 +558,13 @@ ChatEntry<span class="o">(</span><span class="nv">content_type</span><span class
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to MLLM-SHAP</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">✨ Key Features</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization-examples">📊 Visualization &amp; Examples</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supported-llm-integrations">🤖 Supported LLM Integrations</a></li>
-</ul>
-</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">✨ Key Features</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">💾 Installation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">🚀 Quick Start</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#visualization-examples">📊 Visualization &amp; Examples</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#important-links">Important Links</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a><ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Installation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-text-usage">Basic Text Usage</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-audio">Working with Audio</a></li>
 </ul>

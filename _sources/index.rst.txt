@@ -15,6 +15,7 @@ Important Links
 - :doc:`documentation`
 - :doc:`experiments_mllm_shapx`
 - :doc:`extension_gui`
+- :ref:`modindex` (API Reference)
 
 -----------------------------------
 
