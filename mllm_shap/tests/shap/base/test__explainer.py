@@ -57,9 +57,9 @@ class TestBaseExplainer:
     def test_init_validates_dependencies(self) -> None:
         """Pydantic config should reject invalid dependency types."""
         with pytest.raises(ValidationError):
-            ConcreteExplainer(model=DummyModel(), shap_explainer="oops")  # type: ignore[arg-type]
+            ConcreteExplainer(model=DummyModel(), shap_explainer="oops")
         with pytest.raises(ValidationError):
-            ConcreteExplainer(model="not-a-model", shap_explainer=DummyShapExplainer())  # type: ignore[arg-type]
+            ConcreteExplainer(model="not-a-model", shap_explainer=DummyShapExplainer())
 
     def test_call_rejects_chat_in_generation_kwargs(self) -> None:
         """Passing forbidden keys in generation kwargs should raise."""
