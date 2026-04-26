@@ -3,11 +3,11 @@
   <p><strong>Curated notebook workflows for text/audio SHAP explainability.</strong></p>
 </div>
 
-## 🎯 Purpose
+# 🎯 Purpose
 
 Directory contains practical, reproducible notebook scenarios for `mllm-shap`.
 
-## Setup
+# Setup
 
 From the repository root:
 
@@ -21,15 +21,15 @@ or install the package in editable mode:
 pip install -e mllm_shap
 ```
 
-## 📊 Collection Snapshot
+# 📊 Collection Snapshot
 
 - **7 primary notebooks** across core + advanced explainers
 - **modalities covered**: `Text -> Text`, `Text -> Audio`, `Audio + Text -> Audio`
 - **best first notebook**: `text_multi_turn.ipynb`
 
-## 📓 Notebooks
+# 📓 Notebooks
 
-### Core Scenarios
+## Core Scenarios
 
 - `text_multi_turn.ipynb` (`Text -> Text`)
   - recommended starting point
@@ -44,12 +44,12 @@ pip install -e mllm_shap
 - `audio_external.ipynb` (`Audio + Text -> Audio`)
   - end-to-end multimodal example with mixed input modalities
 
-### Advanced Explainers
+## Advanced Explainers
 
 - `complementary.ipynb` - complementary SHAP flow
 - `neyman.ipynb` - Neyman-based attribution variant
 - `hierarchical.ipynb` - hierarchical decomposition approach
 
-## 🧪 Quality Note
+# 🧪 Quality Note
 
 These notebooks double as practical smoke tests for connector and explainer integration.

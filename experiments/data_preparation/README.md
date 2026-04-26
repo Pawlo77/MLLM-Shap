@@ -8,13 +8,13 @@ This directory contains notebooks used to build and transform datasets for exper
 Published outputs are available on Hugging Face:
 [Pawlo77/mllm-shap](https://huggingface.co/datasets/Pawlo77/mllm-shap)
 
-## 📊 Dataset Pipeline Snapshot
+# 📊 Dataset Pipeline Snapshot
 
 - source families: **Infinity-Instruct** and **VoiceBench**
 - output types: multilingual, multi-turn, multi-sentence, single-sentence
 - publication target: Hugging Face dataset hub
 
-## 📓 Notebooks
+# 📓 Notebooks
 
 - `google_tts_demo.ipynb`
   - explores multilingual TTS samples

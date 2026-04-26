@@ -5,13 +5,13 @@
 
 This directory stores assets used for publications and thesis documentation.
 
-## 📦 Contents
+# 📦 Contents
 
 - draft-supporting scripts for preparing tables and figure data
 - drawing/diagram sources used in the paper workflow
 - visualization inputs (for example `words.txt`) and rendering scripts (for example `cloud.py`)
 
-## 🔗 Cross-References
+# 🔗 Cross-References
 
 - analysis logic and metrics are in `../experiments/analysis/`
 - runnable usage examples are in `../examples/`
