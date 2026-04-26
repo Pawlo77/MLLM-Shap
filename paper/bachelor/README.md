@@ -13,4 +13,4 @@ This directory specifically archives and isolates materials deployed directly in
 - **Figure Generators:** Vector representations (like `.drawio` files for Hierarchical workflows) and custom plotting wrappers.
 - **Imagery Pipeline:** Materials spanning from word distribution lists (`words.txt`) to the code producing the high-resolution word cloud renderings for presentations or overviews (`cloud.py`).
 
-To trace how the source algorithms backing these figures function, consult the [`experiments/analysis`](../experiments/analysis/) or [`examples`](../examples/) directories.
+To trace how the source algorithms backing these figures function, consult the [`experiments/analysis`](../../experiments/analysis/) or [`examples`](../../examples/) directories.
