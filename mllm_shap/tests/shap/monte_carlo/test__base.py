@@ -70,7 +70,7 @@ class TestBaseMcShapExplainer:
         explainer.num_samples = 6
         first = explainer._get_num_splits(n=3)
         explainer.num_samples = 4
-        explainer._get_num_splits.cache_clear()  # type: ignore[attr-defined]
+        explainer._get_num_splits.cache_clear()
         second = explainer._get_num_splits(n=3)
         assert first == 6
         assert second == 4

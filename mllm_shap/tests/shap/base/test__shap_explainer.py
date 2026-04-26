@@ -205,7 +205,7 @@ class TestBaseShapExplainer:
                     None,
                 ]
 
-            def _get_num_splits(self, n: int) -> int:  # noqa: D401 - docstring inherited
+            def _get_num_splits(self, n: int) -> int:
                 return 5
 
             def _get_next_split(
