@@ -1,6 +1,8 @@
-"""Generate model responses for masked chats."""
+"""Generate model responses for masked SHAP chats."""
 
-import gc
+from __future__ import annotations
+
+from dataclasses import dataclass
 from logging import Logger
 from threading import Lock, Thread
 from time import time
@@ -13,6 +15,7 @@ from tqdm.auto import tqdm
 from ...connectors.base.chat import AllTextTokensFilteredOutError, BaseMllmChat
 from ...connectors.base.model import BaseMllmModel
 from ...connectors.base.model_response import ModelResponse
+from ...errors import WorkerExecutionError
 from ._mask_generator import MaskGenerator
 from ...utils.logger import get_logger
 from ._cache_manager import CacheManager
@@ -20,7 +23,92 @@ from ._cache_manager import CacheManager
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments
+@dataclass(frozen=True)
+class _GenerationContext:
+    """Context required to process masks.
+
+    Attributes:
+        source_chat: Chat used as the source for masked clones.
+        model: Connector model used to generate responses.
+        cache_manager: Cache manager used for mask-hash lookups.
+        verbose: Flag that controls whether to keep chat history.
+        generate_kwargs: Keyword arguments forwarded to model generation.
+    """
+
+    source_chat: BaseMllmChat
+    model: BaseMllmModel
+    cache_manager: CacheManager
+    verbose: bool
+    generate_kwargs: dict[str, Any]
+
+
+@dataclass
+class _GenerationAccumulator:
+    """Accumulator for generated artifacts.
+
+    Attributes:
+        masks: Output list collecting masks that were evaluated.
+        responses: Output list collecting model responses.
+        history: Optional verbose history entries.
+    """
+
+    masks: list[Tensor]
+    responses: list[ModelResponse]
+    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
+
+    def append(
+        self,
+        *,
+        mask: Tensor,
+        mask_hash: int,
+        masked_chat: BaseMllmChat | None,
+        model_response: ModelResponse,
+    ) -> None:
+        """Store one generated result.
+
+        Args:
+            mask: Evaluated mask.
+            mask_hash: Hash for the evaluated mask.
+            masked_chat: Masked chat used for generation, or ``None`` if cached.
+            model_response: Generated model response.
+        """
+        self.masks.append(mask)
+        self.responses.append(model_response)
+        if self.history is not None:
+            self.history.append((mask, mask_hash, masked_chat, model_response))
+
+
+class _MaskProcessor:
+    """Cache-aware processor for one SHAP mask."""
+
+    def __init__(self, context: _GenerationContext) -> None:
+        self._context = context
+
+    def process(
+        self, *, mask: Tensor, mask_hash: int, i: int
+    ) -> tuple[BaseMllmChat | None, ModelResponse]:
+        """Process one mask.
+
+        Args:
+            mask: Mask tensor to evaluate.
+            mask_hash: Precomputed mask hash.
+            i: Iteration index used in logs.
+
+        Returns:
+            Tuple with masked chat and model response.
+        """
+        return _process_mask(
+            mask=mask,
+            mask_hash=mask_hash,
+            source_chat=self._context.source_chat,
+            model=self._context.model,
+            cache_manager=self._context.cache_manager,
+            verbose=self._context.verbose,
+            i=i,
+            **self._context.generate_kwargs,
+        )
+
+
 def generate_responses(
     masks: list[Tensor],
     responses: list[ModelResponse],
@@ -77,7 +165,6 @@ def generate_responses(
     )
 
 
-# pylint: disable=too-many-positional-arguments,too-many-arguments
 def _process_mask(
     mask: Tensor,
     mask_hash: int,
@@ -133,14 +220,36 @@ def _process_mask(
         model_response = model.generate(
             chat=masked_chat,
             keep_history=verbose,
-            **generate_kwargs,  # type: ignore[arg-type]
+            **generate_kwargs,
         )
         logger.debug("%d: Generation took %.2f seconds", i, time() - t0)
 
     return masked_chat, model_response
 
 
-# pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+def _create_accumulator(
+    *,
+    masks: list[Tensor],
+    responses: list[ModelResponse],
+    verbose: bool,
+) -> _GenerationAccumulator:
+    """Create output accumulator.
+
+    Args:
+        masks: Target list for masks.
+        responses: Target list for responses.
+        verbose: Whether history should be collected.
+
+    Returns:
+        Prepared accumulator instance.
+    """
+    return _GenerationAccumulator(
+        masks=masks,
+        responses=responses,
+        history=[] if verbose else None,
+    )
+
+
 def _generate_responses_multi(
     masks: list[Tensor],
     responses: list[ModelResponse],
@@ -154,8 +263,18 @@ def _generate_responses_multi(
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks in parallel using multiple threads."""
-    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = (
-        [] if verbose else None
+    context = _GenerationContext(
+        source_chat=source_chat,
+        model=model,
+        cache_manager=cache_manager,
+        verbose=verbose,
+        generate_kwargs=generate_kwargs,
+    )
+    processor = _MaskProcessor(context=context)
+    accumulator = _create_accumulator(
+        masks=masks,
+        responses=responses,
+        verbose=verbose,
     )
     iterable_gen = enumerate(
         standard_tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
@@ -181,15 +300,8 @@ def _generate_responses_multi(
                         return
 
                 try:
-                    masked_chat, model_response = _process_mask(
-                        mask=mask,
-                        mask_hash=mask_hash,
-                        source_chat=source_chat,
-                        model=model,
-                        cache_manager=cache_manager,
-                        verbose=verbose,
-                        i=i,
-                        **generate_kwargs,
+                    masked_chat, model_response = processor.process(
+                        mask=mask, mask_hash=mask_hash, i=i
                     )
                 except AllTextTokensFilteredOutError:
                     with lock:
@@ -197,20 +309,19 @@ def _generate_responses_multi(
                     continue
 
                 with lock:
-                    masks.append(mask)  # noqa: F821
-                    responses.append(model_response)
+                    accumulator.append(
+                        mask=mask,
+                        mask_hash=mask_hash,
+                        masked_chat=masked_chat,
+                        model_response=model_response,
+                    )
 
-                if verbose:
-                    with lock:
-                        # here history is not None and is to be populated
-                        history.append((mask, mask_hash, masked_chat, model_response))  # type: ignore[union-attr]
-                else:
-                    # cleanup to avoid memory leaks
+                if not verbose:
+                    # cleanup large refs; avoid forcing global GC in hot loop
                     del masked_chat
                     del model_response
-                    gc.collect()
 
-            except Exception as e:  # pylint: disable=broad-exception-caught
+            except Exception as e:
                 logger.error("Error in SHAP explainer worker: %s", e, exc_info=True)
                 with lock:
                     error_flag = True
@@ -223,12 +334,11 @@ def _generate_responses_multi(
     for worker_thread in workers:
         worker_thread.join()
     if error_flag:
-        raise RuntimeError("Error occurred in SHAP explainer worker thread.")
+        raise WorkerExecutionError("Error occurred in SHAP explainer worker thread.")
 
-    return chats_skipped, history
+    return chats_skipped, accumulator.history
 
 
-# pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
 def _generate_responses_single(
     masks: list[Tensor],
     responses: list[ModelResponse],
@@ -241,8 +351,18 @@ def _generate_responses_single(
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks sequentially."""
-    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = (
-        [] if verbose else None
+    context = _GenerationContext(
+        source_chat=source_chat,
+        model=model,
+        cache_manager=cache_manager,
+        verbose=verbose,
+        generate_kwargs=generate_kwargs,
+    )
+    processor = _MaskProcessor(context=context)
+    accumulator = _create_accumulator(
+        masks=masks,
+        responses=responses,
+        verbose=verbose,
     )
     iterable_gen = enumerate(
         tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
@@ -252,30 +372,23 @@ def _generate_responses_single(
 
     for i, (mask, mask_hash) in iterable_gen:
         try:
-            masked_chat, model_response = _process_mask(
-                mask=mask,
-                mask_hash=mask_hash,
-                source_chat=source_chat,
-                model=model,
-                cache_manager=cache_manager,
-                verbose=verbose,
-                i=i,
-                **generate_kwargs,
+            masked_chat, model_response = processor.process(
+                mask=mask, mask_hash=mask_hash, i=i
             )
         except AllTextTokensFilteredOutError:
             chats_skipped += 1
             continue
 
-        masks.append(mask)
-        responses.append(model_response)
+        accumulator.append(
+            mask=mask,
+            mask_hash=mask_hash,
+            masked_chat=masked_chat,
+            model_response=model_response,
+        )
 
-        if verbose:
-            # here history is not None and is to be populated
-            history.append((mask, mask_hash, masked_chat, model_response))  # type: ignore[union-attr]
-        else:
-            # cleanup to avoid memory leaks
+        if not verbose:
+            # cleanup large refs; avoid forcing global GC in hot loop
             del masked_chat
             del model_response
-            gc.collect()
 
-    return chats_skipped, history
+    return chats_skipped, accumulator.history

@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """Base class for SHAP explainers using approximation methods."""
 
 from abc import ABC
@@ -17,7 +16,6 @@ from .approx import BaseShapApproximation
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
     """Complementary SHAP implementation class."""
 
@@ -49,7 +47,6 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         self._M = None
         self._C = None
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments,duplicate-code
     def _get_masks_generator(
         self,
         mask_manager: MasksManager,
@@ -142,7 +139,7 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                             coalition_size,
                         )
 
-                        BaseComplementaryShapApproximation._increment_coalition_val(  # pylint: disable=protected-access
+                        BaseComplementaryShapApproximation._increment_coalition_val(
                             M, split.squeeze(0), coalition_size, 1
                         )
 
@@ -229,7 +226,7 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
 
         # use fraction
         total_masks = int(2**n - 2)  # exclude all-ones and all-zeros mask
-        r = int(total_masks * fraction)  # type: ignore[operator]
+        r = int(total_masks * fraction)
         if r < 2 * n:
             r = 2 * n  # minimal: pairs of single-feature masks
             logger.warning(

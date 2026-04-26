@@ -3,6 +3,7 @@
 import pytest
 import torch
 from mllm_shap.connectors.base.chat import BaseMllmChat
+from mllm_shap.errors import MaskError
 from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
 
 from ...dummy import DummyChat
@@ -102,7 +103,7 @@ class TestMasksManager:
         """get_hash() should raise if 2D mask has more than one row."""
         mask = torch.tensor([[True, False], [False, True]])
         with pytest.raises(
-            ValueError, match="1D tensor or a 2D tensor with a single row"
+            MaskError, match="1D tensor or a 2D tensor with a single row"
         ):
             _ = manager.get_hash(mask)
 
@@ -116,9 +117,21 @@ class TestMasksManager:
     def test_get_mask_hash_raises_if_missing_both(self, manager: MasksManager) -> None:
         """Should raise ValueError if both mask and mask_hash are None."""
         with pytest.raises(
-            ValueError, match="Either mask or mask_hash must be provided"
+            MaskError, match="Either mask or mask_hash must be provided"
         ):
             _ = manager._MasksManager__get_mask_hash()
+
+    def test_mask_hash_strategy_normalize_returns_1d(self) -> None:
+        """Hash strategy should normalize single-row masks."""
+        mask = torch.tensor([[True, False, True]], dtype=torch.bool)
+        normalized = MasksManager._MaskHashStrategy.normalize(mask)
+        assert normalized.ndim == 1
+        assert normalized.tolist() == [True, False, True]
+
+    def test_mask_hash_strategy_hash_consistent(self) -> None:
+        """Hash strategy should match get_hash API output."""
+        mask = torch.tensor([True, True, False], dtype=torch.bool)
+        assert MasksManager._MaskHashStrategy.hash(mask) == MasksManager.get_hash(mask)
 
     def test_mark_seen_with_mask_argument(self, manager: MasksManager) -> None:
         """Marking by mask tensor should register hash."""

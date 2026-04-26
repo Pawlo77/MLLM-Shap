@@ -181,7 +181,7 @@ class TestGenerateResponses:
 
         def fake_generate(
             self, chat: DummyChat, keep_history: bool = False, **kwargs
-        ) -> ModelResponse:  # noqa: D401
+        ) -> ModelResponse:
             del chat, kwargs
             calls.append(keep_history)
             return ModelResponse(

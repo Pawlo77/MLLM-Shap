@@ -40,7 +40,7 @@ class ChatEntry(BaseModel):
         if len(self.roles) != len(self.content):
             raise ValueError("Number of roles must match number of content pieces.")
 
-        from IPython.display import display  # pylint: disable=import-outside-toplevel
+        from IPython.display import display
 
         roles = sorted(set(self.roles))
 
@@ -54,7 +54,7 @@ class ChatEntry(BaseModel):
         else:  # ModalityFlag.AUDIO
             print("AUDIO CONTENT:")
             audio_bytes = b"".join(cast(list[bytes], self.content))
-            _ = display(display_audio(audio_bytes))  # type: ignore[no-untyped-call]
+            _ = display(display_audio(audio_bytes))
 
     def __str__(self) -> str:
         """String representation of the ChatEntry."""
@@ -68,16 +68,16 @@ class ChatEntry(BaseModel):
             content_str = f"Audio bytes of total length {sum(len(c) if isinstance(c, bytes) else 0 for c in self.content)}"
 
         # Limit to 50 characters
-        if len(content_str) > 50:  # pylint: disable=magic-value-comparison
+        if len(content_str) > 50:
             content_str = content_str[:100] + "..."
 
-        if len(self.roles) > 5:  # pylint: disable=magic-value-comparison
+        if len(self.roles) > 5:
             roles_str = f"[{', '.join(str(Role(v)) for v in self.roles[:2])}"
             roles_str += ", ..., "
             roles_str += f"{', '.join(str(Role(v)) for v in self.roles[-2:])}]"
         else:
             roles_str = f"[{', '.join(str(Role(v)) for v in self.roles)}]"
-        if self.shap_values is not None and len(self.shap_values) > 5:  # pylint: disable=magic-value-comparison
+        if self.shap_values is not None and len(self.shap_values) > 5:
             shap_values_str = f"[{', '.join(str(v) for v in self.shap_values[:2])}"
             shap_values_str += ", ..., "
             shap_values_str += f"{', '.join(str(v) for v in self.shap_values[-2:])}]"

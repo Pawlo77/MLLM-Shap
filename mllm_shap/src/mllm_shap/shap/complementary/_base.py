@@ -13,11 +13,9 @@ from ..base.complementary import BaseComplementaryShapApproximation
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseComplementaryShapExplainer(BaseComplementaryShapApproximation):
     """Complementary SHAP implementation class."""
 
-    # pylint: disable=unused-argument,invalid-name
     def _calculate_shap_values(
         self, masks: Tensor, similarities: Tensor, device: torch.device
     ) -> Tensor:
@@ -52,7 +50,7 @@ class BaseComplementaryShapExplainer(BaseComplementaryShapApproximation):
         n: int,
         device: torch.device,
         generated_masks_num: int,
-        existing_masks: list[Tensor] | None = None,  # pylint: disable=unused-argument
+        existing_masks: list[Tensor] | None = None,
     ) -> Tensor | None:
         """
         Get the base mask for the next split.

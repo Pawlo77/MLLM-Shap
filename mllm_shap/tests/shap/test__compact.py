@@ -54,7 +54,7 @@ class TestExplainerConfig:
     def test_invalid_types_raise(self) -> None:
         """Should raise if invalid argument types are passed."""
         with pytest.raises(Exception):
-            _ExplainerConfig(model="notamodel", shap_explainer="notexplainer")  # type: ignore[arg-type]
+            _ExplainerConfig(model="notamodel", shap_explainer="notexplainer")
 
 
 class TestExplainerResult:

@@ -25,7 +25,7 @@ class _PatchedLFM2AudioProcessor(LFM2AudioProcessor):
 
     __device: str | None
 
-    @property  # type: ignore[override]
+    @property
     def device(self) -> str:
         """
         Get the device.
@@ -66,7 +66,7 @@ class LiquidAudio(BaseMllmModel):
             "device": device,
         }
 
-        if "config" in kwargs or "model" in kwargs or "processor" in kwargs:  # pylint: disable=magic-value-comparison
+        if "config" in kwargs or "model" in kwargs or "processor" in kwargs:
             raise ValueError(
                 "Please do not provide 'config', 'model' or 'processor' arguments. They are set automatically."
             )
@@ -78,10 +78,10 @@ class LiquidAudio(BaseMllmModel):
             processor=_PatchedLFM2AudioProcessor.from_pretrained(**_kw).eval(),
             model=LFM2AudioModel.from_pretrained(**_kw).eval(),
             **kwargs,
-        )  # type: ignore[misc]
+        )
 
         # it is a patch to set device properly
-        self.processor.device = str(device)  # type: ignore
+        self.processor.device = str(device)
 
     def get_new_chat(self, *args: Any, **kwargs: Any) -> LiquidAudioChat:
         kwargs = kwargs or {}
@@ -92,7 +92,7 @@ class LiquidAudio(BaseMllmModel):
             device=self.device,
             get_new_chat_callable=partial(self.get_new_chat, *args, **kwargs),
             **kwargs,
-        )  # type: ignore[misc]
+        )
 
     def generate(
         self,
@@ -101,6 +101,8 @@ class LiquidAudio(BaseMllmModel):
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
     ) -> ModelResponse:
+        # Defensive copy to avoid cross-call mutation via shared default object.
+        model_config = model_config.model_copy(deep=True)
         super().generate(
             chat=chat,
             max_new_tokens=max_new_tokens,
@@ -191,7 +193,7 @@ class LiquidAudio(BaseMllmModel):
                 response.generated_audio_tokens.T,
                 response.generated_modality_flag,
             )
-            # pylint: disable=protected-access # type: ignore[arg-type]
+
             static_embeddings.append(
                 self.model._prefill(**cast(dict[str, Any], chat)).squeeze(0)
             )
@@ -204,7 +206,7 @@ class LiquidAudio(BaseMllmModel):
         contextual_embeddings = []
 
         for emb in static_embeddings:
-            if len(emb.shape) == 2:  # pylint: disable=magic-value-comparison
+            if len(emb.shape) == 2:
                 emb = emb.unsqueeze(0)
             # Last hidden states: [seq_len, hidden_dim]
             contextual_embeddings.append(

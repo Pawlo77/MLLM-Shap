@@ -8,7 +8,6 @@ from torch import Tensor
 from ...connectors.base.model_response import ModelResponse
 
 
-# pylint: disable=too-few-public-methods
 class BaseEmbeddingReducer(ABC):
     """Base class for embedding reduction strategies."""
 

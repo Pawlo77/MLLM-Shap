@@ -29,10 +29,9 @@ def get_process_stats(
         return None, None, 0, 0
 
 
-# pylint: disable=too-many-statements,too-many-branches
 def main() -> None:
     """Main monitoring loop."""
-    if len(sys.argv) < 2:  # pylint: disable=magic-value-comparison
+    if len(sys.argv) < 2:
         print("Usage: python monitor_mem.py <PID>")
         sys.exit(1)
 
@@ -92,7 +91,7 @@ def main() -> None:
 
             choice = input(">> ").lower().strip()
 
-            if choice == "k":  # pylint: disable=magic-value-comparison
+            if choice == "k":
                 if proc_obj and proc_obj.is_running():
                     print(f"Killing PID {target_pid}...")
                     proc_obj.kill()
@@ -101,7 +100,7 @@ def main() -> None:
                     print("Process is already gone.")
                 sys.exit(0)
 
-            elif choice == "q":  # pylint: disable=magic-value-comparison
+            elif choice == "q":
                 print("Exiting monitor.")
                 sys.exit(0)
 

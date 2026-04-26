@@ -33,7 +33,6 @@ class TransformersTextChat(BaseMllmChat):
         }
     )
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -50,7 +49,7 @@ class TransformersTextChat(BaseMllmChat):
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
-            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
+            get_new_chat_callable=get_new_chat_callable,
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
 
@@ -67,7 +66,7 @@ class TransformersTextChat(BaseMllmChat):
         full_mask: Tensor,
         text_mask_relative: Tensor,
         audio_mask_relative: Tensor,  # unused (no audio)
-        chat: "TransformersTextChat",  # type: ignore[override]
+        chat: "TransformersTextChat",
     ) -> "TransformersTextChat":
         new_instance: "TransformersTextChat" = deepcopy(chat)
         new_instance.apply_text_mask(text_mask_relative)

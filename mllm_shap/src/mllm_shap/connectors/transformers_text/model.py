@@ -111,7 +111,6 @@ class TransformersCausalText(BaseMllmModel):
         kwargs["tokenizer"] = self.processor
         return TransformersTextChat(device=self.device, **kwargs)
 
-    # pylint: disable=too-many-locals
     def generate(
         self,
         chat: BaseMllmChat,
@@ -119,6 +118,8 @@ class TransformersCausalText(BaseMllmModel):
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
     ) -> ModelResponse:
+        # Defensive copy to avoid cross-call mutation via shared default object.
+        model_config = model_config.model_copy(deep=True)
         super().generate(
             chat=chat,
             max_new_tokens=max_new_tokens,
@@ -166,7 +167,7 @@ class TransformersCausalText(BaseMllmModel):
             if do_sample and model_config.text_top_k is not None
             else None
         )
-        gen_out = self.model.generate(  # type: ignore[operator]
+        gen_out = self.model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
             max_new_tokens=max_new_tokens,

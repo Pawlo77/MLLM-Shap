@@ -27,18 +27,18 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
     """Patch liquid_audio ChatState and LFMModality with lightweight stubs."""
 
     class TextProcessorStub:
-        def encode(self, phrase: str, add_special_tokens: bool = False) -> list[int]:  # noqa: D401
+        def encode(self, phrase: str, add_special_tokens: bool = False) -> list[int]:
             del add_special_tokens
             return [ord(char) % 97 for char in phrase]
 
-        def decode(self, tokens: Tensor) -> str:  # noqa: D401
+        def decode(self, tokens: Tensor) -> str:
             return ",".join(str(int(v)) for v in tokens.view(-1))
 
     class MimiProcessorStub:
         def __init__(self) -> None:
             self.calls: list[Tensor] = []
 
-        def decode(self, codes: Tensor) -> Tensor:  # noqa: D401
+        def decode(self, codes: Tensor) -> Tensor:
             self.calls.append(codes.clone())
             return codes.to(dtype=torch.float32)
 
@@ -115,7 +115,7 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
             )
             self.modality_flag = torch.cat([self.modality_flag, mod], dim=1)
 
-        def add_audio(self, waveform: Tensor, sample_rate: int) -> None:  # noqa: D401
+        def add_audio(self, waveform: Tensor, sample_rate: int) -> None:
             del sample_rate
             token_count = int(waveform.shape[-1])
             total_columns = liquid_chat.LiquidAudioChat.AUDIO_OUT_SHAPE * token_count
@@ -144,7 +144,7 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
 
         def append(
             self, text: Tensor, audio_out: Tensor, modality_flag: Tensor
-        ) -> None:  # noqa: D401
+        ) -> None:
             if text.dim() == 1:
                 text = text.unsqueeze(0)
             if audio_out.dim() == 1:
@@ -167,10 +167,10 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
                 (text.clone(), audio_out.clone(), modality_flag.clone())
             )
 
-        def new_turn(self, role: str) -> None:  # noqa: D401
+        def new_turn(self, role: str) -> None:
             self.new_turn_log.append(role)
 
-        def end_turn(self) -> None:  # noqa: D401
+        def end_turn(self) -> None:
             self.end_turn_count += 1
 
     monkeypatch.setattr(liquid_chat, "LFMModality", FakeLFMModality)
