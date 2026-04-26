@@ -1,4 +1,3 @@
-# pylint: disable=magic-value-comparison
 """Linguistic features definitions and utilities."""
 
 from functools import lru_cache

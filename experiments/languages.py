@@ -2,7 +2,7 @@
 
 import pandas as pd
 from googletrans import Translator
-from lingua import Language, LanguageDetector, LanguageDetectorBuilder  # pylint: disable=no-name-in-module
+from lingua import Language, LanguageDetector, LanguageDetectorBuilder
 from tqdm.asyncio import tqdm_asyncio
 from transformers import pipeline
 from transformers.pipelines.text_classification import TextClassificationPipeline
@@ -94,7 +94,7 @@ class LanguageClassifier:
             The language label of the text.
         """
         return str(
-            sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0][  # pylint: disable=not-callable
+            sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0][
                 "label"
             ]
         )

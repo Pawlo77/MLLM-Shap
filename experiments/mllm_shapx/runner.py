@@ -1,4 +1,3 @@
-# pylint: disable=duplicate-code
 """Core orchestration: expand variants and execute runs."""
 
 from __future__ import annotations
@@ -17,6 +16,7 @@ import torch
 from mllm_shap.connectors import ModelConfig
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 from mllm_shap.shap.base._masks_manager import MasksManager
+from mllm_shap.shap.base.approx import BaseShapApproximation
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
 
@@ -49,7 +49,52 @@ LOGGER: Logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class ExpandedVariant:  # pylint: disable=too-many-instance-attributes
+class _LinearSampleScaler:
+    """Policy for deriving linear ``num_samples`` from token count.
+
+    Attributes:
+        factor: Multiplier used in ``factor * n_pre^2``.
+    """
+
+    factor: float
+
+    def scale(self, n_pre: int) -> int:
+        """Compute even ``num_samples`` value.
+
+        Args:
+            n_pre: Number of explainable tokens before generation.
+
+        Returns:
+            Even sampling budget used by complementary explainers.
+        """
+        scaled_num_samples = int(self.factor * n_pre * n_pre)
+        return (
+            scaled_num_samples
+            if scaled_num_samples % 2 == 0
+            else scaled_num_samples + 1
+        )
+
+
+def _try_set_num_samples(explainer: Any, num_samples: int) -> bool:
+    """
+    Update sampling budget in-place for approximation explainers.
+
+    Args:
+        explainer: High-level explainer object.
+        num_samples: New sampling budget.
+
+    Returns:
+        True if budget updated in-place, False if caller should rebuild explainer.
+    """
+    shap_explainer = getattr(explainer, "shap_explainer", None)
+    if isinstance(shap_explainer, BaseShapApproximation):
+        shap_explainer.num_samples = int(num_samples)
+        return True
+    return False
+
+
+@dataclass(frozen=True)
+class ExpandedVariant:
     """A concrete materialization of a user-declared variant."""
 
     run_slug: str
@@ -77,7 +122,7 @@ def pick_device(name: Optional[str]) -> torch.device:
     return torch.device(name)
 
 
-def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def expand_variants(
     cfg: ExperimentSet,
 ) -> List[ExpandedVariant]:
     """
@@ -160,7 +205,7 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
                 """Return input list or [None] if empty."""
                 return x if x else [None]
 
-            for k in ks:  # pylint: disable=too-many-nested-blocks
+            for k in ks:
                 for impmf in imp_min_fracs:
                     for inn_ns in _nz(inner_ns):
                         for inn_fr in _nz(inner_fracs):
@@ -245,7 +290,7 @@ def expand_variants(  # pylint: disable=too-many-branches,too-many-locals,too-ma
     return out
 
 
-def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-statements,too-many-branches
+def run_single_sentence_variant(
     cfg: ExperimentSet,
     run: ExpandedVariant,
     df: pd.DataFrame,
@@ -481,25 +526,26 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
         LOGGER.info(" | ".join(user_texts))
 
         if run.linear:
-            scaled_num_samples = int(run.linear * n_pre * n_pre)
-            scaled_num_samples = (
-                scaled_num_samples
-                if scaled_num_samples % 2 == 0
-                else scaled_num_samples + 1
+            scaled_num_samples = _LinearSampleScaler(factor=run.linear).scale(
+                n_pre=n_pre
             )
             LOGGER.info(
                 "Using linear explainer with scaled num_samples=%d.", scaled_num_samples
             )
-            explainer = build_explainer_for_variant(
-                device,
-                cfg.shap,
-                run.variant,
-                cfg.connector,
-                embedding_cfg=cfg.embedding,
-                output_modality=output_modality,
-                concrete_num_samples=scaled_num_samples,
-                concrete_fraction=run.fraction,
-            )
+            if not _try_set_num_samples(
+                explainer=explainer, num_samples=scaled_num_samples
+            ):
+                # Fallback for explainers that do not expose mutable sampling budget.
+                explainer = build_explainer_for_variant(
+                    device,
+                    cfg.shap,
+                    run.variant,
+                    cfg.connector,
+                    embedding_cfg=cfg.embedding,
+                    output_modality=output_modality,
+                    concrete_num_samples=scaled_num_samples,
+                    concrete_fraction=run.fraction,
+                )
 
         generation_kwargs = {
             "max_new_tokens": int(cfg.generation.max_new_tokens),
@@ -578,7 +624,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
                 BaseComplementaryNeymanShapExplainer, explainer.shap_explainer
             )
             # Access step count from neyman explainer
-            # pylint: disable=protected-access
+
             sample_result["neyman_steps"] = (
                 neyman_explainer._BaseComplementaryNeymanShapExplainer__step
             )

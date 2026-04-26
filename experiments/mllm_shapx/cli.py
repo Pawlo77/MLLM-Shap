@@ -9,14 +9,10 @@ import sys
 
 import pandas as pd
 
-# pylint: disable=wrong-import-position
+
 _MLLM_SHAP_SRC = os.environ.get("MLLM_SHAP_SRC")
 if _MLLM_SHAP_SRC and _MLLM_SHAP_SRC not in sys.path:
     sys.path.insert(0, _MLLM_SHAP_SRC)
-
-from .config import ExperimentSet, validate_config  # noqa: E402
-from .data import load_df, load_single_sentence_df  # noqa: E402
-from .runner import expand_variants, run_single_sentence_variant  # noqa: E402
 
 
 def _setup_logging() -> None:
@@ -30,6 +26,9 @@ def _setup_logging() -> None:
 
 def cmd_validate(args: argparse.Namespace) -> None:
     """Validate config and optionally check dataset availability."""
+    from .config import ExperimentSet, validate_config
+    from .data import load_single_sentence_df
+
     cfg = ExperimentSet.from_json(args.config)
     errs = validate_config(cfg)
     if errs:
@@ -47,7 +46,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
                 cfg.dataset.revision,
             )
             print("✅ Dataset shard reachable & readable.")
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             print("❌ Dataset fetch failed:", ex)
             sys.exit(2)
 
@@ -56,6 +55,10 @@ def cmd_validate(args: argparse.Namespace) -> None:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Execute all configured variants."""
+    from .config import ExperimentSet, validate_config
+    from .data import load_df
+    from .runner import expand_variants, run_single_sentence_variant
+
     cfg = ExperimentSet.from_json(args.config)
     errs = validate_config(cfg)
     if errs:

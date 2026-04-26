@@ -1,4 +1,3 @@
-# pylint: disable=magic-value-comparison
 """Statistical analysis functions for experiments."""
 
 from itertools import combinations
@@ -11,7 +10,7 @@ from .transformations import calculate_normalized_entropy
 
 AGG_DICT: dict[str, Any] = {
     "mean": "mean",
-    "gini": lambda x: calculate_gini(x),  # pylint: disable=unnecessary-lambda
+    "gini": lambda x: calculate_gini(x),
     "top_20_mass": lambda x: calculate_top_k_mass(x, 0.2),
     "max": "max",
     "entropy": calculate_normalized_entropy,
@@ -19,7 +18,6 @@ AGG_DICT: dict[str, Any] = {
 """Aggregation functions for statistical analysis."""
 
 
-# pylint: disable=too-many-locals
 def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
     """Perform paired t-tests between modes."""
     modes = comparison_data.columns.tolist()

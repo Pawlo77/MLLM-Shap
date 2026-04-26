@@ -30,7 +30,7 @@ def tensor_to_audio_bytes(
         Audio content as bytes.
     """
     try:
-        import torchaudio  # pylint: disable=import-outside-toplevel
+        import torchaudio
     except ImportError as e:
         raise ImportError("torchaudio is required for audio serialization") from e
 
@@ -174,7 +174,7 @@ def _get_exception_chain(e: Exception) -> str:
     return " | ".join(messages)
 
 
-def extract_audio_from_chat(  # pylint: disable=too-many-branches
+def extract_audio_from_chat(
     chat: Any,
     output_dir: Path,
     prefix: str = "audio",
@@ -230,7 +230,7 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                         "shape": list(audio_out.shape),
                         "dtype": str(audio_out.dtype),
                     }
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:
                 audio_info["output_audio_error"] = _get_exception_chain(e)
                 audio_info["output_audio_debug"] = {
                     "audio_out_shape": list(audio_out.shape)
@@ -261,7 +261,7 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                         "shape": list(audio_tokens.shape),
                         "dtype": str(audio_tokens.dtype),
                     }
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:
                 audio_info["output_audio_error"] = _get_exception_chain(e)
 
     # Check for audio waveform directly
@@ -278,7 +278,7 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                 audio_info["output_waveform"] = artifact.save(
                     output_dir, f"{prefix}_waveform"
                 )
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:
                 audio_info["output_waveform_error"] = _get_exception_chain(e)
 
     return audio_info
@@ -327,7 +327,7 @@ def save_input_audio(
     return result
 
 
-def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def serialize_result_with_audio(
     result: Any,
     output_dir: Path,
     input_audio_bytes: Optional[bytes | list[bytes]] = None,

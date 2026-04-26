@@ -1,4 +1,3 @@
-# pylint: disable=magic-value-comparison
 """Audio experiments analysis utilities."""
 
 from typing import Callable

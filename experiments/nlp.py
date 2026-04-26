@@ -77,8 +77,7 @@ class TTS:
         self._lock: Lock = Lock()
         self._semaphore: Semaphore = Semaphore(self.semaphore_size)
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    async def synthesize_text(  # type: ignore[return]
+    async def synthesize_text(
         self,
         text: str,
         language_code: str,
@@ -117,7 +116,7 @@ class TTS:
                     input=synthesis_input, voice=voice, audio_config=audio_config
                 )
                 return response.audio_content
-            except Exception as e:  # pylint: disable=broad-exception-caught
+            except Exception as e:
                 if attempt < retries - 1:
                     await asyncio.sleep(self.period_duration_seconds)
                 else:
@@ -176,7 +175,7 @@ class TTS:
                 else:
                     result = []
                     for i, entry_dict in enumerate(dt_to_synthesize):
-                        if "value" not in entry_dict:  # pylint: disable=magic-value-comparison
+                        if "value" not in entry_dict:
                             raise ValueError(
                                 f"Missing 'value' key in entry at index {idx}, sub-index {i}. Entry: {entry_dict}"
                             )
@@ -192,7 +191,7 @@ class TTS:
                         entry["value"] = await self.synthesize_sentences(
                             sentences=sentences, **kwargs
                         )
-                        result.append(entry)  # type: ignore[arg-type]
+                        result.append(entry)
                 return idx, result
 
         # Create tasks
@@ -277,6 +276,6 @@ class TTS:
             audio_content: The audio content in bytes.
         """
         # Import here to avoid dependency if not used in notebook
-        from IPython.display import Audio, display  # pylint: disable=import-outside-toplevel
+        from IPython.display import Audio, display
 
-        display(Audio(data=audio_content, autoplay=True))  # type: ignore
+        display(Audio(data=audio_content, autoplay=True))

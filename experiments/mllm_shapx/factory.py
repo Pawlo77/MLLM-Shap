@@ -117,7 +117,7 @@ _LIMITED_NEYMAN_TYPE = "limited_neyman"
 _STANDARD_NEYMAN_TYPE = "standard_neyman"
 
 
-def _build_inner_shap(  # pylint: disable=too-many-branches
+def _build_inner_shap(
     which: str,
     common: Dict[str, Any],
     num_samples: Optional[int],
@@ -164,7 +164,7 @@ def _build_inner_shap(  # pylint: disable=too-many-branches
     raise ValueError(f"Unknown inner SHAP type: {which}")
 
 
-def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arguments,too-many-branches
+def build_explainer_for_variant(
     device: torch.device,
     shap_cfg: ShapConfig,
     variant: ExplainerVariant,
@@ -341,7 +341,7 @@ AUDIO_MODALITIES = (
 )
 
 
-def build_chat(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
+def build_chat(
     model: Any,
     user_texts: str | list[str] | None,
     audio_bytes_list: bytes | list[bytes] | None,

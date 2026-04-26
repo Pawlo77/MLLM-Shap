@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from mllm_shap.connectors.enums import Role  # pylint: disable=wrong-import-order
+from mllm_shap.connectors.enums import Role
 
 EXPERIMENTS_DIR: str = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "experiments_output")
@@ -52,7 +52,7 @@ def load_experiments_results(
 
     # TODO: fix it in multi-lingual dataset
     if is_multi_lingual:
-        mask = experiments_test_df["n_turns"] == 3  # pylint: disable=magic-value-comparison
+        mask = experiments_test_df["n_turns"] == 3
         experiments_df = experiments_df[mask]
         experiments_test_df = experiments_test_df[mask]
 
