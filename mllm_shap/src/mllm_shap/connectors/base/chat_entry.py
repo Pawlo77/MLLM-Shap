@@ -65,9 +65,7 @@ class ChatEntry(BaseModel):
         if self.content_type == ModalityFlag.TEXT.value:
             content_str = ", ".join(cast(list[str], self.content)).replace("\n", "\\n")
         else:
-            content_str = (
-                f"Audio bytes of total length {sum(len(c) if isinstance(c, bytes) else 0 for c in self.content)}"
-            )
+            content_str = f"Audio bytes of total length {sum(len(c) if isinstance(c, bytes) else 0 for c in self.content)}"
 
         # Limit to 50 characters
         if len(content_str) > 50:  # pylint: disable=magic-value-comparison

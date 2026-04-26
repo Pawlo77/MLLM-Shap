@@ -79,7 +79,12 @@ class TTS:
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     async def synthesize_text(  # type: ignore[return]
-        self, text: str, language_code: str, gender: SsmlVoiceGender, voice_name: str | None = None, retries: int = 3
+        self,
+        text: str,
+        language_code: str,
+        gender: SsmlVoiceGender,
+        voice_name: str | None = None,
+        retries: int = 3,
     ) -> bytes:
         """
         Synthesizes speech from the input string of text asynchronously.
@@ -100,7 +105,9 @@ class TTS:
 
         text = text.strip(NO_WORD_CHARS)
         synthesis_input = SynthesisInput(text=text)
-        voice = VoiceSelectionParams(language_code=language_code, ssml_gender=gender, **kw)
+        voice = VoiceSelectionParams(
+            language_code=language_code, ssml_gender=gender, **kw
+        )
 
         audio_config = AudioConfig(audio_encoding=AudioEncoding.MP3)
 
@@ -116,7 +123,9 @@ class TTS:
                 else:
                     raise SynthesisError(f"Error during synthesis of {text}") from e
 
-    async def synthesize_sentences(self, sentences: list[str], **kwargs: Any) -> list[bytes]:
+    async def synthesize_sentences(
+        self, sentences: list[str], **kwargs: Any
+    ) -> list[bytes]:
         """
         Synthesize a list of sentences into audio content asynchronously.
 
@@ -126,7 +135,9 @@ class TTS:
         Returns:
             A list of synthesized audio content in bytes.
         """
-        return await asyncio.gather(*(self.synthesize_text(sentence, **kwargs) for sentence in sentences))
+        return await asyncio.gather(
+            *(self.synthesize_text(sentence, **kwargs) for sentence in sentences)
+        )
 
     async def synthesize_df(
         self,
@@ -156,8 +167,12 @@ class TTS:
             async with self._semaphore:
                 if isinstance(dt_to_synthesize, str):
                     result = await self.synthesize_text(text=dt_to_synthesize, **kwargs)
-                elif isinstance(dt_to_synthesize, list) and all(isinstance(i, str) for i in dt_to_synthesize):
-                    result = await self.synthesize_sentences(sentences=cast(list[str], dt_to_synthesize), **kwargs)
+                elif isinstance(dt_to_synthesize, list) and all(
+                    isinstance(i, str) for i in dt_to_synthesize
+                ):
+                    result = await self.synthesize_sentences(
+                        sentences=cast(list[str], dt_to_synthesize), **kwargs
+                    )
                 else:
                     result = []
                     for i, entry_dict in enumerate(dt_to_synthesize):
@@ -167,21 +182,30 @@ class TTS:
                             )
                         entry = cast(dict[str, Any], entry_dict).copy()
                         sentences = entry.pop("value")
-                        if not isinstance(sentences, list) or not all(isinstance(s, str) for s in sentences):
+                        if not isinstance(sentences, list) or not all(
+                            isinstance(s, str) for s in sentences
+                        ):
                             raise ValueError(
                                 f"'value' must be a list of strings in entry at index {idx}, "
                                 f"sub-index {i}. Found: {type(sentences)}"
                             )
-                        entry["value"] = await self.synthesize_sentences(sentences=sentences, **kwargs)
+                        entry["value"] = await self.synthesize_sentences(
+                            sentences=sentences, **kwargs
+                        )
                         result.append(entry)  # type: ignore[arg-type]
                 return idx, result
 
         # Create tasks
-        tasks = [asyncio.create_task(wrapped_task(i, x)) for i, x in enumerate(df[column_to_synthesize])]
+        tasks = [
+            asyncio.create_task(wrapped_task(i, x))
+            for i, x in enumerate(df[column_to_synthesize])
+        ]
         results = [None] * len(tasks)
 
         try:
-            for finished in tqdm_asyncio.as_completed(tasks, total=len(tasks), desc="Synthesizing"):
+            for finished in tqdm_asyncio.as_completed(
+                tasks, total=len(tasks), desc="Synthesizing"
+            ):
                 idx, res = await finished
                 results[idx] = res
         except ResourceExhausted as e:
@@ -202,7 +226,9 @@ class TTS:
 
         return df
 
-    async def synthesize_df_from_config(self, df: pd.DataFrame, config: TTSConfig, **kwargs: Any) -> pd.DataFrame:
+    async def synthesize_df_from_config(
+        self, df: pd.DataFrame, config: TTSConfig, **kwargs: Any
+    ) -> pd.DataFrame:
         """
         Wrapper around self.synthesize_df to use TTSConfig.
 
@@ -225,11 +251,17 @@ class TTS:
         """Check and enforce the rate limit."""
         async with self._lock:
             current_time = asyncio.get_event_loop().time()
-            self._call_times = [t for t in self._call_times if current_time - t < self.period_duration_seconds]
+            self._call_times = [
+                t
+                for t in self._call_times
+                if current_time - t < self.period_duration_seconds
+            ]
 
             if len(self._call_times) >= self.limit_per_period:
                 # Wait until the oldest call is more than 20 seconds old
-                wait_time = self.period_duration_seconds - (current_time - self._call_times[0])
+                wait_time = self.period_duration_seconds - (
+                    current_time - self._call_times[0]
+                )
                 if wait_time > 0:
                     await asyncio.sleep(wait_time)
                 self._call_times = self._call_times[1:]

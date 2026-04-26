@@ -36,18 +36,24 @@ class TestTorchAudioHandler:
     @pytest.fixture
     def stereo_waveform() -> torch.Tensor:
         """Fixture for sample stereo waveform (2, 4)."""
-        return torch.tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]], dtype=torch.float32)
+        return torch.tensor(
+            [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]], dtype=torch.float32
+        )
 
     # --- from_bytes ---
 
     @patch("mllm_shap.utils.audio.sf.read")
-    def test_from_bytes_reads_and_returns_tensor(self, mock_read: MagicMock, dummy_waveform: torch.Tensor) -> None:
+    def test_from_bytes_reads_and_returns_tensor(
+        self, mock_read: MagicMock, dummy_waveform: torch.Tensor
+    ) -> None:
         """Test that from_bytes loads bytes and returns waveform + sample rate."""
         waveform_np = dummy_waveform.squeeze(0).numpy()
         mock_read.return_value = (waveform_np, 24000)
         fake_bytes = b"audio_bytes"
 
-        waveform, sample_rate = TorchAudioHandler.from_bytes(fake_bytes, audio_format="mp3")
+        waveform, sample_rate = TorchAudioHandler.from_bytes(
+            fake_bytes, audio_format="mp3"
+        )
 
         assert isinstance(waveform, torch.Tensor)
         assert waveform.shape == dummy_waveform.shape
@@ -57,7 +63,9 @@ class TestTorchAudioHandler:
         assert isinstance(args[0], io.BytesIO)
 
     @patch("mllm_shap.utils.audio.sf.read")
-    def test_from_bytes_converts_stereo_to_mono(self, mock_read: MagicMock, stereo_waveform: torch.Tensor) -> None:
+    def test_from_bytes_converts_stereo_to_mono(
+        self, mock_read: MagicMock, stereo_waveform: torch.Tensor
+    ) -> None:
         """Test that stereo waveform is averaged to mono."""
         mock_read.return_value = (stereo_waveform.T.numpy(), 16000)
         fake_bytes = b"audio_bytes"
@@ -133,7 +141,7 @@ class TestTorchAudioHandler:
         _, kwargs = mock_audio_segment_cls.call_args
         assert kwargs["frame_rate"] == 24_000
         assert kwargs["sample_width"] == 2  # PCM16_SAMPLE_WIDTH_BYTES
-        assert kwargs["channels"] == 1      # MONO_CHANNELS
+        assert kwargs["channels"] == 1  # MONO_CHANNELS
 
         # Export was invoked once
         mock_segment.export.assert_called_once()

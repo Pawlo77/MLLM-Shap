@@ -128,7 +128,9 @@ class TestChatEntry:
         assert byte_arg == b"\x00\x01\x02\x03"
 
     @patch("builtins.print")
-    def test_display_text_entry(self, mock_print: MagicMock, text_entry: ChatEntry) -> None:
+    def test_display_text_entry(
+        self, mock_print: MagicMock, text_entry: ChatEntry
+    ) -> None:
         """Ensure display() prints textual content for text entries."""
         text_entry.display()
         printed = " ".join("".join(call.args[0]) for call in mock_print.call_args_list)

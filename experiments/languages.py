@@ -19,7 +19,9 @@ class LanguageClassifier:
         """Lazy load and return the English language detector."""
         if self._english_detector is None:
             self._english_detector = (
-                LanguageDetectorBuilder.from_languages(Language.ENGLISH).with_preloaded_language_models().build()
+                LanguageDetectorBuilder.from_languages(Language.ENGLISH)
+                .with_preloaded_language_models()
+                .build()
             )
         return self._english_detector
 
@@ -27,7 +29,10 @@ class LanguageClassifier:
     def lang_detector(self) -> TextClassificationPipeline:
         """Lazy load and return the transformer-based language detector."""
         if self._lang_detector is None:
-            self._lang_detector = pipeline("text-classification", model="papluca/xlm-roberta-base-language-detection")
+            self._lang_detector = pipeline(
+                "text-classification",
+                model="papluca/xlm-roberta-base-language-detection",
+            )
         return self._lang_detector
 
     def is_language(self, text: str, label: str) -> bool:
@@ -146,7 +151,10 @@ class LanguageTranslator:
         return await self.translate(text, target_language="fr")
 
     async def translate_df(
-        self, df: pd.DataFrame, target_language: str, column_to_translate: str = "conversation__joined"
+        self,
+        df: pd.DataFrame,
+        target_language: str,
+        column_to_translate: str = "conversation__joined",
     ) -> pd.DataFrame:
         """
         Translate the specified column of the DataFrame to the target language.
@@ -158,7 +166,10 @@ class LanguageTranslator:
         Returns:
             The DataFrame with the translated specified column.
         """
-        tasks = [self.translate(x, target_language=target_language) for x in df[column_to_translate]]
+        tasks = [
+            self.translate(x, target_language=target_language)
+            for x in df[column_to_translate]
+        ]
         results = await tqdm_asyncio.gather(*tasks)
         df[column_to_translate] = results
         return df

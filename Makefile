@@ -13,7 +13,7 @@ clean:
 	rm -rf .venv/
 	rm -f uv.lock
 	find . -type d -name "__pycache__" -exec rm -r {} +
-	find . -type d -name ".cache" -exec rm -r {} \; 2>/dev/null || true
+	find . -type d \( -name ".cache" -o -name "*__pycache__" -o -name ".*_cache" \) -exec rm -rf {} + 2>/dev/null || true
 
 activate:
 	@echo "Activate with: source .venv/bin/activate"
@@ -27,3 +27,6 @@ pre-commit-all:
 
 tests:
 	uv run pytest mllm_shap/tests/
+
+docs:
+	uv run sphinx-apidoc -o mllm_shap/docs/ mllm_shap/src/ && uv run make -C mllm_shap/docs clean html

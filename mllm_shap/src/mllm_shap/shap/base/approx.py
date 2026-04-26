@@ -100,7 +100,9 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
                     if self._base_masks is None:
                         return None
                     self._first_call = False
-                elif not self._zero_mask_skipped:  # 0 mask was rejected, so start from 1
+                elif (
+                    not self._zero_mask_skipped
+                ):  # 0 mask was rejected, so start from 1
                     # base masks here cannot be None
                     self._base_masks = self._base_masks[1:]  # type: ignore[index]
                     self._zero_mask_skipped = True
@@ -117,7 +119,9 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
                 )
 
             if generated_masks_num < self._base_masks.shape[0]:
-                if self._base_calls_num != generated_masks_num + int(self._zero_mask_skipped):
+                if self._base_calls_num != generated_masks_num + int(
+                    self._zero_mask_skipped
+                ):
                     raise RuntimeError("Multiple base masks were rejected.")
 
                 self._base_calls_num += 1
@@ -209,7 +213,11 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
         """
         if num_samples is None and fraction is None:
             raise ValueError("Either num_samples or fraction must be provided.")
-        if fraction is not None and (not isinstance(fraction, float) or not 0 < fraction <= 1):
+        if fraction is not None and (
+            not isinstance(fraction, float) or not 0 < fraction <= 1
+        ):
             raise ValueError("fraction must be a float in the range (0, 1].")
-        if num_samples is not None and (not isinstance(num_samples, int) or (num_samples <= 0 and num_samples != -1)):
+        if num_samples is not None and (
+            not isinstance(num_samples, int) or (num_samples <= 0 and num_samples != -1)
+        ):
             raise ValueError("num_samples must be a positive integer.")

@@ -55,7 +55,9 @@ class TestBaseShapExplainer:
             generated_modality_flag=torch.ones(3, dtype=torch.bool),
         )
 
-    def test_initialization_defaults(self, explainer_instance: BaseShapExplainer) -> None:
+    def test_initialization_defaults(
+        self, explainer_instance: BaseShapExplainer
+    ) -> None:
         """Test default initialization components."""
         expl = explainer_instance
         assert isinstance(expl.embedding_reducer, MeanReducer)
@@ -135,7 +137,9 @@ class TestBaseShapExplainer:
         """Test that NotEnoughTokensToExplainError is raised when all chats are skipped."""
         mock_masks_manager.return_value.n = 3
         mock_masks_manager.return_value.max_masks_number = 2
-        mock_masks_manager.return_value.get_initial_mask.return_value = torch.tensor([True, True, True])
+        mock_masks_manager.return_value.get_initial_mask.return_value = torch.tensor(
+            [True, True, True]
+        )
         mock_cache_manager.return_value.extracted_num = 0
         # simulate all chats skipped
         mock_generate_responses.return_value = (2, [])
@@ -172,7 +176,9 @@ class TestBaseShapExplainer:
         )
         mock_create.assert_called_once()
 
-    def test_initialize_state_resets_tracking(self, explainer_instance: BaseShapExplainer) -> None:
+    def test_initialize_state_resets_tracking(
+        self, explainer_instance: BaseShapExplainer
+    ) -> None:
         """Ensure internal counters reset before explanation."""
         explainer_instance.total_n_calls = 5
         setattr(explainer_instance, "_first_call", False)
@@ -182,7 +188,9 @@ class TestBaseShapExplainer:
         assert explainer_instance.total_n_calls == 0
         assert explainer_instance._first_call is True
 
-    def test_masks_generator_filters_invalid_splits(self, dummy_chat_instance: BaseMllmChat) -> None:
+    def test_masks_generator_filters_invalid_splits(
+        self, dummy_chat_instance: BaseMllmChat
+    ) -> None:
         """Generator should skip zero, all-ones, and duplicate splits."""
 
         class ControlledExplainer(DummyShapExplainer):
@@ -215,7 +223,9 @@ class TestBaseShapExplainer:
         device = dummy_chat_instance.torch_device
         masks = [mask_manager.get_initial_mask(device=device)]
 
-        gen = explainer._get_masks_generator(mask_manager=mask_manager, device=device, masks=masks)
+        gen = explainer._get_masks_generator(
+            mask_manager=mask_manager, device=device, masks=masks
+        )
         produced = list(gen)
 
         assert len(produced) == 2
@@ -241,9 +251,13 @@ class TestBaseShapExplainer:
         explainer_instance.similarity_measure = similarity
 
         with patch.object(
-            dummy_model_instance, "get_contextual_embeddings", wraps=dummy_model_instance.get_contextual_embeddings
+            dummy_model_instance,
+            "get_contextual_embeddings",
+            wraps=dummy_model_instance.get_contextual_embeddings,
         ) as spy:
-            result = explainer_instance._get_similarities(responses=responses, model=dummy_model_instance)
+            result = explainer_instance._get_similarities(
+                responses=responses, model=dummy_model_instance
+            )
 
         assert isinstance(result, torch.Tensor)
         spy.assert_called_once()
@@ -264,9 +278,13 @@ class TestBaseShapExplainer:
         explainer_instance.similarity_measure = similarity
 
         with patch.object(
-            dummy_model_instance, "get_contextual_embeddings", wraps=dummy_model_instance.get_contextual_embeddings
+            dummy_model_instance,
+            "get_contextual_embeddings",
+            wraps=dummy_model_instance.get_contextual_embeddings,
         ) as spy:
-            result = explainer_instance._get_similarities(responses=responses, model=dummy_model_instance)
+            result = explainer_instance._get_similarities(
+                responses=responses, model=dummy_model_instance
+            )
 
         assert isinstance(result, torch.Tensor)
         spy.assert_not_called()
@@ -279,7 +297,9 @@ class TestBaseShapExplainer:
         """External group ids should broadcast group scores to all members."""
 
         class DeterministicExplainer(DummyShapExplainer):
-            def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
+            def _calculate_shap_values(
+                self, masks: Tensor, similarities: Tensor, device: torch.device
+            ) -> Tensor:
                 del masks, similarities, device
                 return torch.tensor([0.2, 0.9, 0.1, 0.7, 0.4], dtype=torch.float32)
 
@@ -287,7 +307,9 @@ class TestBaseShapExplainer:
         explainer.normalizer = lambda values: values
         source_chat = DummyChat(num_tokens=5)
         source_chat.external_group_ids = torch.tensor([0, 1, 1, 2, 2], dtype=torch.long)
-        source_chat.shap_values_mask = torch.tensor([True, True, True, True, True], dtype=torch.bool)
+        source_chat.shap_values_mask = torch.tensor(
+            [True, True, True, True, True], dtype=torch.bool
+        )
 
         masks = torch.tensor(
             [
@@ -330,7 +352,10 @@ class TestBaseShapExplainer:
         class SingleSplitExplainer(DummyShapExplainer):
             def __init__(self) -> None:
                 super().__init__()
-                self._splits = [torch.tensor([[True, False, True]], dtype=torch.bool), None]
+                self._splits = [
+                    torch.tensor([[True, False, True]], dtype=torch.bool),
+                    None,
+                ]
 
             def _get_next_split(
                 self,
@@ -394,7 +419,9 @@ class TestBaseShapExplainer:
         mask_sequence = [torch.tensor([[True, False, True]], dtype=torch.bool), None]
 
         with (
-            patch.object(explainer_instance, "_get_next_split", side_effect=mask_sequence),
+            patch.object(
+                explainer_instance, "_get_next_split", side_effect=mask_sequence
+            ),
             patch.object(explainer_instance, "_get_num_splits", return_value=1),
         ):
             result = explainer_instance(

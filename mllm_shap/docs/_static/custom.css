@@ -1,3 +1,94 @@
 .padded-image {
     margin-bottom: 20px;  /* adjust the value as needed */
 }
+
+/* Premium docs polish */
+.bd-page-width {
+    max-width: 1280px;
+}
+
+.bd-main .bd-content .bd-article-container {
+    max-width: 980px;
+}
+
+h1, h2, h3 {
+    letter-spacing: -0.01em;
+}
+
+.bd-content .admonition {
+    border-radius: 10px;
+}
+
+.bd-header .navbar-brand {
+    font-weight: 700;
+}
+
+.bd-header .navbar-nav > li > a.nav-link {
+    font-weight: 500;
+}
+
+/* Admonition premium style */
+.bd-content .admonition.note,
+.bd-content .admonition.warning,
+.bd-content .admonition.tip,
+.bd-content .admonition.important {
+    border-width: 1px;
+    border-style: solid;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.bd-content .admonition.note .admonition-title::before {
+    content: "💡 ";
+}
+
+.bd-content .admonition.warning .admonition-title::before {
+    content: "⚠️ ";
+}
+
+.bd-content .admonition.tip .admonition-title::before {
+    content: "✨ ";
+}
+
+.bd-content .admonition.important .admonition-title::before {
+    content: "📌 ";
+}
+
+/* Table polish */
+.bd-content table.table {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--pst-color-border);
+}
+
+.bd-content table.table thead th {
+    font-weight: 650;
+}
+
+.bd-content table.table tbody tr:hover {
+    background: var(--pst-color-surface);
+}
+
+/* Code block polish */
+.bd-content div.highlight pre {
+    border-radius: 10px;
+    border: 1px solid var(--pst-color-border);
+}
+
+/* Small section emoji spacing consistency */
+h1, h2, h3 {
+    word-spacing: 0.02em;
+}
+
+/* Dark mode contrast tweaks */
+html[data-theme="dark"] .bd-content .admonition {
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-theme="dark"] .bd-content table.table {
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+html[data-theme="dark"] .bd-content div.highlight pre {
+    border-color: rgba(255, 255, 255, 0.16);
+}

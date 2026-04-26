@@ -30,7 +30,13 @@ from mllm_shap.shap.neyman import (
 from mllm_shap.shap.precise import PreciseShapExplainer
 from mllm_shap.shap.similarity import TfIdfCosineSimilarity
 
-from .config import NORMALIZER_MAP, REDUCER_MAP, ExplainerVariant, ShapConfig, SIMILARITY_MAP
+from .config import (
+    NORMALIZER_MAP,
+    REDUCER_MAP,
+    ExplainerVariant,
+    ShapConfig,
+    SIMILARITY_MAP,
+)
 from .constants import ExplainerType, ConnectorType, InputModality, OutputModality
 
 
@@ -58,7 +64,9 @@ def _build_model(
 
     if connector == ConnectorType.TRANSFORMERS_TEXT.value:
         if output_modality == OutputModality.AUDIO:
-            raise ValueError("TransformersCausalText connector does not support audio output.")
+            raise ValueError(
+                "TransformersCausalText connector does not support audio output."
+            )
         return TransformersCausalText(
             device=device,
             history_tracking_mode=tracking_mode,
@@ -206,7 +214,9 @@ def build_explainer_for_variant(  # pylint: disable=too-many-locals,too-many-arg
     reducer = REDUCER_MAP[shap_cfg.reducer]()
     similarity = similarity_cls()
 
-    model = _build_model(device=device, connector=connector, output_modality=output_modality)
+    model = _build_model(
+        device=device, connector=connector, output_modality=output_modality
+    )
     external_emb = _build_external_embedding(model, embedding_cfg, device)
 
     def _common_kwargs() -> Dict[str, Any]:
@@ -321,7 +331,9 @@ INTERLEAVED_AUDIO_FIRST_MODALITIES = (
     InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
     InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
 )
-INTERLEAVED_MODALITIES = INTERLEAVED_TEXT_FIRST_MODALITIES + INTERLEAVED_AUDIO_FIRST_MODALITIES
+INTERLEAVED_MODALITIES = (
+    INTERLEAVED_TEXT_FIRST_MODALITIES + INTERLEAVED_AUDIO_FIRST_MODALITIES
+)
 
 AUDIO_MODALITIES = (
     InputModality.AUDIO_MALE,
@@ -380,10 +392,16 @@ def build_chat(  # pylint: disable=too-many-arguments,too-many-branches,too-many
     elif input_modality in AUDIO_MODALITIES:
         # For audio: add all clips to a single user turn
         if audio_bytes_list is None:
-            raise ValueError(f"Audio bytes required for input modality: {input_modality}")
+            raise ValueError(
+                f"Audio bytes required for input modality: {input_modality}"
+            )
 
         # Normalize to list and filter None values
-        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else list(audio_bytes_list)
+        audios = (
+            [audio_bytes_list]
+            if isinstance(audio_bytes_list, bytes)
+            else list(audio_bytes_list)
+        )
         audios = [a for a in audios if a is not None]
 
         if audios:
@@ -396,11 +414,17 @@ def build_chat(  # pylint: disable=too-many-arguments,too-many-branches,too-many
         # Interleaved: alternate between text and audio in subsequent turns
         # Each sentence uses EITHER text OR audio, alternating by index
         if audio_bytes_list is None:
-            raise ValueError(f"Audio bytes required for input modality: {input_modality}")
+            raise ValueError(
+                f"Audio bytes required for input modality: {input_modality}"
+            )
 
         # Normalize inputs
         texts = [user_texts] if isinstance(user_texts, str) else list(user_texts or [])
-        audios = [audio_bytes_list] if isinstance(audio_bytes_list, bytes) else list(audio_bytes_list)
+        audios = (
+            [audio_bytes_list]
+            if isinstance(audio_bytes_list, bytes)
+            else list(audio_bytes_list)
+        )
         audios = [a for a in audios if a is not None]
 
         # Determine starting modality

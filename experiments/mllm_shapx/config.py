@@ -38,7 +38,7 @@ from .constants import (
     ModeType,
     InputModality,
     OutputModality,
-    DatasetType
+    DatasetType,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -338,13 +338,19 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
     errs: List[str] = []
 
     def _validate_dataset() -> None:
-        if cfg.dataset.subset not in (DatasetType.SINGLE_SENTENCE.value,
-                                      DatasetType.MULTILINGUAL.value,
-                                      DatasetType.MULTI_SENTENCE.value):
+        if cfg.dataset.subset not in (
+            DatasetType.SINGLE_SENTENCE.value,
+            DatasetType.MULTILINGUAL.value,
+            DatasetType.MULTI_SENTENCE.value,
+        ):
             errs.append(
-                f"dataset.subset must be one of: {[DatasetType.SINGLE_SENTENCE.value,
-                                                   DatasetType.MULTILINGUAL.value,
-                                                   DatasetType.MULTI_SENTENCE.value]}."
+                f"dataset.subset must be one of: {
+                    [
+                        DatasetType.SINGLE_SENTENCE.value,
+                        DatasetType.MULTILINGUAL.value,
+                        DatasetType.MULTI_SENTENCE.value,
+                    ]
+                }."
             )
         if cfg.dataset.split != DEFAULT_SPLIT:
             errs.append(f"Only dataset.split='{DEFAULT_SPLIT}' is supported.")
@@ -378,16 +384,24 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
         valid_output = {m.value for m in OutputModality}
 
         if cfg.modality.input_modality not in valid_input:
-            errs.append(f"modality.input_modality must be one of: {sorted(valid_input)}.")
+            errs.append(
+                f"modality.input_modality must be one of: {sorted(valid_input)}."
+            )
         if cfg.modality.output_modality not in valid_output:
-            errs.append(f"modality.output_modality must be one of: {sorted(valid_output)}.")
+            errs.append(
+                f"modality.output_modality must be one of: {sorted(valid_output)}."
+            )
 
         # TransformersCausalText connector only supports text output
         if cfg.connector == ConnectorType.TRANSFORMERS_TEXT.value:
             if cfg.modality.output_modality == OutputModality.AUDIO.value:
-                errs.append("TransformersCausalText connector does not support audio output.")
+                errs.append(
+                    "TransformersCausalText connector does not support audio output."
+                )
             if cfg.modality.input_modality != InputModality.TEXT.value:
-                errs.append("TransformersCausalText connector only supports text input.")
+                errs.append(
+                    "TransformersCausalText connector only supports text input."
+                )
 
     def _validate_shap() -> None:
         if cfg.shap.mode not in (ModeType.CONTEXTUAL.value, ModeType.STATIC.value):

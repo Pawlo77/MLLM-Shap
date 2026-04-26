@@ -211,9 +211,14 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                         artifact = AudioArtifact(
                             audio_bytes=audio_bytes,
                             sample_rate=sample_rate,
-                            metadata={"source": "chat_audio_out", "shape": list(audio_out.shape)},
+                            metadata={
+                                "source": "chat_audio_out",
+                                "shape": list(audio_out.shape),
+                            },
                         )
-                        audio_info["output_audio"] = artifact.save(output_dir, f"{prefix}_output")
+                        audio_info["output_audio"] = artifact.save(
+                            output_dir, f"{prefix}_output"
+                        )
                     else:
                         audio_info["output_audio_info"] = {
                             "note": "decode_audio returned empty bytes",
@@ -228,7 +233,9 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
             except Exception as e:  # pylint: disable=broad-except
                 audio_info["output_audio_error"] = _get_exception_chain(e)
                 audio_info["output_audio_debug"] = {
-                    "audio_out_shape": list(audio_out.shape) if hasattr(audio_out, "shape") else "unknown",
+                    "audio_out_shape": list(audio_out.shape)
+                    if hasattr(audio_out, "shape")
+                    else "unknown",
                 }
 
     # Fallback: try audio_tokens if audio_out is not available
@@ -246,7 +253,9 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                             sample_rate=sample_rate,
                             metadata={"source": "chat_audio_tokens"},
                         )
-                        audio_info["output_audio"] = artifact.save(output_dir, f"{prefix}_output")
+                        audio_info["output_audio"] = artifact.save(
+                            output_dir, f"{prefix}_output"
+                        )
                 else:
                     audio_info["output_audio_tokens"] = {
                         "shape": list(audio_tokens.shape),
@@ -266,7 +275,9 @@ def extract_audio_from_chat(  # pylint: disable=too-many-branches
                     sample_rate=sample_rate,
                     metadata={"source": "chat_waveform"},
                 )
-                audio_info["output_waveform"] = artifact.save(output_dir, f"{prefix}_waveform")
+                audio_info["output_waveform"] = artifact.save(
+                    output_dir, f"{prefix}_waveform"
+                )
             except Exception as e:  # pylint: disable=broad-except
                 audio_info["output_waveform_error"] = _get_exception_chain(e)
 
@@ -354,9 +365,16 @@ def serialize_result_with_audio(  # pylint: disable=too-many-arguments,too-many-
     has_audio = input_audio_bytes is not None and (
         not hasattr(input_audio_bytes, "__len__") or len(input_audio_bytes) > 0
     )
-    if has_audio and input_modality in (InputModality.AUDIO_MALE, InputModality.AUDIO_FEMALE):
+    if has_audio and input_modality in (
+        InputModality.AUDIO_MALE,
+        InputModality.AUDIO_FEMALE,
+    ):
         # Normalize to list
-        audio_list = [input_audio_bytes] if isinstance(input_audio_bytes, (bytes, np.ndarray)) else input_audio_bytes
+        audio_list = (
+            [input_audio_bytes]
+            if isinstance(input_audio_bytes, (bytes, np.ndarray))
+            else input_audio_bytes
+        )
         if len(audio_list) == 1:
             # Single audio - save with original naming
             serialized["input_audio"] = save_input_audio(

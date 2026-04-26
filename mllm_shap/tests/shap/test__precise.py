@@ -58,7 +58,9 @@ class TestPreciseShapExplainer:
         """The generator should first yield the all-zero mask."""
         explainer = PreciseShapExplainer()
         explainer._initialize_state()
-        mask = explainer._get_next_split(n=2, device=torch.device("cpu"), generated_masks_num=0)
+        mask = explainer._get_next_split(
+            n=2, device=torch.device("cpu"), generated_masks_num=0
+        )
         assert torch.equal(mask, torch.tensor([False, False]))
 
     def test_get_next_split_respects_device(self) -> None:
@@ -73,11 +75,17 @@ class TestPreciseShapExplainer:
         """Calling _initialize_state resets the generator state."""
         explainer = PreciseShapExplainer()
         explainer._initialize_state()
-        _ = explainer._get_next_split(n=1, device=torch.device("cpu"), generated_masks_num=0)
-        _ = explainer._get_next_split(n=1, device=torch.device("cpu"), generated_masks_num=1)
+        _ = explainer._get_next_split(
+            n=1, device=torch.device("cpu"), generated_masks_num=0
+        )
+        _ = explainer._get_next_split(
+            n=1, device=torch.device("cpu"), generated_masks_num=1
+        )
         # Exhausted, now reinitialize and expect mask again
         explainer._initialize_state()
-        mask = explainer._get_next_split(n=1, device=torch.device("cpu"), generated_masks_num=0)
+        mask = explainer._get_next_split(
+            n=1, device=torch.device("cpu"), generated_masks_num=0
+        )
         assert mask is not None
 
     def test_get_next_split_raises_if_generator_missing(self) -> None:
@@ -86,7 +94,9 @@ class TestPreciseShapExplainer:
         explainer._initialize_state()
         explainer._first_call = False
         with pytest.raises(RuntimeError, match="Splits generator is not present."):
-            explainer._get_next_split(n=3, device=torch.device("cpu"), generated_masks_num=1)
+            explainer._get_next_split(
+                n=3, device=torch.device("cpu"), generated_masks_num=1
+            )
 
     def test_get_next_split_returns_none_after_completion(self) -> None:
         """Test that _get_next_split returns None after all masks have been generated."""
