@@ -29,18 +29,14 @@ jobs:
           enable-cache: true
 
       - name: Sync dependencies with uv
-        working-directory: mllm_shap
-        run: uv sync --locked --all-extras
+        run: uv sync --locked --all-groups --no-active
 
-      - name: Build documentation
-        working-directory: mllm_shap
+      - name: Build documentation with Makefile
         run: |
-          mkdir -p gh-pages
-          touch gh-pages/.nojekyll
-          uv run sphinx-apidoc -oM . src
-          uv run make -C docs clean
-          uv run make -C docs html
-          cp -r docs/_build/html/* gh-pages/
+          make docs
+          mkdir -p mllm_shap/gh-pages
+          touch mllm_shap/gh-pages/.nojekyll
+          cp -r mllm_shap/docs/_build/html/* mllm_shap/gh-pages/
 
       - name: Deploy documentation
         if: ${{ github.event_name == 'push' }}
