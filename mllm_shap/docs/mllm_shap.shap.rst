@@ -11,6 +11,7 @@ Subpackages
    mllm_shap.shap.complementary
    mllm_shap.shap.hierarchical
    mllm_shap.shap.monte_carlo
+   mllm_shap.shap.neyman
 
 Submodules
 ----------
@@ -43,14 +44,6 @@ mllm\_shap.shap.explainer\_result module
 ----------------------------------------
 
 .. automodule:: mllm_shap.shap.explainer_result
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-mllm\_shap.shap.neyman module
------------------------------
-
-.. automodule:: mllm_shap.shap.neyman
    :members:
    :show-inheritance:
    :undoc-members:
