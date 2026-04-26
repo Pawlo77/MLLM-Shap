@@ -231,7 +231,9 @@ class BaseMllmChat(ABC):
             def _pcm16_roundtrip(wf: Tensor) -> Tensor:
                 """Match the historical WAV(PCM16) encode/decode quantization without allocating bytes."""
                 wf = wf.to(torch.float32)
-                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(-1.0, 1.0)
+                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(
+                    -1.0, 1.0
+                )
                 q = (wf * 32767.0).round().clamp_(-32768.0, 32767.0)
                 return (q / 32767.0).contiguous()
 
@@ -246,7 +248,9 @@ class BaseMllmChat(ABC):
                     text_turn_mask_relative = text_turn_mask[chat.text_tokens_mask]
                     if text_turn_mask_relative.any():
                         new_instance.new_turn(
-                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                            Role.from_ordinal(
+                                int(chat.token_roles[turn_mask][0].item())
+                            )
                         )
                         text = chat.decode_text(
                             chat.text_tokens[text_turn_mask_relative]
@@ -264,10 +268,13 @@ class BaseMllmChat(ABC):
                     idxs = torch.where(audio_turn_mask_relative[:num_segments])[0]
                     if idxs.numel():
                         new_instance.new_turn(
-                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                            Role.from_ordinal(
+                                int(chat.token_roles[turn_mask][0].item())
+                            )
                         )
                         new_audio_segments: list[AudioSegment] = [
-                            chat._audio_segments[turn][i] for i in idxs.tolist()  # pylint: disable=protected-access
+                            chat._audio_segments[turn][i]
+                            for i in idxs.tolist()  # pylint: disable=protected-access
                         ]
 
                         # Prefer slicing from the stored source waveform (one copy per turn)
@@ -289,10 +296,14 @@ class BaseMllmChat(ABC):
                                     raise RuntimeError(
                                         "Audio segment sample rate mismatch with stored waveform."
                                     )
-                                pieces.append(turn_waveform[:, seg.start_sample : seg.end_sample])  # noqa: E203
+                                pieces.append(
+                                    turn_waveform[:, seg.start_sample : seg.end_sample]
+                                )  # noqa: E203
 
                             combined_waveform = (
-                                torch.cat(pieces, dim=1) if pieces else torch.empty((1, 0), dtype=turn_waveform.dtype)
+                                torch.cat(pieces, dim=1)
+                                if pieces
+                                else torch.empty((1, 0), dtype=turn_waveform.dtype)
                             )
                             combined_waveform = _pcm16_roundtrip(combined_waveform)
 
@@ -840,7 +851,11 @@ class BaseMllmChat(ABC):
         if self._audio_waveforms is None:
             self._audio_waveforms = {}
         wf_cpu = waveform.detach().to(torch.float32).cpu().contiguous()
-        self._audio_waveforms[self.turn_number] = (wf_cpu, int(sample_rate), audio_format)
+        self._audio_waveforms[self.turn_number] = (
+            wf_cpu,
+            int(sample_rate),
+            audio_format,
+        )
         logger.debug(
             "Added segments: %d (speaker=%s)",
             len(new_segments),

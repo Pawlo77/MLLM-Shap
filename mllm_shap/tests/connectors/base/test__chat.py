@@ -113,9 +113,15 @@ class TestDummyChat:
         chat.speaker = Role.USER
         text_tensor = torch.arange(2)
         audio_tensor = torch.arange(2)
-        modality_flag = torch.tensor([ModalityFlag.TEXT, ModalityFlag.AUDIO], dtype=torch.int8)
-        with patch("mllm_shap.connectors.base.chat.raise_connector_error", return_value=(2, 2)):
-            chat.append(text_tensor, audio_tensor, modality_flag, history_tracking_mode=None)
+        modality_flag = torch.tensor(
+            [ModalityFlag.TEXT, ModalityFlag.AUDIO], dtype=torch.int8
+        )
+        with patch(
+            "mllm_shap.connectors.base.chat.raise_connector_error", return_value=(2, 2)
+        ):
+            chat.append(
+                text_tensor, audio_tensor, modality_flag, history_tracking_mode=None
+            )
         # after_add logic should extend masks
         assert chat.text_tokens_no_system_mask.shape[0] >= 2
         assert chat.audio_tokens_no_system_mask.shape[0] >= 2
@@ -174,12 +180,16 @@ class TestDummyChat:
         assert new_chat.external_group_ids is None
         assert new_chat.external_shap_values_mask is None
 
-    def test_before_add_blocks_when_external_masks_set(self, chat: BaseMllmChat) -> None:
+    def test_before_add_blocks_when_external_masks_set(
+        self, chat: BaseMllmChat
+    ) -> None:
         """Setting external masks should prevent further additions."""
         ids = torch.tensor([0, 1, 1, 0, 2], dtype=torch.int32)
         chat.external_group_ids = ids[: chat.input_tokens_num]
         chat.speaker = Role.USER
-        with pytest.raises(ValueError, match="Cannot add tokens when external_group_ids is set"):
+        with pytest.raises(
+            ValueError, match="Cannot add tokens when external_group_ids is set"
+        ):
             chat.add_text("hello")
 
         del chat.external_group_ids
@@ -187,21 +197,31 @@ class TestDummyChat:
         chat.add_text("hello")
         assert chat.input_tokens_num == 6
 
-        chat.external_shap_values_mask = torch.ones(chat.input_tokens_num, dtype=torch.bool)
+        chat.external_shap_values_mask = torch.ones(
+            chat.input_tokens_num, dtype=torch.bool
+        )
         chat.speaker = Role.USER
-        with pytest.raises(ValueError, match="Cannot add tokens when external_shap_values_mask is set"):
+        with pytest.raises(
+            ValueError, match="Cannot add tokens when external_shap_values_mask is set"
+        ):
             chat.add_text("world")
         del chat.external_shap_values_mask
 
     def test_external_masks_size_validation(self, chat: BaseMllmChat) -> None:
         """External mask setters should validate tensor lengths."""
         with pytest.raises(ValueError, match="External SHAP values mask size"):
-            chat.external_shap_values_mask = torch.ones(chat.input_tokens_num + 1, dtype=torch.bool)
+            chat.external_shap_values_mask = torch.ones(
+                chat.input_tokens_num + 1, dtype=torch.bool
+            )
 
         with pytest.raises(ValueError, match="External group IDs size"):
-            chat.external_group_ids = torch.ones(chat.input_tokens_num + 2, dtype=torch.int32)
+            chat.external_group_ids = torch.ones(
+                chat.input_tokens_num + 2, dtype=torch.int32
+            )
 
-    def test_translate_group_ids_mask_marks_full_groups(self, chat: BaseMllmChat) -> None:
+    def test_translate_group_ids_mask_marks_full_groups(
+        self, chat: BaseMllmChat
+    ) -> None:
         """translate_groups_ids_mask should expand selections to entire groups."""
         ids = torch.tensor([0, 1, 1, 2, 2], dtype=torch.int32)
         chat.external_group_ids = ids
@@ -283,10 +303,14 @@ class TestGetConversation:
 
         assert len(conversation) == 2
         # First turn
-        first_turn_tokens = [token for entry in conversation[0] for token in entry.content]
+        first_turn_tokens = [
+            token for entry in conversation[0] for token in entry.content
+        ]
         assert first_turn_tokens == ["0", "1"]
         # Second turn
-        second_turn_tokens = [token for entry in conversation[1] for token in entry.content]
+        second_turn_tokens = [
+            token for entry in conversation[1] for token in entry.content
+        ]
         assert second_turn_tokens == ["2", "3"]
 
     def test_text_and_audio_modality(self) -> None:
@@ -295,7 +319,9 @@ class TestGetConversation:
         chat.turn_number = 1
         chat.token_turns = torch.tensor([1, 1, 1, 1], dtype=torch.int16)
         chat.token_roles = torch.tensor([Role.USER.value] * 4, dtype=torch.int8)
-        chat.text_tokens_mask = torch.tensor([True, True, False, False], dtype=torch.bool)
+        chat.text_tokens_mask = torch.tensor(
+            [True, True, False, False], dtype=torch.bool
+        )
 
         with (
             patch.object(

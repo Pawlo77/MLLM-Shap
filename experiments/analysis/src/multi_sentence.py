@@ -73,7 +73,9 @@ def _safe_join_content(content: Any) -> str:
     return ""
 
 
-def _collect_tokens_and_sv(user_turns: list[list[dict[str, Any]]]) -> tuple[list[str], list[float]]:
+def _collect_tokens_and_sv(
+    user_turns: list[list[dict[str, Any]]],
+) -> tuple[list[str], list[float]]:
     """Collect explainable units (tokens / audio placeholders) and their Shapley values.
 
     Multi-sentence prompts may span multiple user turns; each turn can contain

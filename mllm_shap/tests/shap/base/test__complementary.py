@@ -19,7 +19,9 @@ class DummyComplementaryExplainer(BaseComplementaryShapApproximation):
 
     def __init__(self, splits: Iterable[Tensor] | None = None, **kwargs):
         super().__init__(**kwargs)
-        self._scheduled_splits = [s.clone() for s in splits] if splits is not None else []
+        self._scheduled_splits = (
+            [s.clone() for s in splits] if splits is not None else []
+        )
         self._split_index = 0
 
     def _initialize_state(self) -> None:
@@ -81,23 +83,35 @@ class TestNumSplitsStatic:
     """Tests for static num-splits calculation utility."""
 
     def test_requires_minimal_even_samples(self) -> None:
-        with pytest.raises(ValueError, match="at least equal to the number of features times two"):
-            BaseComplementaryShapApproximation._get_num_splits_static(n=3, num_samples=4)
+        with pytest.raises(
+            ValueError, match="at least equal to the number of features times two"
+        ):
+            BaseComplementaryShapApproximation._get_num_splits_static(
+                n=3, num_samples=4
+            )
 
     def test_rejects_odd_num_samples(self) -> None:
         with pytest.raises(ValueError, match="must not be odd"):
-            BaseComplementaryShapApproximation._get_num_splits_static(n=4, num_samples=9)
+            BaseComplementaryShapApproximation._get_num_splits_static(
+                n=4, num_samples=9
+            )
 
     def test_caps_num_samples_to_maximum(self) -> None:
-        result = BaseComplementaryShapApproximation._get_num_splits_static(n=3, num_samples=100)
+        result = BaseComplementaryShapApproximation._get_num_splits_static(
+            n=3, num_samples=100
+        )
         assert result == 6  # 2**3 - 2 = 6
 
     def test_fraction_result_is_even(self) -> None:
-        result = BaseComplementaryShapApproximation._get_num_splits_static(n=10, fraction=0.5)
+        result = BaseComplementaryShapApproximation._get_num_splits_static(
+            n=10, fraction=0.5
+        )
         assert result == 510  # (2**10 - 2) * 0.5
 
     def test_fraction_small_value(self) -> None:
-        result = BaseComplementaryShapApproximation._get_num_splits_static(n=3, fraction=0.1)
+        result = BaseComplementaryShapApproximation._get_num_splits_static(
+            n=3, fraction=0.1
+        )
         assert result % 2 == 0
 
 
@@ -142,7 +156,9 @@ class TestCalculateCMatrix:
         masks = torch.ones((2, 3), dtype=torch.bool)
         sims = torch.zeros(2)
         with pytest.raises(RuntimeError, match="M matrix must be initialized"):
-            explainer._calculate_C_matrix(masks=masks, similarities=sims, device=torch.device("cpu"))
+            explainer._calculate_C_matrix(
+                masks=masks, similarities=sims, device=torch.device("cpu")
+            )
 
     def test_raises_for_non_complementary_pairs(self) -> None:
         explainer = DummyComplementaryExplainer()
@@ -157,7 +173,9 @@ class TestCalculateCMatrix:
         )
         sims = torch.tensor([0.5, 0.1])
         with pytest.raises(ValueError, match="not complementary pairs"):
-            explainer._calculate_C_matrix(masks=masks, similarities=sims, device=torch.device("cpu"))
+            explainer._calculate_C_matrix(
+                masks=masks, similarities=sims, device=torch.device("cpu")
+            )
 
     def test_raises_for_odd_number_of_masks(self) -> None:
         explainer = DummyComplementaryExplainer()
@@ -173,7 +191,9 @@ class TestCalculateCMatrix:
         )
         sims = torch.tensor([0.5, 0.1, 0.2])
         with pytest.raises(ValueError, match="Masks should be in complementary pairs"):
-            explainer._calculate_C_matrix(masks=masks, similarities=sims, device=torch.device("cpu"))
+            explainer._calculate_C_matrix(
+                masks=masks, similarities=sims, device=torch.device("cpu")
+            )
 
     def test_populates_c_matrix_for_valid_pairs(self) -> None:
         explainer = DummyComplementaryExplainer()
@@ -187,7 +207,9 @@ class TestCalculateCMatrix:
             dtype=torch.bool,
         )
         sims = torch.tensor([0.7, 0.2])
-        explainer._calculate_C_matrix(masks=masks, similarities=sims, device=torch.device("cpu"))
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=sims, device=torch.device("cpu")
+        )
 
         assert explainer._C is not None
         expected = torch.zeros((3, 4), dtype=sims.dtype)
@@ -237,8 +259,12 @@ class TestMasksGenerator:
             complement = ~positive
             size_pos = int(positive.sum().item())
             size_neg = int(complement.sum().item())
-            BaseComplementaryShapApproximation._increment_coalition_val(expected_M, positive, size_pos, 1)
-            BaseComplementaryShapApproximation._increment_coalition_val(expected_M, complement, size_neg, 1)
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                expected_M, positive, size_pos, 1
+            )
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                expected_M, complement, size_neg, 1
+            )
 
         torch.testing.assert_close(explainer._M, expected_M)
 

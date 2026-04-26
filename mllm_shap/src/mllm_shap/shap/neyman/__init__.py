@@ -10,4 +10,7 @@ Neyman SHAP explainers module.
 from .limited import LimitedComplementaryNeymanShapExplainer
 from .standard import StandardComplementaryNeymanShapExplainer
 
-__all__ = ["LimitedComplementaryNeymanShapExplainer", "StandardComplementaryNeymanShapExplainer"]
+__all__ = [
+    "LimitedComplementaryNeymanShapExplainer",
+    "StandardComplementaryNeymanShapExplainer",
+]

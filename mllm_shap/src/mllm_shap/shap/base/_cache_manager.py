@@ -47,9 +47,13 @@ class CacheManager:
         cache = chat.cache
         if cache is not None:
             if cache.calculated_by != explainer_hash:
-                raise ValueError("Existing SHAP cache was calculated by a different explainer instance.")
+                raise ValueError(
+                    "Existing SHAP cache was calculated by a different explainer instance."
+                )
             if cache.chat != chat:
-                raise ValueError("Existing SHAP cache is associated with a different chat instance.")
+                raise ValueError(
+                    "Existing SHAP cache is associated with a different chat instance."
+                )
             if cache.had_different_masks:
                 logger.warning(
                     "Existing SHAP cache for chat was calculated with external mask, no retrieval will be done.",
@@ -68,7 +72,9 @@ class CacheManager:
         self.cache = cache
         chat.cache = None
 
-    def contains(self, mask: Tensor | None = None, mask_hash: int | None = None) -> bool:
+    def contains(
+        self, mask: Tensor | None = None, mask_hash: int | None = None
+    ) -> bool:
         """
         Check if the provided mask is present in cache.
 
@@ -80,7 +86,9 @@ class CacheManager:
         """
         return self._masks_manager.seen(mask=mask, mask_hash=mask_hash)
 
-    def extract(self, mask: Tensor | None = None, mask_hash: int | None = None) -> ModelResponse:
+    def extract(
+        self, mask: Tensor | None = None, mask_hash: int | None = None
+    ) -> ModelResponse:
         """
         Extract the model response for the provided mask from cache.
 

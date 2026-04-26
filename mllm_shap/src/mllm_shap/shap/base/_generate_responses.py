@@ -154,8 +154,12 @@ def _generate_responses_multi(
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks in parallel using multiple threads."""
-    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = [] if verbose else None
-    iterable_gen = enumerate(standard_tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen)
+    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = (
+        [] if verbose else None
+    )
+    iterable_gen = enumerate(
+        standard_tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
+    )
 
     chats_skipped = 0
     error_flag = False
@@ -237,8 +241,12 @@ def _generate_responses_single(
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks sequentially."""
-    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = [] if verbose else None
-    iterable_gen = enumerate(tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen)
+    history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None = (
+        [] if verbose else None
+    )
+    iterable_gen = enumerate(
+        tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
+    )
 
     chats_skipped = 0
 

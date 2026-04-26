@@ -11,7 +11,7 @@ from transformers import (
     AutoModel,
     AutoTokenizer,
     PreTrainedTokenizerBase,
-    PreTrainedModel
+    PreTrainedModel,
 )
 
 from ..connectors.base.model_response import ModelResponse
@@ -26,7 +26,10 @@ class ZeroReducer(BaseEmbeddingReducer):
 
         shapes = [tuple(e.shape) for e in embeddings]
         if len(set(shapes)) != 1:
-            raise ValueError(f"All embeddings must have the same shape for ZeroReducer. " f"Got shapes: {shapes}")
+            raise ValueError(
+                f"All embeddings must have the same shape for ZeroReducer. "
+                f"Got shapes: {shapes}"
+            )
 
         return torch.stack(embeddings, dim=0)
 
@@ -135,7 +138,9 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
             local_files_only: Enforce local loading (no network); set False if you allow online fetch.
         """
         # Security: enforce immutable commit SHA (satisfies Bandit B615 when loading with revision).
-        if not isinstance(embed_revision, str) or not re.fullmatch(r"[0-9a-f]{40}", embed_revision):
+        if not isinstance(embed_revision, str) or not re.fullmatch(
+            r"[0-9a-f]{40}", embed_revision
+        ):
             raise ValueError("embed_revision must be a 40-character hex commit SHA.")
 
         self.tokenizer_decode = generation_tokenizer
@@ -173,13 +178,19 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
         for resp in responses:
             token_ids: Tensor = resp.generated_text_tokens  # [T]
             if token_ids.numel() == 0:
-                result.append(torch.empty(0, self._hidden_size, dtype=torch.float32, device=self.device))
+                result.append(
+                    torch.empty(
+                        0, self._hidden_size, dtype=torch.float32, device=self.device
+                    )
+                )
                 continue
 
             # Decode each token id to its text piece (keep specials to preserve alignment)
             pieces: List[str] = []
             for tid in token_ids.tolist():
-                piece = self.tokenizer_decode.decode([int(tid)], skip_special_tokens=False)
+                piece = self.tokenizer_decode.decode(
+                    [int(tid)], skip_special_tokens=False
+                )
                 if isinstance(piece, list):
                     pieces.append("".join(piece))
                 else:
@@ -194,7 +205,7 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
         """Embed a list of short texts -> [len(texts), hidden]."""
         vecs: list[Tensor] = []
         for i in range(0, len(texts), self.batch_size):
-            batch = list(texts[i: i + self.batch_size])
+            batch = list(texts[i : i + self.batch_size])
 
             inputs = self.emb_tokenizer(
                 batch,
@@ -207,7 +218,9 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
 
             outputs = self.emb_model(**inputs)
             last_hidden: Tensor = outputs.last_hidden_state  # [B, L, H]
-            attn: Tensor = inputs["attention_mask"].unsqueeze(-1).type_as(last_hidden)  # [B, L, 1]
+            attn: Tensor = (
+                inputs["attention_mask"].unsqueeze(-1).type_as(last_hidden)
+            )  # [B, L, 1]
 
             # Mean pool over non-padding tokens
             summed: Tensor = (last_hidden * attn).sum(dim=1)  # [B, H]

@@ -86,13 +86,23 @@ class BaseExplainer(ABC):
         """
         generation_kwargs = generation_kwargs or {}
         if "chat" in generation_kwargs or "keep_history" in generation_kwargs:
-            raise ValueError("generation_kwargs should not contain 'chat' or 'keep_history' keys.")
-        if "chat" in explanation_kwargs or "base_chat" in explanation_kwargs or "model" in explanation_kwargs:
-            raise ValueError("explanation_kwargs should not contain 'chat', 'base_chat' or 'model' keys.")
+            raise ValueError(
+                "generation_kwargs should not contain 'chat' or 'keep_history' keys."
+            )
+        if (
+            "chat" in explanation_kwargs
+            or "base_chat" in explanation_kwargs
+            or "model" in explanation_kwargs
+        ):
+            raise ValueError(
+                "explanation_kwargs should not contain 'chat', 'base_chat' or 'model' keys."
+            )
 
         # ensure there are no duplicate keys between generation_kwargs and explanation_kwargs
         common_keys = set(generation_kwargs.keys()) & set(explanation_kwargs.keys())
         if common_keys:
-            raise ValueError(f"Duplicate keys found in generation_kwargs and explanation_kwargs: {sorted(common_keys)}")
+            raise ValueError(
+                f"Duplicate keys found in generation_kwargs and explanation_kwargs: {sorted(common_keys)}"
+            )
 
         self.total_n_calls = 0

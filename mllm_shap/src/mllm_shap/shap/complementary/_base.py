@@ -18,18 +18,24 @@ class BaseComplementaryShapExplainer(BaseComplementaryShapApproximation):
     """Complementary SHAP implementation class."""
 
     # pylint: disable=unused-argument,invalid-name
-    def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
+    def _calculate_shap_values(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> Tensor:
         if not self._zero_mask_skipped:
             raise RuntimeError("Zero mask was not skipped during mask generation.")
         if self._M is None:
-            raise RuntimeError("M matrix must be initialized before calculating SHAP values.")
+            raise RuntimeError(
+                "M matrix must be initialized before calculating SHAP values."
+            )
 
         # Adjust masks and similarities to account for skipped zero mask
         # that is remove full ones mask
         masks = masks[1:]
         similarities = similarities[1:]
         if self._C is None:
-            self._calculate_C_matrix(masks=masks, similarities=similarities, device=device)
+            self._calculate_C_matrix(
+                masks=masks, similarities=similarities, device=device
+            )
 
         # exclude zero-mask column
         M = self._M[:, 1:]

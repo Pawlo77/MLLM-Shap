@@ -159,7 +159,9 @@ class TestExtendTensor:
 
         assert result.dtype == torch.float32
         assert result.device == t.device
-        expected = torch.tensor([1.5, 2.5, 0.5, 0.5], dtype=torch.float32, device=device)
+        expected = torch.tensor(
+            [1.5, 2.5, 0.5, 0.5], dtype=torch.float32, device=device
+        )
         assert torch.equal(result, expected)
 
     def test_zero_length_tensor(self) -> None:
@@ -177,7 +179,9 @@ class TestExtendTensor:
             (3, 0, [1, 2, 0]),
         ],
     )
-    def test_multiple_cases(self, target_length: int, fill_value: int, expected: list[int]) -> None:
+    def test_multiple_cases(
+        self, target_length: int, fill_value: int, expected: list[int]
+    ) -> None:
         """Parameterized test for various input configurations."""
         t = torch.tensor([1, 2])
         result = extend_tensor(t, target_length=target_length, fill_value=fill_value)
