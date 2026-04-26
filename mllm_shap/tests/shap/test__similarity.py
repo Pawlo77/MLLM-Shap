@@ -160,6 +160,10 @@ class TestTfIdfCosineSimilarity:
 
     def test_tokenization_produces_unique_ids(self):
         similarity = TfIdfCosineSimilarity()
-        tokens1 = similarity._TfIdfCosineSimilarity__tokenize(torch.tensor([[1, 2], [3, 4]]))
-        tokens2 = similarity._TfIdfCosineSimilarity__tokenize(torch.tensor([[2, 3], [4, 5]]))
+        tokens1 = similarity._TfIdfCosineSimilarity__tokenize(
+            torch.tensor([[1, 2], [3, 4]])
+        )
+        tokens2 = similarity._TfIdfCosineSimilarity__tokenize(
+            torch.tensor([[2, 3], [4, 5]])
+        )
         assert not torch.equal(tokens1, tokens2)

@@ -43,10 +43,14 @@ def display_shap_colors_df(
     Returns:
         pd.Styler: Styled DataFrame with background gradient.
     """
-    return df.style.background_gradient(subset=[shap_column_name], cmap=cmap, low=low, high=high, **kwargs)
+    return df.style.background_gradient(
+        subset=[shap_column_name], cmap=cmap, low=low, high=high, **kwargs
+    )
 
 
-def display_shap_colors_df_audio(df: pd.DataFrame, audio_column_name: str = "Audio", **kwargs: Any) -> Styler:
+def display_shap_colors_df_audio(
+    df: pd.DataFrame, audio_column_name: str = "Audio", **kwargs: Any
+) -> Styler:
     """
     Set background gradient colors for SHAP values in a DataFrame with audio.
     Render audio in the specified audio column for jupyter notebooks.

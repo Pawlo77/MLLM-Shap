@@ -24,7 +24,9 @@ class TestEmbeddingReducers:
             torch.tensor([[2.0, 0.0, 1.0], [3.0, 3.0, 3.0]]),  # (2, 3)
         ]
 
-    def test_zero_reducer_returns_unchanged(self, embeddings: list[torch.Tensor]) -> None:
+    def test_zero_reducer_returns_unchanged(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that ZeroReducer returns stacked embeddings unchanged."""
         reducer = ZeroReducer()
         result = reducer(embeddings)
@@ -45,21 +47,27 @@ class TestEmbeddingReducers:
         with pytest.raises(ValueError, match="Embedding at index 0 is not a Tensor"):
             reducer(["not-a-tensor"])  # type: ignore[arg-type]
 
-    def test_zero_reducer_respects_sampling_limit(self, embeddings: list[torch.Tensor]) -> None:
+    def test_zero_reducer_respects_sampling_limit(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """ZeroReducer should cap the number of vectors according to the sampling limit."""
         torch.manual_seed(0)
         reducer = ZeroReducer(n=1)
         result = reducer([emb.clone() for emb in embeddings])
         assert result.shape[-1] == 1
 
-    def test_mean_reducer_computes_correct_mean(self, embeddings: list[torch.Tensor]) -> None:
+    def test_mean_reducer_computes_correct_mean(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that MeanReducer computes mean across the first dimension (dim=0)."""
         reducer = MeanReducer()
         expected = torch.stack([emb.mean(dim=0) for emb in embeddings], dim=0)
         result = reducer(embeddings)
         torch.testing.assert_close(result, expected)
 
-    def test_mean_reducer_respects_sampling_limit(self, embeddings: list[torch.Tensor]) -> None:
+    def test_mean_reducer_respects_sampling_limit(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """MeanReducer should apply the optional sampling limit before reduction."""
         torch.manual_seed(0)
         reducer = MeanReducer(n=1)
@@ -74,7 +82,9 @@ class TestEmbeddingReducers:
         result = reducer([emb.clone() for emb in embeddings])
         torch.testing.assert_close(result, expected_tensor)
 
-    def test_max_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+    def test_max_reducer_computes_correct_values(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that MaxReducer computes the elementwise max along the first dimension (dim=0)."""
         reducer = MaxReducer()
         expected = torch.stack([emb.max(dim=0).values for emb in embeddings], dim=0)
@@ -88,7 +98,9 @@ class TestEmbeddingReducers:
         result = reducer(typed_embeddings)
         assert result.dtype == torch.float64
 
-    def test_min_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+    def test_min_reducer_computes_correct_values(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that MinReducer computes the elementwise min along the first dimension (dim=0)."""
         reducer = MinReducer()
         expected = torch.stack([emb.min(dim=0).values for emb in embeddings], dim=0)
@@ -102,7 +114,9 @@ class TestEmbeddingReducers:
         result = reducer(embeddings)
         torch.testing.assert_close(result, torch.tensor([[2.0, 3.0, 4.0]]))
 
-    def test_sum_reducer_computes_correct_values(self, embeddings: list[torch.Tensor]) -> None:
+    def test_sum_reducer_computes_correct_values(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that SumReducer computes the elementwise sum along the first dimension (dim=0)."""
         reducer = SumReducer()
         expected = torch.stack([emb.sum(dim=0) for emb in embeddings], dim=0)
@@ -124,7 +138,9 @@ class TestEmbeddingReducers:
         result = reducer([emb.clone() for emb in embeddings])
         torch.testing.assert_close(result, expected_tensor)
 
-    def test_first_reducer_selects_first_column(self, embeddings: list[torch.Tensor]) -> None:
+    def test_first_reducer_selects_first_column(
+        self, embeddings: list[torch.Tensor]
+    ) -> None:
         """Test that FirstReducer selects the first row (dim index 0)."""
         reducer = FirstReducer()
         expected = torch.stack([emb[0] for emb in embeddings], dim=0)

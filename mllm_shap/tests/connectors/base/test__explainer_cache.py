@@ -36,7 +36,9 @@ class TestExplainerCache:
 
     @staticmethod
     @pytest.fixture
-    def cache(chat: BaseMllmChat, base_responses: list[ModelResponse]) -> ExplainerCache:
+    def cache(
+        chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> ExplainerCache:
         """Fixture for ExplainerCache instance."""
         masks = torch.ones(2, 3, dtype=torch.bool)
         return ExplainerCache(
@@ -48,7 +50,9 @@ class TestExplainerCache:
             shap_values_mask=chat.shap_values_mask,
         )
 
-    def test_init_extends_masks(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+    def test_init_extends_masks(
+        self, chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> None:
         """Test that masks are extended to match chat length."""
         masks = torch.ones(2, 3, dtype=torch.bool)
         cache = ExplainerCache(
@@ -68,7 +72,9 @@ class TestExplainerCache:
     ) -> None:
         """Raise if mask has more tokens than chat."""
         masks = torch.ones(2, chat.input_tokens_num + 1, dtype=torch.bool)
-        with pytest.raises(ValueError, match="Masks size is larger than the number of tokens"):
+        with pytest.raises(
+            ValueError, match="Masks size is larger than the number of tokens"
+        ):
             ExplainerCache(
                 chat=chat,
                 calculated_by=1,
@@ -83,7 +89,9 @@ class TestExplainerCache:
     ) -> None:
         """Mask rows must match number of responses."""
         masks = torch.ones(1, 3, dtype=torch.bool)
-        with pytest.raises(ValueError, match="Masks size does not match the number of responses"):
+        with pytest.raises(
+            ValueError, match="Masks size does not match the number of responses"
+        ):
             ExplainerCache(
                 chat=chat,
                 calculated_by=10,
@@ -104,7 +112,9 @@ class TestExplainerCache:
         assert extended.device == chat.torch_device
 
     @patch.object(BaseMllmChat, "shap_values_mask", new_callable=PropertyMock)
-    def test_values_setter_valid(self, mock_shap_mask: MagicMock, cache: ExplainerCache) -> None:
+    def test_values_setter_valid(
+        self, mock_shap_mask: MagicMock, cache: ExplainerCache
+    ) -> None:
         """Test values setter correctly validates and extends."""
         mock_shap_mask.return_value = torch.tensor([True, True, True, False, False])
         values = torch.tensor([1.0, 2.0, 3.0])
@@ -120,7 +130,9 @@ class TestExplainerCache:
         with pytest.raises(ValueError, match="contain NaN values for text tokens"):
             cache.values = values
 
-    def test_values_setter_raises_non_nan_in_non_text(self, cache: ExplainerCache) -> None:
+    def test_values_setter_raises_non_nan_in_non_text(
+        self, cache: ExplainerCache
+    ) -> None:
         """Raise if non-NaN values exist where mask=False."""
         cache.shap_values_mask = torch.tensor([True, True, False, False, False])
         values = torch.tensor([1.0, 2.0, 3.0])
@@ -138,7 +150,9 @@ class TestExplainerCache:
         with pytest.raises(ValueError, match="have not been computed yet"):
             _ = cache.values
 
-    def test_values_setter_rejects_oversized_tensor(self, cache: ExplainerCache) -> None:
+    def test_values_setter_rejects_oversized_tensor(
+        self, cache: ExplainerCache
+    ) -> None:
         """Values longer than chat length should raise."""
         oversized = torch.arange(cache.chat.input_tokens_num + 1, dtype=torch.float)
         with pytest.raises(ValueError, match="Values size is larger"):
@@ -149,13 +163,17 @@ class TestExplainerCache:
         with pytest.raises(ValueError, match="have not been computed yet"):
             _ = cache.values
 
-    def test_values_getter_shape_mismatch(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_values_getter_shape_mismatch(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Raise if SHAP values shape mismatch."""
         cache._values = torch.randn(chat.input_tokens_num - 1)
         with pytest.raises(ValueError, match="size does not match"):
             _ = cache.values
 
-    def test_normalized_values_cycle(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_normalized_values_cycle(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Test setting/getting normalized values."""
         values = torch.arange(chat.input_tokens_num, dtype=torch.float)
         cache._normalized_values = values
@@ -173,7 +191,9 @@ class TestExplainerCache:
         with pytest.raises(ValueError, match="contain NaN values for text tokens"):
             cache.normalized_values = torch.tensor([float("nan"), 1.0, float("nan")])
 
-    def test_create_classmethod(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+    def test_create_classmethod(
+        self, chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> None:
         """Test ExplainerCache.create sets fields correctly."""
         masks = torch.ones(2, 3, dtype=torch.bool)
         values = torch.tensor([1.0, 2.0, 3.0, float("nan"), float("nan")])
@@ -192,7 +212,9 @@ class TestExplainerCache:
         assert torch.allclose(cache.normalized_values, normalized, equal_nan=True)
         assert cache.n == masks.shape[1]
 
-    def test_had_different_masks_flag(self, chat: BaseMllmChat, base_responses: list[ModelResponse]) -> None:
+    def test_had_different_masks_flag(
+        self, chat: BaseMllmChat, base_responses: list[ModelResponse]
+    ) -> None:
         """had_different_masks should reflect mismatch between chat and provided mask."""
         shap_mask = chat.shap_values_mask.clone()
         shap_mask[0] = False

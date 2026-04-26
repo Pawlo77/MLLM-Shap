@@ -9,6 +9,8 @@ Subpackages
 
    mllm_shap.connectors.base
    mllm_shap.connectors.liquid
+   mllm_shap.connectors.mock
+   mllm_shap.connectors.transformers_text
 
 Submodules
 ----------

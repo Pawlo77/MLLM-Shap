@@ -88,20 +88,32 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
         # check if other[0] == base
         if not (
             torch.equal(base.generated_text_tokens, other[0].generated_text_tokens)
-            and torch.equal(base.generated_audio_tokens, other[0].generated_audio_tokens)
+            and torch.equal(
+                base.generated_audio_tokens, other[0].generated_audio_tokens
+            )
         ):
-            raise ValueError("The first element of 'other' must be equal to 'base' tensor.")
+            raise ValueError(
+                "The first element of 'other' must be equal to 'base' tensor."
+            )
 
-        generated_text_tokens_hashes = [self.__tokenize(tensor=o.generated_text_tokens) for o in other]
-        generated_audio_tokens_hashes = [self.__tokenize(tensor=o.generated_audio_tokens) for o in other]
+        generated_text_tokens_hashes = [
+            self.__tokenize(tensor=o.generated_text_tokens) for o in other
+        ]
+        generated_audio_tokens_hashes = [
+            self.__tokenize(tensor=o.generated_audio_tokens) for o in other
+        ]
 
         token_hashes_tensors = [
             torch.cat((text_hash, audio_hash), dim=0)
-            for text_hash, audio_hash in zip(generated_text_tokens_hashes, generated_audio_tokens_hashes)
+            for text_hash, audio_hash in zip(
+                generated_text_tokens_hashes, generated_audio_tokens_hashes
+            )
         ]
 
         tf_idfs = Tensor(
-            self.__vectorizer.fit_transform([o.numpy() for o in token_hashes_tensors]).toarray(),
+            self.__vectorizer.fit_transform(
+                [o.numpy() for o in token_hashes_tensors]
+            ).toarray(),
         ).to(base.generated_text_tokens.device)
 
         return CosineSimilarity()(base=tf_idfs[0], other=tf_idfs)

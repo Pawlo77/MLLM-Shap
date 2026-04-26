@@ -9,6 +9,7 @@ from wordcloud import WordCloud
 ROOT_DIR: str = os.path.dirname(__file__)
 FIGURES_DIR: str = os.path.join(ROOT_DIR, "figures")
 
+
 def main() -> None:
     """Generate a word cloud image from a text file using a question mark mask."""
     with open(os.path.join(ROOT_DIR, "words.txt")) as f:
@@ -28,6 +29,7 @@ def main() -> None:
 
     wc.generate(text)
     wc.to_file(os.path.join(FIGURES_DIR, "cloud.png"))
+
 
 if __name__ == "__main__":
     main()

@@ -21,7 +21,11 @@ class ConcreteExplainer(BaseExplainer):
         self.calls: list[tuple[DummyChat, dict[str, Any], dict[str, Any]]] = []
 
     def __call__(
-        self, *args: Any, chat: DummyChat, generation_kwargs: dict[str, Any] | None = None, **explanation_kwargs: Any
+        self,
+        *args: Any,
+        chat: DummyChat,
+        generation_kwargs: dict[str, Any] | None = None,
+        **explanation_kwargs: Any,
     ) -> ExplainerResult:
         BaseExplainer.__call__(
             self,
@@ -46,7 +50,9 @@ class TestBaseExplainer:
 
     @staticmethod
     def _create_explainer() -> ConcreteExplainer:
-        return ConcreteExplainer(model=DummyModel(), shap_explainer=DummyShapExplainer())
+        return ConcreteExplainer(
+            model=DummyModel(), shap_explainer=DummyShapExplainer()
+        )
 
     def test_init_validates_dependencies(self) -> None:
         """Pydantic config should reject invalid dependency types."""
