@@ -21,10 +21,10 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install 3.13
 
       - name: Sync deps
-        run: uv sync --locked --all-groups
+        run: make install
 
       - name: Run pre-commit hooks
-        run: uv run pre-commit run --all-files
+        run: make pre-commit-all

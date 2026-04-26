@@ -1,19 +1,37 @@
 <div align="center">
-  <h1>🔬 Research Experiments</h1>
-  <p>Reproducible experiment configurations, datasets, and execution runners for MLLM-SHAP research.</p>
+  <h1>🔬 Experiments Hub</h1>
+  <p><strong>Operational layer for reproducible SHAP research runs and analytics.</strong></p>
 </div>
 
----
+## 🎯 Scope
 
-This directory contains the computational infrastructure and resource code for the various empirical experiments conducted during the development and validation of the package.
+This area owns full experiment lifecycle:
+- dataset preparation
+- runner execution
+- output aggregation
+- post-run statistical analysis
 
-### 📁 Directory Layout
+## 📊 Operations Snapshot
 
-- 📊 **[Analysis](analysis/)**: Post-run notebooks and computational scripts generating final plots, statistical significance tests, and results analysis matrices.
-- 💾 **[Data Preparation](data_preparation/)**: Scaffolding scripts and notebooks assembling the specialized raw input datasets directly hooked into the evaluation.
-- 👻 **[Ghost Busters](ghost_busters/)**: Technical utilities, local server mitigations, and resource management scripts to keep long-running compute jobs clean and localized.
-- 🚀 **[MLLM SHAPX](mllm_shapx/)**: The unified experiment orchestration CLI runner, designed for distributed environment deployments and batch inference configuration parsing.
-- 📂 **[Experiments Output](experiments_output/)**: The raw `.json` output artifacts, metric traces, and cache checkpoints flushed by active pipeline runs.
+- **1 orchestrator**: `mllm_shapx`
+- **2 analysis levels**: per-sample + aggregate summaries
+- **multiple dataset pipelines** under `data_preparation/`
 
-<br>
-<sub><i>Note: Other `.sh` and `.py` loose files in this directory are helper stubs specific to our institutional SLURM cluster setups and ad-hoc job allocations.</i></sub>
+## 🗂️ Directory Guide
+
+- `analysis/` - metrics, plots, significance checks
+- `data_preparation/` - dataset construction notebooks
+- `mllm_shapx/` - config-driven experiment CLI
+- `ghost_busters/` - runtime/process helper scripts
+- `experiments_output/` - generated run artifacts
+
+## ⚙️ Standard Workflow
+
+1. Prepare data in `data_preparation/`.
+2. Validate and run configs via `mllm_shapx`.
+3. Inspect outputs in `experiments_output/`.
+4. Build figures/tables in `analysis/`.
+
+## 🧩 Environment Note
+
+Loose `.py` and `.sh` files mainly support local cluster operations and ad-hoc execution flows.
