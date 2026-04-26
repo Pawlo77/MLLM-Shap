@@ -441,7 +441,7 @@
                   
   <h1>Source code for mllm_shap.shap.hierarchical.explainer</h1><div class="highlight"><pre>
 <span></span><span class="c1"># As high-level API has some duplicate code with :class:`Explainer`,</span>
-<span class="c1"># pylint: disable=duplicate-code</span>
+
 <span class="sd">&quot;&quot;&quot;Hierarchical SHAP explainer module.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
@@ -457,6 +457,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.explainer_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExplainerCache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmChat</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...connectors.base.model_response</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">...errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">...utils.other</span><span class="w"> </span><span class="kn">import</span> <span class="n">extend_tensor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..base.explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseExplainer</span>
@@ -471,7 +472,6 @@
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods,too-many-instance-attributes</span>
 <div class="viewcode-block" id="HierarchicalExplainer">
 <a class="viewcode-back" href="../../../../mllm_shap.shap.hierarchical.html#mllm_shap.shap.HierarchicalExplainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HierarchicalExplainer</span><span class="p">(</span><span class="n">BaseExplainer</span><span class="p">):</span>
@@ -517,7 +517,6 @@
     <span class="n">_progress_bar</span><span class="p">:</span> <span class="n">tqdm</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Progress bar for explanation process.&quot;&quot;&quot;</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">shap_explainer</span><span class="p">:</span> <span class="n">BaseShapExplainer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -561,8 +560,8 @@
                 <span class="s2">&quot;It is strongly recommended to use MinMaxNormalizer with HierarchicalExplainer for correct results.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">!=</span> <span class="n">k</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;k must be an integer, at least 2.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">!=</span> <span class="n">k</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;k must be an integer, at least 2.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
@@ -571,7 +570,7 @@
             <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">,</span> <span class="n">BaseShapApproximation</span><span class="p">)</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">fraction</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;use_importance_sampling is True, but shap_explainer does not support fraction-based approximation.&quot;</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_importance_sampling</span> <span class="o">=</span> <span class="n">use_importance_sampling</span>
@@ -579,16 +578,18 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">importance_sampling_min_fraction</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">importance_sampling_min_fraction</span> <span class="o">&lt;=</span> <span class="mf">1.0</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;importance_sampling_min_fraction must be in (0.0, 1.0].&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;importance_sampling_min_fraction must be in (0.0, 1.0].&quot;</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">importance_sampling_min_fraction</span> <span class="o">=</span> <span class="n">importance_sampling_min_fraction</span>
 
         <span class="k">if</span> <span class="n">first_layer_explainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_layer_explainer</span><span class="p">,</span> <span class="n">BaseShapExplainer</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;first_layer_explainer must be an instance of BaseShapExplainer.&quot;</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="n">shap_explainer</span><span class="o">.</span><span class="n">normalizer</span><span class="o">.</span><span class="vm">__class__</span>  <span class="c1"># type: ignore[union-attr]</span>
+                <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">normalizer</span><span class="o">.</span><span class="vm">__class__</span>
                 <span class="o">==</span> <span class="n">first_layer_explainer</span><span class="o">.</span><span class="n">normalizer</span><span class="o">.</span><span class="vm">__class__</span>
             <span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
@@ -622,7 +623,6 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress_bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_progress_bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">explainer</span><span class="o">.</span><span class="n">total_n_calls</span><span class="p">)</span>
 
-    <span class="c1"># pylint: disable=too-many-positional-arguments,too-many-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__calculate_group_normalized_shap_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
@@ -655,9 +655,11 @@
 <span class="sd">            ValueError: If neither shap_values_mask nor group_ids is provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">shap_values_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either shap_values_mask or group_ids must be provided.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Either shap_values_mask or group_ids must be provided.&quot;</span>
+            <span class="p">)</span>
         <span class="c1"># avoid warnings about invalid cache</span>
-        <span class="k">del</span> <span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">cache</span>  <span class="c1"># type: ignore[union-attr]</span>
+        <span class="k">del</span> <span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">cache</span>
 
         <span class="k">if</span> <span class="n">shap_values_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># no need to explain a single token</span>
@@ -726,7 +728,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__update_progress</span><span class="p">(</span><span class="n">explainer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__extract_normalized_shap_values</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
 
-    <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__compute</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>
@@ -782,9 +783,9 @@
 
         <span class="n">subgroup_size</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="n">subgroups_num</span><span class="p">)</span>
         <span class="n">group_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">group_mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-        <span class="n">group_ids</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__repeated_buckets</span><span class="p">(</span>  <span class="c1"># noqa: E203</span>
+        <span class="n">group_ids</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__repeated_buckets</span><span class="p">(</span>
             <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">subgroup_size</span>
-        <span class="p">)</span>  <span class="c1"># noqa: E203</span>
+        <span class="p">)</span>
 
         <span class="c1"># calculate SHAP values for this level</span>
         <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_group_normalized_shap_values</span><span class="p">(</span>
@@ -813,7 +814,7 @@
                     <span class="n">subgroup_id</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
-                    <span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GraphNode</span><span class="p">())</span>  <span class="c1"># type: ignore[union-attr]</span>
+                    <span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GraphNode</span><span class="p">())</span>
                 <span class="k">continue</span>
 
             <span class="n">subgroup_shap_values</span><span class="p">,</span> <span class="n">subgroup_computation_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compute</span><span class="p">(</span>
@@ -826,7 +827,7 @@
             <span class="p">)</span>
             <span class="n">normalized_shap_values</span><span class="p">[</span><span class="n">subgroup_mask</span><span class="p">]</span> <span class="o">*=</span> <span class="n">subgroup_shap_values</span><span class="p">[</span><span class="n">subgroup_mask</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
-                <span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subgroup_computation_graph</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subgroup_computation_graph</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">normalized_shap_values</span><span class="p">,</span> <span class="n">computation_graph</span>
 
@@ -907,11 +908,11 @@
             <span class="n">group_mask</span> <span class="o">=</span> <span class="n">group_ids</span> <span class="o">==</span> <span class="n">group_id</span>
             <span class="n">start_idx</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__get_group_props</span><span class="p">(</span><span class="n">group_mask</span><span class="p">)</span>
             <span class="n">subgroup_size</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_subgroups_num</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">))</span>
-            <span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># noqa: E203</span>
+            <span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__repeated_buckets</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">subgroup_size</span><span class="p">)</span>
                 <span class="o">+</span> <span class="n">global_offset</span>
             <span class="p">)</span>
-            <span class="n">global_offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>  <span class="c1"># noqa: E203</span>
+            <span class="n">global_offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
         <span class="n">n_groups</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group_ids_split</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Total number of groups at first level: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">)</span>
@@ -971,7 +972,7 @@
                     <span class="n">group_id</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GraphNode</span><span class="p">())</span>  <span class="c1"># type: ignore[union-attr]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GraphNode</span><span class="p">())</span>
                 <span class="k">continue</span>
 
             <span class="n">group_shap_values</span><span class="p">,</span> <span class="n">subgroup_computation_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__compute</span><span class="p">(</span>
@@ -984,7 +985,7 @@
             <span class="p">)</span>
             <span class="n">normalized_shap_values</span><span class="p">[</span><span class="n">group_mask</span><span class="p">]</span> <span class="o">*=</span> <span class="n">group_shap_values</span><span class="p">[</span><span class="n">group_mask</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subgroup_computation_graph</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">computation_graph</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subgroup_computation_graph</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">normalized_shap_values</span>
 
@@ -1190,7 +1191,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A tensor containing the normalized SHAP values for explainable tokens.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cache</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ExplainerCache</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ExplainerCache</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cache</span><span class="o">.</span><span class="n">normalized_values</span><span class="p">[:</span> <span class="n">cache</span><span class="o">.</span><span class="n">n</span><span class="p">]</span>  <span class="c1"># do not return for response tokens</span></div>
 
 </pre></div>

@@ -440,8 +440,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for mllm_shap.shap.base.approx</h1><div class="highlight"><pre>
-<span></span><span class="c1"># pylint: disable=invalid-name</span>
-<span class="sd">&quot;&quot;&quot;Base class for SHAP explainers using approximation methods.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Base class for SHAP explainers using approximation methods.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
@@ -456,7 +455,6 @@
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
 <div class="viewcode-block" id="BaseShapApproximation">
 <a class="viewcode-back" href="../../../../mllm_shap.shap.base.html#mllm_shap.shap.base.approx.BaseShapApproximation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseShapApproximation</span><span class="p">(</span><span class="n">BaseShapExplainer</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -519,7 +517,7 @@
         <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
         <span class="n">generated_masks_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">existing_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="n">existing_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the next mask split for SHAP value calculation</span>
@@ -548,7 +546,7 @@
                     <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zero_mask_skipped</span>
                 <span class="p">):</span>  <span class="c1"># 0 mask was rejected, so start from 1</span>
                     <span class="c1"># base masks here cannot be None</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_base_masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_masks</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># type: ignore[index]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_base_masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_masks</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_zero_mask_skipped</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">else</span><span class="p">:</span>  <span class="c1"># another mask was rejected, raise</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Multiple base masks were rejected.&quot;</span><span class="p">)</span>

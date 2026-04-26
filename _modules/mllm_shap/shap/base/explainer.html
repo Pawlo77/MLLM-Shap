@@ -457,7 +457,6 @@
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ExplainerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration model for Explainer.</span>
@@ -505,9 +504,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">shap_explainer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">model</span>
 
-    <span class="c1"># pylint: disable=magic-value-comparison</span>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>  <span class="c1"># type: ignore[return]</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span><span class="p">,</span>

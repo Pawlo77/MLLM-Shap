@@ -558,7 +558,6 @@
         <span class="k">return</span> <span class="n">TransformersTextChat</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-    <span class="c1"># pylint: disable=too-many-locals</span>
 <div class="viewcode-block" id="TransformersCausalText.generate">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.transformers_text.html#mllm_shap.connectors.TransformersCausalText.generate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
@@ -568,6 +567,8 @@
         <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(),</span>
         <span class="n">keep_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelResponse</span><span class="p">:</span>
+        <span class="c1"># Defensive copy to avoid cross-call mutation via shared default object.</span>
+        <span class="n">model_config</span> <span class="o">=</span> <span class="n">model_config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
@@ -615,7 +616,7 @@
             <span class="k">if</span> <span class="n">do_sample</span> <span class="ow">and</span> <span class="n">model_config</span><span class="o">.</span><span class="n">text_top_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="n">gen_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>  <span class="c1"># type: ignore[operator]</span>
+        <span class="n">gen_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
             <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
             <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
             <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>

@@ -453,7 +453,6 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMllmChat</span>
 
 
-<span class="c1"># pylint: disable=too-many-instance-attributes</span>
 <div class="viewcode-block" id="ExplainerCache">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExplainerCache</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -551,7 +550,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">had_different_masks</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="c1"># pylint: disable=too-many-positional-arguments,too-many-arguments</span>
 <div class="viewcode-block" id="ExplainerCache.create">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.explainer_cache.ExplainerCache.create">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -691,7 +689,7 @@
 
         <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_values_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="c1"># only validate up to n</span>
-        <span class="n">mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="p">:]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># noqa: E203</span>
+        <span class="n">mask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="p">:]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">isnan</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -763,13 +761,13 @@
 <span class="sd">        Disconnect the chat to avoid circular references.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># needs explicit None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">chat</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chat</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># clear other references</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calculated_by</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">responses</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calculated_by</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">responses</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_values</span> <span class="o">=</span> <span class="kc">None</span></div>
 

@@ -467,7 +467,7 @@
 
     <span class="n">__device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 
-    <span class="nd">@property</span>  <span class="c1"># type: ignore[override]</span>
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the device.</span>
@@ -510,7 +510,7 @@
             <span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">if</span> <span class="s2">&quot;config&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s2">&quot;processor&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
+        <span class="k">if</span> <span class="s2">&quot;config&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="s2">&quot;processor&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Please do not provide &#39;config&#39;, &#39;model&#39; or &#39;processor&#39; arguments. They are set automatically.&quot;</span>
             <span class="p">)</span>
@@ -522,10 +522,10 @@
             <span class="n">processor</span><span class="o">=</span><span class="n">_PatchedLFM2AudioProcessor</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="o">**</span><span class="n">_kw</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">(),</span>
             <span class="n">model</span><span class="o">=</span><span class="n">LFM2AudioModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="o">**</span><span class="n">_kw</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">(),</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="p">)</span>
 
         <span class="c1"># it is a patch to set device properly</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LiquidAudio.get_new_chat">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudio.get_new_chat">[docs]</a>
@@ -538,7 +538,7 @@
             <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="n">get_new_chat_callable</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_new_chat</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[misc]</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LiquidAudio.generate">
@@ -550,6 +550,8 @@
         <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(),</span>
         <span class="n">keep_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelResponse</span><span class="p">:</span>
+        <span class="c1"># Defensive copy to avoid cross-call mutation via shared default object.</span>
+        <span class="n">model_config</span> <span class="o">=</span> <span class="n">model_config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
             <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
@@ -643,7 +645,7 @@
                 <span class="n">response</span><span class="o">.</span><span class="n">generated_audio_tokens</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
                 <span class="n">response</span><span class="o">.</span><span class="n">generated_modality_flag</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="c1"># pylint: disable=protected-access # type: ignore[arg-type]</span>
+
             <span class="n">static_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_prefill</span><span class="p">(</span><span class="o">**</span><span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">chat</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="p">)</span>
@@ -657,7 +659,7 @@
         <span class="n">contextual_embeddings</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">emb</span> <span class="ow">in</span> <span class="n">static_embeddings</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">emb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">emb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="n">emb</span> <span class="o">=</span> <span class="n">emb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="c1"># Last hidden states: [seq_len, hidden_dim]</span>
             <span class="n">contextual_embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>

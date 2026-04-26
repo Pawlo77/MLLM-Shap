@@ -465,7 +465,7 @@
 
 <div class="viewcode-block" id="LiquidAudioChat">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.liquid.html#mllm_shap.connectors.LiquidAudioChat">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">LiquidAudioChat</span><span class="p">(</span><span class="n">BaseMllmChat</span><span class="p">,</span> <span class="n">_ChatState</span><span class="p">):</span>  <span class="c1"># type: ignore[misc]</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LiquidAudioChat</span><span class="p">(</span><span class="n">BaseMllmChat</span><span class="p">,</span> <span class="n">_ChatState</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents the chat state for a LiquidAudio model.</span>
 
 <span class="sd">    Handles text and audio token sequences, speaker roles, and special turn markers.</span>
@@ -507,7 +507,6 @@
     <span class="c1"># relies on ChatState.text, ChatState.audio_in, ChatState.audio_out, ChatState.modality_flag</span>
     <span class="c1"># both audio are in  (K, T) format</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
@@ -550,7 +549,7 @@
             <span class="n">empty_turn_sequences</span><span class="o">=</span><span class="n">empty_turn_sequences</span><span class="p">,</span>
             <span class="n">token_filter</span><span class="o">=</span><span class="n">token_filter</span><span class="p">,</span>
             <span class="n">system_roles_setup</span><span class="o">=</span><span class="n">system_roles_setup</span><span class="p">,</span>
-            <span class="n">get_new_chat_callable</span><span class="o">=</span><span class="n">get_new_chat_callable</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="n">get_new_chat_callable</span><span class="o">=</span><span class="n">get_new_chat_callable</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># mark starting tokens as system</span>
@@ -562,14 +561,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_audio_map</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">torch_device</span><span class="p">)</span>
 
     <span class="c1"># assume `_{}` are protected methods from BaseMllmChat</span>
-    <span class="c1"># pylint: disable=too-many-locals,protected-access,too-many-branches,too-many-statements</span>
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_new_instance</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="s2">&quot;LiquidAudioChat&quot;</span><span class="p">],</span>
         <span class="n">full_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">text_mask_relative</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">audio_mask_relative</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">chat</span><span class="p">:</span> <span class="s2">&quot;LiquidAudioChat&quot;</span><span class="p">,</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="n">chat</span><span class="p">:</span> <span class="s2">&quot;LiquidAudioChat&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;LiquidAudioChat&quot;</span><span class="p">:</span>
         <span class="n">new_instance</span><span class="p">:</span> <span class="s2">&quot;LiquidAudioChat&quot;</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">chat</span><span class="p">)</span>
 
@@ -773,7 +772,7 @@
             <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">decoded</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">decoded</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_audio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">audio_tokens</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=too-many-branches</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_audio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">audio_tokens</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">audio_tokens</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Decoding audio tokens based on indices from _audio_map.&quot;</span><span class="p">)</span>
 
@@ -823,7 +822,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># conservative fallback: assume 2048 entries per codebook</span>
                     <span class="n">sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2048</span><span class="p">]</span> <span class="o">*</span> <span class="n">mimi_codes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-except</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="s2">&quot;Could not introspect codebook sizes (</span><span class="si">%s</span><span class="s2">). Falling back to 2048.&quot;</span><span class="p">,</span> <span class="n">e</span>
                 <span class="p">)</span>

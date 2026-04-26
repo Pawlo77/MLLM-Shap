@@ -440,8 +440,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for mllm_shap.connectors.base.chat</h1><div class="highlight"><pre>
-<span></span><span class="c1"># pylint: disable=too-many-lines</span>
-<span class="sd">&quot;&quot;&quot;Base class for chat state management.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Base class for chat state management.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
@@ -475,7 +474,6 @@
 
 
 
-<span class="c1"># pylint: disable=too-many-public-methods,too-many-instance-attributes</span>
 <div class="viewcode-block" id="BaseMllmChat">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseMllmChat</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -539,7 +537,6 @@
         <span class="p">}</span>
     <span class="p">)</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
@@ -600,7 +597,6 @@
             <span class="n">__config</span><span class="o">.</span><span class="n">empty_turn_sequences</span>
         <span class="p">)</span>
 
-    <span class="c1"># pylint: disable=too-many-branches,too-many-statements,too-many-locals,too-many-nested-blocks</span>
 <div class="viewcode-block" id="BaseMllmChat.from_chat">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.from_chat">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -646,7 +642,7 @@
         <span class="k">for</span> <span class="n">seq_tensor</span> <span class="ow">in</span> <span class="n">chat</span><span class="o">.</span><span class="n">empty_turn_sequences</span><span class="p">:</span>
             <span class="n">seq_len</span> <span class="o">=</span> <span class="n">seq_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="c1"># assume _detect is protected not private</span>
-            <span class="n">match_indices</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span>  <span class="c1"># pylint: disable=protected-access</span>
+            <span class="n">match_indices</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">_detect</span><span class="p">(</span>
                 <span class="n">tokens</span><span class="o">=</span><span class="n">new_chat_text_tokens</span><span class="p">,</span>
                 <span class="n">seq_tensor</span><span class="o">=</span><span class="n">seq_tensor</span><span class="p">,</span>
                 <span class="n">mark</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -662,7 +658,7 @@
                 <span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>  <span class="c1"># there is still used audio in the turn</span>
                     <span class="k">continue</span>
 
-                <span class="n">new_chat_text_tokens_mask</span><span class="p">[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">seq_len</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># noqa: E203</span>
+                <span class="n">new_chat_text_tokens_mask</span><span class="p">[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">seq_len</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># update masks</span>
         <span class="n">text_mask_relative</span><span class="p">[</span><span class="n">text_mask_relative</span><span class="o">.</span><span class="n">clone</span><span class="p">()]</span> <span class="o">=</span> <span class="n">new_chat_text_tokens_mask</span>
@@ -674,7 +670,7 @@
             <span class="p">)</span>
 
         <span class="c1"># slower version - retrace entire history</span>
-        <span class="k">if</span> <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pylint: disable=protected-access</span>
+        <span class="k">if</span> <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">new_instance</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">get_new_chat_callable</span><span class="p">()</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">_pcm16_roundtrip</span><span class="p">(</span><span class="n">wf</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -691,7 +687,7 @@
                 <span class="n">masked_turn_mask</span> <span class="o">=</span> <span class="n">turn_mask</span> <span class="o">&amp;</span> <span class="n">mask</span>
 
                 <span class="c1"># text only turn</span>
-                <span class="k">if</span> <span class="n">turn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">:</span>  <span class="c1"># pylint: disable=protected-access</span>
+                <span class="k">if</span> <span class="n">turn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;From chat - text turn: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">turn</span><span class="p">)</span>
                     <span class="n">text_turn_mask</span> <span class="o">=</span> <span class="n">masked_turn_mask</span> <span class="o">&amp;</span> <span class="n">chat</span><span class="o">.</span><span class="n">text_tokens_mask</span>
                     <span class="n">text_turn_mask_relative</span> <span class="o">=</span> <span class="n">text_turn_mask</span><span class="p">[</span><span class="n">chat</span><span class="o">.</span><span class="n">text_tokens_mask</span><span class="p">]</span>
@@ -713,7 +709,7 @@
                     <span class="c1"># relative to turn not audio tokens</span>
                     <span class="n">audio_turn_mask_relative</span> <span class="o">=</span> <span class="n">audio_turn_mask</span><span class="p">[</span><span class="n">turn_mask</span><span class="p">]</span>
 
-                    <span class="n">num_segments</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">[</span><span class="n">turn</span><span class="p">])</span>  <span class="c1"># pylint: disable=protected-access</span>
+                    <span class="n">num_segments</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">[</span><span class="n">turn</span><span class="p">])</span>
                     <span class="n">idxs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">audio_turn_mask_relative</span><span class="p">[:</span><span class="n">num_segments</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="k">if</span> <span class="n">idxs</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
                         <span class="n">new_instance</span><span class="o">.</span><span class="n">new_turn</span><span class="p">(</span>
@@ -722,8 +718,7 @@
                             <span class="p">)</span>
                         <span class="p">)</span>
                         <span class="n">new_audio_segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                            <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">[</span><span class="n">turn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
-                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idxs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># pylint: disable=protected-access</span>
+                            <span class="n">chat</span><span class="o">.</span><span class="n">_audio_segments</span><span class="p">[</span><span class="n">turn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idxs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                         <span class="p">]</span>
 
                         <span class="c1"># Prefer slicing from the stored source waveform (one copy per turn)</span>
@@ -747,7 +742,7 @@
                                     <span class="p">)</span>
                                 <span class="n">pieces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                                     <span class="n">turn_waveform</span><span class="p">[:,</span> <span class="n">seg</span><span class="o">.</span><span class="n">start_sample</span> <span class="p">:</span> <span class="n">seg</span><span class="o">.</span><span class="n">end_sample</span><span class="p">]</span>
-                                <span class="p">)</span>  <span class="c1"># noqa: E203</span>
+                                <span class="p">)</span>
 
                             <span class="n">combined_waveform</span> <span class="o">=</span> <span class="p">(</span>
                                 <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">pieces</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1488,7 +1483,6 @@
         <span class="p">)</span></div>
 
 
-    <span class="c1"># pylint: disable=too-many-locals</span>
 <div class="viewcode-block" id="BaseMllmChat.get_conversation">
 <a class="viewcode-back" href="../../../../mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat.get_conversation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_conversation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ChatEntry</span><span class="p">]]:</span>
@@ -1508,7 +1502,7 @@
 <span class="sd">                    ChatEntry(</span>
 <span class="sd">                        content_type=0,</span>
 <span class="sd">                        roles=[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],</span>
-<span class="sd">                        content=&#39;&lt;|im_start|&gt;, system, \\n, You, are, a helpful assistant that answers questions briefly...&#39;, # noqa: E501 # pylint: disable=line-too-long</span>
+<span class="sd">                        content=&#39;&lt;|im_start|&gt;, system, \\n, You, are, a helpful assistant that answers questions briefly...&#39;,</span>
 <span class="sd">                        shap_values=None</span>
 <span class="sd">                    )</span>
 <span class="sd">                ],</span>
@@ -1537,7 +1531,7 @@
 
             <span class="c1"># Extract per-turn data</span>
             <span class="c1"># input_tokens is list, turns are contiguous</span>
-            <span class="n">turn_tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_tokens</span><span class="p">[</span><span class="n">min_</span> <span class="p">:</span> <span class="n">max_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
+            <span class="n">turn_tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_tokens</span><span class="p">[</span><span class="n">min_</span> <span class="p">:</span> <span class="n">max_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
             <span class="n">turn_roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_roles</span><span class="p">[</span><span class="n">turn_mask</span><span class="p">]</span>
             <span class="n">shap_values_normalized</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">normalized_values</span><span class="p">[</span><span class="n">turn_mask</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1902,7 +1896,7 @@
 
         <span class="c1"># Mark matching positions as False</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">match_indices</span><span class="p">:</span>
-            <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">)[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">seq_len</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># noqa: E203</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">)[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">seq_len</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__extend_tensor</span><span class="p">(</span>
@@ -1961,10 +1955,10 @@
                 <span class="n">shared_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">_SHARED_ATTRIBUTES</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;_BaseMllmChat__shap&quot;</span><span class="p">:</span>  <span class="c1"># pylint: disable=magic-value-comparison</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;_BaseMllmChat__shap&quot;</span><span class="p">:</span>
                 <span class="n">shap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span>
                 <span class="k">if</span> <span class="n">shap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">shap</span><span class="o">.</span><span class="n">chat</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+                    <span class="n">shap</span><span class="o">.</span><span class="n">chat</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="n">new_shap</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">shap</span><span class="p">,</span> <span class="n">memo</span><span class="p">)</span>
                     <span class="n">new_shap</span><span class="o">.</span><span class="n">chat</span> <span class="o">=</span> <span class="n">result</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">new_shap</span><span class="p">)</span>

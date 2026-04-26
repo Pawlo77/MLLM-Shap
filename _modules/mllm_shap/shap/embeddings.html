@@ -440,9 +440,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for mllm_shap.shap.embeddings</h1><div class="highlight"><pre>
-<span></span><span class="c1"># pylint: disable=too-few-public-methods</span>
-
-<span class="sd">&quot;&quot;&quot;Embedding calculation and reduction strategies for SHAP explanations.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Embedding calculation and reduction strategies for SHAP explanations.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">cast</span>
@@ -555,7 +553,7 @@
 
 <div class="viewcode-block" id="CustomEmbedding">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.embeddings.CustomEmbedding">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CustomEmbedding</span><span class="p">(</span><span class="n">BaseExternalEmbedding</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-many-instance-attributes</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomEmbedding</span><span class="p">(</span><span class="n">BaseExternalEmbedding</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    External embeddings using a **local** encoder model (e.g., E5/SBERT).</span>
 
@@ -575,7 +573,6 @@
     <span class="n">l2_normalize</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">_hidden_size</span><span class="p">:</span> <span class="nb">int</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>

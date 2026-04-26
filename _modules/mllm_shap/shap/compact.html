@@ -457,7 +457,6 @@
 <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
 <div class="viewcode-block" id="Explainer">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.compact.Explainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Explainer</span><span class="p">(</span><span class="n">BaseExplainer</span><span class="p">):</span>
@@ -520,7 +519,7 @@
         <span class="k">return</span> <span class="n">ExplainerResult</span><span class="p">(</span>
             <span class="n">source_chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="c1"># chat is set as generate was called with keep_history=True</span>
-            <span class="n">full_chat</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="n">full_chat</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span><span class="p">,</span>
             <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
             <span class="n">total_n_calls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">total_n_calls</span><span class="p">,</span>
         <span class="p">)</span></div>

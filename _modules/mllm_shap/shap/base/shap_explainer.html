@@ -479,7 +479,6 @@
 
 
 
-<span class="c1"># pylint: disable=too-few-public-methods,too-many-instance-attributes</span>
 <div class="viewcode-block" id="BaseShapExplainer">
 <a class="viewcode-back" href="../../../../mllm_shap.shap.base.html#mllm_shap.shap.base.shap_explainer.BaseShapExplainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseShapExplainer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -509,7 +508,6 @@
     <span class="n">_first_call</span><span class="p">:</span> <span class="nb">bool</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicates if it&#39;s the first call to generate masks.&quot;&quot;&quot;</span>
 
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mode</span><span class="p">:</span> <span class="n">Mode</span> <span class="o">=</span> <span class="n">Mode</span><span class="o">.</span><span class="n">CONTEXTUAL</span><span class="p">,</span>
@@ -733,7 +731,6 @@
         <span class="c1"># If not operating on embeddings, handle raw responses</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_measure</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">responses</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">other</span><span class="o">=</span><span class="n">responses</span><span class="p">)</span>
 
-    <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_shap_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
@@ -873,8 +870,7 @@
         <span class="p">)</span>
 
     <span class="c1"># keep the logic in one method for readability</span>
-    <span class="c1"># pylint: disable=too-many-arguments,too-many-positional-arguments</span>
-    <span class="c1"># pylint: disable=too-many-locals,too-many-statements,too-many-branches</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseMllmModel</span><span class="p">,</span>
@@ -916,7 +912,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_state</span><span class="p">()</span>
 
         <span class="c1"># validated within BaseShapCallConfig</span>
-        <span class="n">response_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">response_chat</span><span class="p">:</span> <span class="n">BaseMllmChat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">chat</span>
         <span class="n">source_chat</span> <span class="o">=</span> <span class="n">__config</span><span class="o">.</span><span class="n">source_chat</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">source_chat</span><span class="o">.</span><span class="n">torch_device</span>
 

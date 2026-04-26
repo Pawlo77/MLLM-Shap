@@ -451,7 +451,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base.shap_explainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseShapExplainer</span>
 
 
-<span class="c1"># pylint: disable=too-few-public-methods</span>
 <div class="viewcode-block" id="PreciseShapExplainer">
 <a class="viewcode-back" href="../../../mllm_shap.shap.html#mllm_shap.shap.precise.PreciseShapExplainer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreciseShapExplainer</span><span class="p">(</span><span class="n">BaseShapExplainer</span><span class="p">):</span>
@@ -483,7 +482,6 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_num_splits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># exclude all-true mask</span>
 
-    <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_shap_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">masks</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
