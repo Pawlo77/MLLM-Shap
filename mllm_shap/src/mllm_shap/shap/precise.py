@@ -9,7 +9,6 @@ from torch import Tensor
 from .base.shap_explainer import BaseShapExplainer
 
 
-# pylint: disable=too-few-public-methods
 class PreciseShapExplainer(BaseShapExplainer):
     """Precise SHAP implementation generating all possible masks."""
 
@@ -39,7 +38,6 @@ class PreciseShapExplainer(BaseShapExplainer):
     def _get_num_splits(self, n: int) -> int:
         return int(2**n - 1)  # exclude all-true mask
 
-    # pylint: disable=too-many-locals
     def _calculate_shap_values(
         self,
         masks: Tensor,

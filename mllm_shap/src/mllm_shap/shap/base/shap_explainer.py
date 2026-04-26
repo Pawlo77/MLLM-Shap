@@ -34,7 +34,6 @@ class NotEnoughTokensToExplainError(Exception):
     """Raised when there are not enough tokens to explain in the chat."""
 
 
-# pylint: disable=too-few-public-methods,too-many-instance-attributes
 class BaseShapExplainer(ABC):
     """Base class for SHAP-based explanations."""
 
@@ -62,7 +61,6 @@ class BaseShapExplainer(ABC):
     _first_call: bool
     """Indicates if it's the first call to generate masks."""
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         mode: Mode = Mode.CONTEXTUAL,
@@ -286,7 +284,6 @@ class BaseShapExplainer(ABC):
         # If not operating on embeddings, handle raw responses
         return self.similarity_measure(base=responses[0], other=responses)
 
-    # pylint: disable=too-many-locals
     def _get_shap_values(
         self,
         model: BaseMllmModel,
@@ -426,8 +423,7 @@ class BaseShapExplainer(ABC):
         )
 
     # keep the logic in one method for readability
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
+
     def __call__(
         self,
         model: BaseMllmModel,
@@ -469,7 +465,7 @@ class BaseShapExplainer(ABC):
         self._initialize_state()
 
         # validated within BaseShapCallConfig
-        response_chat: BaseMllmChat = __config.response.chat  # type: ignore[assignment]
+        response_chat: BaseMllmChat = __config.response.chat
         source_chat = __config.source_chat
         device = source_chat.torch_device
 

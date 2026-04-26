@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from logging import Logger
 from typing import Any, Generator
 
@@ -10,12 +11,12 @@ import torch
 from torch import Tensor
 
 from ...connectors.base.chat import BaseMllmChat
+from ...errors import MaskError
 from ...utils.logger import get_logger
 
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=duplicate-code
 class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
     """Generator for producing unique masks for SHAP explainability."""
 
@@ -45,7 +46,7 @@ class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
 
 
 class NoTokensToExplainError(Exception):
-    """Raised when there are no tokens to explain in the chat."""
+    """Raised when chat has no explainable tokens."""
 
 
 class MasksManager:
@@ -62,6 +63,47 @@ class MasksManager:
 
     _seen_masks: set[int]
     """Set of seen mask hashes to avoid duplicates."""
+
+    @dataclass(frozen=True)
+    class _MaskHashStrategy:
+        """Stateless strategy for mask hashing."""
+
+        @staticmethod
+        def normalize(mask: Tensor) -> Tensor:
+            """Normalize mask to 1D shape.
+
+            Args:
+                mask: Raw mask tensor.
+
+            Returns:
+                1D boolean mask tensor.
+
+            Raises:
+                MaskError: If mask has invalid shape.
+            """
+            if len(mask.shape) > 1:
+                if mask.shape[0] != 1:
+                    raise MaskError(
+                        "Mask must be a 1D tensor or a 2D tensor with a single row."
+                    )
+                return mask.squeeze(0)
+            return mask
+
+        @staticmethod
+        def hash(mask: Tensor) -> int:
+            """Hash mask bytes.
+
+            Args:
+                mask: Mask tensor to hash.
+
+            Returns:
+                Integer hash value.
+            """
+            normalized = MasksManager._MaskHashStrategy.normalize(mask)
+            packed = (
+                normalized.contiguous().to(dtype=torch.uint8).cpu().numpy().tobytes()
+            )
+            return hash(packed)
 
     def __init__(self, chat: BaseMllmChat, log_stats: bool = False) -> None:
         """
@@ -187,13 +229,7 @@ class MasksManager:
         Returns:
             Hash of the mask.
         """
-        if len(mask.shape) > 1:
-            if mask.shape[0] != 1:
-                raise ValueError(
-                    "Mask must be a 1D tensor or a 2D tensor with a single row."
-                )
-            mask = mask.squeeze(0)
-        return hash(tuple(mask.tolist()))
+        return MasksManager._MaskHashStrategy.hash(mask)
 
     @staticmethod
     def __get_mask_hash(
@@ -212,6 +248,6 @@ class MasksManager:
         """
         if mask_hash is None:
             if mask is None:
-                raise ValueError("Either mask or mask_hash must be provided.")
+                raise MaskError("Either mask or mask_hash must be provided.")
             mask_hash = MasksManager.get_hash(mask)
         return mask_hash

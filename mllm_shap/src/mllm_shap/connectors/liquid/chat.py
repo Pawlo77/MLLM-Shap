@@ -21,7 +21,7 @@ from ..enums import ModalityFlag, ModelHistoryTrackingMode, Role, SystemRolesSet
 logger: Logger = get_logger(__name__)
 
 
-class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
+class LiquidAudioChat(BaseMllmChat, _ChatState):
     """Represents the chat state for a LiquidAudio model.
 
     Handles text and audio token sequences, speaker roles, and special turn markers.
@@ -63,7 +63,6 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
     # relies on ChatState.text, ChatState.audio_in, ChatState.audio_out, ChatState.modality_flag
     # both audio are in  (K, T) format
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -106,7 +105,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
-            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
+            get_new_chat_callable=get_new_chat_callable,
         )
 
         # mark starting tokens as system
@@ -118,14 +117,14 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
         self._audio_map = torch.empty((0,), dtype=torch.long, device=self.torch_device)
 
     # assume `_{}` are protected methods from BaseMllmChat
-    # pylint: disable=too-many-locals,protected-access,too-many-branches,too-many-statements
+
     @classmethod
     def _set_new_instance(
         cls: type["LiquidAudioChat"],
         full_mask: Tensor,
         text_mask_relative: Tensor,
         audio_mask_relative: Tensor,
-        chat: "LiquidAudioChat",  # type: ignore[override]
+        chat: "LiquidAudioChat",
     ) -> "LiquidAudioChat":
         new_instance: "LiquidAudioChat" = deepcopy(chat)
 
@@ -329,7 +328,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
             return "".join(decoded)
         return decoded
 
-    def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:  # pylint: disable=too-many-branches
+    def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:
         if len(audio_tokens.shape) == 1:
             logger.debug("Decoding audio tokens based on indices from _audio_map.")
 
@@ -379,7 +378,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):  # type: ignore[misc]
                 else:
                     # conservative fallback: assume 2048 entries per codebook
                     sizes = [2048] * mimi_codes.shape[1]
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:
                 logger.warning(
                     "Could not introspect codebook sizes (%s). Falling back to 2048.", e
                 )

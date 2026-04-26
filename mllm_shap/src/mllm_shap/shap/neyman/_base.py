@@ -1,5 +1,5 @@
 # Similar to :class:`BaseShapExplainer`
-# pylint: disable=duplicate-code
+
 """Base Complementary Neyman SHAP explainer implementation."""
 
 from enum import Enum
@@ -35,7 +35,6 @@ class _Step(int, Enum):
     """Neyman allocation step."""
 
 
-# pylint: disable=too-few-public-methods,invalid-name,too-many-instance-attributes
 class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     """
     Base Complementary Neyman SHAP implementation class
@@ -185,7 +184,7 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             raise ValueError("Initial number of splits could not be determined.") from e
 
         # validate initial number of splits
-        if initial_num_splits < 2:  # pylint: disable=magic-value-comparison
+        if initial_num_splits < 2:
             logger.warning(
                 "Initial number of splits %d is less than 2. Setting it to 2.",
                 initial_num_splits,
@@ -211,7 +210,6 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         return num_splits
 
-    # pylint: disable=too-many-return-statements
     def _get_next_split(
         self,
         n: int,
@@ -485,10 +483,7 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
         logger.debug("M hat %s", self.__M_hat)
 
-    # pylint: disable=signature-differs
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         model: BaseMllmModel,
         source_chat: BaseMllmChat,
@@ -508,7 +503,7 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self._initialize_state()
 
         # validated within BaseShapCallConfig
-        response_chat: BaseMllmChat = __config.response.chat  # type: ignore[assignment]
+        response_chat: BaseMllmChat = __config.response.chat
         source_chat = __config.source_chat
         device = source_chat.torch_device
 

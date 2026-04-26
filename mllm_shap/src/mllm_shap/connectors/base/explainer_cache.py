@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from .chat import BaseMllmChat
 
 
-# pylint: disable=too-many-instance-attributes
 class ExplainerCache(BaseModel):
     """
     Cache for explainer computations associated with a chat.
@@ -107,7 +106,6 @@ class ExplainerCache(BaseModel):
         else:
             self.had_different_masks = False
 
-    # pylint: disable=too-many-positional-arguments,too-many-arguments
     @classmethod
     def create(
         cls,
@@ -241,7 +239,7 @@ class ExplainerCache(BaseModel):
 
         mask = self.shap_values_mask.clone()
         # only validate up to n
-        mask[self.n :] = False  # noqa: E203
+        mask[self.n :] = False
 
         if values[mask].isnan().any():
             raise ValueError(
@@ -310,12 +308,12 @@ class ExplainerCache(BaseModel):
         Disconnect the chat to avoid circular references.
         """
         # needs explicit None
-        self.chat = None  # type: ignore[assignment]
+        self.chat = None
 
         # clear other references
-        self.calculated_by = None  # type: ignore[assignment]
-        self.n = None  # type: ignore[assignment]
-        self.responses = None  # type: ignore[assignment]
-        self.masks = None  # type: ignore[assignment]
+        self.calculated_by = None
+        self.n = None
+        self.responses = None
+        self.masks = None
         self._values = None
         self._normalized_values = None

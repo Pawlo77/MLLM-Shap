@@ -1,4 +1,3 @@
-# pylint: disable=too-few-public-methods
 """Embedding similarity calculations for SHAP explanations."""
 
 import hashlib
