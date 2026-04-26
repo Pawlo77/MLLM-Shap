@@ -45,7 +45,8 @@ make install
 
 - primary developer interface: `make`
 - dependency and env management backend: `uv`
-- code quality gates: `pre-commit`, `flake8`, `black`, `isort`, `mypy`, `pylint`
+- code quality gates: `pre-commit`, `black`, `isort`, `flake8`
+- documentation: Sphinx with autodoc
 - packaging and docs pipeline: `pyproject.toml` + Sphinx
 
 # 🔗 Primary Entry Points

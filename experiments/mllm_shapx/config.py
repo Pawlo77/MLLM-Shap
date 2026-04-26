@@ -119,7 +119,7 @@ class ShapConfig:
 
 
 @dataclass
-class ExplainerVariant:  # pylint: disable=too-many-instance-attributes
+class ExplainerVariant:
     """
     One experiment variant.
 
@@ -166,7 +166,6 @@ class EmbeddingConfig:
 class ExperimentSet:
     """Top-level config for a set of experiment variants."""
 
-    # pylint: disable=too-many-instance-attributes
     experiment_set_id: str
     output_root: str = "experiments_output"
     device: Optional[str] = None  # "cuda"|"cpu"|None (auto)
@@ -333,7 +332,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
     )
 
 
-def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-many-statements
+def validate_config(cfg: ExperimentSet) -> List[str]:
     """Return a list of human-readable problems (empty = valid)."""
     errs: List[str] = []
 
@@ -419,7 +418,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:  # pylint: disable=too-man
                 "shap.similarity must be 'CosineSimilarity' or 'TfIdfCosineSimilarity'."
             )
 
-    def _validate_variants() -> None:  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    def _validate_variants() -> None:
         if not cfg.experiments:
             errs.append("experiments must contain at least one variant.")
             return

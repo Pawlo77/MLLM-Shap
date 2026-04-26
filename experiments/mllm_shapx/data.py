@@ -71,7 +71,7 @@ def load_dataset_from_main(
     return dataset.to_pandas()
 
 
-def load_df(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def load_df(
     repo_id: str,
     subset: str,
     split: str,
