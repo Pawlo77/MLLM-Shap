@@ -4,7 +4,7 @@
   <p><strong>Thank you for contributing. This guide keeps workflows consistent, reproducible, and review-ready.</strong></p>
 </div>
 
-## 🧭 Contribution Standard
+# 🧭 Contribution Standard
 
 - Use `Makefile` targets first.
 - Keep changes scoped and documented.
@@ -13,7 +13,7 @@
 
 Target Python: **3.12**.
 
-## ⚡ Quick Start (Make-first)
+# ⚡ Quick Start (Make-first)
 
 ```bash
 # 1) setup env + deps + hooks
@@ -25,7 +25,7 @@ make pre-commit-all
 make tests
 ```
 
-## 🧰 Daily Commands
+# 🧰 Daily Commands
 
 ```bash
 make install        # setup/update env and install hooks
@@ -36,7 +36,7 @@ make tests          # run package tests
 make clean          # remove venv and caches
 ```
 
-## 🗂️ Repository Layout
+# 🗂️ Repository Layout
 
 ```text
 MLLM-Shap/
@@ -53,28 +53,21 @@ Notes:
 - workspace root is not publishable package
 - package code lives in `mllm_shap/src/mllm_shap/`
 
-## ✅ Pre-commit and CI Expectations
+# ✅ Pre-commit and CI Expectations
 
 - Local: run `make pre-commit-all` before pushing.
 - CI: uses `uv` under the hood, synced from `uv.lock`, and runs pre-commit pipeline.
 - If dependency set changes, include updated `uv.lock` in PR.
 
-## 🧪 Documentation Workflow
+# 🧪 Documentation Workflow
 
 Generate API docs sources:
 
 ```bash
-sphinx-apidoc -o mllm_shap/docs/ src
+make docs
 ```
 
-Build HTML docs:
-
-```bash
-cd mllm_shap/docs
-make clean html
-```
-
-## 🛠️ Troubleshooting
+# 🛠️ Troubleshooting
 
 - Missing tool in hooks:
   - run `make install`
@@ -83,7 +76,7 @@ make clean html
 - Broken local setup:
   - run `make clean` then `make install`
 
-## ✍️ Style and Structure Expectations
+# ✍️ Style and Structure Expectations
 
 - Keep module docstrings and type hints updated.
 - Keep user-facing examples in `examples/` clear and runnable.

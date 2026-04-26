@@ -10,19 +10,19 @@
   </p>
 </div>
 
-## 🧭 Executive Overview
+# 🧭 Executive Overview
 
 `MLLM-SHAP` combines production-grade package engineering with research-grade experiment tooling.
 Repository designed for teams that need explainability across text/audio model pipelines without losing reproducibility.
 
-### 📊 At a Glance
+## 📊 At a Glance
 
 - **1 core package**: `mllm_shap`
 - **4 major workstreams**: package, examples, experiments, paper artifacts
 - **9 focused README guides** across repo for fast onboarding
 - **Python target**: 3.12
 
-## ⚡ Quick Start
+# ⚡ Quick Start
 
 ```bash
 pip install mllm-shap
@@ -34,33 +34,33 @@ For full monorepo environment:
 make install
 ```
 
-## 🏗️ Repository Architecture
+# 🏗️ Repository Architecture
 
 - `mllm_shap/` - package source, tests, docs
 - `examples/` - end-to-end notebooks for explainability workflows
 - `experiments/` - dataset prep, config runner, analytics
 - `paper/` - publication assets and figure pipeline
 
-## 🧰 Tooling Standards
+# 🧰 Tooling Standards
 
 - primary developer interface: `make`
 - dependency and env management backend: `uv`
 - code quality gates: `pre-commit`, `flake8`, `black`, `isort`, `mypy`, `pylint`
 - packaging and docs pipeline: `pyproject.toml` + Sphinx
 
-## 🔗 Primary Entry Points
+# 🔗 Primary Entry Points
 
 - package guide: `mllm_shap/README.md`
 - examples guide: `examples/README.md`
 - experiments guide: `experiments/README.md`
 - contribution rules: `CONTRIBUTING.md`
 
-## 🔬 Research References
+# 🔬 Research References
 
 - [Bridging Traditional Explainability Methods and Multimodal Multilingual Models](https://zenodo.org/records/19677572)
 - [SGPA: Spectrogram-Guided Phonetic Alignment for Feasible Shapley Value Explanations](https://arxiv.org/abs/2603.02250)
 - [mllm-shap Zenodo release](https://zenodo.org/records/19678283)
 
-## 📄 License
+# 📄 License
 
 MIT License. See `LICENSE`.

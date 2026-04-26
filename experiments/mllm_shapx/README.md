@@ -5,14 +5,14 @@
 
 `mllm_shapx` runs reproducible SHAP experiments with resume support and optional Weights & Biases tracking.
 
-## 📊 Runner Snapshot
+# 📊 Runner Snapshot
 
 - **Execution model**: config-driven variant expansion
 - **Checkpointing**: built-in resume flow
 - **Output granularity**: per-sample + aggregate metrics
 - **Supported connectors**: `liquid_audio`, `hf_text`
 
-## Prerequisites
+# Prerequisites
 
 - Python 3.12
 - project dependencies installed (`make install`)
@@ -27,13 +27,13 @@ export LOG_LEVEL=INFO
 
 See `.env.example` for defaults.
 
-## CLI Entry Point
+# CLI Entry Point
 
 ```bash
 python -m mllm_shapx.cli
 ```
 
-## Common Commands
+# Common Commands
 
 Validate configuration:
 
@@ -49,7 +49,7 @@ python -m mllm_shapx.cli run --config path/to/config.json --resume
 
 Use `--resume` to continue interrupted runs using checkpoints.
 
-## Configuration
+# Configuration
 
 Start from templates in `configs/`, especially:
 
@@ -64,7 +64,7 @@ The runner supports:
 
 For field-level validation and constraints, use the `validate` command before running large jobs.
 
-## Output Layout
+# Output Layout
 
 Each resolved run writes to:
 
@@ -76,7 +76,7 @@ with:
 - `samples/sample_XXXXX_result.json` (per-sample outputs)
 - `summary/aggregate_metrics.json` (run summary)
 
-## 🛠️ Extension Points
+# 🛠️ Extension Points
 
 - Register new reducers/normalizers in `config.py`.
 - Add new connector wiring in `factory.py`.

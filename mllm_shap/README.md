@@ -9,20 +9,20 @@
   </p>
 </div>
 
-## ✨ Product Highlights
+# ✨ Product Highlights
 
 - exact and approximate SHAP explainers under single API surface
 - text/audio-ready connector model with typed abstractions
 - configurable normalizers, reducers, similarity backends
 - package-level test and docs structure for stable iteration
 
-## 📊 Package Snapshot
+# 📊 Package Snapshot
 
 - **Main modules**: `connectors`, `shap`, `utils`
 - **Explainability modes**: precise + Monte Carlo families + advanced variants
 - **Target runtime**: Python 3.12
 
-## 💾 Installation
+# 💾 Installation
 
 Install from PyPI:
 
@@ -38,7 +38,7 @@ cd MLLM-Shap/mllm_shap
 pip install .
 ```
 
-## 🧱 Package Layout
+# 🧱 Package Layout
 
 - `src/mllm_shap/connectors/` - model and chat connectors
 - `src/mllm_shap/shap/` - explainers, attribution internals, result objects
@@ -46,12 +46,12 @@ pip install .
 - `tests/` - package verification suite
 - `docs/` - documentation sources
 
-## 🚀 Usage and Ecosystem
+# 🚀 Usage and Ecosystem
 
 - notebook workflows: `../examples/README.md`
 - experiment runner integration: `../experiments/mllm_shapx/README.md`
 - GUI companion for visualization: [shap-mllm-explainer](https://github.com/mvishiu11/shap-mllm-explainer)
 
-## 📄 License
+# 📄 License
 
 MIT License.
