@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """Base class for SHAP explainers using approximation methods."""
 
 from abc import ABC
@@ -14,7 +13,6 @@ from .shap_explainer import BaseShapExplainer
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseShapApproximation(BaseShapExplainer, ABC):
     """
     Base class for SHAP explainers using approximation methods.
@@ -75,7 +73,7 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
         n: int,
         device: torch.device,
         generated_masks_num: int,
-        existing_masks: list[Tensor] | None = None,  # pylint: disable=unused-argument
+        existing_masks: list[Tensor] | None = None,
     ) -> Tensor | None:
         """
         Get the next mask split for SHAP value calculation
@@ -104,7 +102,7 @@ class BaseShapApproximation(BaseShapExplainer, ABC):
                     not self._zero_mask_skipped
                 ):  # 0 mask was rejected, so start from 1
                     # base masks here cannot be None
-                    self._base_masks = self._base_masks[1:]  # type: ignore[index]
+                    self._base_masks = self._base_masks[1:]
                     self._zero_mask_skipped = True
                 else:  # another mask was rejected, raise
                     raise RuntimeError("Multiple base masks were rejected.")

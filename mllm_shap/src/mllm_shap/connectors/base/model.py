@@ -18,7 +18,6 @@ from .model_response import ModelResponse
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=duplicate-code
 class BaseMllmModel(ABC):
     """Base class for model connectors."""
 
@@ -35,7 +34,6 @@ class BaseMllmModel(ABC):
     history_tracking_mode: ModelHistoryTrackingMode
     """The mode for tracking chat history."""
 
-    # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __init__(
         self,
         config: HuggingFaceModelConfig,
@@ -74,7 +72,7 @@ class BaseMllmModel(ABC):
         """Get a new chat state for the model."""
 
     @abstractmethod
-    def generate(  # type: ignore[return]
+    def generate(
         self,
         chat: BaseMllmChat,
         max_new_tokens: int = 128,
@@ -105,7 +103,7 @@ class BaseMllmModel(ABC):
         )
 
     @abstractmethod
-    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:  # type: ignore[return]
+    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:
         """
         Get static embeddings for the current chat state.
 

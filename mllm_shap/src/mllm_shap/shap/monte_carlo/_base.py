@@ -13,7 +13,6 @@ from ..base.approx import BaseShapApproximation
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseMcShapExplainer(BaseShapApproximation, ABC):
     """Base Monte Carlo SHAP implementation class"""
 
@@ -55,7 +54,6 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
             )
         return r
 
-    # pylint: disable=unused-argument
     def _calculate_shap_values(
         self, masks: Tensor, similarities: Tensor, device: torch.device
     ) -> Tensor:

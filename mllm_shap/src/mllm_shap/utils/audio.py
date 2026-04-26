@@ -29,9 +29,9 @@ def display_audio(audio_content: bytes) -> "Audio":
         audio_content: The audio content in bytes.
     """
     # Import here to avoid dependency if not used in notebook
-    from IPython.display import Audio  # pylint: disable=import-outside-toplevel
+    from IPython.display import Audio
 
-    return Audio(data=audio_content, autoplay=True)  # type: ignore
+    return Audio(data=audio_content, autoplay=True)
 
 
 class TorchAudioHandler:

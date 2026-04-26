@@ -3,7 +3,6 @@
 from pydantic import BaseModel
 
 
-# pylint: disable=too-few-public-methods
 class HuggingFaceModelConfig(BaseModel):
     """Holds the necessary information to load a model from the Hugging Face Hub."""
 
@@ -14,7 +13,6 @@ class HuggingFaceModelConfig(BaseModel):
     """The specific revision or branch of the model to use."""
 
 
-# pylint: disable=too-few-public-methods
 class ModelConfig(BaseModel):
     """Defines settings for controlling text and audio generation behavior."""
 

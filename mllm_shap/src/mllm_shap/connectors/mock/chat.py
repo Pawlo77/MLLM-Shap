@@ -36,7 +36,6 @@ class MockChat(BaseMllmChat):
         }
     )
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -53,7 +52,7 @@ class MockChat(BaseMllmChat):
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
-            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
+            get_new_chat_callable=get_new_chat_callable,
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
         # debug logger and memory toggle
@@ -73,7 +72,7 @@ class MockChat(BaseMllmChat):
         full_mask: Tensor,
         text_mask_relative: Tensor,
         audio_mask_relative: Tensor,  # unused (no audio)
-        chat: "MockChat",  # type: ignore[override]
+        chat: "MockChat",
     ) -> "MockChat":
         new_instance = deepcopy(chat)
         new_instance.apply_text_mask(text_mask_relative)
