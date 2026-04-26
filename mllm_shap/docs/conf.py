@@ -69,3 +69,22 @@ html_static_path = ["_static"]
 html_css_files = [
     "custom.css",
 ]
+
+html_theme_options = {
+    "header_links_before_dropdown": 4,
+    "navbar_align": "left",
+    "show_toc_level": 2,
+    "navigation_with_keys": True,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/Pawlo77/MLLM-Shap",
+            "icon": "fa-brands fa-github",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/mllm-shap/",
+            "icon": "fa-solid fa-box",
+        },
+    ],
+}
