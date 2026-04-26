@@ -1,5 +1,11 @@
-Release Notes
-=============
+📦 Release Notes
+================
+
+Version 0.1.10
+--------------
+* Refined package and repository metadata for cleaner dependency grouping and professional project presentation.
+* Upgraded README and contributor documentation across repository with consistent structure, premium framing, and make-first workflows.
+* Improved Sphinx documentation experience: cleaner landing page flow, improved navigation labels, stronger getting-started guidance, and refreshed references.
 
 Version 0.1.7
 -------------

@@ -26,41 +26,48 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=67c8c9bf" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=3160fef2" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
 
-    <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../../_static/documentation_options.js?v=8a448e45"></script>
     <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/shap/hierarchical/explainer';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -86,14 +93,14 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
   </button>
   
   
-  <div class="col-lg-3 navbar-header-items__start">
+  <div class=" navbar-header-items__start">
     
       <div class="navbar-item">
 
@@ -114,7 +121,7 @@
     
   </div>
   
-  <div class="col-lg-9 navbar-header-items">
+  <div class=" navbar-header-items">
     
     <div class="me-auto navbar-header-items__center">
       
@@ -122,6 +129,64 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
   </ul>
 </nav></div>
       
@@ -148,6 +213,34 @@
   <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
   <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
 </button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
       
     </div>
     
@@ -193,6 +286,54 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
   </ul>
 </nav></div>
           
@@ -210,6 +351,34 @@
   <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
   <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
 </button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
         
       </div>
     
@@ -382,7 +551,8 @@
 <span class="sd">            ValueError: If k is less than 1 or not an integer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">shap_explainer</span><span class="o">=</span><span class="n">shap_explainer</span> <span class="ow">or</span> <span class="n">PreciseShapExplainer</span><span class="p">(</span><span class="n">normalizer</span><span class="o">=</span><span class="n">MinMaxNormalizer</span><span class="p">()),</span>
+            <span class="n">shap_explainer</span><span class="o">=</span><span class="n">shap_explainer</span>
+            <span class="ow">or</span> <span class="n">PreciseShapExplainer</span><span class="p">(</span><span class="n">normalizer</span><span class="o">=</span><span class="n">MinMaxNormalizer</span><span class="p">()),</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -398,7 +568,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
 
         <span class="k">if</span> <span class="n">use_importance_sampling</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">,</span> <span class="n">BaseShapApproximation</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">fraction</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">,</span> <span class="n">BaseShapApproximation</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="o">.</span><span class="n">fraction</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;use_importance_sampling is True, but shap_explainer does not support fraction-based approximation.&quot;</span>
@@ -413,7 +584,9 @@
 
         <span class="k">if</span> <span class="n">first_layer_explainer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_layer_explainer</span><span class="p">,</span> <span class="n">BaseShapExplainer</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;first_layer_explainer must be an instance of BaseShapExplainer.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;first_layer_explainer must be an instance of BaseShapExplainer.&quot;</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="ow">not</span> <span class="n">shap_explainer</span><span class="o">.</span><span class="n">normalizer</span><span class="o">.</span><span class="vm">__class__</span>  <span class="c1"># type: ignore[union-attr]</span>
                 <span class="o">==</span> <span class="n">first_layer_explainer</span><span class="o">.</span><span class="n">normalizer</span><span class="o">.</span><span class="vm">__class__</span>
@@ -503,7 +676,9 @@
             <span class="n">n_groups</span> <span class="o">=</span> <span class="n">group_ids</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
             <span class="c1"># no need to explain a single group of one token</span>
             <span class="k">if</span> <span class="n">n_groups</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">group_ids</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
+                    <span class="n">group_ids</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span>
+                <span class="p">)</span>
                 <span class="n">r</span><span class="p">[</span><span class="n">group_ids</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
                 <span class="k">return</span> <span class="n">r</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
@@ -516,7 +691,9 @@
             <span class="c1"># set fraction based on importance</span>
             <span class="n">base_fraction</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">BaseShapApproximation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">)</span><span class="o">.</span><span class="n">fraction</span>
             <span class="k">if</span> <span class="n">base_fraction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;shap_explainer fraction is None, cannot use importance sampling.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;shap_explainer fraction is None, cannot use importance sampling.&quot;</span>
+                <span class="p">)</span>
 
             <span class="n">new_fraction</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">importance_sampling_min_fraction</span><span class="p">,</span>
@@ -598,7 +775,9 @@
                 <span class="o">**</span><span class="n">explanation_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
-                <span class="n">computation_graph</span> <span class="o">=</span> <span class="n">GraphNode</span><span class="p">(</span><span class="n">shap_values</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="n">children</span><span class="o">=</span><span class="p">[],</span> <span class="n">group_mask</span><span class="o">=</span><span class="n">group_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+                <span class="n">computation_graph</span> <span class="o">=</span> <span class="n">GraphNode</span><span class="p">(</span>
+                    <span class="n">shap_values</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="n">children</span><span class="o">=</span><span class="p">[],</span> <span class="n">group_mask</span><span class="o">=</span><span class="n">group_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="p">)</span>
             <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">computation_graph</span>
 
         <span class="n">subgroup_size</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="n">subgroups_num</span><span class="p">)</span>
@@ -619,7 +798,9 @@
 
         <span class="k">if</span> <span class="n">_verbose</span><span class="p">:</span>
             <span class="n">computation_graph</span> <span class="o">=</span> <span class="n">GraphNode</span><span class="p">(</span>
-                <span class="n">shap_values</span><span class="o">=</span><span class="n">normalized_shap_values</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="n">children</span><span class="o">=</span><span class="p">[],</span> <span class="n">group_ids</span><span class="o">=</span><span class="n">group_ids</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="n">shap_values</span><span class="o">=</span><span class="n">normalized_shap_values</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                <span class="n">children</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">group_ids</span><span class="o">=</span><span class="n">group_ids</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
             <span class="p">)</span>
 
         <span class="c1"># calculate SHAP values for next levels</span>
@@ -680,7 +861,9 @@
             <span class="n">chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
             <span class="n">explainer_hash</span><span class="o">=</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shap_explainer</span><span class="p">),</span>
             <span class="n">responses</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">masks</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">chat</span><span class="o">.</span><span class="n">input_tokens_num</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">chat</span><span class="o">.</span><span class="n">torch_device</span><span class="p">),</span>
+            <span class="n">masks</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">chat</span><span class="o">.</span><span class="n">input_tokens_num</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">chat</span><span class="o">.</span><span class="n">torch_device</span>
+            <span class="p">),</span>
             <span class="n">normalized_values</span><span class="o">=</span><span class="n">normalized_shap_values</span><span class="p">,</span>
             <span class="n">shap_values_mask</span><span class="o">=</span><span class="n">shap_values_mask</span><span class="p">,</span>
         <span class="p">)</span>
@@ -725,7 +908,8 @@
             <span class="n">start_idx</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__get_group_props</span><span class="p">(</span><span class="n">group_mask</span><span class="p">)</span>
             <span class="n">subgroup_size</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_subgroups_num</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">))</span>
             <span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># noqa: E203</span>
-                <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__repeated_buckets</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">subgroup_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">global_offset</span>
+                <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__repeated_buckets</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">subgroup_size</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">global_offset</span>
             <span class="p">)</span>
             <span class="n">global_offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group_ids_split</span><span class="p">[</span><span class="n">start_idx</span> <span class="p">:</span> <span class="n">end_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>  <span class="c1"># noqa: E203</span>
         <span class="n">n_groups</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group_ids_split</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
@@ -743,7 +927,9 @@
                 <span class="o">**</span><span class="n">explanation_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># separate first-layer explainer</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Calculating first layer explanation using separate explainer.&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Calculating first layer explanation using separate explainer.&quot;</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">first_layer_explainer</span><span class="p">(</span>
                 <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">source_chat</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span>
@@ -753,11 +939,15 @@
             <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">__update_progress</span><span class="p">(</span><span class="n">explainer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">first_layer_explainer</span><span class="p">)</span>
-            <span class="n">response_normalized_values</span> <span class="o">=</span> <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__extract_normalized_shap_values</span><span class="p">(</span>
-                <span class="n">response</span><span class="o">=</span><span class="n">response_with_cache</span>
+            <span class="n">response_normalized_values</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">HierarchicalExplainer</span><span class="o">.</span><span class="n">__extract_normalized_shap_values</span><span class="p">(</span>
+                    <span class="n">response</span><span class="o">=</span><span class="n">response_with_cache</span>
+                <span class="p">)</span>
             <span class="p">)</span>
 
-            <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">response_normalized_values</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span>
+            <span class="n">normalized_shap_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
+                <span class="n">response_normalized_values</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
             <span class="c1"># set SHAP values per group as sum of all tokens in the group</span>
             <span class="k">for</span> <span class="n">group_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">):</span>
                 <span class="n">group_mask</span> <span class="o">=</span> <span class="n">group_ids_split</span> <span class="o">==</span> <span class="n">group_id</span>
@@ -942,14 +1132,18 @@
 
         <span class="c1"># Previous token info</span>
         <span class="n">prev_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="kc">False</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">mask</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
-        <span class="n">prev_modality</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">modality_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">modality_flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">prev_modality</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">modality_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">modality_flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="p">)</span>
 
         <span class="c1"># Start new group if:</span>
         <span class="c1"># - token is explainable</span>
         <span class="c1"># - AND (previous not explainable OR modality changed OR role changed (if `include_role`))</span>
         <span class="n">group_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">prev_mask</span> <span class="o">|</span> <span class="p">(</span><span class="n">modality_flag</span> <span class="o">!=</span> <span class="n">prev_modality</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">include_role</span><span class="p">:</span>
-            <span class="n">prev_role</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">token_roles</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">token_roles</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+            <span class="n">prev_role</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">token_roles</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">token_roles</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="p">)</span>
             <span class="n">group_mask</span> <span class="o">|=</span> <span class="n">token_roles</span> <span class="o">!=</span> <span class="n">prev_role</span>
         <span class="n">group_start</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&amp;</span> <span class="n">group_mask</span>
 
@@ -1028,8 +1222,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1063,7 +1257,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.1.
 </p></div>
       
     </div>

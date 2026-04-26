@@ -1,33 +1,38 @@
-.. mllm-shap documentation master file, created by
-   sphinx-quickstart on Tue Oct 21 11:09:55 2025.
+.. mllm-shap documentation master file.
 
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
 
------------------------------------
+.. note::
 
-Important Links
-================
+   New here? Start with :doc:`getting_started` for quickest path from install to first attribution run.
 
-- :doc:`release_notes`
-- :doc:`additional_notes`
-- :doc:`references`
-- :doc:`documentation`
-- :doc:`experiments_mllm_shapx`
-- :doc:`extension_gui`
-- :ref:`modindex` (API Reference)
+🧭 Documentation Map
+===================
 
------------------------------------
+- :doc:`getting_started` - installation and first runnable example
+- :doc:`documentation` - generated API module reference
+- :doc:`experiments_mllm_shapx` - experiment runner documentation
+- :doc:`extension_gui` - GUI extension notes
+- :doc:`release_notes` - version history
+- :doc:`references` - papers, datasets, and repository links
+- :doc:`additional_notes` - implementation and memory notes
 
-Getting Started
-===============
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Core Docs
 
-.. include:: getting_started.rst
+   getting_started
+   documentation
+   experiments_mllm_shapx
+   extension_gui
+   release_notes
+   references
+   additional_notes
 
------------------------------------
-
-Indices and Tables
-==================
+🔎 Indices and Search
+=====================
 
 * :ref:`genindex`
 * :ref:`modindex`
