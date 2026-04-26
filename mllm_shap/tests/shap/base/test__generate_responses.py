@@ -62,7 +62,9 @@ class TestGenerateResponses:
         mock_cache_manager.extract.assert_called_once()
         assert model_response is cached_model_response
 
-    def test_process_mask_generate_new(self, setup_env: tuple[DummyModel, DummyChat, CacheManager]) -> None:
+    def test_process_mask_generate_new(
+        self, setup_env: tuple[DummyModel, DummyChat, CacheManager]
+    ) -> None:
         """Should generate new response and cache it if not found."""
         model, chat, cache_manager = setup_env
         mask = torch.tensor([True, True, True])
@@ -113,7 +115,9 @@ class TestGenerateResponses:
                 i=2,
             )
 
-    def test_generate_responses_single(self, setup_env: tuple[DummyModel, DummyChat, CacheManager]) -> None:
+    def test_generate_responses_single(
+        self, setup_env: tuple[DummyModel, DummyChat, CacheManager]
+    ) -> None:
         """Should correctly generate responses in single-threaded mode."""
         model, chat, cache_manager = setup_env
 
@@ -137,7 +141,9 @@ class TestGenerateResponses:
         assert len(responses) == 1
         assert isinstance(history[0][3].generated_text_tokens, Tensor)
 
-    def test_generate_responses_multi(self, setup_env: tuple[DummyModel, DummyChat, CacheManager]) -> None:
+    def test_generate_responses_multi(
+        self, setup_env: tuple[DummyModel, DummyChat, CacheManager]
+    ) -> None:
         """Should correctly generate responses using multiple generator jobs."""
         model, chat, cache_manager = setup_env
 
@@ -165,13 +171,17 @@ class TestGenerateResponses:
         assert isinstance(history[0][3].generated_text_tokens, Tensor)
 
     def test_process_mask_respects_keep_history(
-        self, setup_env: tuple[DummyModel, DummyChat, CacheManager], monkeypatch: pytest.MonkeyPatch
+        self,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Model.generate should receive keep_history matching verbose flag."""
         model, chat, cache_manager = setup_env
         calls: list[bool] = []
 
-        def fake_generate(self, chat: DummyChat, keep_history: bool = False, **kwargs) -> ModelResponse:  # noqa: D401
+        def fake_generate(
+            self, chat: DummyChat, keep_history: bool = False, **kwargs
+        ) -> ModelResponse:
             del chat, kwargs
             calls.append(keep_history)
             return ModelResponse(

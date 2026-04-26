@@ -12,7 +12,8 @@ from ...connectors.base.model_response import ModelResponse
 
 
 # duplicates with shap/_explainers/explainer.py
-# pylint: disable=duplicate-code,too-few-public-methods
+
+
 class BaseShapConfig(BaseModel):
     """
     Configuration model for BaseShap.
@@ -29,7 +30,6 @@ class BaseShapConfig(BaseModel):
     allow_mask_duplicates: bool
 
 
-# pylint: disable=too-few-public-methods
 class BaseShapCallConfig(BaseModel):
     """
     Configuration model for BaseShap.__call__ method.
@@ -54,7 +54,10 @@ class BaseShapCallConfig(BaseModel):
         full_dev = getattr(self.response.chat, "device", None)
 
         if not src_dev == full_dev:
-            raise ValueError(f"All chat instances must have the same device. " f"Got source={src_dev}, full={full_dev}")
+            raise ValueError(
+                f"All chat instances must have the same device. "
+                f"Got source={src_dev}, full={full_dev}"
+            )
         return self
 
     @model_validator(mode="after")

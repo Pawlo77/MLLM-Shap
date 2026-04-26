@@ -7,7 +7,6 @@ import pandas as pd
 import seaborn as sns
 
 
-# pylint: disable=too-many-positional-arguments,too-many-arguments
 def plot_token_count_distribution(
     plot_df: pd.DataFrame,
     column: str = "count_text_tokens",
@@ -88,7 +87,11 @@ def plot_dist(
 
 
 def plot_attribution_trend(
-    df: pd.DataFrame, n_bins: int = 100, ax: plt.Axes | None = None, legend: bool = True, suffix: str = ""
+    df: pd.DataFrame,
+    n_bins: int = 100,
+    ax: plt.Axes | None = None,
+    legend: bool = True,
+    suffix: str = "",
 ) -> None:
     """Plot attribution trend by sentence position."""
     df = df.copy()
@@ -115,7 +118,10 @@ def plot_attribution_trend(
     )
 
     ax.set_title(
-        f"Attribution Trend Over Sentence Position by Mode{suffix}", fontsize=16, fontweight="bold", pad=20
+        f"Attribution Trend Over Sentence Position by Mode{suffix}",
+        fontsize=16,
+        fontweight="bold",
+        pad=20,
     )
     ax.set_ylabel("Mean Shapley Value", fontsize=12)
     ax.set_xlabel("Relative Sentence Position", fontsize=12)

@@ -14,9 +14,9 @@ cur_path: str = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, cur_path)
 sys.path.insert(0, os.path.join(cur_path, "..", "src"))
 
-project = 'mllm-shap'
-copyright = '2025, Paweł Pozorski, Jakub Muszyński'
-author = 'Paweł Pozorski, Jakub Muszyński'
+project = "mllm-shap"
+copyright = "2025, Paweł Pozorski, Jakub Muszyński"
+author = "Paweł Pozorski, Jakub Muszyński"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -35,8 +35,8 @@ extensions = [
     "extensions.custom_skip",
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Prefix each section label with the document name to avoid duplicates
 autosectionlabel_prefix_document = True
@@ -67,5 +67,24 @@ suppress_warnings = [
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_css_files = [
-    'custom.css',
+    "custom.css",
 ]
+
+html_theme_options = {
+    "header_links_before_dropdown": 4,
+    "navbar_align": "left",
+    "show_toc_level": 2,
+    "navigation_with_keys": True,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/Pawlo77/MLLM-Shap",
+            "icon": "fa-brands fa-github",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/mllm-shap/",
+            "icon": "fa-solid fa-box",
+        },
+    ],
+}

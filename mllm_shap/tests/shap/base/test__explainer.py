@@ -21,7 +21,11 @@ class ConcreteExplainer(BaseExplainer):
         self.calls: list[tuple[DummyChat, dict[str, Any], dict[str, Any]]] = []
 
     def __call__(
-        self, *args: Any, chat: DummyChat, generation_kwargs: dict[str, Any] | None = None, **explanation_kwargs: Any
+        self,
+        *args: Any,
+        chat: DummyChat,
+        generation_kwargs: dict[str, Any] | None = None,
+        **explanation_kwargs: Any,
     ) -> ExplainerResult:
         BaseExplainer.__call__(
             self,
@@ -46,14 +50,16 @@ class TestBaseExplainer:
 
     @staticmethod
     def _create_explainer() -> ConcreteExplainer:
-        return ConcreteExplainer(model=DummyModel(), shap_explainer=DummyShapExplainer())
+        return ConcreteExplainer(
+            model=DummyModel(), shap_explainer=DummyShapExplainer()
+        )
 
     def test_init_validates_dependencies(self) -> None:
         """Pydantic config should reject invalid dependency types."""
         with pytest.raises(ValidationError):
-            ConcreteExplainer(model=DummyModel(), shap_explainer="oops")  # type: ignore[arg-type]
+            ConcreteExplainer(model=DummyModel(), shap_explainer="oops")
         with pytest.raises(ValidationError):
-            ConcreteExplainer(model="not-a-model", shap_explainer=DummyShapExplainer())  # type: ignore[arg-type]
+            ConcreteExplainer(model="not-a-model", shap_explainer=DummyShapExplainer())
 
     def test_call_rejects_chat_in_generation_kwargs(self) -> None:
         """Passing forbidden keys in generation kwargs should raise."""

@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from .chat import BaseMllmChat
 
 
-# pylint: disable=too-many-instance-attributes
 class ExplainerCache(BaseModel):
     """
     Cache for explainer computations associated with a chat.
@@ -61,16 +60,26 @@ class ExplainerCache(BaseModel):
         Args:
             data: The data to initialize the instance with.
         """
-        super().__init__(chat=chat, masks=masks, responses=responses, shap_values_mask=shap_values_mask, **kwargs)
+        super().__init__(
+            chat=chat,
+            masks=masks,
+            responses=responses,
+            shap_values_mask=shap_values_mask,
+            **kwargs,
+        )
 
         if masks.shape[0] != len(responses):
-            raise ValueError("Masks size does not match the number of responses in the chat.")
+            raise ValueError(
+                "Masks size does not match the number of responses in the chat."
+            )
 
         self.shap_values_mask = shap_values_mask
 
         if chat is not None:
             if chat.input_tokens_num < masks.shape[1]:
-                raise ValueError("Masks size is larger than the number of tokens in the chat.")
+                raise ValueError(
+                    "Masks size is larger than the number of tokens in the chat."
+                )
 
             # Extend masks to match chat length
             masks = torch.cat(
@@ -87,7 +96,9 @@ class ExplainerCache(BaseModel):
             )
 
             if masks.shape[1] != chat.input_tokens_num:
-                raise ValueError("Masks size does not match the number of tokens in the chat.")
+                raise ValueError(
+                    "Masks size does not match the number of tokens in the chat."
+                )
             self.masks = masks
 
             if torch.any(chat.shap_values_mask != shap_values_mask):
@@ -95,7 +106,6 @@ class ExplainerCache(BaseModel):
         else:
             self.had_different_masks = False
 
-    # pylint: disable=too-many-positional-arguments,too-many-arguments
     @classmethod
     def create(
         cls,
@@ -210,7 +220,9 @@ class ExplainerCache(BaseModel):
                 or if they contain non-NaN values for non-user text tokens.
         """
         if self.chat.input_tokens_num < values.shape[0]:
-            raise ValueError("Values size is larger than the number of tokens in the chat.")
+            raise ValueError(
+                "Values size is larger than the number of tokens in the chat."
+            )
 
         values = ExplainerCache.extend_values(
             values,
@@ -221,16 +233,22 @@ class ExplainerCache(BaseModel):
         )
 
         if values.shape[0] != self.chat.input_tokens_num:
-            raise ValueError("SHAP values size does not match the number of tokens in the chat.")
+            raise ValueError(
+                "SHAP values size does not match the number of tokens in the chat."
+            )
 
         mask = self.shap_values_mask.clone()
         # only validate up to n
-        mask[self.n :] = False  # noqa: E203
+        mask[self.n :] = False
 
         if values[mask].isnan().any():
-            raise ValueError("SHAP values contain NaN values for text tokens they should explain.")
+            raise ValueError(
+                "SHAP values contain NaN values for text tokens they should explain."
+            )
         if not values[~mask].isnan().all():
-            raise ValueError("SHAP values contain non-NaN values for text tokens they should not explain.")
+            raise ValueError(
+                "SHAP values contain non-NaN values for text tokens they should not explain."
+            )
 
         setattr(self, name, values)
 
@@ -290,12 +308,12 @@ class ExplainerCache(BaseModel):
         Disconnect the chat to avoid circular references.
         """
         # needs explicit None
-        self.chat = None  # type: ignore[assignment]
+        self.chat = None
 
         # clear other references
-        self.calculated_by = None  # type: ignore[assignment]
-        self.n = None  # type: ignore[assignment]
-        self.responses = None  # type: ignore[assignment]
-        self.masks = None  # type: ignore[assignment]
+        self.calculated_by = None
+        self.n = None
+        self.responses = None
+        self.masks = None
         self._values = None
         self._normalized_values = None

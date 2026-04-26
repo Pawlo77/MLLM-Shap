@@ -1,16 +1,19 @@
 <div align="center">
-  <h1>📄 Project Paper & Figures</h1>
-  <p>Supporting artifacts encompassing drafts, figures, models, and analytical tools deployed for publication.</p>
+  <h1>📄 Paper Artifacts</h1>
+  <p><strong>Publication-grade assets, figure sources, and reproducibility helpers.</strong></p>
 </div>
 
----
+This directory stores assets used for publications and thesis documentation.
 
-This directory specifically archives and isolates materials deployed directly inside the documented paper validating **MLLM-SHAP** routines.
+# 📦 Contents
 
-### 📦 Contents Overview
+- draft-supporting scripts for preparing tables and figure data
+- drawing/diagram sources used in the paper workflow
+- visualization inputs (for example `words.txt`) and rendering scripts (for example `cloud.py`)
 
-- **Source Drafts:** Scripts assembling and exporting the statistical tables found in academic publications.
-- **Figure Generators:** Vector representations (like `.drawio` files for Hierarchical workflows) and custom plotting wrappers.
-- **Imagery Pipeline:** Materials spanning from word distribution lists (`words.txt`) to the code producing the high-resolution word cloud renderings for presentations or overviews (`cloud.py`).
+# 🔗 Cross-References
 
-To trace how the source algorithms backing these figures function, consult the [`experiments/analysis`](../../experiments/analysis/) or [`examples`](../../examples/) directories.
+- analysis logic and metrics are in `../../experiments/analysis/`
+- runnable usage examples are in `../../examples/`
+
+This folder is intentionally focused on publication artifacts rather than reusable library code.

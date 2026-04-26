@@ -18,7 +18,6 @@ from .model_response import ModelResponse
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=duplicate-code
 class BaseMllmModel(ABC):
     """Base class for model connectors."""
 
@@ -35,7 +34,6 @@ class BaseMllmModel(ABC):
     history_tracking_mode: ModelHistoryTrackingMode
     """The mode for tracking chat history."""
 
-    # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __init__(
         self,
         config: HuggingFaceModelConfig,
@@ -74,7 +72,7 @@ class BaseMllmModel(ABC):
         """Get a new chat state for the model."""
 
     @abstractmethod
-    def generate(  # type: ignore[return]
+    def generate(
         self,
         chat: BaseMllmChat,
         max_new_tokens: int = 128,
@@ -92,7 +90,11 @@ class BaseMllmModel(ABC):
         Returns:
             ModelResponse: The updated chat state after generation.
         """
-        logger.debug("Generating audio with max_new_tokens=%d, keep_history=%s", max_new_tokens, keep_history)
+        logger.debug(
+            "Generating audio with max_new_tokens=%d, keep_history=%s",
+            max_new_tokens,
+            keep_history,
+        )
         # validation
         _ = BaseModelGenerateConfig(
             max_new_tokens=max_new_tokens,
@@ -101,7 +103,7 @@ class BaseMllmModel(ABC):
         )
 
     @abstractmethod
-    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:  # type: ignore[return]
+    def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:
         """
         Get static embeddings for the current chat state.
 
@@ -113,8 +115,12 @@ class BaseMllmModel(ABC):
             ValueError: If responses is not a list of ModelResponse.
         """
         logger.debug("Getting static embeddings.")
-        if not isinstance(responses, list) or not all(isinstance(r, ModelResponse) for r in responses):
-            raise ValueError(f"responses must be a list of ModelResponse, got {type(responses)}")
+        if not isinstance(responses, list) or not all(
+            isinstance(r, ModelResponse) for r in responses
+        ):
+            raise ValueError(
+                f"responses must be a list of ModelResponse, got {type(responses)}"
+            )
 
     def get_contextual_embeddings(
         self, *args: Any, static_embeddings: list[Tensor] | None = None, **kwargs: Any
@@ -138,15 +144,26 @@ class BaseMllmModel(ABC):
         if static_embeddings is None:
             static_embeddings = self.get_static_embeddings(*args, **kwargs)
         if not isinstance(static_embeddings, list):
-            raise ValueError(f"static_embeddings must be an instance of list, got {type(static_embeddings)}")
+            raise ValueError(
+                f"static_embeddings must be an instance of list, got {type(static_embeddings)}"
+            )
         for emb in static_embeddings:
             if not isinstance(emb, Tensor):
-                raise ValueError(f"Each item in static_embeddings must be an instance of Tensor, got {type(emb)}")
+                raise ValueError(
+                    f"Each item in static_embeddings must be an instance of Tensor, got {type(emb)}"
+                )
         with torch.no_grad():
-            return cast(list[Tensor], raise_connector_error(self._get_contextual_embeddings, static_embeddings))
+            return cast(
+                list[Tensor],
+                raise_connector_error(
+                    self._get_contextual_embeddings, static_embeddings
+                ),
+            )
 
     @abstractmethod
-    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+    def _get_contextual_embeddings(
+        self, static_embeddings: list[Tensor]
+    ) -> list[Tensor]:
         """
         Get contextual embeddings for the current chat state.
 

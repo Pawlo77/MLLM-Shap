@@ -26,6 +26,13 @@ class TestAudioSegment:
         assert "start=0.000" in rep
         assert "end=0.500" in rep
 
+    def test_add_segment_raises_for_mismatched_tokens(self) -> None:
+        """Adding segments with different tokens should fail."""
+        a = AudioSegment(token="a", start_time=0.0, end_time=0.1, confidence=0.7)
+        b = AudioSegment(token="b", start_time=0.1, end_time=0.2, confidence=0.8)
+        with pytest.raises(ValueError, match="different tokens"):
+            _ = a + b
+
 
 class TestSpectrogramGuidedAlignerInit:
     """Tests for SpectrogramGuidedAligner initialisation behaviour."""
@@ -360,6 +367,7 @@ class TestSpectrogramGuidedAlignerAlign:
         # Mock convert_tokens_to_ids to return the character index
         def mock_convert(c):
             return vocab_chars.index(c) if c in vocab_chars else -1
+
         aligner.processor.tokenizer.convert_tokens_to_ids = mock_convert
 
         # Test transcript with diacritics
@@ -369,9 +377,7 @@ class TestSpectrogramGuidedAlignerAlign:
             target_segments,
             clean_text,
             valid_tokens,
-        ) = aligner._SpectrogramGuidedAligner__prepare_transcript(  # pylint: disable=protected-access
-            transcript
-        )
+        ) = aligner._SpectrogramGuidedAligner__prepare_transcript(transcript)
 
         # Verify normalization
         assert full_transcript == transcript
@@ -381,3 +387,78 @@ class TestSpectrogramGuidedAlignerAlign:
         # valid_tokens should only include characters in vocab and all be integers
         assert all(isinstance(t, int) for t in valid_tokens)
         assert len(valid_tokens) == len("VASCO|NUNEZ")  # All characters should be valid
+
+    def test_prepare_transcript_raises_when_no_valid_tokens(self) -> None:
+        """Transcript with no vocab overlap should raise."""
+        aligner = self._make_aligner_with_mocks()
+        aligner.vocab = {"A": 1}
+        aligner.processor.tokenizer.convert_tokens_to_ids = lambda c: -1
+        with pytest.raises(ValueError, match="no valid characters"):
+            _ = aligner._SpectrogramGuidedAligner__prepare_transcript("!!!")
+
+    @patch("mllm_shap.connectors.base.audio.forced_align")
+    def test_perform_forced_alignment_invokes_forced_align(
+        self, mock_forced_align: MagicMock
+    ) -> None:
+        """Forced align wrapper should pass expected tensors and return alignment path."""
+        aligner = self._make_aligner_with_mocks()
+        waveform = torch.zeros(1, 1600)
+        emissions = torch.randn(1, 5, 4)
+        with patch.object(
+            SpectrogramGuidedAligner,
+            "_SpectrogramGuidedAligner__compute_emissions",
+            return_value=emissions,
+        ):
+            mock_forced_align.return_value = (torch.tensor([[0, 1, 1, 2, 0]]), None)
+            path, out_emissions = (
+                aligner._SpectrogramGuidedAligner__perform_forced_alignment(
+                    waveform, 16_000, [1, 2]
+                )
+            )
+        assert path.tolist() == [0, 1, 1, 2, 0]
+        assert out_emissions.shape == (5, 4)
+
+    def test_merge_tokens_skips_blank_and_merges_runs(self) -> None:
+        """Merge helper should produce non-blank token spans only."""
+        aligner = self._make_aligner_with_mocks()
+        spans = aligner._SpectrogramGuidedAligner__merge_tokens(
+            torch.tensor([0, 1, 1, 0, 2, 2, 2, 0]), blank_id=0
+        )
+        assert spans == [(1, 1, 3), (2, 4, 7)]
+
+    def test_set_segment_indices_enforces_min_duration_and_bounds(self) -> None:
+        """Index attachment should clamp and enforce minimum duration."""
+        aligner = self._make_aligner_with_mocks()
+        waveform = torch.zeros(1, 100)
+        segments = [
+            AudioSegment(token="x", start_time=0.001, end_time=0.0015, confidence=1.0)
+        ]
+        out = aligner._SpectrogramGuidedAligner__set_segment_indices(
+            segments, waveform, 1000
+        )
+        assert out.shape == (1, 100)
+        assert segments[0].start_sample == 1
+        # min duration=50 samples at sr=1000, clamped to waveform max 100
+        assert segments[0].end_sample == 51
+
+    def test_attach_audio_to_segments_requires_input(self) -> None:
+        """Public audio attach helper should validate source inputs."""
+        aligner = self._make_aligner_with_mocks()
+        with pytest.raises(ValueError, match="Either audio_content or both waveform"):
+            aligner.attach_audio_to_segments(segments=[])
+
+    @patch("mllm_shap.connectors.base.audio.TorchAudioHandler.from_bytes")
+    def test_attach_audio_to_segments_uses_audio_content(
+        self, mock_from_bytes: MagicMock
+    ) -> None:
+        """Public attach helper should decode bytes when audio_content is provided."""
+        aligner = self._make_aligner_with_mocks()
+        waveform = torch.zeros(1, 1600)
+        mock_from_bytes.return_value = (waveform, 16_000)
+        segments = [
+            AudioSegment(token="x", start_time=0.0, end_time=0.1, confidence=1.0)
+        ]
+        aligner.attach_audio_to_segments(
+            segments=segments, audio_content=b"abc", audio_format="wav"
+        )
+        assert len(segments[0].audio) > 0

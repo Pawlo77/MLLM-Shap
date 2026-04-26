@@ -50,8 +50,10 @@ class Mock(BaseMllmModel):
         dummy_model = None
 
         # Force text-only history tracking
-        if self._KW_HISTORY_TRACKING_MODE in kwargs and \
-           kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT:
+        if (
+            self._KW_HISTORY_TRACKING_MODE in kwargs
+            and kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT
+        ):
             warnings.warn(
                 "Non-TEXT history tracking requested but this connector is text-only. Forcing TEXT mode.",
                 stacklevel=2,
@@ -63,7 +65,9 @@ class Mock(BaseMllmModel):
             device=device,
             processor=tokenizer,
             model=dummy_model,
-            history_tracking_mode=kwargs.pop(self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT),
+            history_tracking_mode=kwargs.pop(
+                self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT
+            ),
         )
 
     def get_new_chat(self, **kwargs: Any) -> MockChat:
@@ -72,7 +76,6 @@ class Mock(BaseMllmModel):
         kwargs["tokenizer"] = self.processor
         return MockChat(device=self.device, **kwargs)
 
-    # pylint: disable=too-many-locals
     def generate(
         self,
         chat: BaseMllmChat,
@@ -80,7 +83,14 @@ class Mock(BaseMllmModel):
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
     ) -> ModelResponse:
-        super().generate(chat=chat, max_new_tokens=max_new_tokens, model_config=model_config, keep_history=keep_history)
+        # Defensive copy to avoid cross-call mutation via shared default object.
+        model_config = model_config.model_copy(deep=True)
+        super().generate(
+            chat=chat,
+            max_new_tokens=max_new_tokens,
+            model_config=model_config,
+            keep_history=keep_history,
+        )
 
         chat = deepcopy(chat)
 
@@ -107,13 +117,17 @@ class Mock(BaseMllmModel):
         if keep_history:
             # For API parity with other connectors: pass [1, T] tensors
             text_tokens_2d = generated.unsqueeze(0)  # [1, seq_len] (on CPU)
-            empty_audio = torch.empty((0, 0), dtype=torch.long, device=torch.device("cpu"))  # [0, 0]
+            empty_audio = torch.empty(
+                (0, 0), dtype=torch.long, device=torch.device("cpu")
+            )  # [0, 0]
             self._set_chat_history(chat, text_tokens_2d, empty_audio, modality_flag)
 
         return ModelResponse(
             chat=chat if keep_history else None,
             generated_text_tokens=generated,  # [seq_len]
-            generated_audio_tokens=torch.empty((0, 0), dtype=torch.long, device=torch.device("cpu")),  # [0, 0]
+            generated_audio_tokens=torch.empty(
+                (0, 0), dtype=torch.long, device=torch.device("cpu")
+            ),  # [0, 0]
             generated_modality_flag=modality_flag,  # [seq_len]
         )
 
@@ -139,7 +153,9 @@ class Mock(BaseMllmModel):
 
         return static_embeddings
 
-    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+    def _get_contextual_embeddings(
+        self, static_embeddings: list[Tensor]
+    ) -> list[Tensor]:
         # For mock, contextual embeddings are same as static (no model context)
         contextual = [emb.clone() for emb in static_embeddings]
         return contextual

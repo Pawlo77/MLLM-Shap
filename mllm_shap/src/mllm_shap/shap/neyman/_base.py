@@ -1,5 +1,5 @@
 # Similar to :class:`BaseShapExplainer`
-# pylint: disable=duplicate-code
+
 """Base Complementary Neyman SHAP explainer implementation."""
 
 from enum import Enum
@@ -35,7 +35,6 @@ class _Step(int, Enum):
     """Neyman allocation step."""
 
 
-# pylint: disable=too-few-public-methods,invalid-name,too-many-instance-attributes
 class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     """
     Base Complementary Neyman SHAP implementation class
@@ -173,17 +172,19 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             if self.__use_default_initial_sampling_formula:
                 initial_num_splits = max(2, math.ceil(num_splits / (2 * n * n)))
             else:
-                initial_num_splits = BaseComplementaryShapApproximation._get_num_splits_static(
-                    n=n,
-                    num_samples=self.initial_num_samples,
-                    fraction=self.initial_fraction,
-                    force_minimal=False,
+                initial_num_splits = (
+                    BaseComplementaryShapApproximation._get_num_splits_static(
+                        n=n,
+                        num_samples=self.initial_num_samples,
+                        fraction=self.initial_fraction,
+                        force_minimal=False,
+                    )
                 )
         except ValueError as e:
             raise ValueError("Initial number of splits could not be determined.") from e
 
         # validate initial number of splits
-        if initial_num_splits < 2:  # pylint: disable=magic-value-comparison
+        if initial_num_splits < 2:
             logger.warning(
                 "Initial number of splits %d is less than 2. Setting it to 2.",
                 initial_num_splits,
@@ -209,7 +210,6 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
         return num_splits
 
-    # pylint: disable=too-many-return-statements
     def _get_next_split(
         self,
         n: int,
@@ -232,7 +232,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 logger.warning("Initial sampling exceeded total number of splits.")
                 return None
 
-            if not self._first_call and self.__update_M_position():  # stopping condition
+            if (
+                not self._first_call and self.__update_M_position()
+            ):  # stopping condition
                 logger.debug("Moving to Neyman allocation step.")
                 self.__step = _Step.NEYMAN_ALLOCATION
                 return None
@@ -247,7 +249,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
 
             # our modified method with pre-defined members
             if not self._M[self.__i, self.__j] < self.__initial_num_splits:
-                raise RuntimeError("__update_M_position did not update position correctly.")
+                raise RuntimeError(
+                    "__update_M_position did not update position correctly."
+                )
 
             # `self.__j == 0` --> include no tokens
             # generate split of size `self.__j` with required token `self.__i`
@@ -258,7 +262,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 include_token=self.__i if self.__j > 0 else None,
             )
             if self.__j > 0 and not new_mask.squeeze()[self.__i]:
-                raise RuntimeError("Generated mask does not include the required token.")
+                raise RuntimeError(
+                    "Generated mask does not include the required token."
+                )
 
             return new_mask
 
@@ -292,13 +298,19 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         kwargs["allow_full_or_empty"] = True
         return super()._get_masks_generator(*args, **kwargs)
 
-    def _calculate_C_matrix(self, masks: Tensor, similarities: Tensor, device: torch.device) -> None:
+    def _calculate_C_matrix(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> None:
         """Overload to also calculate C squared matrix."""
         if self._M is None:
-            raise RuntimeError("M matrix must be initialized before calculating C matrix.")
+            raise RuntimeError(
+                "M matrix must be initialized before calculating C matrix."
+            )
         if self._C is None or self.__C_squared is None:
             self._C = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
-            self.__C_squared = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
+            self.__C_squared = torch.zeros_like(
+                self._M, dtype=similarities.dtype, device=device
+            )
 
         m = masks.shape[0] // 2
         if 2 * m != masks.shape[0]:
@@ -317,10 +329,18 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             u = similarities[2 * i] - similarities[2 * i + 1]
             u_squared = u * u
 
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C, S, s_size, u)
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C, NS, ns_size, -u)
-            BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, S, s_size, u_squared)
-            BaseComplementaryShapApproximation._increment_coalition_val(self.__C_squared, NS, ns_size, u_squared)
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self._C, S, s_size, u
+            )
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self._C, NS, ns_size, -u
+            )
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self.__C_squared, S, s_size, u_squared
+            )
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self.__C_squared, NS, ns_size, u_squared
+            )
 
     def _calculate_shap_values(
         self,
@@ -331,7 +351,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         if not self._zero_mask_skipped:
             raise RuntimeError("Zero mask was not skipped during mask generation.")
         if self._M is None or self._C is None:
-            raise RuntimeError("M and C matrices must be initialized before calculating SHAP values.")
+            raise RuntimeError(
+                "M and C matrices must be initialized before calculating SHAP values."
+            )
 
         # exclude zero-mask column
         M = self._M[:, 1:]
@@ -403,12 +425,16 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             RuntimeError: If M or C matrices are not initialized.
         """
         if self._M is None or self._C is None or self.__C_squared is None:
-            raise RuntimeError("M, C and C_squared matrices must be initialized before estimating sigma squared.")
+            raise RuntimeError(
+                "M, C and C_squared matrices must be initialized before estimating sigma squared."
+            )
 
         M = self._M.to(self._C.dtype)
         M_small = M - 1
         sigma = (self.__C_squared - torch.pow(self._C, 2) / M) / M_small
-        if torch.any(sigma < 0):  # should never happen, but numerical issues might cause it
+        if torch.any(
+            sigma < 0
+        ):  # should never happen, but numerical issues might cause it
             logger.warning("Negative variance estimates found; setting them to zero.")
             sigma = torch.clamp(sigma, min=0.0)
 
@@ -424,7 +450,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             RuntimeError: If M or C matrices are not initialized.
         """
         if self._M is None or self._C is None:
-            raise RuntimeError("M and C matrices must be initialized before estimating M_hat.")
+            raise RuntimeError(
+                "M and C matrices must be initialized before estimating M_hat."
+            )
 
         # / 2 as each sample covers two entries symmetrically
         m = (self._get_num_splits(n=n) - self.total_n_calls) / 2
@@ -449,14 +477,13 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             + torch.sum(sigma_right / (k_right + 1).to(sigma_right.dtype), dim=0)
         )
 
-        self.__M_hat = torch.zeros(self._M.shape[0], dtype=inner.dtype, device=inner.device)
+        self.__M_hat = torch.zeros(
+            self._M.shape[0], dtype=inner.dtype, device=inner.device
+        )
         self.__M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
         logger.debug("M hat %s", self.__M_hat)
 
-    # pylint: disable=signature-differs
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
-    def __call__(  # type: ignore[override]
+    def __call__(
         self,
         model: BaseMllmModel,
         source_chat: BaseMllmChat,
@@ -476,13 +503,15 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self._initialize_state()
 
         # validated within BaseShapCallConfig
-        response_chat: BaseMllmChat = __config.response.chat  # type: ignore[assignment]
+        response_chat: BaseMllmChat = __config.response.chat
         source_chat = __config.source_chat
         device = source_chat.torch_device
 
         # additional validations guaranteeing no masks will be rejected by chat/model
         if source_chat.system_roles_setup != SystemRolesSetup.SYSTEM_ASSISTANT:
-            raise ValueError("Source chat must have SYSTEM_ASSISTANT roles setup for Neyman SHAP.")
+            raise ValueError(
+                "Source chat must have SYSTEM_ASSISTANT roles setup for Neyman SHAP."
+            )
         # cant check for SYSTEM role alone, as some models might use it for steering tokens
         if Role.ASSISTANT not in source_chat.token_roles:
             logger.warning(
@@ -522,13 +551,17 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         masks_tensor = torch.stack(masks, dim=0)
         similarities = self._get_similarities(responses=responses, model=model)
         self._calculate_C_matrix(
-            masks=masks_tensor[1:, source_chat.shap_values_mask],  # exclude initial all-ones mask
+            masks=masks_tensor[
+                1:, source_chat.shap_values_mask
+            ],  # exclude initial all-ones mask
             similarities=similarities[1:],
             device=device,
         )
 
         self.initial_steps = self.total_n_calls
-        logger.debug("Initial sampling step completed with %d calls.", self.initial_steps)
+        logger.debug(
+            "Initial sampling step completed with %d calls.", self.initial_steps
+        )
 
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:

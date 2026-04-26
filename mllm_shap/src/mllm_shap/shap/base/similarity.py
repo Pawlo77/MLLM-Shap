@@ -6,7 +6,6 @@ from typing import Any
 from torch import Tensor
 
 
-# pylint: disable=too-few-public-methods
 class BaseEmbeddingSimilarity(ABC):
     """Base class for embedding similarity calculations."""
 

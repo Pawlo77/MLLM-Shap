@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """Base class for SHAP explainers using approximation methods."""
 
 from abc import ABC
@@ -17,7 +16,6 @@ from .approx import BaseShapApproximation
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
     """Complementary SHAP implementation class."""
 
@@ -49,7 +47,6 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         self._M = None
         self._C = None
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments,duplicate-code
     def _get_masks_generator(
         self,
         mask_manager: MasksManager,
@@ -97,7 +94,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                         break
 
                     coalition_size = int(new_split.sum().item())
-                    if not allow_full_or_empty and (not new_split.any() or new_split.all()):
+                    if not allow_full_or_empty and (
+                        not new_split.any() or new_split.all()
+                    ):
                         logger.debug(
                             "Generated zero or all-ones mask of size %d, skipping.",
                             coalition_size,
@@ -106,7 +105,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
 
                     new_split_neg = ~new_split
                     new_mask = mask_manager.prepare_mask(split=new_split, device=device)
-                    new_mask_neg = mask_manager.prepare_mask(split=new_split_neg, device=device)
+                    new_mask_neg = mask_manager.prepare_mask(
+                        split=new_split_neg, device=device
+                    )
                     if new_mask is None or new_mask_neg is None:
                         logger.info(
                             "Generated mask of size %d (or its negation) has no True values, skipping.",
@@ -117,7 +118,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                     new_mask_hash = mask_manager.get_hash(new_mask)
                     new_mask_neg_hash = mask_manager.get_hash(new_mask_neg)
                     if not allow_mask_duplicates:
-                        if mask_manager.seen(mask_hash=new_mask_hash) or mask_manager.seen(mask_hash=new_mask_neg_hash):
+                        if mask_manager.seen(
+                            mask_hash=new_mask_hash
+                        ) or mask_manager.seen(mask_hash=new_mask_neg_hash):
                             logger.debug(
                                 "Generated duplicate mask of size %d, skipping.",
                                 coalition_size,
@@ -136,7 +139,7 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                             coalition_size,
                         )
 
-                        BaseComplementaryShapApproximation._increment_coalition_val(  # pylint: disable=protected-access
+                        BaseComplementaryShapApproximation._increment_coalition_val(
                             M, split.squeeze(0), coalition_size, 1
                         )
 
@@ -148,7 +151,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
 
         return _MasksGenerator()
 
-    def _calculate_C_matrix(self, masks: Tensor, similarities: Tensor, device: torch.device) -> None:
+    def _calculate_C_matrix(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> None:
         """
         Calculate the C matrix used in Complementary SHAP calculations.
 
@@ -161,7 +166,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
             RuntimeError: If M matrix is not initialized.
         """
         if self._M is None:
-            raise RuntimeError("M matrix must be initialized before calculating C matrix.")
+            raise RuntimeError(
+                "M matrix must be initialized before calculating C matrix."
+            )
         if self._C is None:
             self._C = torch.zeros_like(self._M, dtype=similarities.dtype, device=device)
 
@@ -180,8 +187,12 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
 
             u = similarities[2 * i] - similarities[2 * i + 1]
 
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C, S, s_size, u)
-            BaseComplementaryShapApproximation._increment_coalition_val(self._C, NS, ns_size, -u)
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self._C, S, s_size, u
+            )
+            BaseComplementaryShapApproximation._increment_coalition_val(
+                self._C, NS, ns_size, -u
+            )
 
     @staticmethod
     def _get_num_splits_static(
@@ -196,18 +207,26 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
                 if include_minimal_masks:
                     # Minimal: pairs of single-feature masks
                     return 2 * n
-                raise ValueError("num_samples cannot be -1 when include_minimal_masks is False.")
+                raise ValueError(
+                    "num_samples cannot be -1 when include_minimal_masks is False."
+                )
             if force_minimal and num_samples < 2 * n:
-                raise ValueError("num_samples must be at least equal to the number of features times two.")
+                raise ValueError(
+                    "num_samples must be at least equal to the number of features times two."
+                )
             if num_samples > (2**n - 2):
-                return int(2**n - 2)  # maximum possible masks excluding all-ones and all-zeros mask
+                return int(
+                    2**n - 2
+                )  # maximum possible masks excluding all-ones and all-zeros mask
             if num_samples % 2 == 1:
-                raise ValueError("num_samples must not be odd to account for complementary masks (in pairs).")
+                raise ValueError(
+                    "num_samples must not be odd to account for complementary masks (in pairs)."
+                )
             return num_samples
 
         # use fraction
         total_masks = int(2**n - 2)  # exclude all-ones and all-zeros mask
-        r = int(total_masks * fraction)  # type: ignore[operator]
+        r = int(total_masks * fraction)
         if r < 2 * n:
             r = 2 * n  # minimal: pairs of single-feature masks
             logger.warning(
@@ -223,7 +242,9 @@ class BaseComplementaryShapApproximation(BaseShapApproximation, ABC):
         return r - 1  # ensure even number of samples
 
     @staticmethod
-    def _increment_coalition_val(tensor: Tensor, indices: Tensor, coalition_size: int, value: Any) -> None:
+    def _increment_coalition_val(
+        tensor: Tensor, indices: Tensor, coalition_size: int, value: Any
+    ) -> None:
         """
         Increment the value in the tensor for the given coalition.
         If coalition_size is 0, update the first column.

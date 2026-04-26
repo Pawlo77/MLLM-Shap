@@ -77,13 +77,17 @@ class TestCacheManager:
         # chat.cache must be cleared
         assert chat.cache is None
 
-    def test_init_raises_if_different_explainer_hash(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_init_raises_if_different_explainer_hash(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Should raise if cache calculated_by != explainer_hash."""
         chat.cache = cache
         with pytest.raises(ValueError, match="different explainer instance"):
             _ = CacheManager(chat=chat, explainer_hash=999)
 
-    def test_init_raises_if_different_chat_instance(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_init_raises_if_different_chat_instance(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Should raise if cache.chat != current chat."""
         another_chat = MagicMock()
         cache.chat = another_chat
@@ -92,7 +96,9 @@ class TestCacheManager:
             _ = CacheManager(chat=chat, explainer_hash=123)
 
     @patch("mllm_shap.shap.base._cache_manager.MasksManager")
-    def test_contains_returns_true_if_seen(self, mock_mask_manager: MagicMock, chat: BaseMllmChat) -> None:
+    def test_contains_returns_true_if_seen(
+        self, mock_mask_manager: MagicMock, chat: BaseMllmChat
+    ) -> None:
         """contains() should return True if mask has been seen."""
         mock_manager = mock_mask_manager.return_value
         mock_manager.seen.return_value = True
@@ -103,7 +109,9 @@ class TestCacheManager:
         assert result is True
         mock_manager.seen.assert_called_once()
 
-    def test_extract_returns_correct_response(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_extract_returns_correct_response(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """extract() should return the correct cached response."""
         chat.cache = cache
         manager = CacheManager(chat=chat, explainer_hash=123)
@@ -126,7 +134,9 @@ class TestCacheManager:
         with pytest.raises(ValueError, match="No cache is associated"):
             _ = manager.extract(mask=torch.tensor([True, False, True, False, False]))
 
-    def test_extract_raises_if_mask_not_found(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_extract_raises_if_mask_not_found(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Should raise if mask not present in responses map."""
         chat.cache = cache
         manager = CacheManager(chat=chat, explainer_hash=123)
@@ -136,10 +146,14 @@ class TestCacheManager:
         with pytest.raises(KeyError, match="Mask not found"):
             _ = manager.extract(mask=mask)
 
-    def test_extract_raises_if_no_mask_or_hash(self, chat: BaseMllmChat, cache: ExplainerCache) -> None:
+    def test_extract_raises_if_no_mask_or_hash(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
         """Should raise if both mask and mask_hash are missing."""
         chat.cache = cache
         manager = CacheManager(chat=chat, explainer_hash=123)
         manager.cache = cache
-        with pytest.raises(ValueError, match="Either mask or mask_hash must be provided"):
+        with pytest.raises(
+            ValueError, match="Either mask or mask_hash must be provided"
+        ):
             _ = manager.extract()

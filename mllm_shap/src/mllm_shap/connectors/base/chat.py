@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 """Base class for chat state management."""
 
 from abc import ABC, abstractmethod
@@ -30,7 +29,6 @@ class AllTextTokensFilteredOutError(ValueError):
     """Raised when all text tokens are filtered out from the chat."""
 
 
-# pylint: disable=too-many-public-methods,too-many-instance-attributes
 class BaseMllmChat(ABC):
     """
     Base class for chat state management.
@@ -92,7 +90,6 @@ class BaseMllmChat(ABC):
         }
     )
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -153,7 +150,6 @@ class BaseMllmChat(ABC):
             __config.empty_turn_sequences
         )
 
-    # pylint: disable=too-many-branches,too-many-statements,too-many-locals,too-many-nested-blocks
     @classmethod
     def from_chat(
         cls,
@@ -197,7 +193,7 @@ class BaseMllmChat(ABC):
         for seq_tensor in chat.empty_turn_sequences:
             seq_len = seq_tensor.shape[0]
             # assume _detect is protected not private
-            match_indices = chat._detect(  # pylint: disable=protected-access
+            match_indices = chat._detect(
                 tokens=new_chat_text_tokens,
                 seq_tensor=seq_tensor,
                 mark=False,
@@ -213,7 +209,7 @@ class BaseMllmChat(ABC):
                 ].any():  # there is still used audio in the turn
                     continue
 
-                new_chat_text_tokens_mask[idx : idx + seq_len] = False  # noqa: E203
+                new_chat_text_tokens_mask[idx : idx + seq_len] = False
 
         # update masks
         text_mask_relative[text_mask_relative.clone()] = new_chat_text_tokens_mask
@@ -225,13 +221,15 @@ class BaseMllmChat(ABC):
             )
 
         # slower version - retrace entire history
-        if chat._audio_segments is not None:  # pylint: disable=protected-access
+        if chat._audio_segments is not None:
             new_instance = chat.get_new_chat_callable()
 
             def _pcm16_roundtrip(wf: Tensor) -> Tensor:
                 """Match the historical WAV(PCM16) encode/decode quantization without allocating bytes."""
                 wf = wf.to(torch.float32)
-                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(-1.0, 1.0)
+                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(
+                    -1.0, 1.0
+                )
                 q = (wf * 32767.0).round().clamp_(-32768.0, 32767.0)
                 return (q / 32767.0).contiguous()
 
@@ -240,13 +238,15 @@ class BaseMllmChat(ABC):
                 masked_turn_mask = turn_mask & mask
 
                 # text only turn
-                if turn not in chat._audio_segments:  # pylint: disable=protected-access
+                if turn not in chat._audio_segments:
                     logger.debug("From chat - text turn: %d", turn)
                     text_turn_mask = masked_turn_mask & chat.text_tokens_mask
                     text_turn_mask_relative = text_turn_mask[chat.text_tokens_mask]
                     if text_turn_mask_relative.any():
                         new_instance.new_turn(
-                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                            Role.from_ordinal(
+                                int(chat.token_roles[turn_mask][0].item())
+                            )
                         )
                         text = chat.decode_text(
                             chat.text_tokens[text_turn_mask_relative]
@@ -260,14 +260,16 @@ class BaseMllmChat(ABC):
                     # relative to turn not audio tokens
                     audio_turn_mask_relative = audio_turn_mask[turn_mask]
 
-                    num_segments = len(chat._audio_segments[turn])  # pylint: disable=protected-access
+                    num_segments = len(chat._audio_segments[turn])
                     idxs = torch.where(audio_turn_mask_relative[:num_segments])[0]
                     if idxs.numel():
                         new_instance.new_turn(
-                            Role.from_ordinal(int(chat.token_roles[turn_mask][0].item()))
+                            Role.from_ordinal(
+                                int(chat.token_roles[turn_mask][0].item())
+                            )
                         )
                         new_audio_segments: list[AudioSegment] = [
-                            chat._audio_segments[turn][i] for i in idxs.tolist()  # pylint: disable=protected-access
+                            chat._audio_segments[turn][i] for i in idxs.tolist()
                         ]
 
                         # Prefer slicing from the stored source waveform (one copy per turn)
@@ -289,10 +291,14 @@ class BaseMllmChat(ABC):
                                     raise RuntimeError(
                                         "Audio segment sample rate mismatch with stored waveform."
                                     )
-                                pieces.append(turn_waveform[:, seg.start_sample : seg.end_sample])  # noqa: E203
+                                pieces.append(
+                                    turn_waveform[:, seg.start_sample : seg.end_sample]
+                                )
 
                             combined_waveform = (
-                                torch.cat(pieces, dim=1) if pieces else torch.empty((1, 0), dtype=turn_waveform.dtype)
+                                torch.cat(pieces, dim=1)
+                                if pieces
+                                else torch.empty((1, 0), dtype=turn_waveform.dtype)
                             )
                             combined_waveform = _pcm16_roundtrip(combined_waveform)
 
@@ -840,7 +846,11 @@ class BaseMllmChat(ABC):
         if self._audio_waveforms is None:
             self._audio_waveforms = {}
         wf_cpu = waveform.detach().to(torch.float32).cpu().contiguous()
-        self._audio_waveforms[self.turn_number] = (wf_cpu, int(sample_rate), audio_format)
+        self._audio_waveforms[self.turn_number] = (
+            wf_cpu,
+            int(sample_rate),
+            audio_format,
+        )
         logger.debug(
             "Added segments: %d (speaker=%s)",
             len(new_segments),
@@ -993,7 +1003,6 @@ class BaseMllmChat(ABC):
             waveform.cpu(), sample_rate=sample_rate, audio_format=audio_format
         )
 
-    # pylint: disable=too-many-locals
     def get_conversation(self) -> list[list[ChatEntry]]:
         """
         Serialize the chat state to a JSON-compatible dictionary.
@@ -1011,7 +1020,7 @@ class BaseMllmChat(ABC):
                     ChatEntry(
                         content_type=0,
                         roles=[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-                        content='<|im_start|>, system, \\n, You, are, a helpful assistant that answers questions briefly...', # noqa: E501 # pylint: disable=line-too-long
+                        content='<|im_start|>, system, \\n, You, are, a helpful assistant that answers questions briefly...',
                         shap_values=None
                     )
                 ],
@@ -1040,7 +1049,7 @@ class BaseMllmChat(ABC):
 
             # Extract per-turn data
             # input_tokens is list, turns are contiguous
-            turn_tokens = self.input_tokens[min_ : max_ + 1]  # noqa: E203
+            turn_tokens = self.input_tokens[min_ : max_ + 1]
             turn_roles = self.token_roles[turn_mask]
             shap_values_normalized: Tensor | None = (
                 self.cache.normalized_values[turn_mask] if self.cache else None
@@ -1401,7 +1410,7 @@ class BaseMllmChat(ABC):
 
         # Mark matching positions as False
         for idx in match_indices:
-            cast(Tensor, mask)[idx : idx + seq_len] = False  # noqa: E203
+            cast(Tensor, mask)[idx : idx + seq_len] = False
         return cast(Tensor, mask)
 
     def __extend_tensor(
@@ -1460,10 +1469,10 @@ class BaseMllmChat(ABC):
                 shared_attrs.update(klass._SHARED_ATTRIBUTES)
 
         for k, v in self.__dict__.items():
-            if k == "_BaseMllmChat__shap":  # pylint: disable=magic-value-comparison
+            if k == "_BaseMllmChat__shap":
                 shap = self.cache
                 if shap is not None:
-                    shap.chat = None  # type: ignore[assignment]
+                    shap.chat = None
                     new_shap = deepcopy(shap, memo)
                     new_shap.chat = result
                     setattr(result, k, new_shap)

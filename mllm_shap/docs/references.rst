@@ -1,13 +1,27 @@
-References
-==========
+📚 References
+=============
 
-MLLM-SHAP is used for research purposes on behaviour of large language models (LLMs) and their
-explainability using SHAP values. Research paper and report is available at `arXiv <https://arxiv.org/im_not_exist_yet>`_. All code is publicly available at `official Github repository <https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments>`_ and can be used as further example on how to use package and how to interpret its results.
+🔬 Research Outputs
+-------------------
 
-Package is fully tested, including analysis of correctness on different approximations algorithms of SHAP values, available `here <https://github.com/Pawlo77/MLLM-Shap/tree/main/mllm_shap/tests/approximations>`_. Following image shows comparison of different SHAP approximations on same input and model - Liquid Audio LLM.
+- `Bridging Traditional Explainability Methods and Multimodal Multilingual Models <https://zenodo.org/records/19677572>`_
+- `SGPA: Spectrogram-Guided Phonetic Alignment for Feasible Shapley Value Explanations <https://arxiv.org/abs/2603.02250>`_
+- `mllm-shap Zenodo release <https://zenodo.org/records/19678283>`_
+
+🗂️ Repository Resources
+-----------------------
+
+- `Main repository <https://github.com/Pawlo77/MLLM-Shap>`_
+- `Experiments folder <https://github.com/Pawlo77/MLLM-Shap/tree/main/experiments>`_
+- `Examples folder <https://github.com/Pawlo77/MLLM-Shap/tree/main/examples>`_
+- `Package tests <https://github.com/Pawlo77/MLLM-Shap/tree/main/mllm_shap/tests>`_
+
+⚠️ Notes
+--------
+
+Approximation methods can become unstable for very small sample budgets or short token sequences.
+For production workloads, validate approximation quality against stronger baselines first.
 
 .. warning::
 
-    Approximation methods might not work well with very small number of samples / input lengths, as many of them are limited from generating not unique masks. This might lead to "dead-locks" in sampling and wrong results.
-
-# TODO: add image
+    Always validate Monte Carlo-style settings on representative data before running large sweeps.

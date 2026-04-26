@@ -21,7 +21,9 @@ def load_single_sentence_df(
     """Load the first parquet shard into a DataFrame with optional pin enforcement."""
     _ensure_pinned_revision(revision)
     filename = f"{subset}/{split}/0000.parquet"
-    print(f"Downloading dataset from HF Hub repo '{repo_id}', file '{filename}', revision '{revision}'")
+    print(
+        f"Downloading dataset from HF Hub repo '{repo_id}', file '{filename}', revision '{revision}'"
+    )
     parquet_local_path = hf_hub_download(  # nosec B615
         repo_id=repo_id,
         filename=filename,
@@ -69,7 +71,7 @@ def load_dataset_from_main(
     return dataset.to_pandas()
 
 
-def load_df(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def load_df(
     repo_id: str,
     subset: str,
     split: str,
@@ -94,9 +96,7 @@ def load_df(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     """
     if use_parquet:
         return load_single_sentence_df(repo_id, subset, split, revision)
-    return load_dataset_from_main(
-        repo_id, subset, split, revision, trust_remote_code
-    )
+    return load_dataset_from_main(repo_id, subset, split, revision, trust_remote_code)
 
 
 def choose_prompt_text_column(df: pd.DataFrame) -> str:

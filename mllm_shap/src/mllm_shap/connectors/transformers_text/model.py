@@ -8,7 +8,13 @@ from typing import Any, cast
 
 import torch
 from torch import Tensor
-from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, PreTrainedModel, PreTrainedTokenizerBase
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    GenerationConfig,
+    PreTrainedModel,
+    PreTrainedTokenizerBase,
+)
 
 from ..base.chat import BaseMllmChat
 from ..base.model import BaseMllmModel
@@ -37,7 +43,9 @@ class TransformersCausalText(BaseMllmModel):
         # Disallow overriding these to keep parity with LiquidAudio pattern.
         forbidden = {"config", "model", "processor"}
         if any(k in kwargs for k in forbidden):
-            raise ValueError("Do not pass 'config', 'model', or 'processor'—they are set automatically.")
+            raise ValueError(
+                "Do not pass 'config', 'model', or 'processor'—they are set automatically."
+            )
 
         tokenizer = cast(Any, AutoTokenizer).from_pretrained(
             CONFIG.repo_id,
@@ -53,9 +61,10 @@ class TransformersCausalText(BaseMllmModel):
         cast(Any, model).eval()
 
         # Force text-only history tracking
-        if self._KW_HISTORY_TRACKING_MODE in kwargs and \
-           kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT:
-
+        if (
+            self._KW_HISTORY_TRACKING_MODE in kwargs
+            and kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT
+        ):
             warnings.warn(
                 "Non-TEXT history tracking requested but this connector is text-only. Forcing TEXT mode.",
                 stacklevel=2,
@@ -67,7 +76,9 @@ class TransformersCausalText(BaseMllmModel):
             device=device,
             processor=tokenizer,
             model=model,
-            history_tracking_mode=kwargs.pop(self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT),
+            history_tracking_mode=kwargs.pop(
+                self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT
+            ),
         )
 
         # Set reasonable defaults for EOS if missing
@@ -83,9 +94,15 @@ class TransformersCausalText(BaseMllmModel):
         if not isinstance(gen_cfg, GenerationConfig):
             gen_cfg = cast(Any, GenerationConfig)()
             setattr(self.model, "generation_config", gen_cfg)
-        if getattr(gen_cfg, "pad_token_id", None) is None and self.processor.pad_token_id is not None:
+        if (
+            getattr(gen_cfg, "pad_token_id", None) is None
+            and self.processor.pad_token_id is not None
+        ):
             gen_cfg.pad_token_id = self.processor.pad_token_id
-        if getattr(gen_cfg, "eos_token_id", None) is None and self.processor.eos_token_id is not None:
+        if (
+            getattr(gen_cfg, "eos_token_id", None) is None
+            and self.processor.eos_token_id is not None
+        ):
             gen_cfg.eos_token_id = self.processor.eos_token_id
 
     def get_new_chat(self, **kwargs: Any) -> TransformersTextChat:
@@ -94,7 +111,6 @@ class TransformersCausalText(BaseMllmModel):
         kwargs["tokenizer"] = self.processor
         return TransformersTextChat(device=self.device, **kwargs)
 
-    # pylint: disable=too-many-locals
     def generate(
         self,
         chat: BaseMllmChat,
@@ -102,10 +118,20 @@ class TransformersCausalText(BaseMllmModel):
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
     ) -> ModelResponse:
-        super().generate(chat=chat, max_new_tokens=max_new_tokens, model_config=model_config, keep_history=keep_history)
+        # Defensive copy to avoid cross-call mutation via shared default object.
+        model_config = model_config.model_copy(deep=True)
+        super().generate(
+            chat=chat,
+            max_new_tokens=max_new_tokens,
+            model_config=model_config,
+            keep_history=keep_history,
+        )
 
         # Enforce text-only semantics and surface warnings for audio knobs
-        if model_config.audio_temperature is not None or model_config.audio_top_k is not None:
+        if (
+            model_config.audio_temperature is not None
+            or model_config.audio_top_k is not None
+        ):
             warnings.warn(
                 "Audio generation parameters were provided but this connector is text-only; \
                     audio settings are ignored.",
@@ -123,16 +149,25 @@ class TransformersCausalText(BaseMllmModel):
 
         # Explicit attention mask avoids warning about attention mask not set
         # and is correct for unpadded 1xT inputs
-        attention_mask = torch.ones_like(input_ids, dtype=torch.long, device=self.device)
+        attention_mask = torch.ones_like(
+            input_ids, dtype=torch.long, device=self.device
+        )
 
-        do_sample = model_config.text_temperature is not None and model_config.text_temperature > 0.0
+        do_sample = (
+            model_config.text_temperature is not None
+            and model_config.text_temperature > 0.0
+        )
         temperature: float | None = (
-            float(model_config.text_temperature) if do_sample and model_config.text_temperature is not None else None
+            float(model_config.text_temperature)
+            if do_sample and model_config.text_temperature is not None
+            else None
         )
         top_k: int | None = (
-            int(model_config.text_top_k) if do_sample and model_config.text_top_k is not None else None
+            int(model_config.text_top_k)
+            if do_sample and model_config.text_top_k is not None
+            else None
         )
-        gen_out = self.model.generate(  # type: ignore[operator]
+        gen_out = self.model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
             max_new_tokens=max_new_tokens,
@@ -145,24 +180,37 @@ class TransformersCausalText(BaseMllmModel):
         )
 
         sequences: Tensor = gen_out.sequences  # [1, prompt_len + seq_len]
-        generated = sequences[0, prompt_len:] if sequences.shape[1] > prompt_len else sequences.new_empty((0,))
+        generated = (
+            sequences[0, prompt_len:]
+            if sequences.shape[1] > prompt_len
+            else sequences.new_empty((0,))
+        )
         generated = generated.to(dtype=torch.long, device=self.device)  # [seq_len]
 
         # All generated tokens are TEXT
-        modality_flag = torch.full((generated.shape[0],), ModalityFlag.TEXT, dtype=torch.long, device=self.device)
+        modality_flag = torch.full(
+            (generated.shape[0],),
+            ModalityFlag.TEXT,
+            dtype=torch.long,
+            device=self.device,
+        )
 
         # History update
         if keep_history:
             # For API parity with LiquidAudio: pass [1, T] tensors
             text_tokens_2d = generated.unsqueeze(0)  # [1, seq_len]
-            empty_audio = torch.empty((0, 0), dtype=torch.long, device=self.device)  # [0, 0]
+            empty_audio = torch.empty(
+                (0, 0), dtype=torch.long, device=self.device
+            )  # [0, 0]
             self._set_chat_history(chat, text_tokens_2d, empty_audio, modality_flag)
 
         return ModelResponse(
             chat=chat if keep_history else None,
-            generated_text_tokens=generated,                   # [seq_len]
-            generated_audio_tokens=torch.empty((0, 0), dtype=torch.long, device=self.device),  # [0, 0]
-            generated_modality_flag=modality_flag,             # [seq_len]
+            generated_text_tokens=generated,  # [seq_len]
+            generated_audio_tokens=torch.empty(
+                (0, 0), dtype=torch.long, device=self.device
+            ),  # [0, 0]
+            generated_modality_flag=modality_flag,  # [seq_len]
         )
 
     # -- embeddings API --
@@ -174,14 +222,18 @@ class TransformersCausalText(BaseMllmModel):
         static_embeddings: list[Tensor] = []
 
         for response in responses:
-            ids = response.generated_text_tokens.to(device=self.device, dtype=torch.long).unsqueeze(0)  # [1, T]
+            ids = response.generated_text_tokens.to(
+                device=self.device, dtype=torch.long
+            ).unsqueeze(0)  # [1, T]
             # Shape: [1, T, hidden]
             emb = emb_layer(ids)
             static_embeddings.append(emb.squeeze(0))  # [T, hidden]
 
         return static_embeddings
 
-    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+    def _get_contextual_embeddings(
+        self, static_embeddings: list[Tensor]
+    ) -> list[Tensor]:
         contextual: list[Tensor] = []
         for emb in static_embeddings:
             if emb.dim() == self._TOKEN_EMB_RANK:

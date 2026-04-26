@@ -1,5 +1,5 @@
 """A connector for text generation using a model conforming to
-   tranformers interface."""
+tranformers interface."""
 
 from .chat import TransformersTextChat
 from .model import TransformersCausalText

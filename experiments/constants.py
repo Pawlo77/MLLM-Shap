@@ -13,7 +13,6 @@ EXPERIMENTS_ROOT_DIR: Path = ensure_dir(Path(__file__).resolve().parent)
 DATA_DIR: Path = ensure_dir(EXPERIMENTS_ROOT_DIR / "data")
 
 
-# pylint: disable=too-few-public-methods
 class DatasetConfig(BaseModel):
     """Configuration for a dataset."""
 

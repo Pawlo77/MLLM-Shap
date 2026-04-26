@@ -1,4 +1,5 @@
 """Thin wrappers around Weights & Biases to keep imports isolated."""
+
 from __future__ import annotations
 
 import os
@@ -10,7 +11,9 @@ from .config import WandBConfig
 from .constants import WandbMode, InputModality, OutputModality
 
 
-def wandb_init_if_enabled(cfg: WandBConfig, run_name: str, run_config: Dict[str, Any]) -> Optional[Any]:
+def wandb_init_if_enabled(
+    cfg: WandBConfig, run_name: str, run_config: Dict[str, Any]
+) -> Optional[Any]:
     """Initialize a W&B run if enabled; return the run object or None."""
     if not cfg.enabled or cfg.mode == WandbMode.DISABLED.value:
         return None
@@ -75,7 +78,7 @@ def wandb_log_dir_incremental(
     run.log_artifact(art, aliases=["latest"])
 
 
-def log_audio_artifacts(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def log_audio_artifacts(
     run: Optional[Any],
     audio_dir: Path,
     input_modality: InputModality,
@@ -118,23 +121,25 @@ def log_audio_artifacts(  # pylint: disable=too-many-arguments,too-many-position
             )
 
             # Determine if input or output
-            is_input = "input" in audio_file.stem.lower()  # pylint: disable=magic-value-comparison
+            is_input = "input" in audio_file.stem.lower()
             key = f"audio/{sample_id}/{'input' if is_input else 'output'}"
 
             log_fn({key: audio})
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             print("Failed to log audio file:", audio_file)
             continue
 
     # Log metadata
     if metadata:
-        log_fn({
-            f"audio_metadata/{sample_id}": {
-                "input_modality": input_modality.value,
-                "output_modality": output_modality.value,
-                **metadata,
+        log_fn(
+            {
+                f"audio_metadata/{sample_id}": {
+                    "input_modality": input_modality.value,
+                    "output_modality": output_modality.value,
+                    **metadata,
+                }
             }
-        })
+        )
 
 
 def log_audio_files(
@@ -171,11 +176,11 @@ def log_audio_files(
                 sample_rate=sample_rate,
             )
 
-            is_input = "input" in audio_file.stem.lower()  # pylint: disable=magic-value-comparison
+            is_input = "input" in audio_file.stem.lower()
             key = f"audio/{sample_id}/{'input' if is_input else 'output'}"
 
             log_fn({key: audio})
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             print("Failed to log audio file:", audio_file)
             continue
 

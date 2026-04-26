@@ -27,11 +27,12 @@ class TransformersTextChat(BaseMllmChat):
     _text_ids: Tensor
     _TWO_DIMS: int = 2
     _SINGLE_BATCH: int = 1
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
-        "tokenizer",  # Large read-only object, safe to share across copies
-    })
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
+        {
+            "tokenizer",  # Large read-only object, safe to share across copies
+        }
+    )
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -48,7 +49,7 @@ class TransformersTextChat(BaseMllmChat):
             empty_turn_sequences=empty_turn_sequences,
             token_filter=token_filter,
             system_roles_setup=system_roles_setup,
-            get_new_chat_callable=get_new_chat_callable,  # type: ignore[arg-type]
+            get_new_chat_callable=get_new_chat_callable,
         )
         self._text_ids = torch.empty(0, dtype=torch.long, device=device)
 
@@ -64,8 +65,8 @@ class TransformersTextChat(BaseMllmChat):
         cls,
         full_mask: Tensor,
         text_mask_relative: Tensor,
-        audio_mask_relative: Tensor,   # unused (no audio)
-        chat: "TransformersTextChat",  # type: ignore[override]
+        audio_mask_relative: Tensor,  # unused (no audio)
+        chat: "TransformersTextChat",
     ) -> "TransformersTextChat":
         new_instance: "TransformersTextChat" = deepcopy(chat)
         new_instance.apply_text_mask(text_mask_relative)
@@ -103,13 +104,17 @@ class TransformersTextChat(BaseMllmChat):
         # Accept shape [T] or [1]; always return a single string.
         flat = text_tokens.detach().to("cpu").reshape(-1)
         raw_ids = flat.tolist()
-        ids: list[int] = [int(raw_ids)] if isinstance(raw_ids, int) else [int(x) for x in raw_ids]
+        ids: list[int] = (
+            [int(raw_ids)] if isinstance(raw_ids, int) else [int(x) for x in raw_ids]
+        )
         decoded = self.tokenizer.decode(ids, skip_special_tokens=False)
         if isinstance(decoded, list):
             return "".join(decoded)
         return decoded
 
-    def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:  # pragma: no cover - unsupported
+    def _decode_audio(
+        self, audio_tokens: Tensor
+    ) -> Tensor | None:  # pragma: no cover - unsupported
         return None  # decoding audio is impossible here
 
     def _add_text(self, text: str) -> int:
@@ -131,8 +136,8 @@ class TransformersTextChat(BaseMllmChat):
     def _append(
         self,
         text: Tensor,
-        audio_out: Tensor,              # ignored for text-only
-        modality_flag: Tensor,          # ignored for text-only
+        audio_out: Tensor,  # ignored for text-only
+        modality_flag: Tensor,  # ignored for text-only
         history_tracking_mode: ModelHistoryTrackingMode,
     ) -> tuple[int, int]:
         if history_tracking_mode == ModelHistoryTrackingMode.AUDIO:
@@ -169,7 +174,9 @@ class TransformersTextChat(BaseMllmChat):
     def _end_turn(self) -> None:
         return
 
-    def _get_tokens_sequences_to_exclude(self, phrases_to_exclude: set[str]) -> list[Tensor]:
+    def _get_tokens_sequences_to_exclude(
+        self, phrases_to_exclude: set[str]
+    ) -> list[Tensor]:
         seqs: list[Tensor] = []
         for phrase in phrases_to_exclude:
             ids = self.tokenizer.encode(phrase, add_special_tokens=False)

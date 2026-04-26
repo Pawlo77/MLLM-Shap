@@ -48,7 +48,6 @@ def reconstruct_spec(run: "Run", target_path: Path) -> None:
         print(f"  [!] Failed to reconstruct spec.json: {e}")
 
 
-# pylint: disable=too-many-locals
 def sync_artifacts(
     entity: str, project: str, output_root: str, experiment_filter: Optional[str] = None
 ) -> None:
