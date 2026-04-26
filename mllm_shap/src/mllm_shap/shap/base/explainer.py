@@ -15,7 +15,6 @@ from .shap_explainer import BaseShapExplainer
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class _ExplainerConfig(BaseModel):
     """
     Configuration model for Explainer.
@@ -61,9 +60,8 @@ class BaseExplainer(ABC):
         self.shap_explainer = __config.shap_explainer
         self.model = __config.model
 
-    # pylint: disable=magic-value-comparison
     @abstractmethod
-    def __call__(  # type: ignore[return]
+    def __call__(
         self,
         *_: Any,
         chat: BaseMllmChat,

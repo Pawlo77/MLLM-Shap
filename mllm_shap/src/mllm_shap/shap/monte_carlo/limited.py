@@ -3,6 +3,5 @@
 from ._base import BaseMcShapExplainer
 
 
-# pylint: disable=too-few-public-methods
 class LimitedMcShapExplainer(BaseMcShapExplainer):
     """Limited Monte Carlo SHAP implementation."""

@@ -7,7 +7,6 @@ from ..connectors.base.chat import BaseMllmChat
 from ..connectors.base.model_response import ModelResponse
 
 
-# pylint: disable=too-few-public-methods
 class ExplainerResult(BaseModel):
     """Result model for Explainer."""
 

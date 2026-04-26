@@ -7,7 +7,6 @@ import pandas as pd
 import seaborn as sns
 
 
-# pylint: disable=too-many-positional-arguments,too-many-arguments
 def plot_token_count_distribution(
     plot_df: pd.DataFrame,
     column: str = "count_text_tokens",

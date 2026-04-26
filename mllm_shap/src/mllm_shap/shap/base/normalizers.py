@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from torch import Tensor
 
 
-# pylint: disable=too-few-public-methods
 class BaseNormalizer(ABC):
     """Base class for SHAP value normalizers."""
 

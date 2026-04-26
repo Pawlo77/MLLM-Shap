@@ -72,11 +72,11 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             self.eval_called = True
             return self
 
-        def generate_sequential(self, *args: Any, **kwargs: Any):  # noqa: ANN001 - signature determined by caller
+        def generate_sequential(self, *args: Any, **kwargs: Any):
             self.generate_sequential_calls.append(kwargs)
             yield from self.sequential_output
 
-        def generate_interleaved(self, *args: Any, **kwargs: Any):  # noqa: ANN001
+        def generate_interleaved(self, *args: Any, **kwargs: Any):
             self.generate_interleaved_calls.append(kwargs)
             yield from self.interleaved_output
 
@@ -124,10 +124,10 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             self.update(chat_kwargs)
             created_chats.append(self)
 
-        def new_turn(self, role: Role) -> None:  # type: ignore[override]
+        def new_turn(self, role: Role) -> None:
             self.new_turn_calls.append(role)
 
-        def append(  # type: ignore[override]
+        def append(
             self,
             *,
             text: Tensor,
@@ -144,10 +144,10 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
                 )
             )
 
-        def end_turn(self) -> None:  # type: ignore[override]
+        def end_turn(self) -> None:
             self.end_turn_calls += 1
 
-        def __deepcopy__(self, memo: dict[int, Any]) -> "ChatStub":  # noqa: D401
+        def __deepcopy__(self, memo: dict[int, Any]) -> "ChatStub":
             copied = ChatStub(
                 device=self.torch_device,
                 processor=self.processor,
@@ -161,19 +161,19 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             return copied
 
         @cached_property
-        def input_tokens(self) -> list[Tensor]:  # type: ignore[override]
+        def input_tokens(self) -> list[Tensor]:
             return []
 
         @cached_property
-        def tokens_modality_flag(self) -> Tensor:  # type: ignore[override]
+        def tokens_modality_flag(self) -> Tensor:
             return torch.zeros(0, dtype=torch.int8, device=self.torch_device)
 
         @cached_property
-        def text_tokens(self) -> Tensor:  # type: ignore[override]
+        def text_tokens(self) -> Tensor:
             return torch.zeros(0, dtype=torch.long, device=self.torch_device)
 
         @cached_property
-        def audio_tokens(self) -> Tensor:  # type: ignore[override]
+        def audio_tokens(self) -> Tensor:
             return torch.zeros(0, dtype=torch.long, device=self.torch_device)
 
     monkeypatch.setattr(liquid_model, "LFM2AudioProcessor", ProcessorStub)
@@ -181,7 +181,7 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(liquid_model, "LiquidAudioChat", ChatStub)
     monkeypatch.setattr(liquid_model, "LFMModality", FakeLFMModality)
     # Ensure the patched processor base is used by the subclass
-    liquid_model._PatchedLFM2AudioProcessor.__bases__ = (ProcessorStub,)  # type: ignore[misc]
+    liquid_model._PatchedLFM2AudioProcessor.__bases__ = (ProcessorStub,)
 
     def factory(
         device: torch.device = torch.device("cpu"),
@@ -202,7 +202,7 @@ def test_patched_processor_device_property() -> None:
     processor = liquid_model._PatchedLFM2AudioProcessor.__new__(
         liquid_model._PatchedLFM2AudioProcessor
     )
-    processor._PatchedLFM2AudioProcessor__device = None  # type: ignore[attr-defined]
+    processor._PatchedLFM2AudioProcessor__device = None
     with pytest.raises(ValueError, match="Device not set"):
         _ = processor.device
 

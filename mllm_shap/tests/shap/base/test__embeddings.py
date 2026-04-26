@@ -9,7 +9,7 @@ from torch import Tensor
 class DummyReducer(BaseEmbeddingReducer):
     """Concrete subclass for testing BaseEmbeddingReducer."""
 
-    def __call__(self, embeddings: list[Tensor]) -> Tensor:  # type: ignore[override]
+    def __call__(self, embeddings: list[Tensor]) -> Tensor:
         return self._prepare(embeddings)
 
 
@@ -35,7 +35,7 @@ class TestBaseEmbeddingReducer:
     def test_call_raises_if_embedding_not_tensor(self) -> None:
         """Should raise ValueError if any embedding is not a torch.Tensor."""
         reducer = DummyReducer()
-        embeddings = [torch.randn(2, 3), "not_a_tensor"]  # type: ignore[list-item]
+        embeddings = [torch.randn(2, 3), "not_a_tensor"]
         with pytest.raises(ValueError, match="Embedding at index 1 is not a Tensor"):
             _ = reducer(embeddings)
 

@@ -297,3 +297,55 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         sims = explainer._get_similarities(responses=[])
         assert isinstance(sims, Tensor)
         assert sims.numel() == 0
+
+    def test_get_start_raises_without_M_matrix(self) -> None:
+        """Private __get_start should fail when M matrix is missing."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        with pytest.raises(ValueError, match="Matrix M is not initialized"):
+            _ = explainer._BaseComplementaryNeymanShapExplainer__get_start()
+
+    def test_update_M_position_requires_M_matrix(self) -> None:
+        """Private __update_M_position should fail when M matrix is missing."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        with pytest.raises(RuntimeError, match="M matrix must be initialized"):
+            _ = explainer._BaseComplementaryNeymanShapExplainer__update_M_position()
+
+    def test_update_M_position_returns_true_when_completed(self) -> None:
+        """__update_M_position should report completion when M reached initial budget."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.full((2, 2), fill_value=2.0)
+        explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+        done = explainer._BaseComplementaryNeymanShapExplainer__update_M_position()
+        assert done is True
+
+    def test_calculate_C_matrix_raises_for_odd_masks_count(self) -> None:
+        """C matrix update should reject non-paired masks."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.ones((3, 3), dtype=torch.float32)
+        explainer._C = torch.zeros_like(explainer._M)
+        masks = torch.tensor([[True, False, True]], dtype=torch.bool)
+        with pytest.raises(ValueError, match="complementary pairs"):
+            BaseComplementaryNeymanShapExplainer._calculate_C_matrix(
+                explainer,
+                masks=masks,
+                similarities=torch.tensor([1.0], dtype=torch.float32),
+                device=torch.device("cpu"),
+            )
+
+    def test_calculate_C_matrix_raises_for_non_complementary_pairs(self) -> None:
+        """C matrix update should reject invalid pair relationship."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.ones((3, 3), dtype=torch.float32)
+        explainer._C = torch.zeros_like(explainer._M)
+        masks = torch.tensor(
+            [[True, False, True], [True, False, True]], dtype=torch.bool
+        )
+        with pytest.raises(ValueError, match="not complementary pairs"):
+            BaseComplementaryNeymanShapExplainer._calculate_C_matrix(
+                explainer,
+                masks=masks,
+                similarities=torch.tensor([1.0, 0.5], dtype=torch.float32),
+                device=torch.device("cpu"),
+            )

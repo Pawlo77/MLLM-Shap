@@ -1,9 +1,12 @@
 """Tests for the HierarchicalExplainer module."""
 
 import math
+from types import SimpleNamespace
 
 import pytest
 import torch
+from mllm_shap.errors import ValidationError
+from mllm_shap.shap.normalizers import IdentityNormalizer, MinMaxNormalizer
 from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.hierarchical.enums import Mode
 from mllm_shap.shap.precise import PreciseShapExplainer
@@ -218,3 +221,90 @@ class TestHierarchicalExplainerCore:
             n=n, k=k
         )
         assert buckets.max().item() == math.ceil(n / k)
+
+    def test_invalid_importance_sampling_min_fraction_raises(self) -> None:
+        """Out-of-range importance fraction should raise validation error."""
+        with pytest.raises(ValidationError, match="importance_sampling_min_fraction"):
+            HierarchicalExplainer(
+                k=4,
+                shap_explainer=DummyApproxExplainer(fraction=0.5),
+                model=DummyModel(),
+                importance_sampling_min_fraction=0.0,
+            )
+
+    def test_first_layer_explainer_type_validation(self) -> None:
+        """Non-explainer first layer object should raise validation error."""
+        with pytest.raises(ValidationError, match="first_layer_explainer"):
+            HierarchicalExplainer(
+                k=4,
+                shap_explainer=DummyApproxExplainer(fraction=0.5),
+                model=DummyModel(),
+                first_layer_explainer="bad",
+            )
+
+    def test_warns_when_normalizer_is_not_minmax(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Constructor should log warning when main explainer normalizer is not MinMax."""
+        _ = HierarchicalExplainer(
+            k=4,
+            shap_explainer=DummyApproxExplainer(
+                fraction=0.5, normalizer=IdentityNormalizer()
+            ),
+            model=DummyModel(),
+        )
+        captured = capsys.readouterr()
+        assert "recommended to use MinMaxNormalizer" in captured.err
+
+    def test_warns_when_first_layer_normalizer_differs(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Constructor should log warning for mismatched normalizers."""
+        main_explainer = DummyApproxExplainer(
+            fraction=0.5, normalizer=MinMaxNormalizer()
+        )
+        first_layer = PreciseShapExplainer(normalizer=IdentityNormalizer())
+        _ = HierarchicalExplainer(
+            k=4,
+            shap_explainer=main_explainer,
+            first_layer_explainer=first_layer,
+            model=DummyModel(),
+        )
+        captured = capsys.readouterr()
+        assert "uses the same normalizer" in captured.err
+
+    def test_calculate_group_shap_values_single_token_short_circuit(self) -> None:
+        """Single-token mask should return one-hot tensor without model call."""
+        explainer = HierarchicalExplainer(
+            k=4,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+        mask = torch.tensor([False, True, False], dtype=torch.bool)
+        out = explainer._HierarchicalExplainer__calculate_group_normalized_shap_values(
+            chat=chat,
+            response=response,
+            shap_values_mask=mask,
+        )
+        assert torch.equal(out, torch.tensor([0.0, 1.0, 0.0]))
+
+    def test_calculate_group_shap_values_single_group_short_circuit(self) -> None:
+        """Single group id should return nan-filled vector with group set to 1."""
+        explainer = HierarchicalExplainer(
+            k=4,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+        group_ids = torch.tensor([0, 1, 1], dtype=torch.long)
+        out = explainer._HierarchicalExplainer__calculate_group_normalized_shap_values(
+            chat=chat,
+            response=response,
+            group_ids=group_ids,
+        )
+        assert torch.isnan(out[0])
+        assert out[1].item() == 1.0
+        assert out[2].item() == 1.0

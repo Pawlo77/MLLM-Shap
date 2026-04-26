@@ -76,7 +76,6 @@ class Mock(BaseMllmModel):
         kwargs["tokenizer"] = self.processor
         return MockChat(device=self.device, **kwargs)
 
-    # pylint: disable=too-many-locals
     def generate(
         self,
         chat: BaseMllmChat,
@@ -84,6 +83,8 @@ class Mock(BaseMllmModel):
         model_config: ModelConfig = ModelConfig(),
         keep_history: bool = False,
     ) -> ModelResponse:
+        # Defensive copy to avoid cross-call mutation via shared default object.
+        model_config = model_config.model_copy(deep=True)
         super().generate(
             chat=chat,
             max_new_tokens=max_new_tokens,

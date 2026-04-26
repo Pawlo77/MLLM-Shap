@@ -1,5 +1,5 @@
 # As high-level API has some duplicate code with :class:`Explainer`,
-# pylint: disable=duplicate-code
+
 """Hierarchical SHAP explainer module."""
 
 import math
@@ -15,6 +15,7 @@ from tqdm.auto import tqdm
 from ...connectors.base.explainer_cache import ExplainerCache
 from ...connectors.base.chat import BaseMllmChat
 from ...connectors.base.model_response import ModelResponse
+from ...errors import ValidationError
 from ...utils.logger import get_logger
 from ...utils.other import extend_tensor
 from ..base.explainer import BaseExplainer
@@ -29,7 +30,6 @@ from .graph import GraphNode
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods,too-many-instance-attributes
 class HierarchicalExplainer(BaseExplainer):
     """
     SHAP explainer implementing hierarchical approach for speed-up.
@@ -73,7 +73,6 @@ class HierarchicalExplainer(BaseExplainer):
     _progress_bar: tqdm | None = None
     """Progress bar for explanation process."""
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         shap_explainer: BaseShapExplainer | None = None,
@@ -117,8 +116,8 @@ class HierarchicalExplainer(BaseExplainer):
                 "It is strongly recommended to use MinMaxNormalizer with HierarchicalExplainer for correct results."
             )
 
-        if k < 2 or int(k) != k:  # pylint: disable=magic-value-comparison
-            raise ValueError("k must be an integer, at least 2.")
+        if k < 2 or int(k) != k:
+            raise ValidationError("k must be an integer, at least 2.")
         self.k = k
 
         self.mode = mode
@@ -127,7 +126,7 @@ class HierarchicalExplainer(BaseExplainer):
             not isinstance(self.shap_explainer, BaseShapApproximation)
             or self.shap_explainer.fraction is None
         ):
-            raise ValueError(
+            raise ValidationError(
                 "use_importance_sampling is True, but shap_explainer does not support fraction-based approximation."
             )
         self.use_importance_sampling = use_importance_sampling
@@ -135,16 +134,18 @@ class HierarchicalExplainer(BaseExplainer):
         if not isinstance(importance_sampling_min_fraction, float) or not (
             0.0 < importance_sampling_min_fraction <= 1.0
         ):
-            raise ValueError("importance_sampling_min_fraction must be in (0.0, 1.0].")
+            raise ValidationError(
+                "importance_sampling_min_fraction must be in (0.0, 1.0]."
+            )
         self.importance_sampling_min_fraction = importance_sampling_min_fraction
 
         if first_layer_explainer is not None:
             if not isinstance(first_layer_explainer, BaseShapExplainer):
-                raise ValueError(
+                raise ValidationError(
                     "first_layer_explainer must be an instance of BaseShapExplainer."
                 )
             if (
-                not shap_explainer.normalizer.__class__  # type: ignore[union-attr]
+                not self.shap_explainer.normalizer.__class__
                 == first_layer_explainer.normalizer.__class__
             ):
                 logger.warning(
@@ -178,7 +179,6 @@ class HierarchicalExplainer(BaseExplainer):
         if self._progress_bar is not None:
             self._progress_bar.update(explainer.total_n_calls)
 
-    # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __calculate_group_normalized_shap_values(
         self,
         chat: BaseMllmChat,
@@ -211,9 +211,11 @@ class HierarchicalExplainer(BaseExplainer):
             ValueError: If neither shap_values_mask nor group_ids is provided.
         """
         if shap_values_mask is None and group_ids is None:
-            raise ValueError("Either shap_values_mask or group_ids must be provided.")
+            raise ValidationError(
+                "Either shap_values_mask or group_ids must be provided."
+            )
         # avoid warnings about invalid cache
-        del response.chat.cache  # type: ignore[union-attr]
+        del response.chat.cache
 
         if shap_values_mask is not None:
             # no need to explain a single token
@@ -282,7 +284,6 @@ class HierarchicalExplainer(BaseExplainer):
         self.__update_progress(explainer=self.shap_explainer)
         return HierarchicalExplainer.__extract_normalized_shap_values(response=response)
 
-    # pylint: disable=too-many-locals
     def __compute(
         self,
         chat: BaseMllmChat,
@@ -338,9 +339,9 @@ class HierarchicalExplainer(BaseExplainer):
 
         subgroup_size = math.ceil(n / subgroups_num)
         group_ids = torch.zeros_like(group_mask, dtype=torch.long)
-        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(  # noqa: E203
+        group_ids[start_idx : end_idx + 1] = HierarchicalExplainer.__repeated_buckets(
             n=n, k=subgroup_size
-        )  # noqa: E203
+        )
 
         # calculate SHAP values for this level
         normalized_shap_values = self.__calculate_group_normalized_shap_values(
@@ -369,7 +370,7 @@ class HierarchicalExplainer(BaseExplainer):
                     subgroup_id,
                 )
                 if _verbose:
-                    computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
+                    computation_graph.children.append(GraphNode())
                 continue
 
             subgroup_shap_values, subgroup_computation_graph = self.__compute(
@@ -382,7 +383,7 @@ class HierarchicalExplainer(BaseExplainer):
             )
             normalized_shap_values[subgroup_mask] *= subgroup_shap_values[subgroup_mask]
             if _verbose:
-                computation_graph.children.append(subgroup_computation_graph)  # type: ignore
+                computation_graph.children.append(subgroup_computation_graph)
 
         return normalized_shap_values, computation_graph
 
@@ -463,11 +464,11 @@ class HierarchicalExplainer(BaseExplainer):
             group_mask = group_ids == group_id
             start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
             subgroup_size = math.ceil(n / self.__get_subgroups_num(n=n))
-            group_ids_split[start_idx : end_idx + 1] = (  # noqa: E203
+            group_ids_split[start_idx : end_idx + 1] = (
                 HierarchicalExplainer.__repeated_buckets(n=n, k=subgroup_size)
                 + global_offset
             )
-            global_offset = int(group_ids_split[start_idx : end_idx + 1].max().item())  # noqa: E203
+            global_offset = int(group_ids_split[start_idx : end_idx + 1].max().item())
         n_groups = int(group_ids_split.max().item()) + 1
 
         logger.info("Total number of groups at first level: %d", n_groups)
@@ -527,7 +528,7 @@ class HierarchicalExplainer(BaseExplainer):
                     group_id,
                 )
                 if _verbose:
-                    self.computation_graph.children.append(GraphNode())  # type: ignore[union-attr]
+                    self.computation_graph.children.append(GraphNode())
                 continue
 
             group_shap_values, subgroup_computation_graph = self.__compute(
@@ -540,7 +541,7 @@ class HierarchicalExplainer(BaseExplainer):
             )
             normalized_shap_values[group_mask] *= group_shap_values[group_mask]
             if _verbose:
-                self.computation_graph.children.append(subgroup_computation_graph)  # type: ignore
+                self.computation_graph.children.append(subgroup_computation_graph)
 
         return normalized_shap_values
 
@@ -746,5 +747,5 @@ class HierarchicalExplainer(BaseExplainer):
         Returns:
             A tensor containing the normalized SHAP values for explainable tokens.
         """
-        cache = cast(ExplainerCache, response.chat.cache)  # type: ignore[union-attr]
+        cache = cast(ExplainerCache, response.chat.cache)
         return cache.normalized_values[: cache.n]  # do not return for response tokens

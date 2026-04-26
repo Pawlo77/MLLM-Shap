@@ -1,5 +1,3 @@
-# pylint: disable=too-few-public-methods
-
 """Embedding calculation and reduction strategies for SHAP explanations."""
 
 import re
@@ -93,7 +91,7 @@ class FirstReducer(BaseEmbeddingReducer):
         return torch.stack(embeddings, dim=0)
 
 
-class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instance-attributes
+class CustomEmbedding(BaseExternalEmbedding):
     """
     External embeddings using a **local** encoder model (e.g., E5/SBERT).
 
@@ -113,7 +111,6 @@ class CustomEmbedding(BaseExternalEmbedding):  # pylint: disable=too-many-instan
     l2_normalize: bool
     _hidden_size: int
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         *,
