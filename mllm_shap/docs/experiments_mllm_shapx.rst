@@ -1,8 +1,8 @@
-mllm_shapx - Experiments Runner
-==============================
+🧪 Experiments Runner
+=====================
 
-Overview
---------
+Overview ✨
+-----------
 
 ``mllm_shapx`` is the configuration-driven experiment runner used in this monorepo to
 execute reproducible SHAP runs (exact and sampling-based) over curated dataset shards.
@@ -22,8 +22,8 @@ Below is a diagram showing DAG of runner operation:
    :align: center
    :class: padded-image
 
-Where it lives
---------------
+Where it lives 📍
+-----------------
 
 In this repository, the code lives under:
 
@@ -33,10 +33,16 @@ The CLI entrypoint is:
 
 - ``python -m mllm_shapx.cli``
 
-Environment / setup
--------------------
+Environment / setup ⚙️
+----------------------
 
 The runner is designed to work in the monorepo environment.
+
+Preferred setup path:
+
+.. code-block:: bash
+
+   make install
 
 If you run ``mllm_shapx`` without installing the ``mllm_shap`` package into the active
 environment, set ``MLLM_SHAP_SRC`` to point at the package sources so imports resolve:
@@ -50,21 +56,21 @@ A minimal example environment file is provided at:
 
 - ``experiments/mllm_shapx/.example.env``
 
-Running the CLI
----------------
+Running the CLI 🧰
+------------------
 
 Validate a config
 ^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-   uv run python -m mllm_shapx.cli validate --config experiments/mllm_shapx/configs/mc_minimal.json
+   python -m mllm_shapx.cli validate --config experiments/mllm_shapx/configs/mc_minimal.json
 
 Optionally, validate and also test that the dataset shard can be fetched/read:
 
 .. code-block:: bash
 
-   uv run python -m mllm_shapx.cli validate \
+   python -m mllm_shapx.cli validate \
      --config experiments/mllm_shapx/configs/mc_minimal.json \
      --check-dataset
 
@@ -73,7 +79,7 @@ Run experiments
 
 .. code-block:: bash
 
-   uv run python -m mllm_shapx.cli run --config experiments/mllm_shapx/configs/mc_minimal.json
+   python -m mllm_shapx.cli run --config experiments/mllm_shapx/configs/mc_minimal.json
 
 Resume an interrupted run
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,7 +89,7 @@ results on disk:
 
 .. code-block:: bash
 
-   uv run python -m mllm_shapx.cli run \
+   python -m mllm_shapx.cli run \
      --config experiments/mllm_shapx/configs/mc_minimal.json \
      --resume
 
@@ -99,8 +105,8 @@ For cluster execution, the repository includes Slurm wrappers under:
 - ``experiments/run_mllm_shapx.sbatch``
 - ``experiments/run_mllm_shapx_exact.sbatch``
 
-Outputs and artifacts
----------------------
+Outputs and artifacts 📦
+------------------------
 
 For each expanded (concrete) run, ``mllm_shapx`` creates a run directory:
 
@@ -117,8 +123,8 @@ Key files:
 - ``samples/*.json``: per-row serialized results (attributions + metadata)
 - ``summary/aggregate_metrics.json``: run-level aggregates (runtime and attribution summaries)
 
-Configuration model (high level)
---------------------------------
+Configuration model (high level) 🧭
+-----------------------------------
 
 The runner parses a JSON config into an ``ExperimentSet`` dataclass (see
 ``experiments/mllm_shapx/config.py``). At a high level:
@@ -142,8 +148,8 @@ See ``experiments/mllm_shapx/constants.py``:
 - Modes: ``CONTEXTUAL`` and ``STATIC``
 - Dataset subsets: ``single_sentence``, ``multi_lingual``, ``multi_sentence``
 
-Weights & Biases integration
-----------------------------
+Weights & Biases integration 📊
+-------------------------------
 
 If enabled in the config, W&B logging is initialized once per run and:
 
@@ -158,8 +164,8 @@ An example of a run logged to W&B:
    :align: center
    :class: padded-image
 
-Troubleshooting
----------------
+Troubleshooting 🛠️
+------------------
 
 - Import errors for ``mllm_shap``: set ``MLLM_SHAP_SRC`` or install the package into the environment.
 - Stuck/partial runs: use ``--resume``; to restart cleanly remove the run’s ``checkpoint.json``.

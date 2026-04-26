@@ -13,7 +13,6 @@ from ..base.approx import BaseShapApproximation
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class BaseMcShapExplainer(BaseShapApproximation, ABC):
     """Base Monte Carlo SHAP implementation class"""
 
@@ -24,7 +23,9 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
                 if self.include_minimal_masks:
                     # Minimal: only single-feature masks and empty mask
                     return n + 1
-                raise ValueError("num_samples cannot be -1 when include_minimal_masks is False.")
+                raise ValueError(
+                    "num_samples cannot be -1 when include_minimal_masks is False."
+                )
             if self.num_samples < n + 1:
                 logger.warning(
                     (
@@ -53,8 +54,11 @@ class BaseMcShapExplainer(BaseShapApproximation, ABC):
             )
         return r
 
-    # pylint: disable=unused-argument
-    def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
+    def _calculate_shap_values(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> Tensor:
         included_mean = (masks * similarities[:, None]).sum(dim=0) / masks.sum(dim=0)
-        excluded_mean = ((~masks) * similarities[:, None]).sum(dim=0) / (~masks).sum(dim=0)
+        excluded_mean = ((~masks) * similarities[:, None]).sum(dim=0) / (~masks).sum(
+            dim=0
+        )
         return included_mean - excluded_mean

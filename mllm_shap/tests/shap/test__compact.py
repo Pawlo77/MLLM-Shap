@@ -43,7 +43,9 @@ def explainer(dummy_model: BaseMllmModel, dummy_shap: BaseShapExplainer) -> Expl
 class TestExplainerConfig:
     """Tests for the _ExplainerConfig validation model."""
 
-    def test_valid_config(self, dummy_model: BaseMllmModel, dummy_shap: BaseShapExplainer) -> None:
+    def test_valid_config(
+        self, dummy_model: BaseMllmModel, dummy_shap: BaseShapExplainer
+    ) -> None:
         """Should initialize with valid types."""
         cfg = _ExplainerConfig(model=dummy_model, shap_explainer=dummy_shap)
         assert isinstance(cfg.model, BaseMllmModel)
@@ -52,7 +54,7 @@ class TestExplainerConfig:
     def test_invalid_types_raise(self) -> None:
         """Should raise if invalid argument types are passed."""
         with pytest.raises(Exception):
-            _ExplainerConfig(model="notamodel", shap_explainer="notexplainer")  # type: ignore[arg-type]
+            _ExplainerConfig(model="notamodel", shap_explainer="notexplainer")
 
 
 class TestExplainerResult:
@@ -93,7 +95,9 @@ class TestExplainerResult:
 class TestExplainer:
     """Tests for the Explainer class."""
 
-    def test_init_with_custom_shap_explainer(self, dummy_model: BaseMllmModel, dummy_shap: BaseShapExplainer) -> None:
+    def test_init_with_custom_shap_explainer(
+        self, dummy_model: BaseMllmModel, dummy_shap: BaseShapExplainer
+    ) -> None:
         """Should correctly initialize with custom SHAP explainer."""
         expl = Explainer(model=dummy_model, shap_explainer=dummy_shap)
         assert expl.model is dummy_model
@@ -104,7 +108,9 @@ class TestExplainer:
         expl = Explainer(model=dummy_model)
         assert isinstance(expl.shap_explainer, PreciseShapExplainer)
 
-    def test_call_returns_explainer_result(self, explainer: Explainer, dummy_chat: BaseMllmChat) -> None:
+    def test_call_returns_explainer_result(
+        self, explainer: Explainer, dummy_chat: BaseMllmChat
+    ) -> None:
         """Should return ExplainerResult after successful explanation."""
         result = explainer(chat=dummy_chat)
 
@@ -113,21 +119,27 @@ class TestExplainer:
         assert isinstance(result.source_chat, BaseMllmChat)
         assert isinstance(result.history, list) or result.history is None
 
-    def test_invalid_generation_kwargs_raise(self, explainer: Explainer, dummy_chat: BaseMllmChat) -> None:
+    def test_invalid_generation_kwargs_raise(
+        self, explainer: Explainer, dummy_chat: BaseMllmChat
+    ) -> None:
         """Should raise ValueError if forbidden keys in generation_kwargs."""
         with pytest.raises(ValueError):
             explainer(chat=dummy_chat, generation_kwargs={"chat": dummy_chat})
         with pytest.raises(ValueError):
             explainer(chat=dummy_chat, generation_kwargs={"keep_history": True})
 
-    def test_invalid_explanation_kwargs_raise(self, explainer: Explainer, dummy_chat: BaseMllmChat) -> None:
+    def test_invalid_explanation_kwargs_raise(
+        self, explainer: Explainer, dummy_chat: BaseMllmChat
+    ) -> None:
         """Should raise ValueError if forbidden keys in explanation_kwargs."""
         with pytest.raises(ValueError):
             explainer(chat=dummy_chat, base_chat=dummy_chat)
         with pytest.raises(ValueError):
             explainer(chat=dummy_chat, model=explainer.model)
 
-    def test_model_generate_and_explainer_are_called(self, dummy_chat: BaseMllmChat) -> None:
+    def test_model_generate_and_explainer_are_called(
+        self, dummy_chat: BaseMllmChat
+    ) -> None:
         """Should call model.generate and shap_explainer.__call__ with proper arguments."""
         shap_called = {}
         model_called = {}

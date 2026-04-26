@@ -9,7 +9,6 @@ from torch import Tensor
 from .base.shap_explainer import BaseShapExplainer
 
 
-# pylint: disable=too-few-public-methods
 class PreciseShapExplainer(BaseShapExplainer):
     """Precise SHAP implementation generating all possible masks."""
 
@@ -39,7 +38,6 @@ class PreciseShapExplainer(BaseShapExplainer):
     def _get_num_splits(self, n: int) -> int:
         return int(2**n - 1)  # exclude all-true mask
 
-    # pylint: disable=too-many-locals
     def _calculate_shap_values(
         self,
         masks: Tensor,
@@ -56,7 +54,9 @@ class PreciseShapExplainer(BaseShapExplainer):
         factorials = torch.cumprod(indices, dim=0)
 
         # Precompute hash values for all subsets
-        subset_hashes = (masks * (2 ** torch.arange(num_features, device=device))).sum(dim=1)
+        subset_hashes = (masks * (2 ** torch.arange(num_features, device=device))).sum(
+            dim=1
+        )
         sorted_hashes, sort_idx = subset_hashes.sort()
         sorted_outputs = similarities[sort_idx]
 
@@ -75,8 +75,13 @@ class PreciseShapExplainer(BaseShapExplainer):
             # Corresponding subsets with i removed - OUT = {S \ {i} : S ∈ IN}
             excluded_subsets = included_subsets.clone()
             excluded_subsets[:, i] = False
-            excluded_hash = (excluded_subsets * (2 ** torch.arange(num_features, device=masks.device))).sum(dim=1)
-            excluded_outputs = sorted_outputs[torch.searchsorted(sorted_hashes, excluded_hash)]  # f(OUT)
+            excluded_hash = (
+                excluded_subsets
+                * (2 ** torch.arange(num_features, device=masks.device))
+            ).sum(dim=1)
+            excluded_outputs = sorted_outputs[
+                torch.searchsorted(sorted_hashes, excluded_hash)
+            ]  # f(OUT)
 
             # Corresponding subset sizes - |S| for S ∈ OUT
             excluded_subset_sizes = subset_sizes[include_mask] - 1
@@ -91,7 +96,9 @@ class PreciseShapExplainer(BaseShapExplainer):
         return shap_values
 
     @staticmethod
-    def __get_splits_generator(n: int, device: torch.device) -> Generator[Tensor, None, None]:
+    def __get_splits_generator(
+        n: int, device: torch.device
+    ) -> Generator[Tensor, None, None]:
         """
         Generates all possible binary masks of a given length, excluding the all-ones mask.
 

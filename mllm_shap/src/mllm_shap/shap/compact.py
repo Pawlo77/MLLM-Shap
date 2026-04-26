@@ -15,7 +15,6 @@ from .precise import PreciseShapExplainer
 logger: Logger = get_logger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class Explainer(BaseExplainer):
     """
     Convenience client class for SHAP explanation.
@@ -76,7 +75,7 @@ class Explainer(BaseExplainer):
         return ExplainerResult(
             source_chat=chat,
             # chat is set as generate was called with keep_history=True
-            full_chat=response.chat,  # type: ignore[arg-type]
+            full_chat=response.chat,
             history=history,
             total_n_calls=self.shap_explainer.total_n_calls,
         )

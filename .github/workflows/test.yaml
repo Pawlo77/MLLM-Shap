@@ -3,10 +3,10 @@ name: Pytest
 on:
   push:
     branches:
-        - main
+      - main
   pull_request:
     branches:
-        - main
+      - main
 
 jobs:
   pre-commit:
@@ -29,8 +29,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Sync deps
-        run: uv sync --locked --all-groups
+        run: make install
 
       - name: Run Pytest
-        working-directory: mllm_shap/tests
-        run: uv run pytest
+        run: make tests

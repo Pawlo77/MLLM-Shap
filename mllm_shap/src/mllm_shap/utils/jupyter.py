@@ -20,7 +20,7 @@ def audio_html(content: bytes) -> str:
         str: HTML representation of the audio.
     """
     a = display_audio(content)
-    return str(a._repr_html_())  # type: ignore[no-untyped-call] # pylint: disable=protected-access
+    return str(a._repr_html_())
 
 
 def display_shap_colors_df(
@@ -43,10 +43,14 @@ def display_shap_colors_df(
     Returns:
         pd.Styler: Styled DataFrame with background gradient.
     """
-    return df.style.background_gradient(subset=[shap_column_name], cmap=cmap, low=low, high=high, **kwargs)
+    return df.style.background_gradient(
+        subset=[shap_column_name], cmap=cmap, low=low, high=high, **kwargs
+    )
 
 
-def display_shap_colors_df_audio(df: pd.DataFrame, audio_column_name: str = "Audio", **kwargs: Any) -> Styler:
+def display_shap_colors_df_audio(
+    df: pd.DataFrame, audio_column_name: str = "Audio", **kwargs: Any
+) -> Styler:
     """
     Set background gradient colors for SHAP values in a DataFrame with audio.
     Render audio in the specified audio column for jupyter notebooks.
@@ -72,7 +76,7 @@ def plot_distribution(values: Tensor, bins: int = 50, **kwargs: Any) -> None:
         bins: Number of bins for the histogram.
         **kwargs: Additional arguments for matplotlib.pyplot.hist.
     """
-    import matplotlib.pyplot as plt  # pylint: disable=import-outside-toplevel
+    import matplotlib.pyplot as plt
 
     # Move to CPU & flatten for plotting
     values_np = values.detach().cpu().to(torch.float32).numpy().flatten()

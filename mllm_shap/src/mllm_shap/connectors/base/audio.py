@@ -19,7 +19,7 @@ from transformers import logging as hf_logging
 from ...utils.audio import TorchAudioHandler
 from ...utils.logger import get_logger
 
-hf_logging.set_verbosity_error()  # type: ignore[no-untyped-call]
+hf_logging.set_verbosity_error()
 
 logger: Logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ ASCII_SPACE = " "
 
 
 @dataclass
-class AudioSegment:  # pylint: disable=too-many-instance-attributes
+class AudioSegment:
     """Represents a segment of audio aligned to a token/word."""
 
     token: str
@@ -89,7 +89,6 @@ class AudioSegment:  # pylint: disable=too-many-instance-attributes
         )
 
 
-# pylint: disable=too-few-public-methods,too-many-instance-attributes
 class SpectrogramGuidedAligner:
     """
     Spectrogram-Guided Forced Aligner using Wav2Vec2 and Torchaudio.
@@ -104,7 +103,6 @@ class SpectrogramGuidedAligner:
     4.  **Aggregation:** Character-level segments are grouped into user-defined tokens.
     """
 
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def __init__(
         self,
         device: torch.device,
@@ -205,7 +203,6 @@ class SpectrogramGuidedAligner:
 
         return emissions
 
-    # pylint: disable=too-many-locals
     def __refine_boundary_smart(
         self, waveform: np.ndarray, sr: int, candidate_time: float
     ) -> float:
@@ -227,7 +224,7 @@ class SpectrogramGuidedAligner:
         search_region = waveform[start_idx:end_idx]
 
         # Too short to analyze
-        if len(search_region) < 256:  # pylint: disable=magic-value-comparison
+        if len(search_region) < 256:
             return candidate_time
 
         # Compute RMS Energy (Loudness)
@@ -267,14 +264,14 @@ class SpectrogramGuidedAligner:
         n_channels = src.shape[0]
         # Convert float32 to int16 PCM
         src = (src * 32767).clamp(-32768, 32767).to(torch.int16)
-        src = src.t().numpy()  # type: ignore[assignment]
+        src = src.t().numpy()
 
         buffer = io.BytesIO()
         with wave.open(buffer, "wb") as wav_file:
-            wav_file.setnchannels(n_channels)  # pylint: disable=no-member
-            wav_file.setsampwidth(2)  # pylint: disable=no-member
-            wav_file.setframerate(sample_rate)  # pylint: disable=no-member
-            wav_file.writeframes(src.tobytes())  # type: ignore[attr-defined] # pylint: disable=no-member
+            wav_file.setnchannels(n_channels)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            wav_file.writeframes(src.tobytes())
 
         return buffer.getvalue()
 
@@ -332,8 +329,10 @@ class SpectrogramGuidedAligner:
         # Strip diacritics while preserving spaces
         text_nfd = unicodedata.normalize("NFD", text_upper)
         text_no_diacritics = "".join(
-            char for char in text_nfd
-            if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
+            char
+            for char in text_nfd
+            if unicodedata.category(char)
+            != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
         )
         # Keep only alphanumeric and spaces
         text_clean = "".join(
@@ -381,7 +380,6 @@ class SpectrogramGuidedAligner:
         alignment_path = aligned_tokens[0]
         return alignment_path, emissions_gpu
 
-    # pylint: disable=too-many-locals
     def __refine_token_spans(
         self,
         token_spans: list[tuple[int, int, int]],
@@ -474,7 +472,7 @@ class SpectrogramGuidedAligner:
                 if end_time is None:
                     end_time = cast(float, start_time) + 0.1
 
-                avg_conf = sum(confs) / len(confs) if confs else 0.0  # type: ignore
+                avg_conf = sum(confs) / len(confs) if confs else 0.0
 
                 final_segments.append(
                     AudioSegment(
@@ -542,15 +540,13 @@ class SpectrogramGuidedAligner:
             waveform: Audio waveform tensor.
             original_sr: Original sampling rate of the waveform.
         """
-        cpu_waveform = self.__set_segment_indices(
-            final_segments, waveform, original_sr
-        )
+        cpu_waveform = self.__set_segment_indices(final_segments, waveform, original_sr)
 
         if not attach_audio:
             return
 
         for seg in final_segments:
-            segment_tensor = cpu_waveform[:, seg.start_sample : seg.end_sample]  # noqa: E203
+            segment_tensor = cpu_waveform[:, seg.start_sample : seg.end_sample]
             seg.audio = self.__save_wav_mem(segment_tensor, original_sr)
 
     def attach_audio_to_segments(
@@ -646,9 +642,7 @@ class SpectrogramGuidedAligner:
         )
 
         if attach_audio:
-            self.__attach_audio_to_segments(
-                final_segments, waveform, original_sr
-            )
+            self.__attach_audio_to_segments(final_segments, waveform, original_sr)
         else:
             self.__set_segment_indices(final_segments, waveform, original_sr)
 

@@ -1,8 +1,8 @@
-Companion GUI - SHAP Multi-Modal LLM Explainer
-==============================================
+🖥️ Companion GUI
+================
 
-Overview
---------
+Overview ✨
+-----------
 
 Separate repository (https://github.com/mvishiu11/shap-mllm-explainer) contains a companion,
 GUI-first application for exploring token-level and audio time-series attributions produced by ``mllm_shap``.
@@ -10,8 +10,8 @@ GUI-first application for exploring token-level and audio time-series attributio
 The app is intentionally containerized (Docker Compose) to provide a reproducible,
 production-like environment.
 
-Architecture
-------------
+Architecture 🏗️
+----------------
 
 The stack is composed of:
 
@@ -58,8 +58,8 @@ Some examples of the running GUI are shown below:
 
 
 
-Running the application (Docker Compose)
----------------------------------------
+Running the application (Docker Compose) 🐳
+-------------------------------------------
 
 CPU
 ^^^
@@ -94,8 +94,8 @@ Quick verification inside the backend container:
 
 	docker compose exec backend uv run python -c "import torch; print('cuda_available=', torch.cuda.is_available()); print('torch_cuda=', torch.version.cuda)"
 
-Local development (without Docker)
-----------------------------------
+Local development (without Docker) 💻
+-------------------------------------
 
 Backend
 ^^^^^^^
@@ -117,8 +117,8 @@ From ``shap-mllm-explainer/web/``:
 	npm i
 	npm run dev
 
-Configuration
--------------
+Configuration ⚙️
+----------------
 
 Frontend configuration
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -137,8 +137,8 @@ Compose files to inspect:
 - ``shap-mllm-explainer/docker-compose.yaml``
 - ``shap-mllm-explainer/docker-compose.gpu.yaml``
 
-Backend API surface (high level)
---------------------------------
+Backend API surface (high level) 🔌
+-----------------------------------
 
 The backend exposes FastAPI routes under the ``/api`` prefix.
 

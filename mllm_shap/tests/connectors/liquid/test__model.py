@@ -72,11 +72,11 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             self.eval_called = True
             return self
 
-        def generate_sequential(self, *args: Any, **kwargs: Any):  # noqa: ANN001 - signature determined by caller
+        def generate_sequential(self, *args: Any, **kwargs: Any):
             self.generate_sequential_calls.append(kwargs)
             yield from self.sequential_output
 
-        def generate_interleaved(self, *args: Any, **kwargs: Any):  # noqa: ANN001
+        def generate_interleaved(self, *args: Any, **kwargs: Any):
             self.generate_interleaved_calls.append(kwargs)
             yield from self.interleaved_output
 
@@ -84,7 +84,9 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             self.prefill_calls.append(kwargs)
             return self.prefill_output
 
-        def lfm(self, inputs_embeds: Tensor, past_key_values: Any, use_cache: bool) -> SimpleNamespace:
+        def lfm(
+            self, inputs_embeds: Tensor, past_key_values: Any, use_cache: bool
+        ) -> SimpleNamespace:
             self.lfm_calls.append((inputs_embeds, past_key_values, use_cache))
             return SimpleNamespace(last_hidden_state=inputs_embeds + 1)
 
@@ -115,15 +117,17 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             self.processor = processor
             self.codebooks = codebooks
             self.new_turn_calls: list[Role] = []
-            self.append_calls: list[tuple[Tensor, Tensor, Tensor, ModelHistoryTrackingMode]] = []
+            self.append_calls: list[
+                tuple[Tensor, Tensor, Tensor, ModelHistoryTrackingMode]
+            ] = []
             self.end_turn_calls = 0
             self.update(chat_kwargs)
             created_chats.append(self)
 
-        def new_turn(self, role: Role) -> None:  # type: ignore[override]
+        def new_turn(self, role: Role) -> None:
             self.new_turn_calls.append(role)
 
-        def append(  # type: ignore[override]
+        def append(
             self,
             *,
             text: Tensor,
@@ -131,13 +135,25 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             modality_flag: Tensor,
             history_tracking_mode: ModelHistoryTrackingMode,
         ) -> None:
-            self.append_calls.append((text.clone(), audio_out.clone(), modality_flag.clone(), history_tracking_mode))
+            self.append_calls.append(
+                (
+                    text.clone(),
+                    audio_out.clone(),
+                    modality_flag.clone(),
+                    history_tracking_mode,
+                )
+            )
 
-        def end_turn(self) -> None:  # type: ignore[override]
+        def end_turn(self) -> None:
             self.end_turn_calls += 1
 
-        def __deepcopy__(self, memo: dict[int, Any]) -> "ChatStub":  # noqa: D401
-            copied = ChatStub(device=self.torch_device, processor=self.processor, codebooks=self.codebooks, **self)
+        def __deepcopy__(self, memo: dict[int, Any]) -> "ChatStub":
+            copied = ChatStub(
+                device=self.torch_device,
+                processor=self.processor,
+                codebooks=self.codebooks,
+                **self,
+            )
             copied.new_turn_calls = self.new_turn_calls.copy()
             copied.append_calls = self.append_calls.copy()
             copied.end_turn_calls = self.end_turn_calls
@@ -145,19 +161,19 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             return copied
 
         @cached_property
-        def input_tokens(self) -> list[Tensor]:  # type: ignore[override]
+        def input_tokens(self) -> list[Tensor]:
             return []
 
         @cached_property
-        def tokens_modality_flag(self) -> Tensor:  # type: ignore[override]
+        def tokens_modality_flag(self) -> Tensor:
             return torch.zeros(0, dtype=torch.int8, device=self.torch_device)
 
         @cached_property
-        def text_tokens(self) -> Tensor:  # type: ignore[override]
+        def text_tokens(self) -> Tensor:
             return torch.zeros(0, dtype=torch.long, device=self.torch_device)
 
         @cached_property
-        def audio_tokens(self) -> Tensor:  # type: ignore[override]
+        def audio_tokens(self) -> Tensor:
             return torch.zeros(0, dtype=torch.long, device=self.torch_device)
 
     monkeypatch.setattr(liquid_model, "LFM2AudioProcessor", ProcessorStub)
@@ -165,9 +181,11 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(liquid_model, "LiquidAudioChat", ChatStub)
     monkeypatch.setattr(liquid_model, "LFMModality", FakeLFMModality)
     # Ensure the patched processor base is used by the subclass
-    liquid_model._PatchedLFM2AudioProcessor.__bases__ = (ProcessorStub,)  # type: ignore[misc]
+    liquid_model._PatchedLFM2AudioProcessor.__bases__ = (ProcessorStub,)
 
-    def factory(device: torch.device = torch.device("cpu")) -> "liquid_model.LiquidAudio":
+    def factory(
+        device: torch.device = torch.device("cpu"),
+    ) -> "liquid_model.LiquidAudio":
         return liquid_model.LiquidAudio(device=device)
 
     return SimpleNamespace(
@@ -181,8 +199,10 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
 def test_patched_processor_device_property() -> None:
     """_PatchedLFM2AudioProcessor should guard device access until set."""
-    processor = liquid_model._PatchedLFM2AudioProcessor.__new__(liquid_model._PatchedLFM2AudioProcessor)
-    processor._PatchedLFM2AudioProcessor__device = None  # type: ignore[attr-defined]
+    processor = liquid_model._PatchedLFM2AudioProcessor.__new__(
+        liquid_model._PatchedLFM2AudioProcessor
+    )
+    processor._PatchedLFM2AudioProcessor__device = None
     with pytest.raises(ValueError, match="Device not set"):
         _ = processor.device
 
@@ -205,9 +225,13 @@ def test_init_sets_components_and_device(stubbed_liquid_audio: SimpleNamespace) 
     assert model.processor.device == "cpu"
 
 
-def test_init_rejects_explicit_components(stubbed_liquid_audio: SimpleNamespace) -> None:
+def test_init_rejects_explicit_components(
+    stubbed_liquid_audio: SimpleNamespace,
+) -> None:
     """Providing custom processor/model/config should be rejected."""
-    with pytest.raises(ValueError, match="Please do not provide 'config', 'model' or 'processor'"):
+    with pytest.raises(
+        ValueError, match="Please do not provide 'config', 'model' or 'processor'"
+    ):
         liquid_model.LiquidAudio(device=torch.device("cpu"), processor=object())
 
 
@@ -221,7 +245,9 @@ def test_get_new_chat_passes_processor(stubbed_liquid_audio: SimpleNamespace) ->
     assert chat.device == model.device
 
 
-def test_generate_uses_sequential_for_text_mode(stubbed_liquid_audio: SimpleNamespace) -> None:
+def test_generate_uses_sequential_for_text_mode(
+    stubbed_liquid_audio: SimpleNamespace,
+) -> None:
     """History tracking TEXT mode should call generate_sequential and skip history saving."""
     model = stubbed_liquid_audio.factory()
     model.model.sequential_output = [torch.tensor([11]), torch.tensor([22])]
@@ -234,7 +260,10 @@ def test_generate_uses_sequential_for_text_mode(stubbed_liquid_audio: SimpleName
     assert response.chat is None
     assert torch.equal(response.generated_text_tokens, torch.tensor([11, 22]))
     assert response.generated_audio_tokens.shape == (0, chat.codebooks)
-    assert torch.equal(response.generated_modality_flag, torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.TEXT]))
+    assert torch.equal(
+        response.generated_modality_flag,
+        torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.TEXT]),
+    )
 
 
 def test_generate_interleaved_keeps_history(
@@ -259,12 +288,15 @@ def test_generate_interleaved_keeps_history(
     assert chat.append_calls  # history stored
     assert chat.end_turn_calls == 1
     assert torch.equal(
-        response.generated_modality_flag, torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT])
+        response.generated_modality_flag,
+        torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT]),
     )
     assert response.generated_audio_tokens.shape == (1, 2)
 
 
-def test_get_static_embeddings_prefills_responses(stubbed_liquid_audio: SimpleNamespace) -> None:
+def test_get_static_embeddings_prefills_responses(
+    stubbed_liquid_audio: SimpleNamespace,
+) -> None:
     """get_static_embeddings should rebuild chats, append history, and call _prefill."""
     model = stubbed_liquid_audio.factory()
     model.model.prefill_output = torch.ones((1, 3, 2))
@@ -289,7 +321,9 @@ def test_get_static_embeddings_prefills_responses(stubbed_liquid_audio: SimpleNa
     assert created_chat.append_calls  # history appended prior to prefill
 
 
-def test_get_contextual_embeddings_invokes_lfm(stubbed_liquid_audio: SimpleNamespace) -> None:
+def test_get_contextual_embeddings_invokes_lfm(
+    stubbed_liquid_audio: SimpleNamespace,
+) -> None:
     """_get_contextual_embeddings should normalise tensor ranks and call model.lfm."""
     model = stubbed_liquid_audio.factory()
     two_dim = torch.zeros((2, 3))

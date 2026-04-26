@@ -34,7 +34,6 @@ class NotEnoughTokensToExplainError(Exception):
     """Raised when there are not enough tokens to explain in the chat."""
 
 
-# pylint: disable=too-few-public-methods,too-many-instance-attributes
 class BaseShapExplainer(ABC):
     """Base class for SHAP-based explanations."""
 
@@ -62,7 +61,6 @@ class BaseShapExplainer(ABC):
     _first_call: bool
     """Indicates if it's the first call to generate masks."""
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         mode: Mode = Mode.CONTEXTUAL,
@@ -90,8 +88,12 @@ class BaseShapExplainer(ABC):
         __config = BaseShapConfig(
             mode=mode,
             embedding_model=embedding_model,
-            embedding_reducer=embedding_reducer if embedding_reducer is not None else MeanReducer(),
-            similarity_measure=similarity_measure if similarity_measure is not None else CosineSimilarity(),
+            embedding_reducer=embedding_reducer
+            if embedding_reducer is not None
+            else MeanReducer(),
+            similarity_measure=similarity_measure
+            if similarity_measure is not None
+            else CosineSimilarity(),
             normalizer=normalizer if normalizer is not None else PowerShiftNormalizer(),
             allow_mask_duplicates=allow_mask_duplicates,
         )
@@ -207,7 +209,9 @@ class BaseShapExplainer(ABC):
                         continue
 
                     new_mask_hash = mask_manager.get_hash(new_mask)
-                    if not allow_mask_duplicates and mask_manager.seen(mask_hash=new_mask_hash):
+                    if not allow_mask_duplicates and mask_manager.seen(
+                        mask_hash=new_mask_hash
+                    ):
                         logger.debug("Generated duplicate mask, skipping.")
                         continue
 
@@ -226,7 +230,9 @@ class BaseShapExplainer(ABC):
         device: torch.device,
         masks: list[Tensor],
         **generate_kwargs: Any,
-    ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
+    ) -> tuple[
+        int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
+    ]:
         """
         Generate a step of masks and get model responses.
 
@@ -240,7 +246,9 @@ class BaseShapExplainer(ABC):
             - Number of chats skipped due to being empty.
             - History of chats and masks used during explanation.
         """
-        gen = self._get_masks_generator(mask_manager=mask_manager, device=device, masks=masks)
+        gen = self._get_masks_generator(
+            mask_manager=mask_manager, device=device, masks=masks
+        )
         r = generate_responses(
             masks=masks,
             gen=gen,
@@ -252,7 +260,9 @@ class BaseShapExplainer(ABC):
 
         return r
 
-    def _get_similarities(self, responses: list[ModelResponse], model: BaseMllmModel) -> Tensor:
+    def _get_similarities(
+        self, responses: list[ModelResponse], model: BaseMllmModel
+    ) -> Tensor:
         """
         Get similarities between the base response and other responses.
 
@@ -274,7 +284,6 @@ class BaseShapExplainer(ABC):
         # If not operating on embeddings, handle raw responses
         return self.similarity_measure(base=responses[0], other=responses)
 
-    # pylint: disable=too-many-locals
     def _get_shap_values(
         self,
         model: BaseMllmModel,
@@ -324,12 +333,16 @@ class BaseShapExplainer(ABC):
 
         # Normalize only calculated SHAP values
         normalized_shap_values = shap_values.clone()
-        normalized_shap_values[shap_values_mask] = self.normalizer(calculated_shap_values)
+        normalized_shap_values[shap_values_mask] = self.normalizer(
+            calculated_shap_values
+        )
 
         # duplicate if external group ids are used
         if source_chat.external_group_ids is not None:
             for group_id, group_shap_value, group_normalized_shap_value in zip(
-                source_chat.external_group_ids[source_chat.external_group_ids_first_positions],
+                source_chat.external_group_ids[
+                    source_chat.external_group_ids_first_positions
+                ],
                 shap_values[source_chat.external_group_ids_first_positions],
                 normalized_shap_values[source_chat.external_group_ids_first_positions],
             ):
@@ -366,7 +379,9 @@ class BaseShapExplainer(ABC):
             raise ValueError("SHAP cache already exists for the provided chat.")
 
         # translate it for reference to group ids
-        shap_values_mask = source_chat.translate_groups_ids_mask(source_chat.shap_values_mask)
+        shap_values_mask = source_chat.translate_groups_ids_mask(
+            source_chat.shap_values_mask
+        )
         # extend mask with False to match new response length
         shap_values_mask = extend_tensor(
             shap_values_mask,
@@ -384,7 +399,9 @@ class BaseShapExplainer(ABC):
             shap_values_mask=shap_values_mask,
         )
 
-    def __get_embeddings(self, responses: list[ModelResponse], model: BaseMllmModel) -> Tensor:
+    def __get_embeddings(
+        self, responses: list[ModelResponse], model: BaseMllmModel
+    ) -> Tensor:
         """
         Get embeddings for the given chat state.
 
@@ -398,12 +415,15 @@ class BaseShapExplainer(ABC):
             return self.embedding_reducer(self.embedding_model(responses=responses))
 
         if self.mode == Mode.STATIC:
-            return self.embedding_reducer(model.get_static_embeddings(responses=responses))
-        return self.embedding_reducer(model.get_contextual_embeddings(responses=responses))
+            return self.embedding_reducer(
+                model.get_static_embeddings(responses=responses)
+            )
+        return self.embedding_reducer(
+            model.get_contextual_embeddings(responses=responses)
+        )
 
     # keep the logic in one method for readability
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    # pylint: disable=too-many-locals,too-many-statements,too-many-branches
+
     def __call__(
         self,
         model: BaseMllmModel,
@@ -445,7 +465,7 @@ class BaseShapExplainer(ABC):
         self._initialize_state()
 
         # validated within BaseShapCallConfig
-        response_chat: BaseMllmChat = __config.response.chat  # type: ignore[assignment]
+        response_chat: BaseMllmChat = __config.response.chat
         source_chat = __config.source_chat
         device = source_chat.torch_device
 

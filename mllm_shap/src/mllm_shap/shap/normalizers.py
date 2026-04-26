@@ -1,5 +1,3 @@
-# pylint: disable=too-few-public-methods
-
 """Normalizers for SHAP values."""
 
 import torch

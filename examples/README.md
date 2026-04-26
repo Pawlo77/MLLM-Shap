@@ -1,38 +1,55 @@
 <div align="center">
-  <h1>💡 MLLM-SHAP Examples</h1>
-  <p>Interactive Jupyter Notebooks demonstrating XAI for Multi-modal LLMs.</p>
+  <h1>💡 Examples Gallery</h1>
+  <p><strong>Curated notebook workflows for text/audio SHAP explainability.</strong></p>
 </div>
 
----
+# 🎯 Purpose
 
-This folder contains example use cases of the `mllm-shap` package. Most examples utilize the built-in `liquid_audio` model (see the [connector reference](./../mllm_shap/src/mllm_shap/connectors/liquid/)).
+Directory contains practical, reproducible notebook scenarios for `mllm-shap`.
 
-## ⚙️ Prerequisites
+# Setup
 
-Before running the examples, ensure you have the required scientific mapping dependencies installed (e.g., `jupyter`, `torch`, `transformers`). You can install the package in editable mode from the root directory:
+From the repository root:
+
+```bash
+make install
+```
+
+or install the package in editable mode:
 
 ```bash
 pip install -e mllm_shap
 ```
 
-## 📓 Notebooks Overview
+# 📊 Collection Snapshot
 
-Each notebook can also serve as an extensive **manual test** to verify the package’s correct functionality—especially useful for researchers developing custom connectors or extending the package’s capabilities.
+- **7 primary notebooks** across core + advanced explainers
+- **modalities covered**: `Text -> Text`, `Text -> Audio`, `Audio + Text -> Audio`
+- **best first notebook**: `text_multi_turn.ipynb`
 
-### 🎭 Basic Usage & Multi-modal Scenarios
-| Notebook | Modality | Description |
-|---|---|---|
-| **[📄 Multi Turn Text](./text_multi_turn.ipynb)** | `Text -> Text` | Recommended starting point. Demonstrates exact Shapley computation and Monte Carlo approximations in a 2-turn conversation. |
-| **[🎲 Monte Carlo Text](./text_monte_carlo.ipynb)** | `Text -> Text` | Continuation of *Multi Turn Text*, illustrating low-call Monte Carlo setups for extremely rapid, albeit noisy, SHAP approximations. |
-| **[🎙️ Monte Carlo Internal Audio](./audio_internal.ipynb)** | `Text -> Audio` | Explains multi-turn models outputting audio. Guides on forcing audio representations into subsequent expandability operations. |
-| **[🎧 Monte Carlo Audio](./audio_external.ipynb)** | `Audio+Text -> Audio` | Comprehensive example blending all supported modalities simultaneously safely within the API. |
+# 📓 Notebooks
 
-### 🛠️ Advanced Explainers
-| Notebook | Concept | Description |
-|---|---|---|
-| **[🧩 Complementary](./complementary.ipynb)** | `Complementary SHAP` | Demonstrates the *Complementary* SHAP explainer logic, rendering internal calculation matrices for validation. |
-| **[⚖️ Neyman](./neyman.ipynb)** | `Neyman-Shapley` | Showcases the *Neyman-Shapley* allocation metric for targeted attribution logic and constraint distributions. |
-| **[🌲 Hierarchical](./hierarchical.ipynb)** | `Hierarchical SHAP` | Illustrates structural inference breakdown via the *Hierarchical* SHAP module algorithms. |
+## Core Scenarios
 
----
-<sub>Need more structure? Check out the [core library](../mllm_shap/) or review [research outputs](../experiments/).</sub>
+- `text_multi_turn.ipynb` (`Text -> Text`)
+  - recommended starting point
+  - compares exact and approximate SHAP behavior in a multi-turn setup
+
+- `text_monte_carlo.ipynb` (`Text -> Text`)
+  - focused on low-cost Monte Carlo attribution runs
+
+- `audio_internal.ipynb` (`Text -> Audio`)
+  - explains pipelines where model output is audio
+
+- `audio_external.ipynb` (`Audio + Text -> Audio`)
+  - end-to-end multimodal example with mixed input modalities
+
+## Advanced Explainers
+
+- `complementary.ipynb` - complementary SHAP flow
+- `neyman.ipynb` - Neyman-based attribution variant
+- `hierarchical.ipynb` - hierarchical decomposition approach
+
+# 🧪 Quality Note
+
+These notebooks double as practical smoke tests for connector and explainer integration.

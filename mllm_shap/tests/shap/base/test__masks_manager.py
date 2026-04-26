@@ -3,6 +3,7 @@
 import pytest
 import torch
 from mllm_shap.connectors.base.chat import BaseMllmChat
+from mllm_shap.errors import MaskError
 from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
 
 from ...dummy import DummyChat
@@ -26,11 +27,15 @@ class TestMasksManager:
 
     def test_init_with_no_tokens_raises(self) -> None:
         """Should raise NoTokensToExplainError if no tokens to explain."""
-        chat = DummyChat(shap_values_mask=torch.zeros(5, dtype=torch.bool), num_tokens=5)
+        chat = DummyChat(
+            shap_values_mask=torch.zeros(5, dtype=torch.bool), num_tokens=5
+        )
         with pytest.raises(NoTokensToExplainError, match="no tokens to explain"):
             _ = MasksManager(chat)
 
-    def test_init_sets_correct_attributes(self, manager: MasksManager, chat: BaseMllmChat) -> None:
+    def test_init_sets_correct_attributes(
+        self, manager: MasksManager, chat: BaseMllmChat
+    ) -> None:
         """Should correctly initialize attributes."""
         assert torch.equal(manager.shap_values_mask, chat.shap_values_mask)
         assert manager.target_length == chat.input_tokens_num
@@ -51,7 +56,9 @@ class TestMasksManager:
         manager.mark_seen(mask_hash=mask_hash)
         assert manager.seen(mask_hash=mask_hash)
 
-    def test_get_initial_mask_creates_all_true_mask(self, manager: MasksManager) -> None:
+    def test_get_initial_mask_creates_all_true_mask(
+        self, manager: MasksManager
+    ) -> None:
         """get_initial_mask() should return a full mask and mark it seen."""
         device = torch.device("cpu")
         mask = manager.get_initial_mask(device=device)
@@ -73,7 +80,9 @@ class TestMasksManager:
         # unmasked positions remain True
         assert result[~manager.shap_values_mask].all()
 
-    def test_prepare_mask_returns_none_if_all_false(self, manager: MasksManager) -> None:
+    def test_prepare_mask_returns_none_if_all_false(
+        self, manager: MasksManager
+    ) -> None:
         """Should return None if resulting mask has no True values."""
         device = torch.device("cpu")
         manager.shap_values_mask = torch.ones(manager.target_length, dtype=torch.bool)
@@ -93,7 +102,9 @@ class TestMasksManager:
     def test_get_hash_raises_if_multiple_rows(self, manager: MasksManager) -> None:
         """get_hash() should raise if 2D mask has more than one row."""
         mask = torch.tensor([[True, False], [False, True]])
-        with pytest.raises(ValueError, match="1D tensor or a 2D tensor with a single row"):
+        with pytest.raises(
+            MaskError, match="1D tensor or a 2D tensor with a single row"
+        ):
             _ = manager.get_hash(mask)
 
     def test_get_mask_hash_from_mask_or_hash(self, manager: MasksManager) -> None:
@@ -105,8 +116,22 @@ class TestMasksManager:
 
     def test_get_mask_hash_raises_if_missing_both(self, manager: MasksManager) -> None:
         """Should raise ValueError if both mask and mask_hash are None."""
-        with pytest.raises(ValueError, match="Either mask or mask_hash must be provided"):
+        with pytest.raises(
+            MaskError, match="Either mask or mask_hash must be provided"
+        ):
             _ = manager._MasksManager__get_mask_hash()
+
+    def test_mask_hash_strategy_normalize_returns_1d(self) -> None:
+        """Hash strategy should normalize single-row masks."""
+        mask = torch.tensor([[True, False, True]], dtype=torch.bool)
+        normalized = MasksManager._MaskHashStrategy.normalize(mask)
+        assert normalized.ndim == 1
+        assert normalized.tolist() == [True, False, True]
+
+    def test_mask_hash_strategy_hash_consistent(self) -> None:
+        """Hash strategy should match get_hash API output."""
+        mask = torch.tensor([True, True, False], dtype=torch.bool)
+        assert MasksManager._MaskHashStrategy.hash(mask) == MasksManager.get_hash(mask)
 
     def test_mark_seen_with_mask_argument(self, manager: MasksManager) -> None:
         """Marking by mask tensor should register hash."""
@@ -135,7 +160,9 @@ class TestMasksManager:
         assert result is not None
         assert result[manager.shap_values_mask].tolist() == [True, False]
 
-    def test_prepare_mask_preserves_dtype_and_device(self, manager: MasksManager) -> None:
+    def test_prepare_mask_preserves_dtype_and_device(
+        self, manager: MasksManager
+    ) -> None:
         """Returned mask keeps boolean dtype on the provided device."""
         device = torch.device("cpu")
         split = torch.tensor([[False, True]], dtype=torch.bool)
@@ -148,9 +175,12 @@ class TestMasksManager:
         """Initial mask should align with shap mask positions."""
         manager = MasksManager(chat=chat)
         mask = manager.get_initial_mask(device=torch.device("cpu"))
-        assert torch.equal(mask[manager.shap_values_mask], torch.ones(manager.n, dtype=torch.bool))
         assert torch.equal(
-            mask[~manager.shap_values_mask], torch.ones(manager.target_length - manager.n, dtype=torch.bool)
+            mask[manager.shap_values_mask], torch.ones(manager.n, dtype=torch.bool)
+        )
+        assert torch.equal(
+            mask[~manager.shap_values_mask],
+            torch.ones(manager.target_length - manager.n, dtype=torch.bool),
         )
 
     def test_get_initial_mask_raises_when_prepare_returns_none(
@@ -158,7 +188,9 @@ class TestMasksManager:
     ) -> None:
         """If prepare_mask fails, get_initial_mask should raise."""
 
-        def _fail_prepare(split: torch.Tensor, device: torch.device) -> torch.Tensor | None:
+        def _fail_prepare(
+            split: torch.Tensor, device: torch.device
+        ) -> torch.Tensor | None:
             del split, device
             return None
 

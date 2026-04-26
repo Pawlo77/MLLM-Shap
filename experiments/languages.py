@@ -2,7 +2,7 @@
 
 import pandas as pd
 from googletrans import Translator
-from lingua import Language, LanguageDetector, LanguageDetectorBuilder  # pylint: disable=no-name-in-module
+from lingua import Language, LanguageDetector, LanguageDetectorBuilder
 from tqdm.asyncio import tqdm_asyncio
 from transformers import pipeline
 from transformers.pipelines.text_classification import TextClassificationPipeline
@@ -19,7 +19,9 @@ class LanguageClassifier:
         """Lazy load and return the English language detector."""
         if self._english_detector is None:
             self._english_detector = (
-                LanguageDetectorBuilder.from_languages(Language.ENGLISH).with_preloaded_language_models().build()
+                LanguageDetectorBuilder.from_languages(Language.ENGLISH)
+                .with_preloaded_language_models()
+                .build()
             )
         return self._english_detector
 
@@ -27,7 +29,10 @@ class LanguageClassifier:
     def lang_detector(self) -> TextClassificationPipeline:
         """Lazy load and return the transformer-based language detector."""
         if self._lang_detector is None:
-            self._lang_detector = pipeline("text-classification", model="papluca/xlm-roberta-base-language-detection")
+            self._lang_detector = pipeline(
+                "text-classification",
+                model="papluca/xlm-roberta-base-language-detection",
+            )
         return self._lang_detector
 
     def is_language(self, text: str, label: str) -> bool:
@@ -89,7 +94,7 @@ class LanguageClassifier:
             The language label of the text.
         """
         return str(
-            sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0][  # pylint: disable=not-callable
+            sorted(self.lang_detector(text), key=lambda x: x["score"], reverse=True)[0][
                 "label"
             ]
         )
@@ -146,7 +151,10 @@ class LanguageTranslator:
         return await self.translate(text, target_language="fr")
 
     async def translate_df(
-        self, df: pd.DataFrame, target_language: str, column_to_translate: str = "conversation__joined"
+        self,
+        df: pd.DataFrame,
+        target_language: str,
+        column_to_translate: str = "conversation__joined",
     ) -> pd.DataFrame:
         """
         Translate the specified column of the DataFrame to the target language.
@@ -158,7 +166,10 @@ class LanguageTranslator:
         Returns:
             The DataFrame with the translated specified column.
         """
-        tasks = [self.translate(x, target_language=target_language) for x in df[column_to_translate]]
+        tasks = [
+            self.translate(x, target_language=target_language)
+            for x in df[column_to_translate]
+        ]
         results = await tqdm_asyncio.gather(*tasks)
         df[column_to_translate] = results
         return df

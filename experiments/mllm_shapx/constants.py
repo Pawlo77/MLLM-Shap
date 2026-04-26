@@ -27,6 +27,7 @@ class ConnectorType(Enum):
 
 class InputModality(StrEnum):
     """Input modality options."""
+
     TEXT = "text"
     AUDIO_MALE = "audio__male"
     AUDIO_FEMALE = "audio__female"
@@ -39,6 +40,7 @@ class InputModality(StrEnum):
 
 class OutputModality(StrEnum):
     """Output modality options."""
+
     TEXT = "text"
     AUDIO = "audio"
 

@@ -60,7 +60,9 @@ class TestBaseShapApproximationInit:
 
     def test_init_raises_if_both_none(self) -> None:
         """Should raise ValueError if both num_samples and fraction are None."""
-        with pytest.raises(ValueError, match="Either num_samples or fraction must be provided"):
+        with pytest.raises(
+            ValueError, match="Either num_samples or fraction must be provided"
+        ):
             DummyExplainer(num_samples=None, fraction=None)
 
     def test_init_raises_for_invalid_fraction_type(self) -> None:
@@ -250,7 +252,9 @@ class TestGetRandomSplit:
 class TestGetNextSplit:
     """Tests for _get_next_split orchestrating base and random masks."""
 
-    def test_prefers_base_masks_before_random(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_prefers_base_masks_before_random(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Should emit base mask before falling back to random splits."""
         explainer = DummyExplainer(num_samples=5)
         device = torch.device("cpu")
@@ -276,7 +280,9 @@ class TestGetNextSplit:
         assert mask is not None
         assert captured == []
 
-    def test_calls_random_after_minimal_masks_exhausted(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_calls_random_after_minimal_masks_exhausted(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Should fall back to random mask generation after emitting minimal masks."""
         explainer = DummyExplainer(num_samples=10)
         device = torch.device("cpu")
@@ -305,7 +311,9 @@ class TestGetNextSplit:
 
         assert random_masks  # random masks were produced
 
-    def test_respects_sampling_budget_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_respects_sampling_budget_limit(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Should return None when sampling budget has been reached."""
         explainer = DummyExplainer(num_samples=1)
         device = torch.device("cpu")
@@ -314,7 +322,11 @@ class TestGetNextSplit:
         def limited_budget(_self: DummyExplainer, n: int) -> int:
             return explainer._generate_minimal_splits(n, device).shape[0]
 
-        monkeypatch.setattr(explainer, "_get_num_splits", limited_budget.__get__(explainer, DummyExplainer))
+        monkeypatch.setattr(
+            explainer,
+            "_get_num_splits",
+            limited_budget.__get__(explainer, DummyExplainer),
+        )
 
         total = explainer._generate_minimal_splits(3, device).shape[0]
         for generated in range(total):
@@ -348,4 +360,6 @@ class TestValidateSamplingParams:
     def test_rejects_invalid_num_samples_type(self, fraction: float | None) -> None:
         """Non-integer num_samples should be rejected regardless of fraction."""
         with pytest.raises(ValueError, match="num_samples must be a positive integer"):
-            BaseShapApproximation._validate_sampling_params(num_samples=1.2, fraction=fraction)
+            BaseShapApproximation._validate_sampling_params(
+                num_samples=1.2, fraction=fraction
+            )

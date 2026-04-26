@@ -1,17 +1,28 @@
 [project]
 name = "mllm-shap"
-version = "0.1.9"
-description = "Shap implementation for Multi Modal Large Language Models with audio and text on input."
+version = "0.1.10"
+description = "SHAP implementation for multimodal large language models supporting audio and text input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-classifiers = [
-    "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
-    "License :: OSI Approved :: MIT License",
-    "Intended Audience :: Information Technology",
-    "Intended Audience :: Science/Research",
+
+license = { text = "MIT License" }
+keywords = [
+  "audio",
+  "llms",
+  "mllms",
+  "shapley-value",
+  "text",
+  "xai",
 ]
-license = {text = "MIT License"}
+
+classifiers = [
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.12",
+]
+
 authors = [
   { name = "Paweł Pozorski", email = "pozorski.paul@gmail.com" },
   { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
@@ -21,34 +32,29 @@ maintainers = [
   { name = "Jakub Muszyński", email = "jakub.m.muszynski@gmail.com" },
 ]
 dependencies = [
-    "ipywidgets>=8.1.8",
-    "liquid-audio>=1.0.0",
-    "matplotlib>=3.10.7",
-    "pandas>=2.3.3",
-    "pydantic>=2.12.4",
-    "scikit-learn>=1.7.2",
-    "torch>=2.9.0",
-    "torchaudio>=2.9.0",
-    "torchcodec>=0.8",
-    "tqdm>=4.67.1",
+  "ipywidgets>=8.1.8",
+  "liquid-audio>=1.0.0",
+  "matplotlib>=3.10.7",
+  "pandas>=2.3.3",
+  "pydantic>=2.12.4",
+  "scikit-learn>=1.7.2",
+  "torch>=2.9.0",
+  "torchaudio>=2.9.0",
+  "torchcodec>=0.8",
+  "tqdm>=4.67.1",
+  "transformers>=4.55.4,<5.5.0",
 ]
-keywords=["shapley-value", "llms", "mllms", "audio", "text", "xai"]
 
 [project.urls]
-Homepage = "https://github.com/Pawlo77/MLLM-Shap.git"
-Repository = "https://github.com/Pawlo77/MLLM-Shap.git"
-Documentation = "https://pawlo77.github.io/MLLM-Shap/"
-Issues = "https://github.com/Pawlo77/MLLM-Shap/issues"
 Changelog = "https://pawlo77.github.io/MLLM-Shap/release_notes.html"
+Documentation = "https://pawlo77.github.io/MLLM-Shap/"
+Homepage = "https://github.com/Pawlo77/MLLM-Shap.git"
+Issues = "https://github.com/Pawlo77/MLLM-Shap/issues"
+Repository = "https://github.com/Pawlo77/MLLM-Shap.git"
 
 [build-system]
 requires = ["uv_build>=0.9.2,<0.10.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
-dev = [
-    "myst-parser>=4.0.1",
-    "pydata-sphinx-theme>=0.16.1",
-    "pytest>=8.4.2",
-    "sphinx>=8.2.3",
-]
+dev = []
