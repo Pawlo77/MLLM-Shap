@@ -101,7 +101,9 @@ class DummyChat(BaseMllmChat):
     def _end_turn(self) -> None:
         """No-op for testing."""
 
-    def _get_tokens_sequences_to_exclude(self, phrases_to_exclude: set[str]) -> list[Tensor]:
+    def _get_tokens_sequences_to_exclude(
+        self, phrases_to_exclude: set[str]
+    ) -> list[Tensor]:
         """No exclusions for dummy."""
         return []
 
@@ -141,7 +143,9 @@ class DummyModel(BaseMllmModel):
         """Return dummy static embeddings."""
         return [torch.zeros((1, 2)) for _ in responses]
 
-    def _get_contextual_embeddings(self, static_embeddings: list[Tensor]) -> list[Tensor]:
+    def _get_contextual_embeddings(
+        self, static_embeddings: list[Tensor]
+    ) -> list[Tensor]:
         """Return dummy contextual embeddings."""
         return [torch.zeros_like(e) for e in static_embeddings]
 
@@ -164,6 +168,8 @@ class DummyShapExplainer(BaseShapExplainer):
 
         return torch.rand(n, device=device) > 0.5
 
-    def _calculate_shap_values(self, masks: Tensor, similarities: Tensor, device: torch.device) -> Tensor:
+    def _calculate_shap_values(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> Tensor:
         # return a simple 1D tensor of ones with length equal to number of tokens
         return torch.ones(masks.shape[1], device=device, dtype=torch.float32)

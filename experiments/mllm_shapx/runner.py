@@ -414,14 +414,18 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
                 if not isinstance(audio_bytes_list, (list, np.ndarray)):
                     audio_bytes_list = [audio_bytes_list]
             else:
-                raise KeyError(f"Expected '{AudioCol.MALE.value}' in row for {input_modality} input modality.")
+                raise KeyError(
+                    f"Expected '{AudioCol.MALE.value}' in row for {input_modality} input modality."
+                )
         elif needs_female_audio:
             if AudioCol.FEMALE.value in row:
                 audio_bytes_list = row[AudioCol.FEMALE.value]
                 if not isinstance(audio_bytes_list, (list, np.ndarray)):
                     audio_bytes_list = [audio_bytes_list]
             else:
-                raise KeyError(f"Expected '{AudioCol.FEMALE.value}' in row for {input_modality} input modality.")
+                raise KeyError(
+                    f"Expected '{AudioCol.FEMALE.value}' in row for {input_modality} input modality."
+                )
 
         # Prompt resolution - returns list of texts for multi-turn support
         user_texts = extract_texts_from_row(row[text_col])
@@ -432,7 +436,7 @@ def run_single_sentence_variant(  # pylint: disable=too-many-locals,too-many-sta
             user_texts=user_texts,
             audio_bytes_list=audio_bytes_list,
             input_modality=input_modality,
-            token_filter=token_filter
+            token_filter=token_filter,
         )
 
         # Ensure masks/tokens ready

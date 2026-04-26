@@ -75,11 +75,16 @@ class MasksManager:
         """
         mask = chat.shap_values_mask
         if not mask.any():
-            raise NoTokensToExplainError("There are no tokens to explain in the provided chat.")
+            raise NoTokensToExplainError(
+                "There are no tokens to explain in the provided chat."
+            )
         self.shap_values_mask = mask
 
         self.target_length = chat.input_tokens_num
-        logger.debug("Generating masks for target length %d using provided mask.", self.target_length)
+        logger.debug(
+            "Generating masks for target length %d using provided mask.",
+            self.target_length,
+        )
 
         n = int(mask.sum().item())
         if n == 0:
@@ -100,7 +105,9 @@ class MasksManager:
         """Maximum number of unique masks possible for n features."""
         return int(2**self.n - 1)
 
-    def mark_seen(self, mask: Tensor | None = None, mask_hash: int | None = None) -> None:
+    def mark_seen(
+        self, mask: Tensor | None = None, mask_hash: int | None = None
+    ) -> None:
         """
         Mark the provided mask as seen.
 
@@ -155,7 +162,9 @@ class MasksManager:
             Tensor of shape [target_length, ], dtype=torch.bool representing the final mask,
                 or None if the final mask has no True values.
         """
-        prepared_mask = torch.zeros((self.target_length,), dtype=torch.bool, device=device)
+        prepared_mask = torch.zeros(
+            (self.target_length,), dtype=torch.bool, device=device
+        )
 
         # Set masked positions according to splits
         prepared_mask[self.shap_values_mask] = split
@@ -180,12 +189,16 @@ class MasksManager:
         """
         if len(mask.shape) > 1:
             if mask.shape[0] != 1:
-                raise ValueError("Mask must be a 1D tensor or a 2D tensor with a single row.")
+                raise ValueError(
+                    "Mask must be a 1D tensor or a 2D tensor with a single row."
+                )
             mask = mask.squeeze(0)
         return hash(tuple(mask.tolist()))
 
     @staticmethod
-    def __get_mask_hash(mask: Tensor | None = None, mask_hash: int | None = None) -> int:
+    def __get_mask_hash(
+        mask: Tensor | None = None, mask_hash: int | None = None
+    ) -> int:
         """
         Get the hash of the provided mask.
 

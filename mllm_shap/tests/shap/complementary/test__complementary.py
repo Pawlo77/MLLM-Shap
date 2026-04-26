@@ -2,7 +2,9 @@
 
 import pytest
 import torch
-from mllm_shap.shap.complementary._base import BaseComplementaryShapExplainer as ComplementaryShapExplainer
+from mllm_shap.shap.complementary._base import (
+    BaseComplementaryShapExplainer as ComplementaryShapExplainer,
+)
 from mllm_shap.shap.base._masks_manager import MasksManager
 from torch import Tensor
 from ...dummy import DummyChat
@@ -31,25 +33,33 @@ class TestComplementaryShapExplainerNumSplits:
         """Provides a default explainer instance for testing."""
         return DummyComplementaryExplainer(num_samples=None, fraction=0.5)
 
-    def test_num_samples_too_low_raises(self, explainer: ComplementaryShapExplainer) -> None:
+    def test_num_samples_too_low_raises(
+        self, explainer: ComplementaryShapExplainer
+    ) -> None:
         """Tests that setting num_samples too low raises ValueError."""
         explainer.num_samples = 3
         with pytest.raises(ValueError, match="num_samples must be at least"):
             _ = explainer._get_num_splits(n=2)
 
-    def test_num_samples_odd_raises(self, explainer: ComplementaryShapExplainer) -> None:
+    def test_num_samples_odd_raises(
+        self, explainer: ComplementaryShapExplainer
+    ) -> None:
         """Tests that setting num_samples to an odd number raises ValueError."""
         explainer.num_samples = 9
         with pytest.raises(ValueError, match="num_samples must not be odd"):
             _ = explainer._get_num_splits(n=4)
 
-    def test_num_samples_too_large_clamps(self, explainer: ComplementaryShapExplainer) -> None:
+    def test_num_samples_too_large_clamps(
+        self, explainer: ComplementaryShapExplainer
+    ) -> None:
         """Tests that num_samples too large is clamped to maximum possible."""
         explainer.num_samples = 999
         result = explainer._get_num_splits(n=3)
         assert result == 2**3 - 2
 
-    def test_fraction_returns_even_or_adjusted(self, explainer: ComplementaryShapExplainer) -> None:
+    def test_fraction_returns_even_or_adjusted(
+        self, explainer: ComplementaryShapExplainer
+    ) -> None:
         """Tests that fraction-based sample count is computed correctly."""
         explainer.num_samples = None
         explainer.fraction = 0.6
@@ -108,7 +118,9 @@ class TestComplementaryShapExplainerNextSplit:
         explainer = DummyComplementaryExplainer(num_samples=8)
         explainer._initialize_state()
         explainer._first_call = False
-        result = explainer._get_next_split(n=3, device=torch.device("cpu"), generated_masks_num=9)
+        result = explainer._get_next_split(
+            n=3, device=torch.device("cpu"), generated_masks_num=9
+        )
         assert result is None
 
     def test_masks_generator_length_matches_budget(self) -> None:
@@ -161,7 +173,9 @@ class TestComplementaryShapExplainerCalculateShapValues:
         )
         explainer._zero_mask_skipped = True
         similarities = torch.tensor([1.0, 1.0, 3.0, 2.0, 4.0])
-        result = explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
+        result = explainer._calculate_shap_values(
+            masks=masks, similarities=similarities, device=device
+        )
         assert isinstance(result, Tensor)
         assert result.shape[0] == masks.shape[1]
         assert torch.isfinite(result).all()
@@ -227,7 +241,9 @@ class TestComplementaryShapExplainerCalculateShapValues:
         masks = torch.ones((2, 2), dtype=torch.bool)
         similarities = torch.ones(2)
         with pytest.raises(RuntimeError, match="Zero mask was not skipped"):
-            _ = explainer._calculate_shap_values(masks, similarities, torch.device("cpu"))
+            _ = explainer._calculate_shap_values(
+                masks, similarities, torch.device("cpu")
+            )
 
     def test_raises_when_matrices_not_initialized(self) -> None:
         """Missing M or C matrices should raise."""
@@ -237,7 +253,9 @@ class TestComplementaryShapExplainerCalculateShapValues:
         masks = torch.ones((2, 2), dtype=torch.bool)
         similarities = torch.ones(2)
         with pytest.raises(RuntimeError, match="M matrix must be initialized"):
-            _ = explainer._calculate_shap_values(masks, similarities, torch.device("cpu"))
+            _ = explainer._calculate_shap_values(
+                masks, similarities, torch.device("cpu")
+            )
 
     def test_result_matches_manual_computation(self) -> None:
         """Compare result against manual ratio computation for small example."""
@@ -270,7 +288,9 @@ class TestComplementaryShapExplainerCalculateShapValues:
         similarities = torch.tensor([1.0, 2.0, 3.0])
 
         # expect _calculate_C_matrix to update C for the complementary pairs without changing base columns
-        result = explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
+        result = explainer._calculate_shap_values(
+            masks=masks, similarities=similarities, device=device
+        )
 
         M = explainer._M[:, 1:]
         C = explainer._C[:, 1:]

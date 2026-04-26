@@ -66,20 +66,33 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
             self.proc = proc if proc is not None else ProcessorStub()
             self.codebooks = codebooks
 
-            self.text = text if text is not None else torch.zeros((1, 1), dtype=torch.long, device=device)
+            self.text = (
+                text
+                if text is not None
+                else torch.zeros((1, 1), dtype=torch.long, device=device)
+            )
             if audio_in is None:
-                audio_in = torch.zeros((liquid_chat.LiquidAudioChat.AUDIO_IN_SHAPE, 0), dtype=torch.long, device=device)
+                audio_in = torch.zeros(
+                    (liquid_chat.LiquidAudioChat.AUDIO_IN_SHAPE, 0),
+                    dtype=torch.long,
+                    device=device,
+                )
             self.audio_in = audio_in
             if audio_out is None:
                 audio_out = torch.zeros((codebooks, 0), dtype=torch.long, device=device)
             self.audio_out = audio_out
             if modality_flag is None:
                 modality_flag = torch.full(
-                    (1, self.text.shape[1]), FakeLFMModality.TEXT, dtype=torch.long, device=device
+                    (1, self.text.shape[1]),
+                    FakeLFMModality.TEXT,
+                    dtype=torch.long,
+                    device=device,
                 )
             self.modality_flag = modality_flag
             self.audio_in_lens = (
-                audio_in_lens if audio_in_lens is not None else torch.zeros((0,), dtype=torch.long, device=device)
+                audio_in_lens
+                if audio_in_lens is not None
+                else torch.zeros((0,), dtype=torch.long, device=device)
             )
 
             self.new_turn_log: list[str] = []
@@ -95,7 +108,10 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
             ).unsqueeze(0)
             self.text = torch.cat([self.text, tokens], dim=1)
             mod = torch.full(
-                (1, tokens.shape[1]), FakeLFMModality.TEXT, dtype=torch.long, device=self.modality_flag.device
+                (1, tokens.shape[1]),
+                FakeLFMModality.TEXT,
+                dtype=torch.long,
+                device=self.modality_flag.device,
             )
             self.modality_flag = torch.cat([self.modality_flag, mod], dim=1)
 
@@ -112,7 +128,9 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
             self.audio_in_lens = torch.cat(
                 [
                     self.audio_in_lens,
-                    torch.tensor([total_columns], dtype=torch.long, device=waveform.device),
+                    torch.tensor(
+                        [total_columns], dtype=torch.long, device=waveform.device
+                    ),
                 ],
                 dim=0,
             )
@@ -124,7 +142,9 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
             )
             self.modality_flag = torch.cat([self.modality_flag, mod], dim=1)
 
-        def append(self, text: Tensor, audio_out: Tensor, modality_flag: Tensor) -> None:  # noqa: D401
+        def append(
+            self, text: Tensor, audio_out: Tensor, modality_flag: Tensor
+        ) -> None:  # noqa: D401
             if text.dim() == 1:
                 text = text.unsqueeze(0)
             if audio_out.dim() == 1:
@@ -139,9 +159,13 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
                 self.text = torch.cat([self.text, text], dim=1)
             if audio_added:
                 self.audio_out = torch.cat([self.audio_out, audio_out], dim=1)
-            self.modality_flag = torch.cat([self.modality_flag, modality_flag.to(self.modality_flag.device)], dim=1)
+            self.modality_flag = torch.cat(
+                [self.modality_flag, modality_flag.to(self.modality_flag.device)], dim=1
+            )
 
-            self.append_calls.append((text.clone(), audio_out.clone(), modality_flag.clone()))
+            self.append_calls.append(
+                (text.clone(), audio_out.clone(), modality_flag.clone())
+            )
 
         def new_turn(self, role: str) -> None:  # noqa: D401
             self.new_turn_log.append(role)
@@ -152,7 +176,10 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
     monkeypatch.setattr(liquid_chat, "LFMModality", FakeLFMModality)
     monkeypatch.setattr(liquid_chat, "_ChatState", ChatStateStub)
     try:
-        liquid_chat.LiquidAudioChat.__bases__ = (liquid_chat.BaseMllmChat, ChatStateStub)
+        liquid_chat.LiquidAudioChat.__bases__ = (
+            liquid_chat.BaseMllmChat,
+            ChatStateStub,
+        )
     except TypeError:
         pass
 
@@ -165,7 +192,9 @@ def _build_chat_with_state(**kwargs: Any) -> liquid_chat.LiquidAudioChat:
     return chat
 
 
-def test_init_sets_system_token_and_empty_audio_map(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_init_sets_system_token_and_empty_audio_map(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
 
     assert chat._audio_map.numel() == 0
@@ -174,9 +203,18 @@ def test_init_sets_system_token_and_empty_audio_map(patched_liquid_audio_chat: S
     assert chat.text_tokens_no_system_mask.tolist() == [False]
 
 
-def test_get_relative_audio_masks_handles_in_and_out(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_get_relative_audio_masks_handles_in_and_out(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     modality = torch.tensor(
-        [[FakeLFMModality.AUDIO_IN, FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT, FakeLFMModality.AUDIO_IN]],
+        [
+            [
+                FakeLFMModality.AUDIO_IN,
+                FakeLFMModality.TEXT,
+                FakeLFMModality.AUDIO_OUT,
+                FakeLFMModality.AUDIO_IN,
+            ]
+        ],
         dtype=torch.long,
     )
     chat = _build_chat_with_state(modality_flag=modality)
@@ -186,17 +224,27 @@ def test_get_relative_audio_masks_handles_in_and_out(patched_liquid_audio_chat: 
 
     audio_in_mask, audio_out_mask = chat._get_relative_audio_masks()
 
-    expected_in = torch.tensor([True, False, True], dtype=torch.bool, device=chat.torch_device)
-    expected_out = torch.tensor([False, True, False], dtype=torch.bool, device=chat.torch_device)
+    expected_in = torch.tensor(
+        [True, False, True], dtype=torch.bool, device=chat.torch_device
+    )
+    expected_out = torch.tensor(
+        [False, True, False], dtype=torch.bool, device=chat.torch_device
+    )
     assert torch.equal(audio_in_mask, expected_in)
     assert torch.equal(audio_out_mask, expected_out)
 
 
-def test_append_text_history_keeps_audio_map_empty(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_append_text_history_keeps_audio_map_empty(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
     text = torch.tensor([[10, 11]], dtype=torch.long)
-    audio = torch.arange(chat.codebooks * 2, dtype=torch.long).reshape(chat.codebooks, 2)
-    modality = torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT], dtype=torch.long)
+    audio = torch.arange(chat.codebooks * 2, dtype=torch.long).reshape(
+        chat.codebooks, 2
+    )
+    modality = torch.tensor(
+        [FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT], dtype=torch.long
+    )
 
     text_added, audio_added = chat._append(
         text=text,
@@ -213,11 +261,17 @@ def test_append_text_history_keeps_audio_map_empty(patched_liquid_audio_chat: Si
     assert appended_modality.shape[1] == 1
 
 
-def test_append_audio_history_updates_audio_tokens_and_map(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_append_audio_history_updates_audio_tokens_and_map(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
     text = torch.tensor([[10, 20]], dtype=torch.long)
-    audio = torch.arange(chat.codebooks * 2, dtype=torch.long).reshape(chat.codebooks, 2)
-    modality = torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT], dtype=torch.long)
+    audio = torch.arange(chat.codebooks * 2, dtype=torch.long).reshape(
+        chat.codebooks, 2
+    )
+    modality = torch.tensor(
+        [FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT], dtype=torch.long
+    )
 
     text_added, audio_added = chat._append(
         text=text,
@@ -233,7 +287,9 @@ def test_append_audio_history_updates_audio_tokens_and_map(patched_liquid_audio_
     assert torch.equal(appended_audio, audio)
 
 
-def test_add_audio_appends_tokens_and_negative_map(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_add_audio_appends_tokens_and_negative_map(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
     waveform = torch.zeros((chat.codebooks, 2), dtype=torch.float32)
 
@@ -244,17 +300,25 @@ def test_add_audio_appends_tokens_and_negative_map(patched_liquid_audio_chat: Si
     assert chat.audio_in_lens.tolist() == [16]
 
 
-def test_decode_audio_returns_none_for_audio_in_shape(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_decode_audio_returns_none_for_audio_in_shape(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
-    audio_tokens = torch.zeros((liquid_chat.LiquidAudioChat.AUDIO_IN_SHAPE, 3), dtype=torch.long)
+    audio_tokens = torch.zeros(
+        (liquid_chat.LiquidAudioChat.AUDIO_IN_SHAPE, 3), dtype=torch.long
+    )
 
     decoded = chat._decode_audio(audio_tokens)
     assert decoded is None
 
 
-def test_decode_audio_uses_mimi_for_audio_out(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_decode_audio_uses_mimi_for_audio_out(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
-    audio_tokens = torch.arange(chat.codebooks * 3, dtype=torch.long).reshape(chat.codebooks, 3)
+    audio_tokens = torch.arange(chat.codebooks * 3, dtype=torch.long).reshape(
+        chat.codebooks, 3
+    )
 
     decoded = chat._decode_audio(audio_tokens)
 
@@ -262,11 +326,16 @@ def test_decode_audio_uses_mimi_for_audio_out(patched_liquid_audio_chat: SimpleN
     assert len(chat.proc.mimi.calls) == 1
 
 
-def test_decode_audio_mixed_sign_raises(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_decode_audio_mixed_sign_raises(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
     mixed = torch.tensor([0, 1], dtype=torch.long)
 
-    with pytest.raises(ValueError, match="audio_tokens should contain either only audio in or only audio out tokens"):
+    with pytest.raises(
+        ValueError,
+        match="audio_tokens should contain either only audio in or only audio out tokens",
+    ):
         chat._decode_audio(mixed)
 
 
@@ -277,11 +346,15 @@ def test_get_tokens_sequences_to_exclude_encodes_phrases(
     sequences = chat._get_tokens_sequences_to_exclude({"ab"})
 
     assert len(sequences) == 1
-    encoded = torch.tensor(chat.proc.text.encode("ab", add_special_tokens=False), device=chat.torch_device)
+    encoded = torch.tensor(
+        chat.proc.text.encode("ab", add_special_tokens=False), device=chat.torch_device
+    )
     assert torch.equal(sequences[0], encoded)
 
 
-def test_new_turn_and_end_turn_forward_to_chat_state(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_new_turn_and_end_turn_forward_to_chat_state(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     chat = _build_chat_with_state()
 
     chat.new_turn(Role.USER)
@@ -294,13 +367,26 @@ def test_new_turn_and_end_turn_forward_to_chat_state(patched_liquid_audio_chat: 
     assert chat.end_turn_count == 1
 
 
-def test_input_tokens_mixes_text_and_audio_sources(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_input_tokens_mixes_text_and_audio_sources(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     codebooks = liquid_chat.LiquidAudioChat.AUDIO_OUT_SHAPE
     text = torch.tensor([[5, 6]], dtype=torch.long)
-    audio_in = torch.arange(codebooks, dtype=torch.long).view(codebooks, 1).repeat(1, codebooks)
+    audio_in = (
+        torch.arange(codebooks, dtype=torch.long)
+        .view(codebooks, 1)
+        .repeat(1, codebooks)
+    )
     audio_out = torch.arange(codebooks, dtype=torch.long).unsqueeze(1)
     modality = torch.tensor(
-        [[FakeLFMModality.TEXT, FakeLFMModality.AUDIO_IN, FakeLFMModality.AUDIO_OUT, FakeLFMModality.TEXT]],
+        [
+            [
+                FakeLFMModality.TEXT,
+                FakeLFMModality.AUDIO_IN,
+                FakeLFMModality.AUDIO_OUT,
+                FakeLFMModality.TEXT,
+            ]
+        ],
         dtype=torch.long,
     )
 
@@ -312,11 +398,16 @@ def test_input_tokens_mixes_text_and_audio_sources(patched_liquid_audio_chat: Si
         audio_in_lens=torch.tensor([codebooks], dtype=torch.long),
     )
     chat._audio_map = torch.tensor([-1, 1], dtype=torch.long)
-    chat.text_tokens_no_system_mask = torch.tensor([False, True], dtype=torch.bool, device=chat.torch_device)
-    chat.audio_tokens_no_system_mask = torch.tensor([True, True], dtype=torch.bool, device=chat.torch_device)
+    chat.text_tokens_no_system_mask = torch.tensor(
+        [False, True], dtype=torch.bool, device=chat.torch_device
+    )
+    chat.audio_tokens_no_system_mask = torch.tensor(
+        [True, True], dtype=torch.bool, device=chat.torch_device
+    )
     chat.token_turns = torch.zeros(4, dtype=torch.int16)
     chat.token_roles = torch.tensor(
-        [Role.SYSTEM.value, Role.SYSTEM.value, Role.ASSISTANT.value, Role.USER.value], dtype=torch.int8
+        [Role.SYSTEM.value, Role.SYSTEM.value, Role.ASSISTANT.value, Role.USER.value],
+        dtype=torch.int8,
     )
     chat.refresh(full=True)
 
@@ -328,13 +419,26 @@ def test_input_tokens_mixes_text_and_audio_sources(patched_liquid_audio_chat: Si
     assert torch.equal(tokens[3], chat.text_tokens[1].unsqueeze(-1))
 
 
-def test_set_new_instance_filters_audio_components(patched_liquid_audio_chat: SimpleNamespace) -> None:
+def test_set_new_instance_filters_audio_components(
+    patched_liquid_audio_chat: SimpleNamespace,
+) -> None:
     codebooks = liquid_chat.LiquidAudioChat.AUDIO_OUT_SHAPE
     text = torch.tensor([[11, 22]], dtype=torch.long)
-    audio_in = torch.arange(codebooks, dtype=torch.long).view(codebooks, 1).repeat(1, codebooks)
+    audio_in = (
+        torch.arange(codebooks, dtype=torch.long)
+        .view(codebooks, 1)
+        .repeat(1, codebooks)
+    )
     audio_out = torch.arange(codebooks, dtype=torch.long).unsqueeze(1)
     modality = torch.tensor(
-        [[FakeLFMModality.TEXT, FakeLFMModality.AUDIO_IN, FakeLFMModality.AUDIO_OUT, FakeLFMModality.TEXT]],
+        [
+            [
+                FakeLFMModality.TEXT,
+                FakeLFMModality.AUDIO_IN,
+                FakeLFMModality.AUDIO_OUT,
+                FakeLFMModality.TEXT,
+            ]
+        ],
         dtype=torch.long,
     )
     chat = _build_chat_with_state(
@@ -346,11 +450,16 @@ def test_set_new_instance_filters_audio_components(patched_liquid_audio_chat: Si
     )
     chat._audio_map = torch.tensor([-1, 1], dtype=torch.long)
     chat.validate_from_chat = True
-    chat.text_tokens_no_system_mask = torch.tensor([False, True], dtype=torch.bool, device=chat.torch_device)
-    chat.audio_tokens_no_system_mask = torch.tensor([True, True], dtype=torch.bool, device=chat.torch_device)
+    chat.text_tokens_no_system_mask = torch.tensor(
+        [False, True], dtype=torch.bool, device=chat.torch_device
+    )
+    chat.audio_tokens_no_system_mask = torch.tensor(
+        [True, True], dtype=torch.bool, device=chat.torch_device
+    )
     chat.token_turns = torch.zeros(4, dtype=torch.int16)
     chat.token_roles = torch.tensor(
-        [Role.SYSTEM.value, Role.SYSTEM.value, Role.ASSISTANT.value, Role.USER.value], dtype=torch.int8
+        [Role.SYSTEM.value, Role.SYSTEM.value, Role.ASSISTANT.value, Role.USER.value],
+        dtype=torch.int8,
     )
     chat.refresh(full=True)
 
@@ -367,7 +476,10 @@ def test_set_new_instance_filters_audio_components(patched_liquid_audio_chat: Si
 
     assert torch.equal(
         new_chat.modality_flag,
-        torch.tensor([[FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT, FakeLFMModality.TEXT]], dtype=torch.long),
+        torch.tensor(
+            [[FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT, FakeLFMModality.TEXT]],
+            dtype=torch.long,
+        ),
     )
     assert new_chat.audio_in.shape[1] == 0
     assert new_chat.audio_in_lens.numel() == 0

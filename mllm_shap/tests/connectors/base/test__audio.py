@@ -360,6 +360,7 @@ class TestSpectrogramGuidedAlignerAlign:
         # Mock convert_tokens_to_ids to return the character index
         def mock_convert(c):
             return vocab_chars.index(c) if c in vocab_chars else -1
+
         aligner.processor.tokenizer.convert_tokens_to_ids = mock_convert
 
         # Test transcript with diacritics

@@ -332,8 +332,10 @@ class SpectrogramGuidedAligner:
         # Strip diacritics while preserving spaces
         text_nfd = unicodedata.normalize("NFD", text_upper)
         text_no_diacritics = "".join(
-            char for char in text_nfd
-            if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
+            char
+            for char in text_nfd
+            if unicodedata.category(char)
+            != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
         )
         # Keep only alphanumeric and spaces
         text_clean = "".join(
@@ -542,9 +544,7 @@ class SpectrogramGuidedAligner:
             waveform: Audio waveform tensor.
             original_sr: Original sampling rate of the waveform.
         """
-        cpu_waveform = self.__set_segment_indices(
-            final_segments, waveform, original_sr
-        )
+        cpu_waveform = self.__set_segment_indices(final_segments, waveform, original_sr)
 
         if not attach_audio:
             return
@@ -646,9 +646,7 @@ class SpectrogramGuidedAligner:
         )
 
         if attach_audio:
-            self.__attach_audio_to_segments(
-                final_segments, waveform, original_sr
-            )
+            self.__attach_audio_to_segments(final_segments, waveform, original_sr)
         else:
             self.__set_segment_indices(final_segments, waveform, original_sr)
 

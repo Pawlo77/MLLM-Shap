@@ -74,14 +74,18 @@ class DummyBaseComplementaryNeymanShapExplainer(BaseComplementaryNeymanShapExpla
         """Return a constant similarity tensor of ones (for testing purposes)."""
         return torch.ones(len(responses), dtype=torch.float32)
 
-    def _calculate_C_matrix(self, masks: Tensor, similarities: Tensor, device: torch.device) -> None:
+    def _calculate_C_matrix(
+        self, masks: Tensor, similarities: Tensor, device: torch.device
+    ) -> None:
         """
         For tests, write deterministic simple contributions into self._C
         (this overrides heavy logic of the real method).
         """
         # masks shape = (masks_count, token_count)
         if self._M is None:
-            raise RuntimeError("M matrix must be initialized before calculating C matrix.")
+            raise RuntimeError(
+                "M matrix must be initialized before calculating C matrix."
+            )
         if self._C is None:
             self._C = torch.zeros_like(self._M)
         # simple deterministic update: increment by 1 per True entry for test visibility
@@ -101,14 +105,20 @@ class TestBaseComplementaryNeymanShapExplainerNumSplits:
     @pytest.fixture
     def explainer(self) -> DummyBaseComplementaryNeymanShapExplainer:
         """Provide a default explainer fixture."""
-        return DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2, initial_fraction=0.5)
+        return DummyBaseComplementaryNeymanShapExplainer(
+            initial_num_samples=2, initial_fraction=0.5
+        )
 
-    def test_num_splits_returns_integer(self, explainer: DummyBaseComplementaryNeymanShapExplainer) -> None:
+    def test_num_splits_returns_integer(
+        self, explainer: DummyBaseComplementaryNeymanShapExplainer
+    ) -> None:
         """Ensure _get_num_splits() returns a valid integer and sets initial splits."""
         num_splits = explainer._get_num_splits(n=5)
         assert isinstance(num_splits, int)
         # the initial number of splits is stored under a mangled name; read it defensively
-        initial_splits = getattr(explainer, "_BaseComplementaryNeymanShapExplainer__initial_num_splits", None)
+        initial_splits = getattr(
+            explainer, "_BaseComplementaryNeymanShapExplainer__initial_num_splits", None
+        )
         assert initial_splits is not None and isinstance(initial_splits, int)
         assert initial_splits >= 1
         assert num_splits >= initial_splits
@@ -121,7 +131,9 @@ class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
     def explainer(self) -> DummyBaseComplementaryNeymanShapExplainer:
         return DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
 
-    def test_complementary_mask_pair_generation(self, explainer: DummyBaseComplementaryNeymanShapExplainer) -> None:
+    def test_complementary_mask_pair_generation(
+        self, explainer: DummyBaseComplementaryNeymanShapExplainer
+    ) -> None:
         """
         Tests that masks produced by the masks generator come in complementary pairs.
         This uses the explainer's _get_masks_generator which is a thin wrapper around the base generator.
@@ -133,7 +145,9 @@ class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
         # create a MasksManager for this chat
         mask_manager = MasksManager(chat=chat)
         # get the generator (kwargs align with the wrapper in the explainer)
-        gen = explainer._get_masks_generator(mask_manager=mask_manager, device=device, masks=[])
+        gen = explainer._get_masks_generator(
+            mask_manager=mask_manager, device=device, masks=[]
+        )
         # pull two masks (should be complementary pair)
         mask_a, _ = next(gen)
         mask_b, _ = next(gen)
@@ -168,7 +182,9 @@ class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
     def test_no_tokens_to_explain_raises(self) -> None:
         """MasksManager should raise if chat.shap_values_mask has no True values."""
         bad_chat = DummyChat()
-        bad_chat.shap_values_mask = torch.tensor([False, False, False, False], dtype=torch.bool)
+        bad_chat.shap_values_mask = torch.tensor(
+            [False, False, False, False], dtype=torch.bool
+        )
         with pytest.raises(NoTokensToExplainError):
             MasksManager(chat=bad_chat)
 
@@ -192,13 +208,21 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         """Check that SHAP value computation produces a tensor of the correct shape."""
         explainer = DummyBaseComplementaryNeymanShapExplainer()
         # prepare M and C such that M[:, 1:] are non-zero
-        explainer._M = torch.tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=torch.float32)
-        explainer._C = torch.tensor([[0.0, 4.0, 6.0], [0.0, 2.0, 8.0], [0.0, 1.0, 1.0]], dtype=torch.float32)
+        explainer._M = torch.tensor(
+            [[2.0, 2.0, 2.0], [2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=torch.float32
+        )
+        explainer._C = torch.tensor(
+            [[0.0, 4.0, 6.0], [0.0, 2.0, 8.0], [0.0, 1.0, 1.0]], dtype=torch.float32
+        )
         explainer._zero_mask_skipped = True
         device = torch.device("cpu")
-        masks = torch.tensor([[True, False, False], [False, True, False]], dtype=torch.bool)
+        masks = torch.tensor(
+            [[True, False, False], [False, True, False]], dtype=torch.bool
+        )
         similarities = torch.tensor([1.0, 1.0], dtype=torch.float32)
-        result = explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
+        result = explainer._calculate_shap_values(
+            masks=masks, similarities=similarities, device=device
+        )
         assert isinstance(result, Tensor)
         # result length equals number of features (rows in _M)
         assert result.shape[0] == explainer._M.shape[0]
@@ -210,10 +234,14 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         explainer._M = torch.ones((3, 3), dtype=torch.float32) * 2.0
         explainer._C = torch.zeros_like(explainer._M)
         device = torch.device("cpu")
-        masks = torch.tensor([[True, False, False], [False, True, False]], dtype=torch.bool)
+        masks = torch.tensor(
+            [[True, False, False], [False, True, False]], dtype=torch.bool
+        )
         similarities = torch.tensor([1.0, 1.0], dtype=torch.float32)
         with pytest.raises(RuntimeError, match="Zero mask was not skipped"):
-            explainer._calculate_shap_values(masks=masks, similarities=similarities, device=device)
+            explainer._calculate_shap_values(
+                masks=masks, similarities=similarities, device=device
+            )
 
     def test_calculate_C_matrix_updates_counts(self) -> None:
         """Ensure the test `_calculate_C_matrix` implementation increments counts at the expected indices."""
@@ -222,11 +250,15 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         explainer._M = torch.ones((3, 3), dtype=torch.float32)
         explainer._C = torch.zeros_like(explainer._M)
 
-        masks = torch.tensor([[True, False, True], [True, True, False]], dtype=torch.bool)
+        masks = torch.tensor(
+            [[True, False, True], [True, True, False]], dtype=torch.bool
+        )
         similarities = torch.tensor([1.0, 1.0], dtype=torch.float32)
         device = torch.device("cpu")
 
-        explainer._calculate_C_matrix(masks=masks, similarities=similarities, device=device)
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=similarities, device=device
+        )
 
         # coalition size for both rows is 2, so updates happen in column index 2
         # expected increments: token0 present in both rows -> 2, token1 present once -> 1, token2 present once -> 1
@@ -243,7 +275,9 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         similarities = torch.tensor([1.0, 1.0], dtype=torch.float32)
         device = torch.device("cpu")
 
-        explainer._calculate_C_matrix(masks=masks, similarities=similarities, device=device)
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=similarities, device=device
+        )
 
         # first row has zero Trues -> contributions at column 0 for no-token coalition
         assert explainer._C[:, 0].sum() >= 0.0

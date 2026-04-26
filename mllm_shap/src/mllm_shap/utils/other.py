@@ -6,7 +6,9 @@ import torch
 from torch import Tensor
 
 
-def raise_connector_error(callable_: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+def raise_connector_error(
+    callable_: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Any:
     """
     Wrapper to raise connector errors with more context.
 
@@ -39,7 +41,9 @@ def safe_mask(tensor: Tensor, mask: Tensor) -> Tensor:
     """
     masked = tensor[..., mask]
     if masked.numel() == 0:
-        target_shape = (tensor.shape[0], 0) if len(tensor.shape) > 1 else (tensor.shape[0],)
+        target_shape = (
+            (tensor.shape[0], 0) if len(tensor.shape) > 1 else (tensor.shape[0],)
+        )
         masked = torch.empty(target_shape, device=tensor.device, dtype=tensor.dtype)
     return masked
 
@@ -58,7 +62,9 @@ def safe_mask_unsqueeze(tensor: Tensor, mask: Tensor) -> Tensor:
     """
     masked = tensor[0][mask]
     if masked.numel() == 0:
-        target_shape = (tensor.shape[0], 0) if len(tensor.shape) > 1 else (tensor.shape[0],)
+        target_shape = (
+            (tensor.shape[0], 0) if len(tensor.shape) > 1 else (tensor.shape[0],)
+        )
         masked = torch.empty(target_shape, device=tensor.device, dtype=tensor.dtype)
     else:
         masked = masked.unsqueeze(0)
