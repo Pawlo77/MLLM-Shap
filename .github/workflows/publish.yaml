@@ -5,7 +5,7 @@ on:
     branches:
       - feature/pypi # for development testing
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   run:
