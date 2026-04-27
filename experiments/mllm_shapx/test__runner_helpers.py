@@ -1,7 +1,5 @@
 """Unit tests for lightweight runner helpers."""
 
-from __future__ import annotations
-
 from types import SimpleNamespace
 
 from . import runner

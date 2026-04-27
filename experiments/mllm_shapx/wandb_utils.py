@@ -1,7 +1,5 @@
 """Thin wrappers around Weights & Biases to keep imports isolated."""
 
-from __future__ import annotations
-
 import os
 import importlib
 from pathlib import Path

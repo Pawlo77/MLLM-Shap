@@ -346,25 +346,25 @@ All four experiments can be run concurrently. Experiments B, C, and D are fast; 
 - [ ] **§3.5 Attribution Faithfulness** — Experiment A results (full protocol, Δ log-prob table, t-test)
 - [ ] **§3.6 Stage 3 Ablation** — Experiment C results (spectral flux comparison table)
 - [ ] **§3.7 Pilot on Natural Speech** — Experiment B results (LibriSpeech, failure rate, runtime)
-- [ ] **§2 preamble** — 2-sentence Shapley basics (player = segment, coalition = subset)
-- [ ] **§2.1** — One sentence on character-level OOV/pronunciation variant handling
-- [ ] **§2.2** — Paragraph on CTC blank symbol heuristic
-- [ ] **§2.3** — Explicit δ value; tuning protocol sentence; sensitivity analysis; replace "empirically tuned"
-- [ ] **§3.1.1 or §3.1.4** — One sentence defining the SV characteristic function (log-prob of ground-truth transcription)
-- [ ] **§3.3** — 1–2 sentences clarifying that concentration shift is descriptive, not normative
-- [ ] **§4.1 Limitations** — Fifth limitation: synthetic-speech-primary evaluation, LibriSpeech pilot scope
+- [x] **§2 preamble** — 2-sentence Shapley basics (player = segment, coalition = subset)
+- [x] **§2.1** — One sentence on character-level OOV/pronunciation variant handling
+- [x] **§2.2** — Paragraph on CTC blank symbol heuristic
+- [x] **§2.3** — Explicit δ value; tuning protocol sentence; sensitivity analysis; replace "empirically tuned"
+- [x] **§3.1.1 or §3.1.4** — One sentence defining the SV characteristic function (log-prob of ground-truth transcription)
+- [x] **§3.3** — 1–2 sentences clarifying that concentration shift is descriptive, not normative
+- [x] **§4.1 Limitations** — Fifth limitation: synthetic-speech-primary evaluation, LibriSpeech pilot scope
 
 ### Sections to Rewrite
-- [ ] **Abstract** — Lead with application problem before coalition space math
-- [ ] **§1 Introduction, final paragraph** — Foreground bridging contribution; distinguish tools from problem solved
-- [ ] **§4 Discussion, Non-neutrality finding** — Explicitly state redistribution is an inherent SV property [4], not a bias
-- [ ] **§3.3.1** — Add footnote or citation for √n normalization; shift emphasis to Gini as primary metric
-- [ ] **§2.2** — Replace "robust CTC alignment quality" with cited, measured claim
+- [x] **Abstract** — Lead with application problem before coalition space math
+- [x] **§1 Introduction, final paragraph** — Foreground bridging contribution; distinguish tools from problem solved
+- [x] **§4 Discussion, Non-neutrality finding** — Explicitly state redistribution is an inherent SV property [4], not a bias
+- [x] **§3.3.1** — Add footnote or citation for √n normalization; shift emphasis to Gini as primary metric
+- [x] **§2.2** — Replace "robust CTC alignment quality" with cited, measured claim
 
 ### Figure Fixes
-- [ ] **Figure 1** — Correct waveform, increase font size, add four explicit stage labels
-- [ ] **Figure 2** — Fix "Count of Count..." typo; remove whitespace; consider shared x-axis
+- [x] **Figure 1** — Correct waveform, increase font size, add four explicit stage labels
+- [x] **Figure 2** — Fix "Count of Count..." typo; remove whitespace; consider shared x-axis
 
 ### Terminology Fixes
-- [ ] Replace all instances of "wall-clock time" → "total execution time"
-- [ ] Replace "empirically tuned" (§2.3) → explicit values + protocol description
+- [x] Replace all instances of "wall-clock time" → "total execution time"
+- [x] Replace "empirically tuned" (§2.3) → explicit values + protocol description

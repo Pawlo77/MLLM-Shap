@@ -1,7 +1,5 @@
 """Unit tests for SpectrogramGuidedAligner and AudioSegment."""
 
-from __future__ import annotations
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -78,6 +76,8 @@ class TestSpectrogramGuidedAlignerInit:
         assert aligner.device is device
         assert aligner.vocab == {"A": 0, "B": 1}
         assert aligner.blank_id == 0
+        assert aligner.boundary_energy_weight == pytest.approx(0.8)
+        assert aligner.boundary_flux_weight == pytest.approx(0.2)
 
     @patch(
         "mllm_shap.connectors.base.audio.Wav2Vec2ForCTC.from_pretrained",
@@ -93,6 +93,40 @@ class TestSpectrogramGuidedAlignerInit:
         device = torch.device("cpu")
         with pytest.raises(ValueError, match="Could not load"):
             SpectrogramGuidedAligner(device=device, model_name="non-existent-model")
+
+    @patch("mllm_shap.connectors.base.audio.Wav2Vec2ForCTC.from_pretrained")
+    @patch("mllm_shap.connectors.base.audio.Wav2Vec2Processor.from_pretrained")
+    def test_init_raises_on_invalid_boundary_weights(
+        self,
+        mock_processor_from_pretrained: MagicMock,
+        mock_model_from_pretrained: MagicMock,
+    ) -> None:
+        """Boundary refinement weights should be non-negative and not both zero."""
+        tokenizer = MagicMock()
+        tokenizer.get_vocab.return_value = {"A": 0}
+        tokenizer.pad_token_id = 0
+
+        processor = MagicMock()
+        processor.tokenizer = tokenizer
+        mock_processor_from_pretrained.return_value = processor
+
+        model = MagicMock()
+        model.to.return_value = model
+        mock_model_from_pretrained.return_value = model
+
+        device = torch.device("cpu")
+        with pytest.raises(ValueError, match="non-negative"):
+            SpectrogramGuidedAligner(
+                device=device,
+                boundary_energy_weight=-0.1,
+                boundary_flux_weight=1.0,
+            )
+        with pytest.raises(ValueError, match="greater than zero"):
+            SpectrogramGuidedAligner(
+                device=device,
+                boundary_energy_weight=0.0,
+                boundary_flux_weight=0.0,
+            )
 
 
 class TestSpectrogramGuidedAlignerAlign:

@@ -26,8 +26,10 @@ logger: Logger = get_logger(__name__)
 warnings.filterwarnings("ignore", message=".*forced_align has been deprecated.*")
 
 
-UNICODE_CATEGORY_NONSPACING_MARK = "Mn"
-ASCII_SPACE = " "
+ASCII_SPACE: str = " "
+UNICODE_CATEGORY_NONSPACING_MARK: str = "Mn"
+_SILENCE_THRESHOLD_RATIO: float = 0.5
+_MIN_REFINE_SAMPLES: int = 256
 
 
 @dataclass
@@ -99,7 +101,8 @@ class SpectrogramGuidedAligner:
     The alignment process consists of several phases:
     1.  **Acoustic Modeling:** A CTC model (Wav2Vec2) maps audio to character probabilities.
     2.  **Forced Alignment:** Dynamic programming finds the optimal alignment path.
-    3.  **Boundary Refinement:** Spectrogram features (Energy & Flux) refine boundaries.
+    3.  **Boundary Refinement:** Spectrogram features (Energy & Flux) refine boundaries,
+        using gap midpoints as search anchors and joint negotiation to prevent inversions.
     4.  **Aggregation:** Character-level segments are grouped into user-defined tokens.
     """
 
@@ -110,29 +113,28 @@ class SpectrogramGuidedAligner:
         model_revision: str = "main",
         sample_rate: int = 16000,
         ctc_separator: str = "|",
+        boundary_energy_weight: float = 0.8,
+        boundary_flux_weight: float = 0.2,
     ):
-        """
-        Initializes the aligner with the specified CTC model.
+        if boundary_energy_weight < 0 or boundary_flux_weight < 0:
+            raise ValueError("Boundary refinement weights must be non-negative.")
+        if boundary_energy_weight + boundary_flux_weight <= 0:
+            raise ValueError(
+                "At least one boundary refinement weight must be greater than zero."
+            )
 
-        Args:
-            device: Torch device to run the model on (CPU or GPU).
-            model_name: Hugging Face model name for the Wav2Vec2 CTC model.
-            model_revision: Model revision or version to use.
-            sample_rate: Expected sample rate for the model (default 16kHz).
-            ctc_separator: Separator used in CTC decoding.
-        """
         self.device = device
         self.sample_rate = sample_rate
         self.ctc_separator = ctc_separator
+        self.boundary_energy_weight = float(boundary_energy_weight)
+        self.boundary_flux_weight = float(boundary_flux_weight)
 
         logger.debug("Loading alignment model: %s on %s...", model_name, device)
         try:
-            self.processor = cast(Any, Wav2Vec2Processor).from_pretrained(  # nosec B615
+            self.processor = cast(Any, Wav2Vec2Processor).from_pretrained(
                 model_name, revision=model_revision
             )
-            model = Wav2Vec2ForCTC.from_pretrained(  # nosec B615
-                model_name, revision=model_revision
-            )
+            model = Wav2Vec2ForCTC.from_pretrained(model_name, revision=model_revision)
             self.model = cast(Wav2Vec2ForCTC, model.to(cast(Any, device)))
         except OSError as e:
             raise ValueError(
@@ -147,40 +149,17 @@ class SpectrogramGuidedAligner:
 
     @staticmethod
     def normalize_text(text: str) -> str:
-        """
-        Normalize text for alignment by stripping diacritics and keeping only alphanumeric characters.
-
-        This normalization is applied consistently to both the transcript used for forced alignment
-        and the target segments used for aggregation to ensure matching.
-
-        Args:
-            text: The text to normalize.
-        Returns:
-            Normalized text (uppercase, no diacritics, only alphanumeric).
-        """
-        # Decompose Unicode characters (e.g., "ñ" -> "n" + combining tilde)
-        # and filter out combining marks (diacritics)
         text_nfd = unicodedata.normalize("NFD", text)
         text_no_diacritics = "".join(
             char
             for char in text_nfd
             if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK
         )
-        # Keep only alphanumeric characters and convert to uppercase
         return "".join(filter(str.isalnum, text_no_diacritics)).upper()
 
     def __compute_emissions(
         self, waveform: torch.Tensor, original_sr: int
     ) -> torch.Tensor:
-        """
-        Computes log-probability emissions from the acoustic model.
-
-        Args:
-            waveform: Audio waveform tensor.
-            original_sr: Original sampling rate of the waveform.
-        Returns:
-            Emission log-probabilities tensor.
-        """
         if original_sr != self.sample_rate:
             resampler = torchaudio.transforms.Resample(
                 orig_freq=original_sr, new_freq=self.sample_rate
@@ -192,7 +171,6 @@ class SpectrogramGuidedAligner:
         if waveform.dim() > 1:
             waveform = waveform.squeeze()
 
-        # Model Forward Pass
         inputs = self.processor(
             waveform, sampling_rate=self.sample_rate, return_tensors="pt", padding=True
         )
@@ -204,65 +182,90 @@ class SpectrogramGuidedAligner:
         return emissions
 
     def __refine_boundary_smart(
-        self, waveform: np.ndarray, sr: int, candidate_time: float
-    ) -> float:
+        self,
+        waveform: np.ndarray,
+        sr: int,
+        candidate_time: float,
+        *,
+        left_time: float | None = None,
+        right_time: float | None = None,
+    ) -> tuple[float, bool]:
         """
-        'Smart' Refinement using Energy and Spectral Flux.
+        Refine a single boundary timestamp using energy and spectral flux.
+
+        Fix 1: When left_time and right_time are supplied (the raw endpoints of
+        the gap between two adjacent character spans), the search window is
+        centred on their midpoint so that long silences are searched
+        symmetrically rather than being anchored to one character's tail.
+
+        Fix 3: If no frame in the window is clearly quieter than the window
+        mean (no genuine silence), the raw candidate_time is returned unchanged
+        rather than forcing a cut inside an active phoneme.
+
+        Fix 4: Returns a boolean indicating whether refinement was actually
+        applied (False when the search region was too short or no silence was
+        found).
 
         Args:
-            waveform: Audio waveform as a numpy array.
-            sr: Sampling rate of the waveform.
-            candidate_time: Initial candidate boundary time in seconds.
+            waveform:       Full audio waveform as a 1-D numpy array.
+            sr:             Sampling rate.
+            candidate_time: Raw CTC boundary estimate in seconds.
+            left_time:      Start of the blank gap (seconds). Optional.
+            right_time:     End of the blank gap (seconds). Optional.
+
         Returns:
-            Refined boundary time in seconds.
+            (refined_time_seconds, was_refined)
         """
-        window_samples = int(0.08 * sr)
-        center_sample = int(candidate_time * sr)
+        # use gap midpoint as centre when gap endpoints are known.
+        if left_time is not None and right_time is not None:
+            center_time = (left_time + right_time) / 2.0
+            half_window = (right_time - left_time) / 2.0 + 0.04  # gap ± 40 ms margin
+        else:
+            center_time = candidate_time
+            half_window = 0.08  # original ±80 ms
+
+        window_samples = int(half_window * sr)
+        center_sample = int(center_time * sr)
 
         start_idx = max(0, center_sample - window_samples)
         end_idx = min(len(waveform), center_sample + window_samples)
         search_region = waveform[start_idx:end_idx]
 
-        # Too short to analyze
-        if len(search_region) < 256:
-            return candidate_time
+        # flag when region is too short to analyse.
+        if len(search_region) < _MIN_REFINE_SAMPLES:
+            return candidate_time, False
 
-        # Compute RMS Energy (Loudness)
         rms = librosa.feature.rms(y=search_region, frame_length=256, hop_length=64)[0]
-
-        # Compute Spectral Flux (Change)
         stft = np.abs(librosa.stft(search_region, n_fft=256, hop_length=64))
         flux = np.sum(np.diff(stft, axis=1) ** 2, axis=0)
-        # Pad flux to match rms length
         flux = np.pad(flux, (0, len(rms) - len(flux)), mode="constant")
 
-        # Normalize to [0, 1]
         rms_norm = (rms - np.min(rms)) / (np.max(rms) - np.min(rms) + 1e-9)
         flux_norm = (flux - np.min(flux)) / (np.max(flux) - np.min(flux) + 1e-9)
 
-        # Weighted cost function: prioritize silence (low RMS) and stability (low Flux)
-        cost = 0.8 * rms_norm + 0.2 * flux_norm
-        min_idx = np.argmin(cost)
+        cost = (
+            self.boundary_energy_weight * rms_norm
+            + self.boundary_flux_weight * flux_norm
+        )
+        min_idx = int(np.argmin(cost))
+
+        # only accept the refined position if it is genuinely quieter
+        # than the window mean.  If no such frame exists (continuous speech,
+        # no inter-word pause), fall back to the raw candidate.
+        min_rms = rms[min_idx]
+        mean_rms = float(np.mean(rms))
+        if min_rms > _SILENCE_THRESHOLD_RATIO * mean_rms:
+            return candidate_time, False
 
         refined_sample = start_idx + (min_idx * 64)
-        return refined_sample / sr
+        return refined_sample / sr, True
 
     def __save_wav_mem(self, tensor: torch.Tensor, sample_rate: int) -> bytes:
-        """
-        Saves a waveform tensor to WAV format in memory.
-
-        Args:
-            tensor: Audio waveform tensor.
-            sample_rate: Sampling rate for the WAV file.
-        Returns:
-            Raw WAV bytes.
-        """
         src = tensor.cpu()
         if src.dim() == 1:
             src = src.unsqueeze(0)
 
         n_channels = src.shape[0]
-        # Convert float32 to int16 PCM
         src = (src * 32767).clamp(-32768, 32767).to(torch.int16)
         src = src.t().numpy()
 
@@ -279,13 +282,19 @@ class SpectrogramGuidedAligner:
         self, alignment_path: torch.Tensor, blank_id: int
     ) -> list[tuple[int, int, int]]:
         """
-        Merges frame-level alignment into (token, start, end) spans.
+        Merge frame-level alignment into (token, start, end) spans.
 
-        Args:
-            alignment_path: Tensor of token IDs aligned per frame.
-            blank_id: ID of the blank token in CTC.
+        Blank-labelled frames are excluded from character spans by construction:
+        a span ends at the frame where any token transition occurs, so blank
+        regions appear as gaps between adjacent character spans.  These gaps
+        are resolved in __refine_token_spans using gap-midpoint anchoring
+        (Fix 1 / Fix 2).
+
         Returns:
             list of (token_id, start_frame, end_frame) tuples.
+            Unchanged from the original — blank handling is correct here;
+            the original methodological problem was in how the resulting
+            gap timestamps were used downstream.
         """
         path = alignment_path.tolist()
 
@@ -299,7 +308,6 @@ class SpectrogramGuidedAligner:
                 current_token = token
                 start_frame = i
 
-        # Final span
         if current_token is not None and current_token != blank_id:
             spans.append((current_token, start_frame, len(path)))
 
@@ -308,14 +316,6 @@ class SpectrogramGuidedAligner:
     def __prepare_transcript(
         self, transcript: str | list[str]
     ) -> tuple[str, list[str], str, list[int]]:
-        """
-        Prepares the transcript for alignment.
-
-        Args:
-            transcript: Either a single string or a list of tokens.
-        Returns:
-            tuple containing full transcript, target segments, clean text, and valid token IDs.
-        """
         if isinstance(transcript, str):
             full_transcript = transcript
             target_segments = transcript.split()
@@ -323,22 +323,16 @@ class SpectrogramGuidedAligner:
             target_segments = transcript
             full_transcript = " ".join(transcript)
 
-        # Normalize text: strip diacritics, uppercase, keep alphanumeric + spaces
-        # Then replace spaces with CTC separator
         text_upper = full_transcript.upper()
-        # Strip diacritics while preserving spaces
         text_nfd = unicodedata.normalize("NFD", text_upper)
         text_no_diacritics = "".join(
             char
             for char in text_nfd
-            if unicodedata.category(char)
-            != UNICODE_CATEGORY_NONSPACING_MARK  # Remove combining marks (diacritics)
+            if unicodedata.category(char) != UNICODE_CATEGORY_NONSPACING_MARK
         )
-        # Keep only alphanumeric and spaces
         text_clean = "".join(
             c for c in text_no_diacritics if c.isalnum() or c == ASCII_SPACE
         )
-        # Replace spaces with CTC separator
         clean_text = text_clean.replace(ASCII_SPACE, self.ctc_separator)
 
         valid_tokens = [
@@ -355,16 +349,8 @@ class SpectrogramGuidedAligner:
     def __perform_forced_alignment(
         self, waveform: torch.Tensor, original_sr: int, valid_tokens: list[int]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Performs forced alignment using Torchaudio's forced_align.
-        Ensures CPU fallback for compatibility.
-
-        Returns:
-            tuple of (alignment_path, emission_log_probs).
-        """
         emissions_gpu = self.__compute_emissions(waveform, original_sr).squeeze(0)
 
-        # Move to CPU for forced_align to support MPS (Apple Silicon)
         emissions_cpu = emissions_gpu.unsqueeze(0).cpu()
         targets_cpu = torch.tensor([valid_tokens], dtype=torch.int32).cpu()
         emission_lens_cpu = torch.tensor([emissions_gpu.size(0)]).cpu()
@@ -386,61 +372,115 @@ class SpectrogramGuidedAligner:
         emissions_gpu: torch.Tensor,
         waveform: torch.Tensor,
         original_sr: int,
-    ) -> list[dict[str, str | float]]:
+    ) -> list[dict[str, str | float | bool]]:
         """
-        Refines token boundary times using acoustic features.
+        Refine token boundary times using acoustic features.
 
-        Args:
-            token_spans: list of (token_id, start_frame, end_frame) tuples.
-            emissions_gpu: Emission log-probabilities tensor.
-            waveform: Audio waveform tensor.
-            original_sr: Original sampling rate of the waveform.
-        Returns:
-            list of refined character segments with start/end times and confidence.
+        Fix 1 + Fix 2: Boundaries between adjacent character spans are resolved
+        jointly.  For each consecutive pair (span[i], span[i+1]), the raw gap
+        is [span[i].end, span[i+1].start] in frame space.  We convert that gap
+        to seconds, compute its midpoint, and call __refine_boundary_smart once,
+        centred on the midpoint with the full gap as the search window.  The
+        resulting single refined time is assigned as the end of span[i] AND the
+        start of span[i+1], guaranteeing monotonicity and symmetric coverage of
+        blank regions.
+
+        Fix 4: The `boundary_refined` flag from __refine_boundary_smart is
+        stored per character so callers can detect heterogeneous boundary quality.
         """
         ratio = waveform.size(1) / emissions_gpu.size(0)
         numpy_wave = waveform.cpu().numpy().squeeze()
+        total_samples = waveform.size(1)
 
-        refined_chars: list[dict[str, str | float]] = []
+        n = len(token_spans)
+        if n == 0:
+            return []
+
+        # --- Pass 1: convert all raw frame spans to seconds -------------------
+        raw_starts: list[float] = []
+        raw_ends: list[float] = []
+        confs: list[float] = []
+
         for sp_token, sp_start, sp_end in token_spans:
-            t_start = (sp_start * ratio) / original_sr
-            t_end = (sp_end * ratio) / original_sr
-
-            # Calculate confidence from GPU emissions (fast)
+            raw_starts.append((sp_start * ratio) / original_sr)
+            raw_ends.append((sp_end * ratio) / original_sr)
             conf = torch.exp(emissions_gpu[sp_start:sp_end, sp_token]).mean().item()
+            confs.append(conf)
 
-            # Refine boundaries
-            r_start = self.__refine_boundary_smart(numpy_wave, original_sr, t_start)
-            r_end = self.__refine_boundary_smart(numpy_wave, original_sr, t_end)
+        # --- Pass 2: resolve shared inter-character boundaries jointly --------
+        # refined_boundaries[i] is the shared boundary between span[i] and span[i+1].
+        # len == n-1.
+        refined_boundaries: list[tuple[float, bool]] = []
+        for i in range(n - 1):
+            gap_left = raw_ends[i]  # end of left character span (seconds)
+            gap_right = raw_starts[i + 1]  # start of right character span (seconds)
+
+            # Midpoint of the blank gap as the search anchor (Fix 1).
+            gap_mid = (gap_left + gap_right) / 2.0
+
+            refined_time, was_refined = self.__refine_boundary_smart(
+                numpy_wave,
+                original_sr,
+                candidate_time=gap_mid,
+                left_time=gap_left,
+                right_time=gap_right,
+            )
+
+            # Safety clamp: must stay within [gap_left, gap_right] to prevent
+            # the refined boundary from drifting into neighbouring phonemes.
+            refined_time = float(np.clip(refined_time, gap_left, gap_right))
+            refined_boundaries.append((refined_time, was_refined))
+
+        # --- Pass 3: refine leading edge of first span and trailing edge of last span ---
+        # These have no neighbour on one side, so we use the original ±80 ms window.
+        first_start, first_refined = self.__refine_boundary_smart(
+            numpy_wave, original_sr, raw_starts[0]
+        )
+        last_end, last_refined = self.__refine_boundary_smart(
+            numpy_wave, original_sr, min(raw_ends[-1], total_samples / original_sr)
+        )
+
+        # --- Pass 4: assemble refined character records -----------------------
+        refined_chars: list[dict[str, str | float | bool]] = []
+        for i, (sp_token, _sp_start, _sp_end) in enumerate(token_spans):
+            # Start time: refined leading edge (first span) or shared boundary with left neighbour
+            if i == 0:
+                start_time = first_start
+                start_refined = first_refined
+            else:
+                start_time, start_refined = refined_boundaries[i - 1]
+
+            # End time: shared boundary with right neighbour, or refined trailing edge (last span)
+            if i == n - 1:
+                end_time = last_end
+                end_refined = last_refined
+            else:
+                end_time, end_refined = refined_boundaries[i]
+
+            boundary_refined = start_refined and end_refined
 
             char = cast(str, self.tokenizer.convert_ids_to_tokens(sp_token))
-
             refined_chars.append(
-                {"char": char, "start": r_start, "end": r_end, "confidence": conf}
+                {
+                    "char": char,
+                    "start": start_time,
+                    "end": end_time,
+                    "confidence": confs[i],
+                    "boundary_refined": boundary_refined,
+                }
             )
 
         return refined_chars
 
     def __aggregate_chars_to_segments(
         self,
-        char_segments: list[dict[str, str | float]],
+        char_segments: list[dict[str, str | float | bool]],
         target_segments: list[str],
     ) -> list[AudioSegment]:
-        """
-        Aggregates character-level alignment into the provided target segments.
-
-        Args:
-            char_segments: list of character-level segments with timings.
-            target_segments: list of target tokens/words to align to.
-        Returns:
-            list of aggregated AudioSegment objects.
-        """
-        # Aggregate chars to words/tokens
         final_segments = []
         current_char_idx = 0
 
         for segment_text in target_segments:
-            # Normalize target segment for matching - use the same normalization as __prepare_transcript
             clean_target = self.normalize_text(segment_text)
 
             if not clean_target:
@@ -448,10 +488,10 @@ class SpectrogramGuidedAligner:
 
             start_time = None
             end_time = None
-            confs = []
+            seg_confs = []
+            all_refined = True
             found_chars = 0
 
-            # Greedy matching
             while found_chars < len(clean_target) and current_char_idx < len(
                 char_segments
             ):
@@ -462,27 +502,28 @@ class SpectrogramGuidedAligner:
                     if start_time is None:
                         start_time = seg["start"]
                     end_time = seg["end"]
-                    confs.append(seg["confidence"])
+                    seg_confs.append(seg["confidence"])
+                    if not seg.get("boundary_refined", True):
+                        all_refined = False
                     found_chars += 1
 
                 current_char_idx += 1
 
             if start_time is not None:
-                # Fallback for single characters
                 if end_time is None:
                     end_time = cast(float, start_time) + 0.1
 
-                avg_conf = sum(confs) / len(confs) if confs else 0.0
+                avg_conf = sum(seg_confs) / len(seg_confs) if seg_confs else 0.0
 
-                final_segments.append(
-                    AudioSegment(
-                        token=segment_text,
-                        start_time=cast(float, start_time),
-                        end_time=cast(float, end_time),
-                        confidence=avg_conf,
-                        audio_format="wav",
-                    )
+                audio_seg = AudioSegment(
+                    token=segment_text,
+                    start_time=cast(float, start_time),
+                    end_time=cast(float, end_time),
+                    confidence=avg_conf,
+                    audio_format="wav",
                 )
+                audio_seg.boundary_refined = all_refined
+                final_segments.append(audio_seg)
 
         return final_segments
 
@@ -492,16 +533,6 @@ class SpectrogramGuidedAligner:
         waveform: torch.Tensor,
         original_sr: int,
     ) -> torch.Tensor:
-        """
-        Attach sample indices to segments based on timing information.
-
-        Args:
-            final_segments: list of AudioSegment objects.
-            waveform: Audio waveform tensor.
-            original_sr: Original sampling rate of the waveform.
-        Returns:
-            CPU waveform tensor in shape [channels, samples].
-        """
         cpu_waveform = waveform.cpu()
         if cpu_waveform.dim() == 1:
             cpu_waveform = cpu_waveform.unsqueeze(0)
@@ -510,12 +541,10 @@ class SpectrogramGuidedAligner:
             start_sample = int(seg.start_time * original_sr)
             end_sample = int(seg.end_time * original_sr)
 
-            # Ensure minimum duration (50ms) to avoid degenerate files
             min_duration = int(0.05 * original_sr)
             if end_sample - start_sample < min_duration:
                 end_sample = start_sample + min_duration
 
-            # Clamp boundaries
             start_sample = max(0, start_sample)
             end_sample = min(cpu_waveform.size(1), end_sample)
 
@@ -532,14 +561,6 @@ class SpectrogramGuidedAligner:
         original_sr: int,
         attach_audio: bool = True,
     ) -> None:
-        """
-        Attaches segment indices (always) and optionally raw audio bytes.
-
-        Args:
-            final_segments: list of AudioSegment objects.
-            waveform: Audio waveform tensor.
-            original_sr: Original sampling rate of the waveform.
-        """
         cpu_waveform = self.__set_segment_indices(final_segments, waveform, original_sr)
 
         if not attach_audio:
@@ -557,21 +578,6 @@ class SpectrogramGuidedAligner:
         original_sr: int | None = None,
         audio_format: str = "mp3",
     ) -> None:
-        """
-        Attach raw audio bytes to existing AudioSegment objects.
-
-        This is a helper method to materialize audio bytes for segments that were
-        created without audio attachment (i.e., with attach_audio=False).
-
-        Args:
-            segments: list of AudioSegment objects to attach audio to.
-            audio_content: Raw audio bytes. Either this or (waveform, original_sr) must be provided.
-            waveform: Audio waveform tensor. Either this and original_sr or audio_content must be provided.
-            original_sr: Original sampling rate of the waveform.
-            audio_format: Format of the audio content (default is "mp3").
-        Raises:
-            ValueError: If neither audio_content nor (waveform, original_sr) are provided.
-        """
         if audio_content is None and (waveform is None or original_sr is None):
             raise ValueError(
                 "Either audio_content or both waveform and original_sr must be provided."
@@ -583,7 +589,6 @@ class SpectrogramGuidedAligner:
         original_sr = cast(int, original_sr)
         waveform = cast(torch.Tensor, waveform)
 
-        # Materialize bytes on demand.
         self.__attach_audio_to_segments(
             segments, waveform, original_sr, attach_audio=True
         )
@@ -597,19 +602,6 @@ class SpectrogramGuidedAligner:
         audio_format: str = "mp3",
         attach_audio: bool = False,
     ) -> list[AudioSegment]:
-        """
-        Main pipeline execution.
-
-        Args:
-            audio_content: Raw audio bytes.
-            transcript: Either a single string (will be split by spaces)
-                OR a list of tokens/utterances to align to.
-            audio_format: Format of the audio content (default is "mp3").
-            attach_audio: Whether to attach raw audio bytes to each segment (default is False).
-                If False, segments will have empty audio bytes to save memory.
-        Returns:
-            list of aligned AudioSegment objects.
-        """
         if audio_content is None and (waveform is None or original_sr is None):
             raise ValueError(
                 "Either audio_content or both waveform and original_sr must be provided."

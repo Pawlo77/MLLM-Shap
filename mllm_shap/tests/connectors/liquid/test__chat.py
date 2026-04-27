@@ -1,7 +1,5 @@
 """Tests for the LiquidAudio chat connector."""
 
-from __future__ import annotations
-
 from enum import IntEnum
 from types import SimpleNamespace
 from typing import Any

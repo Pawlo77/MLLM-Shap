@@ -1,7 +1,5 @@
 """Filesystem helpers for runs, checkpoints, and JSON I/O."""
 
-from __future__ import annotations
-
 import json
 import logging
 import time

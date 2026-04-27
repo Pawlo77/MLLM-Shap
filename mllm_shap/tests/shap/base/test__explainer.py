@@ -1,7 +1,5 @@
 """Unit tests for BaseExplainer convenience wrapper."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import pytest

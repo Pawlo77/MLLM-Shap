@@ -1,7 +1,5 @@
 """Central constants and enums to avoid magic strings."""
 
-from __future__ import annotations
-
 from enum import Enum, StrEnum
 
 

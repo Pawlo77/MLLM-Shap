@@ -2,76 +2,36 @@
 % *                     Review vs. Camera-Ready settings                             *
 % *==================================================================================*
 %
-% REVIEW: Use the following command for submitting the paper (double-blind,
-% for review):
-%\documentclass{Interspeech}
-%
 % CAMERA-READY: Use the following command for the camera-ready version, one
 % affiliation per line:
 \documentclass[cameraready]{Interspeech}
 \usepackage{flushend}
 \usepackage[all]{nowidow}
-% *==================================================================================*
 
-
-% **************************************
-% *                                    *
-% *      STOP !   DO NOT DELETE !      *
-% *          READ THIS FIRST           *
-% *                                    *
-% * This template also includes        *
-% * important INSTRUCTIONS that you    *
-% * must follow when preparing your    *
-% * paper. Read it BEFORE replacing    *
-% * the content with your own work.    *
-% **************************************
-
-%==================================================================================
-% Title
-% Must exactly match the title entered into the paper submission system
 \title{SGPA: Spectrogram-Guided Phonetic Alignment for Feasible Shapley Value Explanations in Multimodal Large Language Models}
 
-%==================================================================================
-% Authors
-% The order of authors here must exactly match the order entered into the paper submission system
-% Note that the COMPLETE list of authors MUST be entered into the paper submission system at the outset, including when submitting your manuscript for double-blind review
-% The ORCID number is still optional but will become mandatory in the future years. It is strongly encouraged to get an ORCID for each cu-author.
-% Middle names, including initials, must be included in the first name
 \author[affiliation={1}, orcid=0009-0007-0728-1043, equalcontribution, correspondingauthor]{Paweł Dominik}{Pozorski}
 \author[affiliation={1}, orcid=0009-0000-2797-6044, equalcontribution, correspondingauthor]{Jakub Miłosz}{Muszyński}
 \author[affiliation={1}, orcid=0000-0001-7714-4844]{Maria}{Ganzha}
-% The maximum number of authors in the author list is 20. If the number of contributing authors is more than this, they should be listed in a footnote or the acknowledgement section.
-
-%==================================================================================
-% Affiliations
 
 \address{
     $^1$ Warsaw University of Technology, Warsaw, Poland
 }
 
-%==================================================================================
-% Emails
 \email{\texttt{\{jakub.muszynski2.stud, pawel.pozorski.stud, maria.ganzha\}@pw.edu.pl}}
 
-%==================================================================================
-% Keywords
 \keywords{Audio Processing, Speech Interpretability, Explainable Artificial Intelligence, Multimodal Large Language Models, Shapley Values}
 
 \newcommand{\blue}[1]{\textcolor{blue}{#1}}
 \newcommand{\red}[1]{\textcolor{red}{#1}}
 \usepackage{comment}
 
-%==================================================================================
-% Content
-
 \begin{document}
 
 \maketitle
 
-% the abstract here must exactly match the abstract entered into the paper submission system
 \begin{abstract}
-    % 1000 characters. ASCII characters only. No citations.
-    Explaining the behavior of end-to-end audio language models via Shapley value attribution is intractable under native tokenization: a typical utterance yields over $150$ encoder frames, inflating the coalition space by roughly $10^{42}$ relative to text; individual audio frames lack standalone meaning; and token boundaries that bisect phonetic transitions introduce masking artifacts. We introduce Spectrogram-Guided Phonetic Alignment (SGPA), a four-stage pipeline that combines Connectionist Temporal Classification forced alignment with spectral boundary refinement to produce acoustically stable, word-aligned audio segments. Controlled diagnostics on LFM2-Audio-1.5B with VoiceBench show that SGPA yields a 43$\times$ reduction in model evaluations. Statistical testing confirms that SGPA significantly alters attribution concentration while preserving the global cumulative profile, establishing it as a feasibility-enabling layer for audio explainability.
+    End-to-end audio language models process speech without explicit linguistic structure, making it difficult to identify which parts of an utterance drive a given response. Shapley value attribution offers a theoretically grounded remedy, but applying it to audio is intractable under native tokenization: a typical utterance yields over $150$ encoder frames, inflating the coalition space by roughly $10^{42}$ relative to text; individual frames lack standalone meaning; and token boundaries that bisect phonetic transitions introduce masking artifacts. We introduce Spectrogram-Guided Phonetic Alignment (SGPA), a four-stage pipeline that combines Connectionist Temporal Classification forced alignment with spectral boundary refinement to produce acoustically stable, word-aligned audio segments. Controlled diagnostics on LFM2-Audio-1.5B with VoiceBench show that SGPA yields a 43$\times$ reduction in model evaluations. Statistical testing confirms that SGPA significantly alters attribution concentration while preserving the global cumulative profile, establishing it as a feasibility-enabling layer for audio explainability.
 \end{abstract}
 
 \section{Introduction}
@@ -82,27 +42,15 @@ The root cause is native audio tokenization. Unlike text, which discretizes natu
 
 \begin{itemize}
     \item \textbf{Dimensionality explosion.} A standard $3$-second utterance produces over $150$ encoder frames under native tokenization. Since exact SV computation requires evaluating all $2^n$ subsets, this inflates the coalition space from $2^{10}$ (for a 10-word text) to $2^{150}$ -- a factor of ${\approx}10^{42}$. For a representative $50$-token prompt, exact computation would require ${\approx}10^{15}$ model evaluations; at \SI{1}{\milli\second} per call this exceeds $30$~years.\footnote{Derived from $2^{50} \times 10^{-3}\,\text{s} \approx 3.6 \times 10^{10}$\,s\,$\approx 35$~years.}
-    % [NOTE] The 10^42 and 30-year figures are author-derived calculations,
-    % not sourced from a cited reference. The footnote shows the derivation.
     \item \textbf{Semantic dilution.} Individual \SI{20}{\milli\second} audio frames lack standalone meaning. Attributions assigned to these opaque units appear as granular noise that cannot be interpreted by human supervisors or linguistic experts~\cite{mosca-etal-2022-shap}.
     \item \textbf{Boundary artifacts.} Native token boundaries frequently bisect phonetic transitions such as co-articulations~\cite{ladefoged2014course, hardcastle1999coarticulation}. Masking tokens at these positions introduces audible discontinuities and out-of-distribution perturbations that degrade the fidelity of SV estimates.
 \end{itemize}
 
 This work addresses these challenges by introducing \textbf{Spectrogram-Guided Phonetic Alignment (SGPA)}, a four-stage preprocessing pipeline that maps raw audio waveforms to word-aligned segments using Connectionist Temporal Classification (CTC)~\cite{graves2006connectionist} and local spectral refinement~\cite{mcfee2015librosa}. By replacing architecture-specific encoder frames with semantically grounded word-level segments, SGPA reduces the effective player count by $10$--$50\times$, compressing the required model evaluations from ${\approx}2{,}552$ to ${\approx}59$ per sample -- making SV-based audio attribution computationally feasible on consumer hardware.\penalty-10000
 
-Our contributions are threefold: (i)~we present SGPA, a model-agnostic alignment layer for audio SV computation; (ii)~we provide controlled diagnostics demonstrating that SGPA is not a neutral transformation -- it significantly alters attribution concentration (Cohen's~$d$~\cite{cohen1988statistical} up to \textit{$-1.37$}) while preserving the global cumulative SV profile; and (iii)~we release an open-source Python package, \texttt{mllm-shap}
-% [ORIGINAL]
-% \footnote{\url{https://pypi.org/project/mllm-shap/}}
-% [ANONYMOUS]
-\footnote{\url{https://pypi.org} url anonymous for the review}
-%
-, implementing the full pipeline. SGPA is integrated into a broader explainability platform available in the accompanying
-% [ORIGINAL]
-% package~\cite{pozorskimuszynskimllmshap}.
-% [ANONYMOUS]
-package [anonymous citation].
-%
-% [CITATION NOTE] verify whether self-citation is appropriate for Interspeech policy.
+Our contributions are threefold: (i)~we present SGPA, a model-agnostic alignment layer for audio SV computation; (ii)~we provide controlled diagnostics demonstrating that SGPA is not a neutral transformation -- it significantly alters attribution concentration (Cohen's~$d$~\cite{cohen1988statistical} up to \textit{$-1.37$}) while preserving the global cumulative SV profile; and (iii)~we release an open-source Python package, \texttt{mllm-shap}\footnote{\url{https://pypi.org/project/mllm-shap/}}, implementing the full pipeline. SGPA is integrated into a broader explainability platform available in the accompanying package~\cite{pozorskimuszynskimllmshap}.
+
+The central contribution is not the individual components -- CTC alignment and spectral boundary refinement are established tools -- but their composition into a feasibility-enabling layer that makes SV attribution on audio computationally tractable and linguistically interpretable.
 
 Section~2 details the SGPA pipeline. Section~3 presents diagnostic experiments, and Section~4 discusses limitations and future directions.
 
@@ -110,22 +58,28 @@ Section~2 details the SGPA pipeline. Section~3 presents diagnostic experiments, 
 \section{Spectrogram-Guided Phonetic Alignment}
 \label{sec:sgpa}
 
-SGPA is a four-stage pipeline that converts a raw audio waveform and its transcript into word-aligned audio segments suitable for SV analysis. The key idea is to redefine SV \emph{players}: instead of opaque encoder frames, each word in the transcript becomes a single player whose audio boundaries are determined by forced alignment and local spectral cues. When a player is excluded from a coalition, its corresponding audio segment is replaced with silence (zero amplitude)~\cite{covert2021explaining}, preserving the temporal structure of the remaining signal. Figure~\ref{fig:sgpa_pipeline} provides an overview.
+In Shapley value attribution, a \emph{player} is an atomic input unit whose contribution to a model's output is being quantified; a \emph{coalition} $S$ is any subset of players presented to the model, with absent players replaced by a neutral baseline (here, silence). SGPA redefines the player set: instead of opaque encoder frames, each word in the transcript becomes a single player, whose removal is implemented by silencing its corresponding audio segment. This reformulation reduces the player count to a function of the number of words, making the coalition space manageable for SV estimation compared to native tokenization.
+
+SGPA is a four-stage pipeline that converts a raw audio waveform and its transcript into word-aligned audio segments suitable for SV analysis. When a player is excluded from a coalition, its corresponding audio segment is replaced with silence (zero amplitude)~\cite{covert2021explaining}, preserving the temporal structure of the remaining signal. Figure~\ref{fig:sgpa_pipeline} provides an overview.
 %
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{../figures/sgpa_pipeline.png}
-  \caption{SGPA pipeline: transcript decomposition $\to$ CTC alignment $\to$ spectral boundary refinement $\to$ word-level aggregation. The CTC boundary (dashed) is shifted to a spectrally stable region (solid).}
+  \includegraphics[width=0.8\linewidth]{../figures/sgpa_pipeline.png}
+  \caption{
+    SGPA pipeline on a sample audio segment from the artificial part of the dataset. \textbf{(1)} The raw audio waveform is decomposed into target transcript segments. \textbf{(2)} Initial alignment identifies a raw inter-character gap bounded by CTC probabilities ($t_L$, $t_R$). \textbf{(3)} To prevent phoneme truncation, SGPA defines a localized search window and minimizes a joint spectral cost function (energy $E[t]$ and spectral flux $SF[t]$) to find a spectrally stable minimum. \textbf{(4)} The final word-level boundary is shifted from the naive left-edge cut to the verified silence threshold, resulting in a precise, zero-gap segmentation.
+    }
   \label{fig:sgpa_pipeline}
-\end{figure}
+\end{figure*}
 
 \subsection{Stage~1: Transcript Decomposition}
 
 The input transcript is decomposed into words and characters, recording a character-to-word membership map. This bookkeeping is essential because Stage~2 operates at the character level, while the final SV game requires word-level segments. The membership map allows character-level time boundaries to be merged upward in Stage~4.
 
+Because Stage~2 operates at the character level using a Wav2Vec2 character vocabulary, no word is strictly out-of-vocabulary; however, uncommon phoneme sequences may yield lower-confidence alignment timestamps, which Stage~3 partially compensates for by seeking spectrally stable cut regions within the inter-character gap rather than at a fixed offset from the raw boundary.
+
 \subsection{Stage~2: Initial Alignment via CTC}
 
-We feed the audio waveform into Wav2Vec2-XLSR-53~\cite{baevski2020wav2vec}, a self-supervised speech model chosen for its robust CTC alignment quality and public availability; its multilingual capability additionally enables future cross-lingual extension. The model produces an emission matrix $\mathbf{E} \in \mathbb{R}^{T \times V}$, where $T$ is the number of time frames and $V$ the vocabulary size. We apply Viterbi decoding~\cite{viterbi1967error} to extract the most likely character path:
+We feed the audio waveform into Wav2Vec2-XLSR-53~\cite{conneau2020xlsr}, a  self-supervised speech model whose CTC alignment quality has been validated on  forced-alignment tasks~\cite{kurzinger2020ctc,zhu2021forced} and is publicly  available; its multilingual pretraining additionally enables future cross-lingual extension. The model produces an emission matrix $\mathbf{E} \in \mathbb{R}^{T \times V}$, where $T$ is the number of time frames and $V$ the vocabulary size. We apply Viterbi decoding~\cite{viterbi1967error} to extract the most likely character path:
 %
 \begin{align}
   \pi^* = \arg\max_{\pi}\, P(\pi \mid \mathbf{E})
@@ -134,9 +88,11 @@ We feed the audio waveform into Wav2Vec2-XLSR-53~\cite{baevski2020wav2vec}, a se
 %
 This yields approximate start and end frame indices for each character, converted to timestamps via the model's effective frame stride. These timestamps serve as coarse anchors but are not guaranteed to coincide with acoustically stable cut points.
 
+Blank tokens dominate CTC emission sequences. In our implementation, blank-labelled frames are excluded from character spans by construction: a character's span runs from the frame where that character first becomes the active non-blank token to the frame where the \emph{next} token transition occurs, regardless of whether that transition leads to another non-blank token or to a blank. Inter-character and inter-word blank regions therefore manifest as \emph{gaps} between adjacent character spans -- explicit time intervals with neither endpoint assigned a character label. These gaps are the primary input to Stage~3, which resolves each gap into a single refined boundary timestamp.
+
 \subsection{Stage~3: Spectral Boundary Refinement}
 
-CTC-derived boundaries may fall in the middle of phonetic transitions. Speech commonly alternates between high-energy steady regions (e.g., vowels) and lower-energy regions or rapid transitions (e.g., closures, silences). For each candidate boundary~$t_{\mathrm{est}}$, we define a local search window $W = [t_{\mathrm{est}} - \delta,\, t_{\mathrm{est}} + \delta]$, where $\delta$ is a tunable half-width, and compute two signal-level features using \texttt{librosa}~\cite{mcfee2015librosa}:
+CTC-derived character boundaries may land in the middle of phonetic transitions. Stage~3 refines each boundary by searching locally for the acoustically quietest cut point, using two signal-level features computed with \texttt{librosa}~\cite{mcfee2015librosa}:
 %
 \begin{itemize}
     \item \textbf{Short-time energy} $E[n]$: the RMS energy per frame, capturing local amplitude.
@@ -150,67 +106,73 @@ The refined boundary is selected as the point of minimal combined activity:
   \label{eq:boundary}
 \end{align}
 %
-where $\alpha{=}0.8$ and $\beta{=}0.2$ are empirically tuned weights that favor low-energy, spectrally stable regions -- typically inter-word pauses -- thereby reducing the risk of introducing audible artifacts during the masking operations required for SV estimation.
+where $\alpha = 0.8$ and $\beta = 1 - \alpha = 0.2$ were determined through a two-stage grid search over $\alpha \in \{0.5, 0.6, 0.7, 0.8, 0.9\}$ using artificial audio from the experimentation dataset (Subsection~\ref{sec:setup}). In Stage 1, an automated proxy click-artifact score---based on transient energy and high-frequency power at detected masking boundaries---was computed for all samples to generate a machine-ranked shortlist. In Stage 2, a single annotator manually evaluated a $20$-sample subset using a five-point Mean Opinion Score (MOS) scale ($1 = \text{severe clicks}$, $5 = \text{no clicks}$). Details in Appendix~\ref{app:hyperparam}.\penalty-10000
+
+Three design choices distinguish the refinement procedure from a naive sliding-window minimum:
+
+\begin{description}
+  \item[Gap-midpoint anchoring.] Each inter-character gap $[t_L, t_R]$ -- where $t_L$ is the end of the left character's span and $t_R$ is the start of the right character's span -- defines both the anchor and the extent of the search window: the window is centred on $(t_L + t_R)/2$ with half-width $\delta = (t_R - t_L)/2 + 40\,\text{ms}$. Anchoring at the gap midpoint rather than at either character's raw boundary ensures symmetric coverage of the blank-dominated silence regardless of gap duration, preventing the search from being confined to one character's acoustic tail when the inter-word pause is long. The $40\,\text{ms}$ padding was chosen heuristically to accommodate transient boundary effects such as stop consonant release bursts and short-lag voice onset times, which typically fall within $0$--$25\,\text{ms}$ \cite{lisker1964cross}, providing a comfortable margin above the upper end of that range. The $80\,\text{ms}$ fixed-window fallback was set to encompass the full range of English aspirated stop VOTs ($60$--$100\,\text{ms}$) \cite{lisker1964cross}, consistent with the segmental closure durations documented for connected English speech \cite{klatt1976linguistic}. While these values ensure robust coverage of local acoustic uncertainty, their exact optimality was not determined via grid search and warrants further empirical exploration.
+
+  \item[Joint boundary resolution.] Each shared boundary between adjacent character spans is resolved \emph{once}. The single refined time is assigned as the end of the left character and the start of the right character simultaneously, and the result is clamped to $[t_L, t_R]$. This joint resolution guarantees that character spans remain monotonically ordered and non-overlapping, which is a precondition for artifact-free segment masking in Stage~4.
+
+  \item[Silence-aware fallback.] The minimum-cost frame is accepted only if its RMS energy falls below half the window mean -- a threshold indicating a genuine inter-word pause. In fast or continuous speech where no such frame exists, the algorithm falls back to the raw gap midpoint rather than forcing a cut inside an active phoneme. Each resulting \texttt{AudioSegment} carries a \texttt{boundary\_refined} flag (set to \texttt{False} for fallback cases) that propagates through word-level aggregation, providing callers with visibility into boundary quality heterogeneity across the player set.
+\end{description}
+
+The leading edge of the first character span and the trailing edge of the last character span have no gap neighbour on their outer side; these are refined independently using a fixed $\pm80\,\text{ms}$ window centred on their respective raw timestamps, subject to the same silence-aware fallback.
 
 \subsection{Stage~4: Word-Level Aggregation}
 
-The refined character-level boundaries are merged into word-level segments using the membership map from Stage~1. This granularity aligns with the primary unit of human interpretation (words), reduces the player count from $O(100)$ native tokens to $O(10)$ segments, and makes SV estimation with the Neyman-allocated complementary-contributions estimator~\cite{shapleyapproximations, nayman} computationally feasible.
+The refined character-level boundaries are merged into word-level segments using the membership map from Stage~1. This granularity aligns with the primary unit of human interpretation (words), significantly reducing the player count (Figure~\ref{fig:token_dist}), and makes SV estimation with the Neyman-allocated complementary-contributions estimator~\cite{shapleyapproximations, nayman} computationally feasible. A word-level segment is marked as boundary-unrefined if any of its constituent character boundaries fell back to the raw gap midpoint, enabling downstream filtering or flagging of lower-quality players.
 
 %==================================================================================
 \section{Diagnostic Evaluation}
 \label{sec:experiments}
 
-To validate SGPA, we conduct a controlled comparison between two segmentation regimes: (i)~the model's native audio tokenization and (ii)~SGPA word-aligned segments. All remaining estimator and inference settings are held constant. Reproduction notebooks are available in the project repository
-% [ORIGINAL]
-% \footnote{\url{https://github.com/Pawlo77/MLLM-Shap}}.
-% [ANONYMOUS]
-\footnote{\url{https://anonymous.4open.science/r/interspeech-mllm-shap-conference} - repository url anonymous for the review}.
-%
+To validate SGPA, we conduct a controlled comparison between two segmentation regimes: (i)~the model's native audio tokenization and (ii)~SGPA word-aligned segments. All remaining estimator and inference settings are held constant. Reproduction notebooks are available in the project repository\footnote{\url{https://github.com/Pawlo77/MLLM-Shap}}.
 
 \subsection{Setup}
+\label{sec:setup}
 
-\subsubsection{Model} We use \textbf{LFM2-Audio-1.5B}~\cite{LIQUID_LFM2_AUDIO_2025}\footnote{\url{https://huggingface.co/LiquidAI/LFM2-Audio-1.5B}}, a 1.5\,B-parameter open-source, end-to-end audio foundation model. Our selection criteria were: (i)~direct audio token processing without a cascaded speech$\,\to\,$text pipeline~\cite{yang2025largelanguagemodelsmeet, Lee_2022}; (ii)~publicly available weights; and (iii)~a parameter count small enough to fit within the \SI{16}{\giga\byte} VRAM of a consumer-grade Nvidia RTX~4080. LFM2 was the smallest publicly available model satisfying all three criteria.
+\begin{description}
+    \item[Model] We use \textbf{LFM2-Audio-1.5B}~\cite{LIQUID_LFM2_AUDIO_2025}\footnote{\url{https://huggingface.co/LiquidAI/LFM2-Audio-1.5B}}, a 1.5\,B-parameter open-source, end-to-end audio foundation model. Our selection criteria were: (i)~direct audio token processing without a cascaded speech$\,\to\,$text pipeline~\cite{yang2025largelanguagemodelsmeet, Lee_2022}; (ii)~publicly available weights; and (iii)~a parameter count small enough to fit within the \SI{16}{\giga\byte} VRAM of a consumer-grade Nvidia RTX~4080. LFM2 was the smallest publicly available model satisfying all three criteria at the time of experimentation.
 
-\subsubsection{Dataset} We evaluate on a single-sentence English subset of \textbf{VoiceBench}~\cite{chen2024voicebench}, a benchmark that assesses voice assistants across general knowledge, instruction-following, and safety dimensions. To construct the subset, we: (i)~remove exact-match text duplicates across all VoiceBench partitions; (ii)~retain only single-sentence prompts via NLTK~\cite{bird2009natural} sentence segmentation; and (iii)~apply stratified sampling over the source sub-datasets, reducing the pool by $90\%$ to arrive at $100$ samples (mean $7.19$ tokens, $37.87$ characters). Audio is synthesized with Google Chirp~3~HD TTS\footnote{\url{https://cloud.google.com/text-to-speech}} using default settings, yielding mean durations of \SI{2.69}{\second} (male) and \SI{2.48}{\second} (female), with a combined corpus length of \SI{1035.5}{\second}. The dataset is publicly available
-% [ORIGINAL]
-% \footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}.\penalty-10000
-% [ANONYMOUS]
-\footnote{\url{https://huggingface.co} datasets url anonymous for the review, dataset can be created deterministically based on repository-provided code}.\penalty-10000
-%
+  \item[SV Characteristic Function] The characteristic function $v(S)$ is defined as the log-probability assigned by LFM2-Audio-1.5B to the ground-truth target transcription when all players not in coalition $S$ are silenced. Formally, for a transcript $y^*$ and a masked audio signal $x_S$ in which segments outside $S$ are replaced with zero amplitude, $v(S) = \log P(y^* \mid x_S)$.
 
-\subsubsection{Modes} Since SGPA targets audio inputs, we evaluate two speech-to-speech configurations: male voice (\texttt{SM2S}) and female voice (\texttt{SF2S}). Each prompt is synthesized in both variants to assess SGPA's consistency across speaker characteristics.
+  \item[Dataset] We evaluate on a single-sentence English subset of \textbf{VoiceBench}~\cite{chen2024voicebench}, a benchmark that assesses voice assistants across general knowledge, instruction-following, and safety dimensions. To construct the subset, we: (i)~remove exact-match text duplicates across all VoiceBench partitions; (ii)~retain only single-sentence prompts via NLTK~\cite{bird2009natural} sentence segmentation; and (iii)~apply stratified sampling over the source sub-datasets, reducing the pool by $90\%$ to arrive at $100$ samples (mean $7.19$ tokens, $37.87$ characters). Audio is synthesized with Google Chirp~3~HD TTS\footnote{\url{https://cloud.google.com/text-to-speech}} using default settings, yielding mean durations of \SI{2.69}{\second} (male) and \SI{2.48}{\second} (female), with a combined corpus length of \SI{1035.5}{\second}. The dataset is publicly available\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}.\penalty-10000
 
-\subsubsection{SV approximation} We employ the Neyman-allocated complementary-contributions estimator~\cite{shapleyapproximations}, which reuses each coalition's complementary contribution across all players it contains, combined with the Neyman stratified sampling formula~\cite{nayman} for optimal budget allocation. The total budget is set to $3n^2$ model evaluations, where $n$ is the number of players. The algorithm proceeds in two phases: Phase~1 draws $m_{\mathrm{init}} = \max(2, \lfloor m / 2n^2 \rfloor)$ samples per stratum to initialize variance estimates; Phase~2 allocates the remaining budget proportionally to the estimated standard deviations, minimizing the total SV variance.
+  \item[Modes] Since SGPA targets audio inputs, we evaluate two speech-to-speech configurations: male voice (\texttt{SM2S}) and female voice (\texttt{SF2S}). Each prompt is synthesized in both variants to assess SGPA's consistency across speaker characteristics.
 
-\subsubsection{Infrastructure} All experiments run on a single Nvidia RTX~4080 GPU (\SI{16}{\giga\byte} VRAM). The \texttt{mllm-shap} package
-% [ORIGINAL]
-% \footnote{\url{https://pypi.org/project/mllm-shap/}} \cite{pozorskimuszynskimllmshap}
-% [ANONYMOUS]
-\footnote{\url{https://pypi.org} url anonymous for the review} [anonymous citation]
-%
-implements SGPA, the SV estimators, and model connectors.
-% [CITATION NOTE] verify whether self-citation is appropriate for Interspeech policy.
+  \item[SV approximation] We employ the Neyman-allocated complementary-contributions estimator~\cite{shapleyapproximations}, which reuses each coalition's complementary contribution across all players it contains, combined with the Neyman stratified sampling formula~\cite{nayman} for optimal budget allocation. The total budget is set to $3n^2$ model evaluations, where $n$ is the number of players. The algorithm proceeds in two phases: Phase~1 draws $m_{\mathrm{init}} = \max(2, \lfloor m / 2n^2 \rfloor)$ samples per stratum to initialize variance estimates; Phase~2 allocates the remaining budget proportionally to the estimated standard deviations, minimizing the total SV variance.
+
+  \item[Infrastructure] All experiments run on a single Nvidia RTX~4080 GPU (\SI{16}{\giga\byte} VRAM). The \texttt{mllm-shap} package\footnote{\url{https://pypi.org/project/mllm-shap/}}~\cite{pozorskimuszynskimllmshap} implements SGPA, the SV estimators, and model connectors.
+\end{description}
 
 \subsection{Feasibility: Coalition Space Reduction}
 \label{subsec:feasibility}
 
 \begin{table}[t]
-  \caption{Effect of SGPA on Neyman SV estimation cost. Mean model calls and wall-clock time per sample over $100$ VoiceBench single-sentence prompts.}
-  \label{tab:sgpa_cost}
+  \caption{Effect of SGPA on Neyman SV estimation cost and phase budget distribution. Mean model calls, total execution time, and proportion of samples per Neyman step count over $100$ VoiceBench single-sentence prompts.}
+  \label{tab:sgpa_cost_extended}
   \centering
-  \begin{tabular}{llcc}
+  \small
+  \setlength{\tabcolsep}{4pt} % Reduces horizontal padding
+  \begin{tabular}{llrrcc}
     \toprule
-    \textbf{SGPA} & \textbf{Mode} & \textbf{Calls (mean)} & \textbf{Time (s)} \\
+    & & & & \multicolumn{2}{c}{\textbf{Phase (\%)}} \\
+    \cmidrule(lr){5-6}
+    \textbf{SGPA} & \textbf{Mode} & \textbf{Calls (mean)} & \textbf{Time (s)} & \textbf{1} & \textbf{2} \\
     \midrule
-    \checkmark & SM2S & 59.42  & 67.53 \\
-    \checkmark & SF2S & 59.32  & 66.08 \\
-     --         & SM2S & 2365.76 & 1696.49 \\
-     --         & SF2S & 2552.14 & 1819.88 \\
+    \checkmark & SM2S & 59.4 & 67.5 & 37 & 63 \\
+    \checkmark & SF2S & 59.3 & 66.1 & 37 & 63 \\
+    \midrule
+    --         & SM2S & 2365.8 & 1696.5 & 0 & 100 \\
+    --         & SF2S & 2552.1 & 1819.9 & 2 & 98 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Table~\ref{tab:sgpa_cost} reports computational cost under both segmentation regimes. Without SGPA, native audio tokenization produces long feature sequences and the Neyman estimator requires ${\approx}2{,}552$ model calls per sample (mode~\texttt{SF2S}), with a mean wall-clock time of \SI{1820}{\second}. With SGPA, word-level aggregation compresses the player set to ${\approx}7$ segments, reducing calls to ${\approx}59$ per sample -- a $43\times$ reduction -- and wall-clock time to ${\approx}\SI{66}{\second}$ ($28\times$ faster).
+
+Table~\ref{tab:sgpa_cost_extended} reports computational cost under both segmentation regimes. Without SGPA, native audio tokenization produces long feature sequences and the Neyman estimator requires ${\approx}2{,}552$ model calls per sample (mode~\texttt{SF2S}), with a mean total execution time of \SI{1820}{\second}. With SGPA, word-level aggregation compresses the player set to ${\approx}7$ segments, reducing calls to ${\approx}59$ per sample -- a $43\times$ reduction -- and total execution time to ${\approx}\SI{66}{\second}$ ($28\times$ faster).
 
 Figure~\ref{fig:token_dist} illustrates the shift in feature-count distributions. With SGPA enabled, explainable lengths concentrate in a narrow, low-count regime (interquartile range $\approx$2); without SGPA, they expand substantially and become more dispersed, directly increasing coalition complexity.
 
@@ -221,25 +183,23 @@ Figure~\ref{fig:token_dist} illustrates the shift in feature-count distributions
   \label{fig:token_dist}
 \end{figure}
 
-The Neyman budget allocation also shifts qualitatively. With SGPA, the estimator distributes $37\%$ of its budget to the initial variance-estimation phase (Phase~1) and $63\%$ to the optimized phase (Phase~2). Without SGPA, the large game forces nearly all budget ($\geq98\%$) into Phase~2, leaving minimal room for reliable variance estimation and yielding a less stable approximation.
+The Neyman budget allocation also shifts qualitatively (Table~\ref{tab:sgpa_cost_extended}). With SGPA, the estimator distributes $37\%$ of its budget to the initial variance-estimation phase (Phase~1) and $63\%$ to the optimized phase (Phase~2). Without SGPA, the large game forces nearly all budget ($\geq98\%$) into Phase~2, leaving minimal room for reliable variance estimation and yielding a less stable approximation.
 
 \subsection{Attribution Statistics}
 \label{subsec:attribution}
 
 Because SGPA redefines the player partition -- from model-native audio units to word-aligned segments -- it alters the cooperative game being solved. Attribution statistics under the two regimes are therefore expected to differ; the question is how and by how much. To quantify this, we compare three concentration metrics.
 
-\subsubsection{Metrics} Let $\tilde{s}_i = |s_i| / \sum_j |s_j|$ denote the normalized absolute SV for player~$i$. We report:
-%
-\begin{itemize}
-    \item \textbf{Top-$20\%$ mass}: $\sum_{i=1}^{\lceil 0.2n \rceil} \tilde{s}_{(i)}$, the share captured by the top quintile.
-    \item \textbf{Gini coefficient}: $G = \frac{1}{2n}\sum_{i}\sum_{j} |\tilde{s}_i - \tilde{s}_j|$, measuring inequality.
-    \item \textbf{Normalized entropy}: $H_{\text{norm}} = {-\sum_i \tilde{s}_i \log \tilde{s}_i}\, /\, {\sqrt{n}}$. Division by $\sqrt{n}$ compensates for the length dependence of raw entropy, enabling comparison between SGPA (${\approx}7$ players) and native tokenization (${\approx}50$ players).
-\end{itemize}
-%
+\subsubsection{Metrics} Let $\tilde{s}_i = |s_i| / \sum_j |s_j|$ denote the normalized absolute SV for player~$i$. We report three complementary concentration metrics. The \textbf{Gini coefficient} $G = \frac{1}{2n}\sum_{i}\sum_{j} |\tilde{s}_i - \tilde{s}_j|$ is our primary concentration metric: it captures inequality across the full player distribution and requires no length normalization, making it directly comparable across SGPA (${\approx}7$ players) and native tokenization (${\approx}50$ players).
+
+As secondary characterizations we report \textbf{Top-$20\%$ mass} $\sum_{i=1}^{\lceil 0.2n \rceil} \tilde{s}_{(i)}$ (the share captured by the top quintile) and \textbf{normalized entropy} $H_{\text{norm}} = {-\sum_i \tilde{s}_i \log \tilde{s}_i}\, /\, {\sqrt{n}}$.\footnote{Raw Shannon entropy grows with $n$ even for a uniform distribution. We divide by $\sqrt{n}$ as a heuristic for partial length normalization when comparing distributions of different sizes; a fully length-invariant alternative is to divide by $\log n$, yielding values in $[0,1]$. We use $\sqrt{n}$ to avoid over-compressing variance at small player counts, but we note that our central claims regarding attribution concentration rest on the Gini coefficient, which requires no such normalization.} These metrics supplement the Gini coefficient with additional characterizations of the attribution distribution; our core conclusions do not depend on the entropy normalization choice.
+
+A conceptual note: SGPA does not assert that more concentrated attribution is normatively correct. The shift in attribution statistics observed below is a descriptive consequence of redefining the player partition -- an inherent property of Shapley values, which depend on the chosen player set~\cite{RM-670-PR}. For a sentence where all words contribute equally, SGPA would assign equal SVs across segments. The entropy and Gini changes reflect the distributional consequences of aggregating ${\approx}50$ noisy frame-level attributions into ${\approx}7$ interpretable word-level scores.
+
 \subsubsection{Results} We apply paired $t$-tests with Bonferroni correction ($\alpha = 0.05$). Table~\ref{tab:sgpa_stats} reports the results. Nearly all comparisons are significant, confirming that SGPA systematically alters attribution concentration.
 
 \begin{table}[t]
-  \caption{Paired significance tests of per-observation SV summary metrics (SGPA~\emph{on} vs.\  \emph{off}), Bonferroni-corrected $\alpha = 0.05$. Entropy is normalized by $\sqrt{n}$.}
+  \caption{Paired significance tests of per-observation SV summary metrics (SGPA~\emph{on} vs.\  \emph{off}), Bonferroni-corrected $\alpha = 0.05$. Entropy is normalized by $\sqrt{n}$ (secondary metric; see text).}
   \label{tab:sgpa_stats}
   \centering
   \begin{tabular}{llccc}
@@ -257,7 +217,7 @@ Because SGPA redefines the player partition -- from model-native audio units to 
   \end{tabular}
 \end{table}
 
-The large negative Cohen's~$d$ for normalized entropy ($-1.37$ for \texttt{SM2S}, $-0.97$ for \texttt{SF2S}) indicates that SGPA \emph{increases} entropy, spreading attribution more evenly across the fewer word-level players. Conversely, the positive~$d$ for top-$20\%$ mass shows that each player's share grows as the total count shrinks -- a mechanical consequence of distributing the same total attribution over fewer units.
+The Gini coefficient is statistically significant for \texttt{SM2S} ($p < 0.01$, $d = 0.50$) and directionally consistent for \texttt{SF2S}. This provides length-normalization-free evidence that SGPA shifts attribution concentration. The large negative Cohen's~$d$ for normalized entropy ($-1.37$ for \texttt{SM2S}, $-0.97$ for \texttt{SF2S}) indicates that SGPA \emph{increases} entropy, spreading attribution more evenly across the fewer word-level players -- consistent with consolidating many noisy frame-level scores into fewer, more stable word-level attributions. The positive~$d$ for top-$20\%$ mass reflects the mechanical consequence that each player's share grows as the total count shrinks.
 
 The sole non-significant comparison (\texttt{SF2S}~Gini, $d{=}0.21$) suggests that overall inequality is less sensitive to segmentation for female-voice inputs. Figure~\ref{fig:entropy} visualizes this effect: SGPA expands the interquartile range of normalized entropy, indicating a broader set of concentration regimes across observations.
 
@@ -287,20 +247,31 @@ A key methodological question is whether SGPA alters the qualitative attribution
 We introduced SGPA, a four-stage alignment pipeline that converts raw audio waveforms into word-aligned segments for SV attribution. By combining CTC-based forced alignment with spectrogram-guided boundary refinement, SGPA addresses the three barriers that make SV computation on audio intractable under native tokenization. Our controlled diagnostics on LFM2-Audio-1.5B with VoiceBench yield three principal findings:
 
 \begin{enumerate}
-    \item \textbf{Feasibility.} SGPA compresses the player set from ${\approx}50$ native tokens to ${\approx}7$ word-aligned segments, reducing model evaluations by $43\times$ (from 2{,}552 to 59) and wall-clock time from ${\approx}30$~minutes to roughly one minute per sample on a consumer-grade GPU.
-    \item \textbf{Non-neutrality.} SGPA fundamentally changes the cooperative game being solved: it increases normalized entropy (Cohen's $d = -1.37$ for \texttt{SM2S}) and raises top-quintile mass ($d = 0.86$), confirming that word-level segmentation redistributes attribution relative to native frames -- a deliberate trade-off favoring interpretability over fidelity to the model's internal tokenization.
+    \item \textbf{Feasibility.} SGPA compresses the player set from ${\approx}50$ native tokens to ${\approx}7$ word-aligned segments, reducing model evaluations by $43\times$ (from 2{,}552 to 59) and total execution time from ${\approx}30$~minutes to roughly one minute per sample on a consumer-grade GPU.
+
+    \item \textbf{Non-neutrality.} SGPA fundamentally changes the cooperative game being solved. The Gini coefficient -- a length-normalization-free primary metric -- is statistically significant for \texttt{SM2S} ($d = 0.50$), and directionally consistent for \texttt{SF2S}, confirming that word-level segmentation shifts attribution concentration. SGPA also increases normalized entropy ($d = -1.37$ for \texttt{SM2S}) and raises top-quintile mass ($d = 0.86$). This redistribution is an inherent property of Shapley values: explanations depend on the chosen player partition~\cite{RM-670-PR}, and any change to that partition necessarily changes the resulting attributions. The trade-off is deliberate -- interpretability over fidelity to the model's internal tokenization. Crucially, SGPA does not enforce concentrated attribution: for a sentence where all words contribute equally, SGPA assigns equal SVs across segments.
+
     \item \textbf{Structural preservation.} Despite altering local allocation density, SGPA preserves the global cumulative SV profile and its characteristic ''early mass'' pattern, indicating that the word-level partition retains the model's broad attribution structure.
 \end{enumerate}
 
-\subsection{Limitations} Four limitations should be noted. First, SGPA's spectral refinement weights ($\alpha{=}0.8$, $\beta{=}0.2$) and the search-window half-width~$\delta$ were empirically tuned on English data; their robustness to tonal languages or phonologically diverse inventories has not been evaluated. Second, all diagnostics used a single model (LFM2-Audio-1.5B) due to research hardware constraints; replication on larger architectures such as Kimi Audio \cite{KimiTeam_2025} would strengthen generalizability. Third, because SGPA redefines the player partition, attributions under SGPA and native tokenization are not directly comparable -- this is an inherent property of SV, where explanations depend on the chosen player set~\cite{RM-670-PR}. Fourth, SGPA requires a transcript; audio-only applications would need upstream ASR, introducing an additional error source.
+\subsection{Limitations} Five limitations should be noted. First, SGPA's spectral refinement weights ($\alpha{=}0.8$, $\beta{=}0.2$) were tuned on a limited English TTS set; their robustness to tonal languages or phonologically diverse inventories has not been evaluated. Second, all diagnostics used a single model (LFM2-Audio-1.5B) due to research hardware constraints; replication on larger architectures such as Kimi Audio~\cite{KimiTeam_2025} would strengthen generalizability. Third, because SGPA redefines the player partition, attributions under SGPA and native tokenization are not directly comparable -- this is an inherent property of SV, where explanations depend on the chosen player set~\cite{RM-670-PR}. Fourth, SGPA requires a transcript; audio-only applications would need upstream ASR, introducing an additional error source. Fifth, the primary evaluation corpus consists entirely of synthesized TTS speech (Google Chirp~3~HD), which exhibits regular inter-word pauses and clean phoneme boundaries. The silence-aware fallback in Stage~3 is designed to degrade gracefully on natural speech -- returning the raw gap midpoint when no genuine pause is detected -- but the rate of such fallbacks and their effect on SV fidelity under naturalistic conditions remains to be quantified.
 
-\subsection{Future work} Future work will extend validation to additional architectures, cross-lingual settings, and alternative SV estimators. The fixed spectral weighting could be replaced with learned boundary predictors. Finally, phrase-level and sub-word-level aggregation strategies may offer complementary granularity trade-offs for different analytical objectives.
+\subsection{Future work} Future work will extend validation to additional architectures, cross-lingual settings, and alternative SV estimators. Evaluation on natural speech corpora (e.g., LibriSpeech) is a near-term priority, with the \texttt{boundary\_refined} flag providing a direct per-segment quality signal for analysing the scope and impact of Stage~3 fallbacks. The fixed spectral weighting could be replaced with learned boundary predictors. Phrase-level and sub-word-level aggregation strategies may offer complementary granularity trade-offs for different analytical objectives. A fully length-invariant entropy normalization (division by $\log n$) will be evaluated to complement the Gini-first analysis.
 
 \section{Generative AI Use Disclosure}
 Generative AI tools were used for editing and polishing the manuscript. All content was reviewed and validated by the authors, who take full responsibility.
 
 \bibliographystyle{IEEEtran}
 \bibliography{mybib}
+
+\appendix
+
+\section{Hyperparameter Tuning for Spectral Refinement}
+\label{app:hyperparam}
+
+% TODO
+Both the automated metrics and human annotations identified $\alpha = 0.8$ as optimal. Finally, a sensitivity analysis across the grid showed a mean spectral flux ranging from $0.0524$ to $0.0526$; this variation of less than $0.6\%$ confirms the system's robustness to the exact weighting.
+
 
 \end{document}
 

@@ -1,7 +1,5 @@
 """Tests for the LiquidAudio model connector."""
 
-from __future__ import annotations
-
 from enum import IntEnum
 from functools import cached_property
 from types import SimpleNamespace

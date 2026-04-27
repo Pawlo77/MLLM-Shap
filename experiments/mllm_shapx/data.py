@@ -1,7 +1,5 @@
 """Dataset loading, row selection, and optional prompt token filtering utilities."""
 
-from __future__ import annotations
-
 import importlib
 import os
 import re

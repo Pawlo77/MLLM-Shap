@@ -1,7 +1,5 @@
 """Factory to build explainers and chats for given variants and model kinds."""
 
-from __future__ import annotations
-
 from typing import Any, Dict, Optional, Type, cast
 
 import torch
