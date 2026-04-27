@@ -1,7 +1,5 @@
 """Generate model responses for masked SHAP chats."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from logging import Logger
 from threading import Lock, Thread

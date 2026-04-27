@@ -1,7 +1,5 @@
 """Unit tests for BaseComplementaryShapApproximation."""
 
-from __future__ import annotations
-
 from typing import Iterable
 
 import pytest

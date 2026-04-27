@@ -1,7 +1,5 @@
 """Core orchestration: expand variants and execute runs."""
 
-from __future__ import annotations
-
 import gc
 import json
 import logging

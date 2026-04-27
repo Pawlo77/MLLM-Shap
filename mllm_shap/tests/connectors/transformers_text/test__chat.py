@@ -1,8 +1,5 @@
 """Tests for the Transformers text chat connector."""
 
-from __future__ import annotations
-
-
 import pytest
 import torch
 

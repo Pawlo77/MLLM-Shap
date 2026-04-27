@@ -1,7 +1,5 @@
 """Tests for TransformersCausalText model connector."""
 
-from __future__ import annotations
-
 from types import SimpleNamespace
 from typing import Any
 

@@ -10,8 +10,6 @@ You can also restrict files via --allow-patterns to save space, e.g.:
     --allow-patterns tokenizer.* config.json *.safetensors
 """
 
-from __future__ import annotations
-
 import argparse
 import re
 from pathlib import Path

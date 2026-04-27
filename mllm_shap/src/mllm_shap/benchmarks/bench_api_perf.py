@@ -1,7 +1,5 @@
 """Micro-benchmarks for API/performance hotspots."""
 
-from __future__ import annotations
-
 import argparse
 import statistics
 import time

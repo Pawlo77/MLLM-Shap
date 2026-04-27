@@ -1,7 +1,5 @@
 """Mock model connector for debugging."""
 
-from __future__ import annotations
-
 import warnings
 from copy import deepcopy
 from typing import Any, cast

@@ -1,7 +1,5 @@
 """CLI entrypoint for validation and running experiments."""
 
-from __future__ import annotations
-
 import argparse
 import logging
 import os
