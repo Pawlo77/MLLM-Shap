@@ -86,7 +86,7 @@ echo "SHARD_INDEX=$SHARD_INDEX"
 echo "START_INDEX=$START_INDEX"
 echo "TASK_MAX_SAMPLES=$TASK_MAX_SAMPLES"
 
-python - <<'PY'
+"$PYTHON_RUNNER" - <<'PY'
 import json
 import os
 from pathlib import Path
