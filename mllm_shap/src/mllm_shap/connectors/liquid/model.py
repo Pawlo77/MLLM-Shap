@@ -1,5 +1,6 @@
 """LiquidAudio model connector."""
 
+import json
 import warnings
 from copy import deepcopy
 from typing import Any, cast
@@ -7,6 +8,7 @@ from functools import partial
 
 import torch
 from liquid_audio import ChatState, LFM2AudioModel, LFM2AudioProcessor, LFMModality
+from liquid_audio.model.lfm2_audio import get_model_dir
 from torch import Tensor
 
 from ..base.chat import BaseMllmChat
@@ -18,6 +20,20 @@ from .config import CONFIG
 from ..base.model_response import ModelResponse
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
+
+
+def _patch_liquid_audio_config(repo_id: str, revision: str | None) -> None:
+    """Normalize cached LFM2 config types for stricter liquid_audio validators."""
+    cache_path = get_model_dir(repo_id, revision=revision)
+    config_path = cache_path / "config.json"
+    with config_path.open(encoding="utf-8") as f:
+        config = json.load(f)
+
+    lfm = config.get("lfm", {})
+    value = lfm.get("block_ffn_dim_multiplier")
+    if isinstance(value, int):
+        lfm["block_ffn_dim_multiplier"] = float(value)
+        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
 
 
 class _PatchedLFM2AudioProcessor(LFM2AudioProcessor):
@@ -71,6 +87,7 @@ class LiquidAudio(BaseMllmModel):
                 "Please do not provide 'config', 'model' or 'processor' arguments. They are set automatically."
             )
 
+        _patch_liquid_audio_config(CONFIG.repo_id, CONFIG.revision)
         super().__init__(
             *args,
             config=CONFIG,

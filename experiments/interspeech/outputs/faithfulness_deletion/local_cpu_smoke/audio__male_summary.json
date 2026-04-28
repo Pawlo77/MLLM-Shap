@@ -1,0 +1,19 @@
+{
+  "completed_samples": 1,
+  "failed_samples": 0,
+  "mean_top_drop": 0.0,
+  "std_top_drop": null,
+  "mean_random_drop": 1.0,
+  "std_random_drop": null,
+  "mean_drop_difference": -1.0,
+  "median_drop_difference": -1.0,
+  "paired_t_stat": null,
+  "paired_p_value": null,
+  "cohen_dz": null,
+  "top_greater_than_random_rate": 0.0,
+  "mean_runtime_sec": 12.044811572999606,
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/AudioShap_WUT_Bachelor/experiments/experiments_output/single_sentence_2026_01_03/audio_male_audio_limited_neyman_lin3_0",
+  "audio_column": "audio__male",
+  "results_csv": "experiments/interspeech/outputs/faithfulness_deletion/local_cpu_smoke/audio__male_results.csv",
+  "failures_csv": "experiments/interspeech/outputs/faithfulness_deletion/local_cpu_smoke/audio__male_failures.csv"
+}
