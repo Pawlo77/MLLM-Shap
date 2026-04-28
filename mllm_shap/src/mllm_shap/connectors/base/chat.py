@@ -1087,7 +1087,7 @@ class BaseMllmChat(ABC):
                 if current_modality == ModalityFlag.TEXT:
                     decoded = self.decode_text(text_tokens=token)
                 else:
-                    decoded = self.decode_audio(audio_tokens=token)
+                    decoded = self.decode_audio(audio_tokens=token, audio_format="wav")
                 content.append(decoded)
                 roles.append(role.item())
 
