@@ -58,6 +58,8 @@ def cmd_run(args: argparse.Namespace) -> None:
     from .runner import expand_variants, run_single_sentence_variant
 
     cfg = ExperimentSet.from_json(args.config)
+    if args.max_samples is not None:
+        cfg.selection.max_samples = int(args.max_samples)
     errs = validate_config(cfg)
     if errs:
         print("❌ Config problems:")
@@ -112,6 +114,12 @@ def build_argparser() -> argparse.ArgumentParser:
         "--resume",
         action="store_true",
         help="Resume from checkpoint/output if present.",
+    )
+    r.add_argument(
+        "--max-samples",
+        type=int,
+        default=None,
+        help="Override selection.max_samples from the JSON config.",
     )
     r.set_defaults(func=cmd_run)
 
