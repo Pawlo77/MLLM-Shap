@@ -86,6 +86,8 @@ class BaseMllmChat(ABC):
             "system_roles_setup",
             "_system_roles",
             "empty_turn_sequences",
+            "get_new_chat_callable",
+            "token_filter",
             "token_sequences_to_exclude",
         }
     )
