@@ -100,10 +100,13 @@ def _as_list(value: Any) -> list[Any]:
     return [value]
 
 
-def _load_spec(run_dir: Path) -> dict[str, Any]:
-    spec_path = run_dir / "spec.json"
+def _load_spec(run_dir: Path, spec_path: Path | None = None) -> dict[str, Any]:
+    spec_path = spec_path or (run_dir / "spec.json")
     if not spec_path.exists():
-        raise FileNotFoundError(f"Missing mllm_shapx spec: {spec_path}")
+        raise FileNotFoundError(
+            f"Missing mllm_shapx spec: {spec_path}. "
+            "Pass --spec-path for committed HP-1 specs when experiments_output is incomplete."
+        )
     return json.loads(spec_path.read_text(encoding="utf-8"))
 
 
@@ -512,6 +515,7 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
 def run_faithfulness(
     *,
     run_dir: Path,
+    spec_path: Path | None,
     output_dir: Path,
     max_samples: int | None,
     device: str,
@@ -527,7 +531,7 @@ def run_faithfulness(
     """Run deletion faithfulness for one mllm_shapx run directory."""
     run_dir = run_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    spec = _load_spec(run_dir)
+    spec = _load_spec(run_dir, spec_path=spec_path)
     cfg = _experiment_set_from_spec(spec)
     input_modality = cfg.modality.get_input_modality()
     output_modality = cfg.modality.get_output_modality()
@@ -676,6 +680,12 @@ def build_argparser() -> argparse.ArgumentParser:
     """Build CLI parser."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, default=None)
+    parser.add_argument(
+        "--spec-path",
+        type=Path,
+        default=None,
+        help="Path to committed mllm_shapx spec JSON; falls back to RUN_DIR/spec.json.",
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--max-samples", type=int, default=100)
     parser.add_argument("--device", default="cuda")
@@ -721,6 +731,7 @@ def main() -> None:
 
     summary = run_faithfulness(
         run_dir=args.run_dir,
+        spec_path=args.spec_path,
         output_dir=args.output_dir,
         max_samples=args.max_samples,
         device=args.device,
