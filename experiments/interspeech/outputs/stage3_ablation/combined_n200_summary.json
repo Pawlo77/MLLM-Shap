@@ -1,0 +1,19 @@
+{
+  "completed_samples": 200,
+  "failed_samples": 0,
+  "mean_raw_flux": 25.027932336904634,
+  "std_raw_flux": 17.32993940562607,
+  "mean_refined_flux": 11.526316559109887,
+  "std_refined_flux": 12.254603616627547,
+  "mean_percent_reduction": 52.36416613445549,
+  "median_percent_reduction": 55.10530042000862,
+  "paired_t_stat": 14.228733762957217,
+  "paired_p_value": 3.7353743458175546e-32,
+  "cohen_dz": 1.006123413073528,
+  "mean_refined_boundary_rate": 0.37233333333333335,
+  "mean_runtime_sec": 0.32039164548999,
+  "source_sample_csvs": [
+    "experiments/interspeech/outputs/stage3_ablation/audio__male_n100_samples.csv",
+    "experiments/interspeech/outputs/stage3_ablation/audio__female_n100_samples.csv"
+  ]
+}
