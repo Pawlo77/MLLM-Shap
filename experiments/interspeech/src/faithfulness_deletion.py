@@ -178,7 +178,14 @@ def _sample_paths(run_dir: Path, max_samples: int | None) -> list[Path]:
     if max_samples is not None:
         paths = paths[:max_samples]
     if not paths:
-        raise FileNotFoundError(f"No sample JSON files found in {run_dir / 'samples'}")
+        raise FileNotFoundError(
+            f"No sample JSON files found in {run_dir / 'samples'}. "
+            "Generate HP-1 SHAP inputs first with "
+            "`python -m experiments.mllm_shapx.cli run --config "
+            "experiments/interspeech/configs/hp1_shap_inputs_audio_male.json "
+            "--max-samples 1 --resume` "
+            "(or the female config for audio__female)."
+        )
     return paths
 
 
