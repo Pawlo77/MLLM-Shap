@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="${PROJECT_DIR:-$HOME/projects/MLLM-Shap}"
+PROJECT_DIR="${PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$PWD}}"
 OUTPUT_DIR="${OUTPUT_DIR:-experiments/interspeech/outputs/faithfulness_deletion}"
 MAX_SAMPLES="${MAX_SAMPLES:-100}"
 ALIGNER_DEVICE="${ALIGNER_DEVICE:-cpu}"
