@@ -54,8 +54,7 @@ For partitioned SLURM runs:
 After all array tasks finish, combine partitions with:
 
 ```bash
-PYTHONPATH="$PWD" uv run --project "$PWD" --group dev \
-python -m experiments.interspeech.src.faithfulness_deletion \
+PYTHONPATH="$PWD" .venv/bin/python -m experiments.interspeech.src.faithfulness_deletion \
   --output-dir experiments/interspeech/outputs/faithfulness_deletion \
   --combine-only
 ```
@@ -68,6 +67,36 @@ This writes:
 - voice-level and combined summary JSON files.
 
 ## Local Validation
+
+## Lem Environment Setup
+
+On Lem, the repository is cloned fresh and the virtual environment must be created there. A failed `uv sync` can leave a partial `.venv`; if basic imports such as `numpy` fail, the sync did not complete.
+
+Recommended one-time setup from the repository root:
+
+```bash
+cd ~/MLLM-Shap
+export PATH="$HOME/.local/bin:$PATH"
+export UV_HTTP_TIMEOUT=300
+export UV_CONCURRENT_DOWNLOADS=2
+rm -rf .venv
+uv sync --group dev
+```
+
+Why this matters: `--group dev` is needed because the experiment utilities import dependencies from the dev group, including Hugging Face dataset tooling. The NVIDIA wheel timeout during `nvidia-cusparse` download means the environment was not installed; running `.venv/bin/python` after that failure will produce `ModuleNotFoundError` errors.
+
+After setup, verify the environment:
+
+```bash
+.venv/bin/python - <<'PY'
+import numpy, pandas, torch
+print("numpy", numpy.__version__)
+print("pandas", pandas.__version__)
+print("torch", torch.__version__, "cuda", torch.cuda.is_available())
+PY
+```
+
+Use the same `.venv` for interactive validation and `sbatch`. Do not run dependency installation inside each SLURM array task.
 
 Use preflight mode to validate dataset access, row ordering, SV extraction, SGPA alignment, deletion interval selection, and audio re-encoding without loading LFM2:
 
@@ -84,9 +113,7 @@ python -m experiments.interspeech.src.faithfulness_deletion \
 Full local model validation is:
 
 ```bash
-PYTHONPATH="$PWD" UV_PROJECT_ENVIRONMENT="$PWD/.venv" \
-uv run --project "$PWD" --group dev \
-python -m experiments.interspeech.src.faithfulness_deletion \
+PYTHONPATH="$PWD" .venv/bin/python -m experiments.interspeech.src.faithfulness_deletion \
   --run-dir experiments/experiments_output/single_sentence_2026_01_03/audio_male_audio_limited_neyman_lin3_0 \
   --output-dir experiments/interspeech/outputs/faithfulness_deletion \
   --max-samples 1 \
@@ -134,7 +161,7 @@ sbatch experiments/run_hp1_faithfulness.sbatch
 Recommended interactive validation on Lem:
 
 ```bash
-srun -A plgYOUR_GRANT -p lem-gpu-interactive --gres=gpu:1 --cpus-per-task=16 --mem=40G --time=01:00:00 --pty bash
+srun -A plgYOUR_GRANT -p lem-gpu-interactive --gres=gpu:hopper:1 --cpus-per-task=16 --mem=40G --time=01:00:00 --pty bash
 ```
 
 Then run the full one-sample command from the repository root.
