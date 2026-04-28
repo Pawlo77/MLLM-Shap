@@ -7,7 +7,6 @@
 #SBATCH --array=0-199%32
 #SBATCH --time=02:00:00
 #SBATCH --gres=gpu:hopper:1
-#SBATCH --gpus-per-task=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=40G
 #SBATCH --ntasks=1
