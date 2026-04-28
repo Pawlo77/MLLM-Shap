@@ -50,7 +50,7 @@
   "experiments": [
     {
       "explainer_type": "limited_neyman",
-      "linear": [0.05],
+      "linear": [0.06],
       "name": "audio_male_audio_smoke"
     }
   ]
