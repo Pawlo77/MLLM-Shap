@@ -67,7 +67,7 @@ class TTS:
     """A class for text-to-speech synthesis using Google Cloud Text-to-Speech API."""
 
     client: TextToSpeechAsyncClient = TextToSpeechAsyncClient()
-    limit_per_period: int = 200
+    limit_per_period: int = 500
     period_duration_seconds: int = 60
     semaphore_size: int = 25
 

@@ -42,7 +42,7 @@ dependencies = [
   "torchaudio>=2.9.0",
   "torchcodec>=0.8",
   "tqdm>=4.67.1",
-  "transformers>=4.55.4,<5.5.0",
+  "transformers>=4.55.4,<5.4.0",
 ]
 
 [project.urls]

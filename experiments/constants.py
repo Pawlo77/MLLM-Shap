@@ -63,6 +63,15 @@ INFINITY_INSTRUCT__CONFIG = DatasetConfig(
     languages={"en", "fr", "es"},
 )
 
+LIBRISPEECH_ASR__CONFIG = DatasetConfig(
+    dataset_name="openslr/librispeech_asr",
+    data_dir=ensure_dir(DATA_DIR / "librispeech_asr"),
+    cache_dir=ensure_dir(DATA_DIR / "librispeech_asr" / ".cache"),
+    revision="71cacbfb7e2354c4226d01e70d77d5fca3d04ba1",
+    configs={"clean": "clean"},
+    languages={"en"},
+)
+
 
 TTS_CONFIGS: dict[str, dict[str, TTSConfig]] = {
     "fr": {

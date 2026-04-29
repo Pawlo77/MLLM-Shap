@@ -10,7 +10,7 @@ Published outputs are available on Hugging Face:
 
 # 📊 Dataset Pipeline Snapshot
 
-- source families: **Infinity-Instruct** and **VoiceBench**
+- source families: **Infinity-Instruct**, **VoiceBench**, and **LibriSpeech-ASR**
 - output types: multilingual, multi-turn, multi-sentence, single-sentence
 - publication target: Hugging Face dataset hub
 
@@ -27,6 +27,14 @@ Published outputs are available on Hugging Face:
 - `voice_bench.ipynb`
   - prepares single-sentence and multi-sentence subsets
   - source dataset: [hlt-lab/voicebench](https://huggingface.co/datasets/hlt-lab/voicebench)
+
+- `voice_bench_single_sentence_1k.ipynb`
+  - prepares a quality-filtered 1k single-sentence VoiceBench subset
+  - keeps `audio__original` normalized to bytes format and includes `audio__original__duration`
+
+- `librispeech_single_sentence_1k.ipynb`
+  - prepares a quality-filtered 1k single-sentence LibriSpeech-ASR subset
+  - source dataset: [openslr/librispeech_asr](https://huggingface.co/datasets/openslr/librispeech_asr) (`clean`, `train.100`)
 
 - `overview.ipynb`
   - quick walkthrough of loading and using prepared datasets
