@@ -1,0 +1,19 @@
+{
+  "completed_samples": 7,
+  "failed_samples": 0,
+  "mean_top_drop": 0.7011327647737094,
+  "std_top_drop": 0.32852753019868813,
+  "mean_random_drop": 0.7087801364915711,
+  "std_random_drop": 0.32677099273316235,
+  "mean_drop_difference": -0.007647371717861721,
+  "median_drop_difference": -0.01621779054403305,
+  "paired_t_stat": -0.23397630886654758,
+  "paired_p_value": 0.8227824913205316,
+  "cohen_dz": -0.08843473125472352,
+  "top_greater_than_random_rate": 0.2857142857142857,
+  "mean_runtime_sec": 2.0143878457186344,
+  "run_dir": "/home/grid/users/plgjmuszynski/MLLM-Shap/experiments/experiments_output/single_sentence_2026_01_03/audio_male_audio_limited_neyman_lin3_0",
+  "audio_column": "audio__male",
+  "results_csv": "experiments/interspeech/outputs/faithfulness_deletion/remap_fix_50/audio__male_part1-of-8_results.csv",
+  "failures_csv": "experiments/interspeech/outputs/faithfulness_deletion/remap_fix_50/audio__male_part1-of-8_failures.csv"
+}

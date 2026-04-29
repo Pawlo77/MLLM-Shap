@@ -3,6 +3,9 @@
 The experiment consumes existing mllm_shapx SGPA runs, identifies the highest
 absolute-SV word segment per sample, and tests whether deleting that segment
 changes the model response more than deleting a random equal-duration segment.
+With --all-rank-deletions, it reuses the same phase-1 SHAP sample JSONs and
+deletes every SGPA segment once to evaluate whether deletion impact tracks
+absolute-SV rank.
 """
 
 from __future__ import annotations
@@ -73,6 +76,36 @@ class FaithfulnessResult:
     top_end_sec: float
     random_start_sec: float
     random_end_sec: float
+    mask_duration_sec: float
+    runtime_sec: float
+
+
+@dataclass(frozen=True)
+class RankwiseDeletionResult:
+    """Per-segment deletion result for all-rank faithfulness validation."""
+
+    sample_id: int
+    row_index: int
+    audio_column: str
+    transcript: str
+    n_segments: int
+    segment_idx: int
+    segment_rank_abs_sv: int
+    segment_token: str
+    segment_sv: float
+    segment_abs_sv: float
+    segment_abs_sv_share: float
+    top_abs_sv: float
+    top1_top2_gap: float | None
+    top1_top2_ratio: float | None
+    top1_share: float
+    abs_sv_entropy_norm: float | None
+    abs_sv_gini: float
+    original_similarity: float
+    deleted_similarity: float
+    deletion_drop: float
+    segment_start_sec: float
+    segment_end_sec: float
     mask_duration_sec: float
     runtime_sec: float
 
@@ -266,6 +299,62 @@ def _response_similarity(
     """Compute the same token-level TF-IDF cosine payoff used in the SGPA runs."""
     sims = TfIdfCosineSimilarity()(base=base, other=[base, top, random])
     return float(sims[0].item()), float(sims[1].item()), float(sims[2].item())
+
+
+def _response_similarities(base: Any, others: list[Any]) -> tuple[float, list[float]]:
+    """Compute base self-similarity and similarities for multiple responses."""
+    sims = TfIdfCosineSimilarity()(base=base, other=[base, *others])
+    return float(sims[0].item()), [float(value.item()) for value in sims[1:]]
+
+
+def _rank_abs_sv(segment_sv_values: list[float]) -> dict[str, Any]:
+    """Rank segment SVs by absolute magnitude and compute concentration metrics."""
+    values = np.asarray(segment_sv_values, dtype=float)
+    abs_values = np.abs(values)
+    order = np.argsort(-abs_values, kind="mergesort")
+    ranks = np.empty(len(abs_values), dtype=int)
+    ranks[order] = np.arange(1, len(abs_values) + 1)
+
+    total_abs = float(abs_values.sum())
+    shares = abs_values / (total_abs + EPS)
+    top_abs = float(abs_values[order[0]]) if len(order) else 0.0
+    second_abs = float(abs_values[order[1]]) if len(order) > 1 else None
+    top1_top2_gap = top_abs - second_abs if second_abs is not None else None
+    top1_top2_ratio = top_abs / (second_abs + EPS) if second_abs is not None else None
+    top1_share = float(shares[order[0]]) if len(order) else 0.0
+
+    positive_shares = shares[shares > 0]
+    entropy_norm = None
+    if len(shares) > 1 and len(positive_shares):
+        entropy = -float(np.sum(positive_shares * np.log(positive_shares)))
+        entropy_norm = entropy / float(np.log(len(shares)))
+
+    sorted_abs = np.sort(abs_values)
+    if len(sorted_abs) == 0 or total_abs <= EPS:
+        gini = 0.0
+    else:
+        index = np.arange(1, len(sorted_abs) + 1)
+        gini = float(
+            (2 * np.sum(index * sorted_abs)) / (len(sorted_abs) * total_abs)
+            - (len(sorted_abs) + 1) / len(sorted_abs)
+        )
+
+    return {
+        "order": order,
+        "ranks": ranks,
+        "abs_values": abs_values,
+        "shares": shares,
+        "top_abs": top_abs,
+        "top1_top2_gap": float(top1_top2_gap) if top1_top2_gap is not None else None,
+        "top1_top2_ratio": float(top1_top2_ratio)
+        if top1_top2_ratio is not None
+        else None,
+        "top1_share": top1_share,
+        "abs_sv_entropy_norm": float(entropy_norm)
+        if entropy_norm is not None
+        else None,
+        "abs_sv_gini": gini,
+    }
 
 
 def _preflight_one_sample(
@@ -466,6 +555,112 @@ def _run_one_sample(
     )
 
 
+def _run_one_sample_rankwise(
+    *,
+    sample_path: Path,
+    row: dict[str, Any],
+    model: Any,
+    aligner: SpectrogramGuidedAligner,
+    input_modality: InputModality,
+    audio_column: str,
+    max_new_tokens: int,
+    text_temperature: float,
+) -> list[RankwiseDeletionResult]:
+    """Delete every aligned SGPA segment once and record its SV rank."""
+    sample_id = _parse_sample_id(sample_path)
+    sample_json = json.loads(sample_path.read_text(encoding="utf-8"))
+    row_index = int(sample_json.get("row_index", sample_id))
+    transcript = " ".join(extract_texts_from_row(row[row["_text_col"]]))
+    audio_values = _as_list(row[audio_column])
+    if not audio_values:
+        raise ValueError(f"No audio bytes in column {audio_column}")
+    audio_bytes = audio_values[0]
+
+    waveform, sample_rate = TorchAudioHandler.from_bytes(
+        audio_bytes, audio_format="wav"
+    )
+    segments = aligner(
+        transcript=transcript,
+        waveform=waveform,
+        original_sr=int(sample_rate),
+        audio_format="wav",
+        attach_audio=False,
+    )
+    if not segments:
+        raise ValueError("Alignment produced no segments.")
+
+    sv_values = _extract_audio_sv(sample_json)
+    segment_sv_values, _sv_bins = _aggregate_sv_to_segments(sv_values, len(segments))
+    rank_info = _rank_abs_sv(segment_sv_values)
+
+    deleted_audio: list[bytes] = []
+    intervals: list[tuple[int, int]] = []
+    for segment in segments:
+        start, end = _segment_interval(segment)
+        intervals.append((start, end))
+        deleted_audio.append(
+            TorchAudioHandler.to_bytes(
+                _mask_interval(waveform, start, end),
+                sample_rate=int(sample_rate),
+                audio_format="wav",
+            )
+        )
+
+    t0 = time.perf_counter()
+    base_response = _generate_response(
+        model, audio_bytes, input_modality, max_new_tokens, text_temperature
+    )
+    deleted_responses = [
+        _generate_response(
+            model,
+            segment_audio,
+            input_modality,
+            max_new_tokens,
+            text_temperature,
+        )
+        for segment_audio in deleted_audio
+    ]
+    original_sim, deleted_sims = _response_similarities(
+        base_response, deleted_responses
+    )
+    runtime_sec = float(time.perf_counter() - t0)
+
+    results: list[RankwiseDeletionResult] = []
+    for segment_idx, (segment, deleted_sim) in enumerate(zip(segments, deleted_sims)):
+        start, end = intervals[segment_idx]
+        segment_sv = float(segment_sv_values[segment_idx])
+        deletion_drop = original_sim - deleted_sim
+        results.append(
+            RankwiseDeletionResult(
+                sample_id=sample_id,
+                row_index=row_index,
+                audio_column=audio_column,
+                transcript=transcript,
+                n_segments=len(segments),
+                segment_idx=segment_idx,
+                segment_rank_abs_sv=int(rank_info["ranks"][segment_idx]),
+                segment_token=segment.token,
+                segment_sv=segment_sv,
+                segment_abs_sv=float(rank_info["abs_values"][segment_idx]),
+                segment_abs_sv_share=float(rank_info["shares"][segment_idx]),
+                top_abs_sv=float(rank_info["top_abs"]),
+                top1_top2_gap=rank_info["top1_top2_gap"],
+                top1_top2_ratio=rank_info["top1_top2_ratio"],
+                top1_share=float(rank_info["top1_share"]),
+                abs_sv_entropy_norm=rank_info["abs_sv_entropy_norm"],
+                abs_sv_gini=float(rank_info["abs_sv_gini"]),
+                original_similarity=original_sim,
+                deleted_similarity=deleted_sim,
+                deletion_drop=deletion_drop,
+                segment_start_sec=float(start / sample_rate),
+                segment_end_sec=float(end / sample_rate),
+                mask_duration_sec=float(max(1, end - start) / sample_rate),
+                runtime_sec=runtime_sec / max(1, len(segments)),
+            )
+        )
+    return results
+
+
 def _summarize(results_df: pd.DataFrame, failures_df: pd.DataFrame) -> dict[str, Any]:
     if results_df.empty:
         return {
@@ -503,22 +698,148 @@ def _summarize(results_df: pd.DataFrame, failures_df: pd.DataFrame) -> dict[str,
     }
 
 
-def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
+def _safe_spearman(x: pd.Series, y: pd.Series) -> float | None:
+    """Compute Spearman correlation when both vectors have enough variation."""
+    if len(x) < 2 or x.nunique(dropna=True) < 2 or y.nunique(dropna=True) < 2:
+        return None
+    corr = stats.spearmanr(x.to_numpy(dtype=float), y.to_numpy(dtype=float)).statistic
+    return float(corr) if math.isfinite(float(corr)) else None
+
+
+def _summarize_rankwise(
+    results_df: pd.DataFrame, failures_df: pd.DataFrame
+) -> dict[str, Any]:
+    """Summarize all-rank deletion outputs."""
+    if results_df.empty:
+        return {
+            "completed_deletions": 0,
+            "completed_samples": 0,
+            "failed_samples": int(len(failures_df)),
+        }
+
+    per_rank = (
+        results_df.groupby("segment_rank_abs_sv", as_index=True)
+        .agg(
+            n=("deletion_drop", "size"),
+            mean_drop=("deletion_drop", "mean"),
+            median_drop=("deletion_drop", "median"),
+            mean_abs_sv_share=("segment_abs_sv_share", "mean"),
+            mean_abs_sv=("segment_abs_sv", "mean"),
+        )
+        .sort_index()
+    )
+    per_rank_summary = {
+        str(int(rank)): {
+            "n": int(row["n"]),
+            "mean_drop": float(row["mean_drop"]),
+            "median_drop": float(row["median_drop"]),
+            "mean_abs_sv_share": float(row["mean_abs_sv_share"]),
+            "mean_abs_sv": float(row["mean_abs_sv"]),
+        }
+        for rank, row in per_rank.iterrows()
+    }
+
+    top_rows = results_df[results_df["segment_rank_abs_sv"] == 1]
+    non_top_rows = results_df[results_df["segment_rank_abs_sv"] > 1]
+    sample_count = int(
+        results_df[["audio_column", "sample_id"]].drop_duplicates().shape[0]
+    )
+
+    per_sample_corrs: list[float] = []
+    for _key, group in results_df.groupby(["audio_column", "sample_id"]):
+        corr = _safe_spearman(group["segment_abs_sv"], group["deletion_drop"])
+        if corr is not None:
+            per_sample_corrs.append(corr)
+
+    global_corr = _safe_spearman(
+        results_df["segment_abs_sv"], results_df["deletion_drop"]
+    )
+    global_rank_corr = _safe_spearman(
+        -results_df["segment_rank_abs_sv"], results_df["deletion_drop"]
+    )
+    top_minus_non_top = (
+        float(top_rows["deletion_drop"].mean() - non_top_rows["deletion_drop"].mean())
+        if not top_rows.empty and not non_top_rows.empty
+        else None
+    )
+
+    return {
+        "completed_deletions": int(len(results_df)),
+        "completed_samples": sample_count,
+        "failed_samples": int(len(failures_df)),
+        "mean_deletion_drop": float(results_df["deletion_drop"].mean()),
+        "mean_top_rank_drop": float(top_rows["deletion_drop"].mean())
+        if not top_rows.empty
+        else None,
+        "mean_non_top_rank_drop": float(non_top_rows["deletion_drop"].mean())
+        if not non_top_rows.empty
+        else None,
+        "mean_top_minus_non_top_drop": top_minus_non_top,
+        "spearman_abs_sv_vs_drop": global_corr,
+        "spearman_negative_rank_vs_drop": global_rank_corr,
+        "mean_within_sample_spearman_abs_sv_vs_drop": (
+            float(np.mean(per_sample_corrs)) if per_sample_corrs else None
+        ),
+        "median_within_sample_spearman_abs_sv_vs_drop": (
+            float(np.median(per_sample_corrs)) if per_sample_corrs else None
+        ),
+        "within_sample_spearman_n": len(per_sample_corrs),
+        "mean_top1_share": float(
+            results_df[["audio_column", "sample_id", "top1_share"]]
+            .drop_duplicates()["top1_share"]
+            .mean()
+        ),
+        "mean_top1_top2_gap": float(
+            results_df[["audio_column", "sample_id", "top1_top2_gap"]]
+            .drop_duplicates()["top1_top2_gap"]
+            .dropna()
+            .mean()
+        ),
+        "mean_abs_sv_entropy_norm": float(
+            results_df[["audio_column", "sample_id", "abs_sv_entropy_norm"]]
+            .drop_duplicates()["abs_sv_entropy_norm"]
+            .dropna()
+            .mean()
+        ),
+        "per_rank": per_rank_summary,
+        "mean_runtime_sec_per_deletion": float(results_df["runtime_sec"].mean()),
+    }
+
+
+def combine_partition_outputs(
+    output_dir: Path, all_rank_deletions: bool = False
+) -> dict[str, Any]:
     """Combine partition CSVs and write voice-level plus combined summaries."""
     output_dir.mkdir(parents=True, exist_ok=True)
     summaries: dict[str, Any] = {}
     combined_frames: list[pd.DataFrame] = []
     combined_failure_frames: list[pd.DataFrame] = []
+    results_tag = "rankwise_results" if all_rank_deletions else "results"
+    summary_tag = "rankwise_summary" if all_rank_deletions else "summary"
+    combined_results_name = (
+        "combined_rankwise_results.csv"
+        if all_rank_deletions
+        else "combined_results.csv"
+    )
+    combined_summary_name = (
+        "combined_rankwise_summary.json"
+        if all_rank_deletions
+        else "combined_summary.json"
+    )
 
     for audio_column in ("audio__male", "audio__female"):
-        paths = sorted(output_dir.glob(f"{audio_column}_part*-of*_results.csv"))
+        paths = sorted(output_dir.glob(f"{audio_column}_part*-of*_{results_tag}.csv"))
         if not paths:
             continue
         df = pd.concat([pd.read_csv(path) for path in paths], ignore_index=True)
-        df = df.drop_duplicates(subset=["sample_id"], keep="last")
-        df = df.sort_values("sample_id")
-        result_path = output_dir / f"{audio_column}_combined_results.csv"
-        summary_path = output_dir / f"{audio_column}_combined_summary.json"
+        if all_rank_deletions:
+            df = df.drop_duplicates(subset=["sample_id", "segment_idx"], keep="last")
+            df = df.sort_values(["sample_id", "segment_rank_abs_sv", "segment_idx"])
+        else:
+            df = df.drop_duplicates(subset=["sample_id"], keep="last")
+            df = df.sort_values("sample_id")
+        result_path = output_dir / f"{audio_column}_combined_{results_tag}.csv"
+        summary_path = output_dir / f"{audio_column}_combined_{summary_tag}.json"
         df.to_csv(result_path, index=False)
         failures_paths = sorted(
             output_dir.glob(f"{audio_column}_part*-of*_failures.csv")
@@ -534,7 +855,11 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
                 keep="last",
             )
             combined_failure_frames.append(failures_df)
-        summary = _summarize(df, failures_df)
+        summary = (
+            _summarize_rankwise(df, failures_df)
+            if all_rank_deletions
+            else _summarize(df, failures_df)
+        )
         summary.update({"audio_column": audio_column, "results_csv": str(result_path)})
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         summaries[audio_column] = summary
@@ -542,16 +867,25 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
 
     if combined_frames:
         combined_df = pd.concat(combined_frames, ignore_index=True)
-        combined_df = combined_df.sort_values(["audio_column", "sample_id"])
-        combined_path = output_dir / "combined_results.csv"
-        combined_summary_path = output_dir / "combined_summary.json"
+        sort_columns = (
+            ["audio_column", "sample_id", "segment_rank_abs_sv", "segment_idx"]
+            if all_rank_deletions
+            else ["audio_column", "sample_id"]
+        )
+        combined_df = combined_df.sort_values(sort_columns)
+        combined_path = output_dir / combined_results_name
+        combined_summary_path = output_dir / combined_summary_name
         combined_df.to_csv(combined_path, index=False)
         combined_failures_df = (
             pd.concat(combined_failure_frames, ignore_index=True)
             if combined_failure_frames
             else pd.DataFrame()
         )
-        combined_summary = _summarize(combined_df, combined_failures_df)
+        combined_summary = (
+            _summarize_rankwise(combined_df, combined_failures_df)
+            if all_rank_deletions
+            else _summarize(combined_df, combined_failures_df)
+        )
         combined_summary.update({"results_csv": str(combined_path)})
         combined_summary_path.write_text(
             json.dumps(combined_summary, indent=2), encoding="utf-8"
@@ -574,6 +908,7 @@ def run_faithfulness(
     num_partitions: int | None,
     resume: bool,
     preflight_only: bool = False,
+    all_rank_deletions: bool = False,
     max_new_tokens_override: int | None = None,
     text_temperature_override: float | None = None,
 ) -> dict[str, Any]:
@@ -604,12 +939,14 @@ def run_faithfulness(
     suffix = audio_column
     if partition_index is not None:
         suffix += f"_part{partition_index}-of-{num_partitions}"
-    results_path = output_dir / f"{suffix}_results.csv"
+    results_name = "rankwise_results" if all_rank_deletions else "results"
+    summary_name = "rankwise_summary" if all_rank_deletions else "summary"
+    results_path = output_dir / f"{suffix}_{results_name}.csv"
     failures_path = output_dir / f"{suffix}_failures.csv"
-    summary_path = output_dir / f"{suffix}_summary.json"
+    summary_path = output_dir / f"{suffix}_{summary_name}.json"
 
     existing_ids: set[int] = set()
-    results: list[FaithfulnessResult] = []
+    results: list[FaithfulnessResult | RankwiseDeletionResult] = []
     failures: list[FailureResult] = []
     if resume and results_path.exists():
         existing = pd.read_csv(results_path)
@@ -672,18 +1009,32 @@ def run_faithfulness(
             row_index = int(sample_json.get("row_index", sample_id))
             row = rows[row_index]
             transcript = " ".join(extract_texts_from_row(row[row["_text_col"]]))
-            result = _run_one_sample(
-                sample_path=sample_path,
-                row=row,
-                model=model,
-                aligner=aligner,
-                input_modality=input_modality,
-                audio_column=audio_column,
-                max_new_tokens=max_new_tokens,
-                text_temperature=text_temperature,
-                rng=rng,
-            )
-            results.append(result)
+            if all_rank_deletions:
+                results.extend(
+                    _run_one_sample_rankwise(
+                        sample_path=sample_path,
+                        row=row,
+                        model=model,
+                        aligner=aligner,
+                        input_modality=input_modality,
+                        audio_column=audio_column,
+                        max_new_tokens=max_new_tokens,
+                        text_temperature=text_temperature,
+                    )
+                )
+            else:
+                result = _run_one_sample(
+                    sample_path=sample_path,
+                    row=row,
+                    model=model,
+                    aligner=aligner,
+                    input_modality=input_modality,
+                    audio_column=audio_column,
+                    max_new_tokens=max_new_tokens,
+                    text_temperature=text_temperature,
+                    rng=rng,
+                )
+                results.append(result)
         except Exception as exc:  # noqa: BLE001 - keep long cluster runs alive.
             failures.append(
                 FailureResult(
@@ -701,8 +1052,18 @@ def run_faithfulness(
             if resume and results_path.exists():
                 old_df = pd.read_csv(results_path)
                 new_df = pd.concat([old_df, new_df], ignore_index=True)
-                new_df = new_df.drop_duplicates(subset=["sample_id"], keep="last")
-            new_df.sort_values("sample_id").to_csv(results_path, index=False)
+                duplicate_subset = (
+                    ["sample_id", "segment_idx"]
+                    if all_rank_deletions
+                    else ["sample_id"]
+                )
+                new_df = new_df.drop_duplicates(subset=duplicate_subset, keep="last")
+            sort_columns = (
+                ["sample_id", "segment_rank_abs_sv", "segment_idx"]
+                if all_rank_deletions
+                else ["sample_id"]
+            )
+            new_df.sort_values(sort_columns).to_csv(results_path, index=False)
         if failures:
             pd.DataFrame([asdict(f) for f in failures]).to_csv(
                 failures_path, index=False
@@ -714,11 +1075,16 @@ def run_faithfulness(
     final_failures = (
         pd.read_csv(failures_path) if failures_path.exists() else pd.DataFrame()
     )
-    summary = _summarize(final_results, final_failures)
+    summary = (
+        _summarize_rankwise(final_results, final_failures)
+        if all_rank_deletions
+        else _summarize(final_results, final_failures)
+    )
     summary.update(
         {
             "run_dir": str(run_dir),
             "audio_column": audio_column,
+            "all_rank_deletions": all_rank_deletions,
             "results_csv": str(results_path),
             "failures_csv": str(failures_path),
         }
@@ -758,6 +1124,14 @@ def build_argparser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
+        "--all-rank-deletions",
+        action="store_true",
+        help=(
+            "Delete every SGPA segment once and evaluate deletion drop by abs-SV "
+            "rank, using existing phase-1 sample JSONs."
+        ),
+    )
+    parser.add_argument(
         "--preflight-only",
         action="store_true",
         help="Validate data/SV/alignment/masking/audio encoding without loading LFM2.",
@@ -774,7 +1148,9 @@ def main() -> None:
     """Run CLI."""
     args = build_argparser().parse_args()
     if args.combine_only:
-        summary = combine_partition_outputs(args.output_dir)
+        summary = combine_partition_outputs(
+            args.output_dir, all_rank_deletions=args.all_rank_deletions
+        )
         print(json.dumps(summary, indent=2))
         return
     if args.run_dir is None:
@@ -792,6 +1168,7 @@ def main() -> None:
         num_partitions=args.num_partitions,
         resume=args.resume,
         preflight_only=args.preflight_only,
+        all_rank_deletions=args.all_rank_deletions,
         max_new_tokens_override=args.max_new_tokens,
         text_temperature_override=args.text_temperature,
     )

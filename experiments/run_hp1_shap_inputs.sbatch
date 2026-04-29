@@ -102,7 +102,7 @@ dst.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
 print(f"Wrote shard config: {dst}")
 PY
 
-srun --export=ALL --gpu-bind=single:1 bash -lc '
+srun --export=ALL bash -lc '
   echo "Inside step:"
   echo "  CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<unset>}"
   nvidia-smi || { echo "nvidia-smi failed in step"; exit 2; }
