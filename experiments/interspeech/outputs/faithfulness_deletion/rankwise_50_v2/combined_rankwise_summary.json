@@ -1,0 +1,91 @@
+{
+  "completed_deletions": 591,
+  "completed_samples": 99,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.820466147126652,
+  "mean_top_rank_drop": 0.8074275222653994,
+  "mean_non_top_rank_drop": 0.8230897728609284,
+  "mean_top_minus_non_top_drop": -0.01566225059552906,
+  "spearman_abs_sv_vs_drop": 0.04215658335180661,
+  "spearman_negative_rank_vs_drop": -3.907899383773063e-05,
+  "mean_within_sample_spearman_abs_sv_vs_drop": -0.09037621216618986,
+  "median_within_sample_spearman_abs_sv_vs_drop": -0.023809523809523815,
+  "within_sample_spearman_n": 99,
+  "mean_top1_share": 0.258532348007053,
+  "mean_top1_top2_gap": 0.04391423425980547,
+  "mean_abs_sv_entropy_norm": 0.9708647431124412,
+  "per_rank": {
+    "1": {
+      "n": 99,
+      "mean_drop": 0.8074275222653994,
+      "median_drop": 0.8693304508924484,
+      "mean_abs_sv_share": 0.25853234800705305,
+      "mean_abs_sv": 0.2585323475291858
+    },
+    "2": {
+      "n": 99,
+      "mean_drop": 0.7969941920977124,
+      "median_drop": 0.8795735388994217,
+      "mean_abs_sv_share": 0.21461811347337523,
+      "mean_abs_sv": 0.2146181132693803
+    },
+    "3": {
+      "n": 99,
+      "mean_drop": 0.8376848578565952,
+      "median_drop": 0.8941978886723518,
+      "mean_abs_sv_share": 0.18401101656646726,
+      "mean_abs_sv": 0.18401101627916264
+    },
+    "4": {
+      "n": 92,
+      "mean_drop": 0.8256598550765573,
+      "median_drop": 0.8575170412659645,
+      "mean_abs_sv_share": 0.14836945437051258,
+      "mean_abs_sv": 0.14836945424916764
+    },
+    "5": {
+      "n": 71,
+      "mean_drop": 0.8704072871232327,
+      "median_drop": 0.9028992801904678,
+      "mean_abs_sv_share": 0.12499588852740924,
+      "mean_abs_sv": 0.12499588832642854
+    },
+    "6": {
+      "n": 52,
+      "mean_drop": 0.7791085541964724,
+      "median_drop": 0.8675839602947235,
+      "mean_abs_sv_share": 0.1051556882609545,
+      "mean_abs_sv": 0.10515568811898932
+    },
+    "7": {
+      "n": 40,
+      "mean_drop": 0.8657440148526803,
+      "median_drop": 0.8947720564901829,
+      "mean_abs_sv_share": 0.08449930243429989,
+      "mean_abs_sv": 0.08449930216520438
+    },
+    "8": {
+      "n": 25,
+      "mean_drop": 0.7715424497425556,
+      "median_drop": 0.8631186783313751,
+      "mean_abs_sv_share": 0.07248946505290949,
+      "mean_abs_sv": 0.0724894647870678
+    },
+    "9": {
+      "n": 12,
+      "mean_drop": 0.7684592714843651,
+      "median_drop": 0.8497202321887016,
+      "mean_abs_sv_share": 0.05624267452413768,
+      "mean_abs_sv": 0.056242674269014914
+    },
+    "10": {
+      "n": 2,
+      "mean_drop": 0.8569201678037643,
+      "median_drop": 0.8569201678037643,
+      "mean_abs_sv_share": 0.04054953963504285,
+      "mean_abs_sv": 0.04054953812737945
+    }
+  },
+  "mean_runtime_sec_per_deletion": 0.7501138984714202,
+  "results_csv": "experiments/interspeech/outputs/faithfulness_deletion/rankwise_50_v2/combined_rankwise_results.csv"
+}

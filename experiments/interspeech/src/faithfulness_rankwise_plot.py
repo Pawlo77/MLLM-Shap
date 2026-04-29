@@ -107,7 +107,7 @@ def plot_rankwise_faithfulness(result_dir: Path, output_base: Path) -> plt.Figur
         linewidth=2.2,
         ax=ax0,
     )
-    ax0.set_title("A. Drop by SV Rank", loc="left", fontweight="bold")
+    ax0.set_title("A. Deletion Drop by SV Rank", loc="left", fontweight="bold")
     ax0.set_xlabel("Segment rank by |SV|")
     ax0.set_ylabel("Response-similarity drop")
     ax0.grid(axis="y", linestyle="--", alpha=0.35)
@@ -145,7 +145,7 @@ def plot_rankwise_faithfulness(result_dir: Path, output_base: Path) -> plt.Figur
         linewidth=2.0,
         ax=ax1,
     )
-    ax1.set_title("B. Rank Signal vs SV Concentration", loc="left", fontweight="bold")
+    ax1.set_title("B. Rank Curve by SV Concentration", loc="left", fontweight="bold")
     ax1.set_xlabel("Segment rank by |SV|")
     ax1.set_ylabel("Response-similarity drop")
     ax1.legend(title="", frameon=True, edgecolor="#dddddd", loc="best")
@@ -178,7 +178,7 @@ def plot_rankwise_faithfulness(result_dir: Path, output_base: Path) -> plt.Figur
         ax.spines["right"].set_visible(False)
 
     fig.suptitle(
-        "Deletion Impact Tracks SGPA-SV Rank, Conditional on Attribution Concentration",
+        "Rank-Wise Deletion Diagnostic for SGPA-SV Faithfulness",
         fontweight="bold",
         y=0.98,
     )

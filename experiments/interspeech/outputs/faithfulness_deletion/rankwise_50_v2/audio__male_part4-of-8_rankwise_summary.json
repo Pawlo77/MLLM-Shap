@@ -1,0 +1,81 @@
+{
+  "completed_deletions": 35,
+  "completed_samples": 6,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.8488841161397951,
+  "mean_top_rank_drop": 0.8251098257799944,
+  "mean_non_top_rank_drop": 0.8538029348349263,
+  "mean_top_minus_non_top_drop": -0.028693109054931942,
+  "spearman_abs_sv_vs_drop": 0.0700280112044818,
+  "spearman_negative_rank_vs_drop": -0.0432193894569483,
+  "mean_within_sample_spearman_abs_sv_vs_drop": -0.18293650793650795,
+  "median_within_sample_spearman_abs_sv_vs_drop": -0.28928571428571437,
+  "within_sample_spearman_n": 6,
+  "mean_top1_share": 0.2648477611875091,
+  "mean_top1_top2_gap": 0.06101424627316491,
+  "mean_abs_sv_entropy_norm": 0.9761463470124081,
+  "per_rank": {
+    "1": {
+      "n": 6,
+      "mean_drop": 0.8251098257799944,
+      "median_drop": 0.8819333575665951,
+      "mean_abs_sv_share": 0.2648477611875091,
+      "mean_abs_sv": 0.2648477621842175
+    },
+    "2": {
+      "n": 6,
+      "mean_drop": 0.8838988617062569,
+      "median_drop": 0.8894488774240017,
+      "mean_abs_sv_share": 0.2038335146690093,
+      "mean_abs_sv": 0.2038335159110526
+    },
+    "3": {
+      "n": 6,
+      "mean_drop": 0.8437923192977905,
+      "median_drop": 0.8536029383540154,
+      "mean_abs_sv_share": 0.1740277363936172,
+      "mean_abs_sv": 0.17402773754050335
+    },
+    "4": {
+      "n": 6,
+      "mean_drop": 0.8565975062859555,
+      "median_drop": 0.8762539327144623,
+      "mean_abs_sv_share": 0.1481018483580008,
+      "mean_abs_sv": 0.14810184948146338
+    },
+    "5": {
+      "n": 5,
+      "mean_drop": 0.8918337628245354,
+      "median_drop": 0.8800666555762291,
+      "mean_abs_sv_share": 0.1308149698366941,
+      "mean_abs_sv": 0.13081497112289067
+    },
+    "6": {
+      "n": 3,
+      "mean_drop": 0.9004895004133383,
+      "median_drop": 0.8725870549678802,
+      "mean_abs_sv_share": 0.1001220537305229,
+      "mean_abs_sv": 0.10012205423845437
+    },
+    "7": {
+      "n": 2,
+      "mean_drop": 0.9088219255208969,
+      "median_drop": 0.9088219255208969,
+      "mean_abs_sv_share": 0.09960039122051625,
+      "mean_abs_sv": 0.09960039192810649
+    },
+    "8": {
+      "n": 1,
+      "mean_drop": 0.2762718200683594,
+      "median_drop": 0.2762718200683594,
+      "mean_abs_sv_share": 0.1014930375351089,
+      "mean_abs_sv": 0.1014930373057723
+    }
+  },
+  "mean_runtime_sec_per_deletion": 0.7776530577002893,
+  "run_dir": "/home/grid/users/plgjmuszynski/MLLM-Shap/experiments/experiments_output/single_sentence_2026_01_03/audio_male_audio_limited_neyman_lin3_0",
+  "audio_column": "audio__male",
+  "all_rank_deletions": true,
+  "results_csv": "experiments/interspeech/outputs/faithfulness_deletion/rankwise_50_v2/audio__male_part4-of-8_rankwise_results.csv",
+  "failures_csv": "experiments/interspeech/outputs/faithfulness_deletion/rankwise_50_v2/audio__male_part4-of-8_failures.csv"
+}
