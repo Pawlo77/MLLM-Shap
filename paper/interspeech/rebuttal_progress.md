@@ -24,28 +24,31 @@ Nothing. No §3.5 was added. The abstract is substantively identical to version_
 
 ---
 
-### HP-2 · Stage 3 Necessity Unproven — ⚠️ EXPERIMENT DONE; MANUSCRIPT PENDING
+### HP-2 · Stage 3 Necessity Unproven — ✅ DONE
 
 **What the plan required:**
 A new subsection §3.6 Stage 3 Ablation: run the pipeline without Stage 3 (Stages 1→2→4 only), extract spectral flux at raw CTC boundaries vs. SGPA-refined boundaries, run a paired t-test, and report the percentage reduction in mean spectral flux. Optionally re-run the HP-1 faithfulness test on the Stage-3-off variant.
 
 **What was done:**
-The Stage 3 ablation experiment has now been implemented and run in `experiments/interspeech/src/stage3_ablation.py`. It compares raw CTC word-level boundaries against SGPA-refined boundaries while holding the word-level player set fixed, then measures spectral flux at each boundary.
+The Stage 3 ablation experiment is implemented in `experiments/interspeech/src/stage3_ablation.py` and integrated into the manuscript as §3.6 (\texttt{paper.tex}). The paper now includes:
 
-Results over 200 synthesized VoiceBench utterances (100 male, 100 female):
+- a dedicated subsection **3.6 Stage 3 Ablation**
+- Table `tab:stage3_ablation` with per-dataset/per-audio raw vs. refined flux
+- Figure `fig:stage3_ablation`
 
-- Combined raw mean boundary flux: 25.03
-- Combined SGPA-refined mean boundary flux: 11.53
-- Mean reduction: 52.36%
-- Paired t-test: t = 14.23, p = 3.74e-32
-- Cohen's dz = 1.01
-- Alignment/measurement failures: 0
+Current integrated combined result (all reported runs):
 
-Paper-style outputs were generated at `paper/interspeech/figures/stage3_ablation.png` and `paper/interspeech/figures/stage3_ablation.pdf`. Full CSV/JSON outputs are in `experiments/interspeech/outputs/stage3_ablation/`.
+- Raw mean boundary flux: 24.64
+- SGPA-refined mean boundary flux: 13.37
+- Mean reduction: 42.72%
+- Paired t-test: t = 50.57, p < 1e-300
+- Cohen's dz = 0.92
 
-No §3.6 manuscript subsection has been added yet, and the forward reference in §2.3 is still pending.
+Natural-speech result is explicitly included: `single_sentence_500` (original audio) shows 51.43% reduction, stronger than `single_sentence_1k` original (36.52%).
 
-**Status:** Experiment complete; manuscript integration pending.
+Outputs are in `experiments/interspeech/outputs/stage3_ablation/`; figure is generated at `paper/interspeech/figures/stage3_ablation.png`.
+
+**Status:** Fully done (experiment + manuscript integration).
 
 ---
 
@@ -266,7 +269,7 @@ The abstract was rewritten. Version_1 opened: *"Explaining the behavior of end-t
 | Item | Priority | Status |
 |------|----------|--------|
 | HP-1: Faithfulness / §3.5 (Experiment A) | Tier 1 | ❌ Not done — requires new experiment |
-| HP-2: Stage 3 Ablation / §3.6 (Experiment C) | Tier 1 | ⚠️ Experiment done — manuscript integration pending |
+| HP-2: Stage 3 Ablation / §3.6 (Experiment C) | Tier 1 | ✅ Done |
 | HP-3: Real Speech Pilot / §3.7 (Experiment B) | Tier 1 | ⚠️ Text done; pilot missing |
 | HP-4: Novelty framing rewrite | Tier 1 | ✅ Done |
 | MP-1: Entropy normalization + Gini-first restructure | Tier 2 | ✅ Done |

@@ -40,6 +40,8 @@ Lead the rebuttal with Experiment A results. Frame the perturbation test explici
 
 ### HP-2 · Stage 3 Necessity Unproven — Missing Ablation Baseline
 
+**Status update (implemented):** Experiment C has been run and integrated into the manuscript as §3.6 Stage 3 Ablation with Table~\texttt{tab:stage3\_ablation} and Figure~\texttt{fig:stage3\_ablation}. The section now reports raw-vs-refined spectral-flux reductions across dataset configs, including natural-speech \texttt{single\_sentence\_500}, where reduction is strongest.
+
 **The Issue [R6, R3]:**
 R6 (Weak Accept) lists this as a major weakness: *"It is unclear to the reviewer whether Stage 3: Spectral Boundary Refinement is actually necessary."* R6 further notes that without a naive word-boundary baseline (Stages 1 → 2 → 4, skipping Stage 3), it is impossible to attribute any attribution-quality improvement to SGPA's design rather than to the mere reduction in segment count. R3 implicitly reinforces this by questioning whether CTC boundaries are even reliable.
 
@@ -344,7 +346,7 @@ All four experiments can be run concurrently. Experiments B, C, and D are fast; 
 
 ### New Subsections / Paragraphs to Add
 - [ ] **§3.5 Attribution Faithfulness** — Experiment A results (full protocol, Δ log-prob table, t-test)
-- [ ] **§3.6 Stage 3 Ablation** — Experiment C results (spectral flux comparison table)
+- [x] **§3.6 Stage 3 Ablation** — Experiment C results (spectral flux comparison table)
 - [ ] **§3.7 Pilot on Natural Speech** — Experiment B results (LibriSpeech, failure rate, runtime)
 - [x] **§2 preamble** — 2-sentence Shapley basics (player = segment, coalition = subset)
 - [x] **§2.1** — One sentence on character-level OOV/pronunciation variant handling

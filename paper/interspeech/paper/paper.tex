@@ -138,7 +138,7 @@ To validate SGPA, we conduct a controlled comparison between two segmentation re
 
   \item[SV Characteristic Function] The characteristic function $v(S)$ is defined as the log-probability assigned by LFM2-Audio-1.5B to the ground-truth target transcription when all players not in coalition $S$ are silenced. Formally, for a transcript $y^*$ and a masked audio signal $x_S$ in which segments outside $S$ are replaced with zero amplitude, $v(S) = \log P(y^* \mid x_S)$.
 
-  \item[Datasets] We evaluate our approach using two single-sentence English corpora derived from industry-standard benchmarks: (i)~\texttt{voice\_bench\_single\_sentence\_1k}, adapted from \textbf{VoiceBench}~\cite{chen2024voicebench}, which features paired synthetic (male and female) audio alongside original speech; and (ii)~\texttt{single\_sentence\_500}, adapted from \textbf{LibriSpeech-ASR}~\cite{panayotov2015librispeech}, which consists entirely of natural human speech. By leveraging these two datasets, we are able to analyze our contribution comprehensively across both artificial and authentic speech domains. Both curated corpora are publicly released alongside this work\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}. \textbf{Due to hardware limitations, we limit our evaluation to the 100 prompts from each dataset.} Full details regarding the construction pipeline---including deduplication, sentence filtering, semantic quality filtering, token-budget filtering, and sampling---are provided in Appendix~\ref{app:dataset_creation}. \penalty-10000
+  \item[Datasets] We evaluate our approach using two single-sentence English corpora derived from industry-standard benchmarks: (i)~\texttt{voice\_bench\_single\_sentence\_1k}, adapted from \textbf{VoiceBench}~\cite{chen2024voicebench}, which features paired synthetic (male and female) audio alongside original speech; and (ii)~\texttt{single\_sentence\_500}, adapted from \textbf{LibriSpeech-ASR}~\cite{panayotov2015librispeech}, which consists entirely of natural human speech. By leveraging these two datasets, we are able to analyze our contribution comprehensively across both artificial and authentic speech domains. Both curated corpora are publicly released alongside this work\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}. For selected analyses we use limited variants of these corpora due to compute constraints; whenever this applies, the exact subset and size are stated explicitly in the corresponding subsection. Full details regarding the construction pipeline---including deduplication, sentence filtering, semantic quality filtering, token-budget filtering, and sampling---are provided in Appendix~\ref{app:dataset_creation}. \penalty-10000
 
   \item[Modes] Since SGPA targets audio inputs, we evaluate two speech-to-speech configurations: male voice (\texttt{SM2S}) and female voice (\texttt{SF2S}). Each prompt is synthesized in both variants to assess SGPA's consistency across speaker characteristics.
 
@@ -226,6 +226,41 @@ The sole non-significant comparison (\texttt{SF2S}~Gini, $d{=}0.21$) suggests th
   \includegraphics[width=\linewidth]{../figures/sv_entropy_by_mode.png}
   \caption{Normalized attribution entropy ($H / \sqrt{n}$) by mode with and without SGPA. SGPA widens the interquartile range, reflecting greater variability in concentration across samples.}
   \label{fig:entropy}
+\end{figure}
+
+\subsection{Stage 3 Ablation: Boundary Stability}
+\label{subsec:stage3_ablation}
+
+To test whether Stage~3 (spectral boundary refinement) is necessary beyond player-count reduction, we run an ablation that keeps the word-level player set fixed and compares spectral flux at cut frames for (i) raw CTC boundaries and (ii) SGPA-refined boundaries. Lower boundary flux indicates cuts placed in acoustically more stable regions, reducing masking artifacts. This directly follows the rebuttal objective for Stage~3 necessity.
+
+\begin{table}[t]
+  \caption{Stage~3 ablation results (raw CTC vs.\ SGPA-refined boundary flux).}
+  \label{tab:stage3_ablation}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{l l r r r}
+    \toprule
+    \textbf{Dataset} & \textbf{Audio} & \textbf{Raw} & \textbf{Refined} & \textbf{Reduction} \\
+    \midrule
+    single\_sentence\_1k & Male TTS   & 31.26 & 17.49 & 43.54\% \\
+                        & Female TTS & 17.57 &  9.64 & 43.53\% \\
+                        & Original   & 22.18 & 12.91 & 36.52\% \\
+    \addlinespace[1pt]
+    single\_sentence\_500 & Original  & 30.22 & 13.49 & 51.43\% \\
+    \midrule
+    Combined & All & 24.64 & 13.37 & 42.72\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Across all runs, SGPA reduces mean boundary spectral flux by $42.72\%$ (24.64 $\rightarrow$ 13.37). On the combined sample set ($n=3010$), this reduction is highly significant (paired $t=50.57$, $p<10^{-300}$, Cohen's $d_z=0.92$). For the original-audio-only condition, reductions remain large in both dataset configurations (36.52\% on \texttt{single\_sentence\_1k}, 51.43\% on \texttt{single\_sentence\_500}). Notably, \texttt{single\_sentence\_500} is based on natural human speech and yields the stronger reduction, suggesting that Stage~3 remains effective---and can be even more beneficial---outside synthetic TTS conditions. These results support that Stage~3 is not a cosmetic preprocessing step: it systematically relocates boundaries to lower-flux regions, directly mitigating OOD masking risk.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/stage3_ablation.png}
+  \caption{Stage~3 ablation overview. Left: per-sample paired flux before/after refinement; right: percent-reduction distribution.}
+  \label{fig:stage3_ablation}
 \end{figure}
 
 \subsection{Preservation of Macro-Trends}

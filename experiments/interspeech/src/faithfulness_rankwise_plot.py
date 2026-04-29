@@ -185,7 +185,6 @@ def plot_rankwise_faithfulness(result_dir: Path, output_base: Path) -> plt.Figur
 
     output_base.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_base.with_suffix(".png"), dpi=300, bbox_inches="tight")
-    fig.savefig(output_base.with_suffix(".pdf"), bbox_inches="tight")
     return fig
 
 
@@ -210,7 +209,6 @@ def main() -> None:
     args = build_argparser().parse_args()
     plot_rankwise_faithfulness(args.result_dir, args.output_base)
     print(f"Saved {args.output_base.with_suffix('.png')}")
-    print(f"Saved {args.output_base.with_suffix('.pdf')}")
 
 
 if __name__ == "__main__":
