@@ -173,6 +173,40 @@ def _extract_audio_sv(sample_json: dict[str, Any]) -> list[float]:
     raise ValueError("No audio SHAP values found in sample JSON.")
 
 
+def _aggregate_sv_to_segments(
+    sv_values: list[float], segment_count: int
+) -> tuple[list[float], list[tuple[int, int]]]:
+    """Map serialized audio attribution values onto SGPA-aligned segments.
+
+    The saved conversation can contain finer-grained audio attribution entries than
+    the SGPA alignment emits. For the deletion test, aggregate contiguous SV bins
+    onto the available aligned segments and select the segment with largest
+    absolute aggregate contribution.
+    """
+    if segment_count <= 0:
+        raise ValueError("segment_count must be positive.")
+    if not sv_values:
+        raise ValueError("No audio SHAP values found in sample JSON.")
+    if len(sv_values) == segment_count:
+        return list(sv_values), [(i, i + 1) for i in range(segment_count)]
+
+    values = np.asarray(sv_values, dtype=float)
+    aggregated: list[float] = []
+    bins: list[tuple[int, int]] = []
+    for segment_idx in range(segment_count):
+        start = int(np.floor(segment_idx * len(values) / segment_count))
+        end = int(np.floor((segment_idx + 1) * len(values) / segment_count))
+        end = max(end, start + 1)
+        end = min(end, len(values))
+        if start >= len(values):
+            start = len(values) - 1
+            end = len(values)
+        chunk = values[start:end]
+        aggregated.append(float(chunk.sum()))
+        bins.append((start, end))
+    return aggregated, bins
+
+
 def _sample_paths(run_dir: Path, max_samples: int | None) -> list[Path]:
     paths = sorted((run_dir / "samples").glob("sample_*_result.json"))
     if max_samples is not None:
@@ -252,8 +286,6 @@ def _preflight_one_sample(
         raise ValueError(f"No audio bytes in column {audio_column}")
     audio_bytes = audio_values[0]
 
-    sv_values = _extract_audio_sv(sample_json)
-    top_segment_idx = int(np.argmax(np.abs(np.asarray(sv_values, dtype=float))))
     waveform, sample_rate = TorchAudioHandler.from_bytes(
         audio_bytes, audio_format="wav"
     )
@@ -264,10 +296,11 @@ def _preflight_one_sample(
         audio_format="wav",
         attach_audio=False,
     )
-    if top_segment_idx >= len(segments):
-        raise ValueError(
-            f"Top-SV index {top_segment_idx} exceeds aligned segment count {len(segments)}."
-        )
+    if not segments:
+        raise ValueError("Alignment produced no segments.")
+    sv_values = _extract_audio_sv(sample_json)
+    segment_sv_values, sv_bins = _aggregate_sv_to_segments(sv_values, len(segments))
+    top_segment_idx = int(np.argmax(np.abs(np.asarray(segment_sv_values, dtype=float))))
 
     candidate_indices = [i for i in range(len(segments)) if i != top_segment_idx]
     random_segment_idx = int(rng.choice(candidate_indices))
@@ -296,6 +329,7 @@ def _preflight_one_sample(
         "sv_count": len(sv_values),
         "segment_count": len(segments),
         "top_segment_idx": top_segment_idx,
+        "top_sv_bin": sv_bins[top_segment_idx],
         "random_segment_idx": random_segment_idx,
         "top_token": segments[top_segment_idx].token,
         "random_token": segments[random_segment_idx].token,
@@ -346,10 +380,6 @@ def _run_one_sample(
         raise ValueError(f"No audio bytes in column {audio_column}")
     audio_bytes = audio_values[0]
 
-    sv_values = _extract_audio_sv(sample_json)
-    top_segment_idx = int(np.argmax(np.abs(np.asarray(sv_values, dtype=float))))
-    top_sv = float(sv_values[top_segment_idx])
-
     waveform, sample_rate = TorchAudioHandler.from_bytes(
         audio_bytes, audio_format="wav"
     )
@@ -362,10 +392,10 @@ def _run_one_sample(
     )
     if not segments:
         raise ValueError("Alignment produced no segments.")
-    if top_segment_idx >= len(segments):
-        raise ValueError(
-            f"Top-SV index {top_segment_idx} exceeds aligned segment count {len(segments)}."
-        )
+    sv_values = _extract_audio_sv(sample_json)
+    segment_sv_values, _sv_bins = _aggregate_sv_to_segments(sv_values, len(segments))
+    top_segment_idx = int(np.argmax(np.abs(np.asarray(segment_sv_values, dtype=float))))
+    top_sv = float(segment_sv_values[top_segment_idx])
 
     candidate_indices = [i for i in range(len(segments)) if i != top_segment_idx]
     if not candidate_indices:
@@ -478,6 +508,7 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     summaries: dict[str, Any] = {}
     combined_frames: list[pd.DataFrame] = []
+    combined_failure_frames: list[pd.DataFrame] = []
 
     for audio_column in ("audio__male", "audio__female"):
         paths = sorted(output_dir.glob(f"{audio_column}_part*-of*_results.csv"))
@@ -497,6 +528,12 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
             if failures_paths
             else pd.DataFrame()
         )
+        if not failures_df.empty:
+            failures_df = failures_df.drop_duplicates(
+                subset=["sample_id", "audio_column", "error_type", "error_message"],
+                keep="last",
+            )
+            combined_failure_frames.append(failures_df)
         summary = _summarize(df, failures_df)
         summary.update({"audio_column": audio_column, "results_csv": str(result_path)})
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -509,7 +546,12 @@ def combine_partition_outputs(output_dir: Path) -> dict[str, Any]:
         combined_path = output_dir / "combined_results.csv"
         combined_summary_path = output_dir / "combined_summary.json"
         combined_df.to_csv(combined_path, index=False)
-        combined_summary = _summarize(combined_df, pd.DataFrame())
+        combined_failures_df = (
+            pd.concat(combined_failure_frames, ignore_index=True)
+            if combined_failure_frames
+            else pd.DataFrame()
+        )
+        combined_summary = _summarize(combined_df, combined_failures_df)
         combined_summary.update({"results_csv": str(combined_path)})
         combined_summary_path.write_text(
             json.dumps(combined_summary, indent=2), encoding="utf-8"
@@ -546,8 +588,10 @@ def run_faithfulness(
         raise ValueError("HP-1 faithfulness currently expects audio-output runs.")
     audio_column = cfg.modality.input_modality
 
-    rows = _load_selected_rows(cfg, max_samples=max_samples)
     sample_paths = _sample_paths(run_dir, max_samples=max_samples)
+    # Load the full deterministic row index map. max_samples limits the number of
+    # sample JSONs to evaluate, not the maximum row_index those JSONs may refer to.
+    rows = _load_selected_rows(cfg, max_samples=None)
     if partition_index is not None or num_partitions is not None:
         if partition_index is None or num_partitions is None:
             raise ValueError("Provide both partition_index and num_partitions.")
