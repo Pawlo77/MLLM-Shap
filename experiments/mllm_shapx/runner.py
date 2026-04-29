@@ -3,6 +3,7 @@
 import gc
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass
 from logging import Logger
@@ -336,9 +337,19 @@ def run_single_sentence_variant(
 
     # ---- checkpoint
     ckpt_path = run_dir / "checkpoint.json"
-    ckpt = load_checkpoint(ckpt_path)
+    disable_checkpoint = os.environ.get("MLLM_SHAPX_DISABLE_CHECKPOINT") == "1"
+    ckpt = {
+        "completed_indices": [],
+        "next_index": 0,
+        "created_at": time.time(),
+        "updated_at": time.time(),
+    }
+    if not disable_checkpoint:
+        ckpt = load_checkpoint(ckpt_path)
 
-    if resume:
+    if disable_checkpoint:
+        LOGGER.info("Checkpointing disabled for run '%s'.", run.run_slug)
+    elif resume:
         already = existing_completed_from_disk(run_dir)
         ckpt["completed_indices"] = sorted(
             set(ckpt["completed_indices"]).union(already)
@@ -656,9 +667,10 @@ def run_single_sentence_variant(
         )
 
         # checkpoint after each sample
-        update_checkpoint(
-            ckpt_path, ckpt, just_completed=row_idx, next_index=row_idx + 1
-        )
+        if not disable_checkpoint:
+            update_checkpoint(
+                ckpt_path, ckpt, just_completed=row_idx, next_index=row_idx + 1
+            )
         completed_set.add(row_idx)
         matched_ctr += 1
 

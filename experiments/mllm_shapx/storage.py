@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Dict, cast
@@ -32,8 +33,10 @@ def _json_default(o: Any) -> Any:
 def save_json(path: Path, obj: Any) -> None:
     """Save an object as pretty-printed JSON to the given path."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(obj, f, indent=2, ensure_ascii=False, default=_json_default)
+    os.replace(tmp_path, path)
 
 
 def load_checkpoint(path: Path) -> Dict[str, Any]:
@@ -45,8 +48,19 @@ def load_checkpoint(path: Path) -> Dict[str, Any]:
             "created_at": time.time(),
             "updated_at": time.time(),
         }
-    with open(path, "r", encoding="utf-8") as f:
-        return cast(Dict[str, Any], json.load(f))
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return cast(Dict[str, Any], json.load(f))
+    except json.JSONDecodeError:
+        logging.getLogger(__name__).warning(
+            "Ignoring malformed checkpoint file: %s", path
+        )
+        return {
+            "completed_indices": [],
+            "next_index": 0,
+            "created_at": time.time(),
+            "updated_at": time.time(),
+        }
 
 
 def update_checkpoint(
