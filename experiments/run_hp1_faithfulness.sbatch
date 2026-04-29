@@ -21,6 +21,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-experiments/interspeech/outputs/faithfulness_deletion/
 MAX_SAMPLES="${MAX_SAMPLES:-100}"
 ALIGNER_DEVICE="${ALIGNER_DEVICE:-cpu}"
 PARTITIONS_PER_VOICE="${PARTITIONS_PER_VOICE:-8}"
+ALL_RANK_DELETIONS="${ALL_RANK_DELETIONS:-0}"
 
 RUN_DIRS=(
   "experiments/experiments_output/single_sentence_2026_01_03/audio_male_audio_limited_neyman_lin3_0"
@@ -61,6 +62,7 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export PYTHONPATH="$PROJECT_DIR:${PYTHONPATH:-}"
 export PROJECT_DIR OUTPUT_DIR MAX_SAMPLES ALIGNER_DEVICE RUN_DIR SPEC_PATH
 export PARTITIONS_PER_VOICE PARTITION_INDEX
+export ALL_RANK_DELETIONS
 
 if [ -x "$PROJECT_DIR/.venv/bin/python" ]; then
   PYTHON_RUNNER="$PROJECT_DIR/.venv/bin/python"
@@ -81,11 +83,17 @@ echo "OUTPUT_DIR=$OUTPUT_DIR"
 echo "MAX_SAMPLES=$MAX_SAMPLES"
 echo "PARTITIONS_PER_VOICE=$PARTITIONS_PER_VOICE"
 echo "PARTITION_INDEX=$PARTITION_INDEX"
+echo "ALL_RANK_DELETIONS=$ALL_RANK_DELETIONS"
 
-srun --export=ALL --gpu-bind=single:1 bash -lc '
+srun --export=ALL bash -lc '
   echo "Inside step:"
   echo "  CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<unset>}"
   nvidia-smi || { echo "nvidia-smi failed in step"; exit 2; }
+
+  extra_args=()
+  if [ "${ALL_RANK_DELETIONS}" = "1" ]; then
+    extra_args+=(--all-rank-deletions)
+  fi
 
   "$PYTHON_RUNNER" -u -m experiments.interspeech.src.faithfulness_deletion \
       --run-dir "$RUN_DIR" \
@@ -96,5 +104,6 @@ srun --export=ALL --gpu-bind=single:1 bash -lc '
       --aligner-device "$ALIGNER_DEVICE" \
       --partition-index "$PARTITION_INDEX" \
       --num-partitions "$PARTITIONS_PER_VOICE" \
-      --resume
+      --resume \
+      "${extra_args[@]}"
 '

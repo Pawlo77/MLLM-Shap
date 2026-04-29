@@ -1,0 +1,17 @@
+{
+  "completed_samples": 48,
+  "failed_samples": 0,
+  "mean_top_drop": 0.7721797222426782,
+  "std_top_drop": 0.20257329382874495,
+  "mean_random_drop": 0.7022773525289571,
+  "std_random_drop": 0.25971467492049344,
+  "mean_drop_difference": 0.06990236971372117,
+  "median_drop_difference": 0.027862446382641903,
+  "paired_t_stat": 2.313804471514554,
+  "paired_p_value": 0.025100275542804924,
+  "cohen_dz": 0.333968907024686,
+  "top_greater_than_random_rate": 0.625,
+  "mean_runtime_sec": 2.140247840522837,
+  "audio_column": "audio__female",
+  "results_csv": "experiments/interspeech/outputs/faithfulness_deletion/remap_fix_50/audio__female_combined_results.csv"
+}
