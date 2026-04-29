@@ -1,0 +1,19 @@
+{
+  "mean_reduction_percent": 42.71974404994009,
+  "paired_t_stat": 0.0,
+  "paired_p_value": 0.0,
+  "cohen_dz": 0.0,
+  "percent_reduction_quantiles": {
+    "q01": -62.92265528679344,
+    "q99": 96.81688708545961
+  },
+  "percent_reduction_ylim": {
+    "min": -72.50702782912863,
+    "max": 106.4012596277948
+  },
+  "n_samples": 3010,
+  "dataset_configs": [
+    "single_sentence_1k",
+    "single_sentence_500"
+  ]
+}

@@ -138,7 +138,7 @@ To validate SGPA, we conduct a controlled comparison between two segmentation re
 
   \item[SV Characteristic Function] The characteristic function $v(S)$ is defined as the log-probability assigned by LFM2-Audio-1.5B to the ground-truth target transcription when all players not in coalition $S$ are silenced. Formally, for a transcript $y^*$ and a masked audio signal $x_S$ in which segments outside $S$ are replaced with zero amplitude, $v(S) = \log P(y^* \mid x_S)$.
 
-  \item[Dataset] We evaluate on a single-sentence English subset of \textbf{VoiceBench}~\cite{chen2024voicebench}, a benchmark that assesses voice assistants across general knowledge, instruction-following, and safety dimensions. To construct the subset, we: (i)~remove exact-match text duplicates across all VoiceBench partitions; (ii)~retain only single-sentence prompts via NLTK~\cite{bird2009natural} sentence segmentation; and (iii)~apply stratified sampling over the source sub-datasets, reducing the pool by $90\%$ to arrive at $100$ samples (mean $7.19$ tokens, $37.87$ characters). Audio is synthesized with Google Chirp~3~HD TTS\footnote{\url{https://cloud.google.com/text-to-speech}} using default settings, yielding mean durations of \SI{2.69}{\second} (male) and \SI{2.48}{\second} (female), with a combined corpus length of \SI{1035.5}{\second}. The dataset is publicly available\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}.\penalty-10000
+  \item[Datasets] We evaluate our approach using two single-sentence English corpora derived from industry-standard benchmarks: (i)~\texttt{voice\_bench\_single\_sentence\_1k}, adapted from \textbf{VoiceBench}~\cite{chen2024voicebench}, which features paired synthetic (male and female) audio alongside original speech; and (ii)~\texttt{single\_sentence\_500}, adapted from \textbf{LibriSpeech-ASR}~\cite{panayotov2015librispeech}, which consists entirely of natural human speech. By leveraging these two datasets, we are able to analyze our contribution comprehensively across both artificial and authentic speech domains. Both curated corpora are publicly released alongside this work\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}. \textbf{Due to hardware limitations, we limit our evaluation to the 100 prompts from each dataset.} Full details regarding the construction pipeline---including deduplication, sentence filtering, semantic quality filtering, token-budget filtering, and sampling---are provided in Appendix~\ref{app:dataset_creation}. \penalty-10000
 
   \item[Modes] Since SGPA targets audio inputs, we evaluate two speech-to-speech configurations: male voice (\texttt{SM2S}) and female voice (\texttt{SF2S}). Each prompt is synthesized in both variants to assess SGPA's consistency across speaker characteristics.
 
@@ -269,9 +269,42 @@ Generative AI tools were used for editing and polishing the manuscript. All cont
 \section{Hyperparameter Tuning for Spectral Refinement}
 \label{app:hyperparam}
 
-% TODO
-Both the automated metrics and human annotations identified $\alpha = 0.8$ as optimal. Finally, a sensitivity analysis across the grid showed a mean spectral flux ranging from $0.0524$ to $0.0526$; this variation of less than $0.6\%$ confirms the system's robustness to the exact weighting.
+This appendix reports numeric outputs from \texttt{experiments/interspeech/alpha\_search.ipynb}, used to choose the Stage~3 boundary-refinement weight $\alpha$ in Eq.~\ref{eq:boundary} ($\beta = 1-\alpha$).
 
+\begin{description}
+  \item[Search setup.] Candidates were $\alpha \in \{0.5,0.6,0.7,0.8,0.9\}$. The automatic pass used $1232$ utterances with $3$ masks per utterance, yielding $18450$ stimuli in total ($3690$ per $\alpha$). The manual-validation subset used $20$ utterances, i.e., $300$ stimuli ($60$ per $\alpha$).
+
+  \item[Stage~1: automatic proxy score.] Lower values are better. On the full automatic set (\texttt{auto\_all}), mean click scores were: $0.44$ ($\alpha=0.5$), $0.45$ ($\alpha=0.8$), $0.45$ ($\alpha=0.6$), $0.45$ ($\alpha=0.9$), and $0.45$ ($\alpha=0.7$). On the manual subset scored automatically (\texttt{manual\_auto\_20}), ranking changed to: $0.46$ ($\alpha=0.8$), $0.46$ ($\alpha=0.9$), $0.46$ ($\alpha=0.5$), $0.47$ ($\alpha=0.7$), and $0.48$ ($\alpha=0.6$).
+
+  \item[Stage~2: human MOS.] A single annotator rated all $300$ manual-subset stimuli on a $1$--$5$ click MOS scale ($1=\text{severe clicks}$, $5=\text{no clicks}$). For consistency with artifact minimization, lower mean MOS was preferred. Means were: $2.88$ ($\alpha=0.8$), $2.98$ ($\alpha=0.5$), $3.17$ ($\alpha=0.9$), $3.35$ ($\alpha=0.7$), and $3.43$ ($\alpha=0.6$).
+
+  \item[Combined decision.] We combined automatic and human signals on the manual subset using equal weights after min-max normalization: $\texttt{combined\_score} = 0.5 \cdot \texttt{auto\_norm} + 0.5 \cdot \texttt{human\_norm}$ (lower is better). Final scores were: $0.00$ ($\alpha=0.8$), $0.24$ ($\alpha=0.5$), $0.32$ ($\alpha=0.9$), $0.71$ ($\alpha=0.7$), and $1.00$ ($\alpha=0.6$). We therefore selected $\alpha=0.8$ and $\beta=0.2$.
+
+  \item[Sensitivity.] Mean spectral flux by $\alpha$ was: $0.05$ (0.5), $0.05$ (0.6), $0.05$ (0.7), $0.05$ (0.8), and $0.05$ (0.9). The range is $0.00$ (about $0.56\%$ relative to the minimum), indicating limited sensitivity around the chosen operating point.
+\end{description}
+
+\section{Dataset Construction Details}
+\label{app:dataset_creation}
+
+We release two single-sentence corpora used in this paper: \texttt{voice\_bench\_single\_sentence\_1k} and \texttt{librispeech\_single\_sentence\_1k}. Both use the same text-first curation pipeline before audio-level processing:
+\begin{enumerate}
+  \item \textbf{Exact deduplication.} We group by exact prompt/transcript string match and keep one representative row per unique text. Metadata fields (e.g., source dataset labels) are merged; for audio fields we keep the first occurrence.
+  \item \textbf{Sentence filtering.} We segment text with NLTK sentence splitting~\cite{bird2009natural}, retain only entries with exactly one sentence, and drop non-English entries using an automatic language classifier.
+  \item \textbf{Semantic quality filtering.} We apply a two-stage filter:
+  \begin{itemize}
+    \item \emph{Rule-based pre-filter:} reject entries with fewer than $4$ words, more than $300$ characters, URL/code-like prefixes, or low alphabetic ratio ($<0.55$).
+    \item \emph{Embedding-based scoring:} encode text with \texttt{all-MiniLM-L6-v2}, compute cosine similarity to an anchor centroid, and remove the bottom $20\%$ by score.
+  \end{itemize}
+  \item \textbf{Semantic near-duplicate removal.} We run greedy cosine-similarity deduplication on normalized embeddings, ordered by descending quality score, with threshold $\tau=0.92$.
+  \item \textbf{Token-budget filtering.} We compute explainability token counts from the LFM2 chat mask (with punctuation tokens excluded) and keep only entries with token count $\leq 10$.
+  \item \textbf{Sampling.} We perform stratified sampling over token-count strata with deterministic seeding and shortfall backfilling from the remaining pool to reach target size.
+\end{enumerate}
+
+The \texttt{voice\_bench\_single\_sentence\_1k} dataset, derived from the source partitions of VoiceBench, provides three aligned audio variations alongside duration metadata for each prompt: \texttt{audio\_\_original}, \texttt{audio\_\_male}, and \texttt{audio\_\_female}. While \texttt{audio\_\_original} preserves the unmodified source recordings, the male and female variants are synthesized via Google Chirp~3~HD TTS\footnote{\url{https://cloud.google.com/text-to-speech}} using default English (\texttt{en-GB}) voice configurations. The final evaluation subset consists of $854$ entries restricted to short utterances of at most $10$ tokens, as determined by the LFM2 tokenizer on the transcriptions. Sequence lengths are uniformly distributed for entries of $6$ to $10$ tokens, with slightly reduced frequencies for lengths of $4$ to $5$ tokens. Overall, the dataset averages $7.61$ tokens per entry ($\text{SD} = 1.70$). The mean audio durations are \SI{3.98}{\second} for the original speech, \SI{2.54}{\second} for the synthetic male speech, and \SI{2.74}{\second} for the synthetic female speech.
+
+Similarly, the \texttt{single\_sentence\_500} dataset is sourced from \texttt{openslr/librispeech\_asr} but retains only the unmodified \texttt{audio\_\_original} LibriSpeech recordings, omitting any TTS synthesis. This dataset also targets short utterances of up to $10$ tokens (via the LFM2 tokenizer) and comprises $448$ total entries. Its sequence length distribution is right-skewed, with most entries containing $9$ or more tokens, yielding a higher mean length of $8.97$ tokens ($\text{SD} = 1.21$). The mean audio duration for these original recordings is \SI{2.44}{\second}.
+
+For rapid evaluation, we use limited $100$-sample versions of both datasets, constructed by selecting the first $20$ prompts for each token-count bin from $6$ to $10$. Reproduction notebooks detailing the data preparation pipeline are available in the repository under the \texttt{experiments/data\_preparation/} directory.
 
 \end{document}
 

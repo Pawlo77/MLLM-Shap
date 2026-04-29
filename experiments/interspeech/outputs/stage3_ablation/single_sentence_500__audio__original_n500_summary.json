@@ -1,0 +1,23 @@
+{
+  "audio_column": "audio__original",
+  "dataset_name": "Pawlo77/mllm-swap",
+  "dataset_config": "single_sentence_500",
+  "dataset_revision": "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e",
+  "requested_samples": 500,
+  "completed_samples": 448,
+  "failed_samples": 0,
+  "mean_raw_flux": 30.216740166753578,
+  "std_raw_flux": 22.587371650067894,
+  "mean_refined_flux": 13.48694626467125,
+  "std_refined_flux": 14.078827224663387,
+  "mean_percent_reduction": 51.42998423955826,
+  "median_percent_reduction": 57.546582492679775,
+  "paired_t_stat": 20.46130286555015,
+  "paired_p_value": 3.795822346862748e-66,
+  "cohen_dz": 0.966705694276622,
+  "mean_refined_boundary_rate": 0.3750079719387755,
+  "mean_runtime_sec": 0.16733764528839856,
+  "samples_csv": "experiments/interspeech/outputs/stage3_ablation/single_sentence_500__audio__original_n500_samples.csv",
+  "boundaries_csv": "experiments/interspeech/outputs/stage3_ablation/single_sentence_500__audio__original_n500_boundaries.csv",
+  "failures_csv": "experiments/interspeech/outputs/stage3_ablation/single_sentence_500__audio__original_n500_failures.csv"
+}

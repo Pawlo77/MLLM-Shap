@@ -27,8 +27,8 @@ from tqdm.auto import tqdm
 
 
 DEFAULT_DATASET_NAME = "Pawlo77/mllm-swap"
-DEFAULT_DATASET_CONFIG = "single_sentence"
-DEFAULT_DATASET_REVISION = "3a8e7fbe8da0b3caaf865978e92c86ee670bda65"
+DEFAULT_DATASET_CONFIG = "single_sentence_1k"
+DEFAULT_DATASET_REVISION = "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e"
 DEFAULT_OUTPUT_DIR = Path("outputs/stage3_ablation")
 EPS = 1e-9
 
@@ -38,6 +38,7 @@ class SampleResult:
     """Per-utterance Stage 3 ablation result."""
 
     sample_id: int
+    dataset_config: str
     transcript: str
     audio_column: str
     duration_sec: float
@@ -58,6 +59,7 @@ class BoundaryResult:
     """One raw/refined boundary-pair measurement."""
 
     sample_id: int
+    dataset_config: str
     boundary_idx: int
     transcript: str
     audio_column: str
@@ -73,6 +75,7 @@ class FailureResult:
     """A sample that could not be aligned or measured."""
 
     sample_id: int
+    dataset_config: str
     transcript: str
     audio_column: str
     error_type: str
@@ -259,6 +262,17 @@ def _load_voicebench_like_rows(
     return df[["transcript", "audio_bytes"]].reset_index(drop=True)
 
 
+def _slugify_dataset_config(dataset_config: str) -> str:
+    """Filesystem-safe slug for dataset config names."""
+    return (
+        str(dataset_config)
+        .strip()
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(" ", "_")
+    )
+
+
 def run_stage3_ablation(
     dataset_name: str,
     dataset_config: str,
@@ -271,7 +285,14 @@ def run_stage3_ablation(
     """Run the Stage 3 ablation and write CSV/JSON outputs."""
     output_dir.mkdir(parents=True, exist_ok=True)
     torch_device = torch.device(
-        device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device
+        or (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
     )
     rows = _load_voicebench_like_rows(
         dataset_name=dataset_name,
@@ -328,6 +349,7 @@ def run_stage3_ablation(
                 boundary_results.append(
                     BoundaryResult(
                         sample_id=int(sample_id),
+                        dataset_config=dataset_config,
                         boundary_idx=int(boundary_idx),
                         transcript=transcript,
                         audio_column=audio_column,
@@ -351,6 +373,7 @@ def run_stage3_ablation(
             sample_results.append(
                 SampleResult(
                     sample_id=int(sample_id),
+                    dataset_config=dataset_config,
                     transcript=transcript,
                     audio_column=audio_column,
                     duration_sec=duration_sec,
@@ -372,6 +395,7 @@ def run_stage3_ablation(
             failures.append(
                 FailureResult(
                     sample_id=int(sample_id),
+                    dataset_config=dataset_config,
                     transcript=transcript,
                     audio_column=audio_column,
                     error_type=type(exc).__name__,
@@ -383,7 +407,8 @@ def run_stage3_ablation(
     boundaries_df = pd.DataFrame([asdict(r) for r in boundary_results])
     failures_df = pd.DataFrame([asdict(r) for r in failures])
 
-    stem = f"{audio_column}_n{max_samples}"
+    cfg_slug = _slugify_dataset_config(dataset_config)
+    stem = f"{cfg_slug}__{audio_column}_n{max_samples}"
     samples_path = output_dir / f"{stem}_samples.csv"
     boundaries_path = output_dir / f"{stem}_boundaries.csv"
     failures_path = output_dir / f"{stem}_failures.csv"
@@ -396,6 +421,9 @@ def run_stage3_ablation(
     if samples_df.empty:
         summary: dict[str, Any] = {
             "audio_column": audio_column,
+            "dataset_name": dataset_name,
+            "dataset_config": dataset_config,
+            "dataset_revision": dataset_revision,
             "requested_samples": max_samples,
             "completed_samples": 0,
             "failed_samples": len(failures),
@@ -443,7 +471,7 @@ def build_argparser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-config", default=DEFAULT_DATASET_CONFIG)
     parser.add_argument("--dataset-revision", default=DEFAULT_DATASET_REVISION)
     parser.add_argument("--audio-column", default="audio__male")
-    parser.add_argument("--max-samples", type=int, default=100)
+    parser.add_argument("--max-samples", type=int, default=1000)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--device", default=None)
     return parser
