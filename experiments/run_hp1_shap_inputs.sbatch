@@ -60,6 +60,7 @@ export PYTHONUNBUFFERED=1
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export PYTHONPATH="$PROJECT_DIR:${PYTHONPATH:-}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+export MLLM_SHAPX_DISABLE_CHECKPOINT=1
 
 if [ -x "$PROJECT_DIR/.venv/bin/python" ]; then
   PYTHON_RUNNER="$PROJECT_DIR/.venv/bin/python"
