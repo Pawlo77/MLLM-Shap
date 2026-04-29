@@ -364,6 +364,7 @@ def serialize_result_with_audio(
         not hasattr(input_audio_bytes, "__len__") or len(input_audio_bytes) > 0
     )
     if has_audio and input_modality in (
+        InputModality.AUDIO_ORIGINAL,
         InputModality.AUDIO_MALE,
         InputModality.AUDIO_FEMALE,
     ):

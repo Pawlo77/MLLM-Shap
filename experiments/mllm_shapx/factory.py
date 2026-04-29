@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Type, cast
 
 import torch
 from mllm_shap.connectors import LiquidAudio, TransformersCausalText
+from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.connectors.enums import (
     ModelHistoryTrackingMode,
     Role,
@@ -334,9 +335,19 @@ INTERLEAVED_MODALITIES = (
 )
 
 AUDIO_MODALITIES = (
+    InputModality.AUDIO_ORIGINAL,
     InputModality.AUDIO_MALE,
     InputModality.AUDIO_FEMALE,
 )
+
+
+def infer_audio_format(audio: bytes) -> str:
+    """Infer container format from common audio byte signatures."""
+    if audio.startswith(b"RIFF"):
+        return "wav"
+    if audio.startswith(b"ID3") or audio.startswith(b"\xff"):
+        return "mp3"
+    return "wav"
 
 
 def build_chat(
@@ -346,6 +357,8 @@ def build_chat(
     input_modality: InputModality = InputModality.TEXT,
     *,
     token_filter: Any | None = None,
+    audio_segmentation_method: str = "raw",
+    aligner: SpectrogramGuidedAligner | None = None,
 ) -> Any:
     """
     Prepare chat turns with the given input modality for the model.
@@ -404,8 +417,21 @@ def build_chat(
 
         if audios:
             chat.new_turn(Role.USER)
-            for audio in audios:
-                chat.add_audio(audio)
+            if audio_segmentation_method == "sgpa":
+                if aligner is None:
+                    raise ValueError("SGPA audio segmentation requires an aligner.")
+                if len(audios) != 1:
+                    raise ValueError("SGPA audio segmentation expects one audio clip.")
+                chat.add_audio_with_transcript(
+                    audios[0],
+                    transcript=user_texts or "",
+                    aligner=aligner,
+                    audio_format=infer_audio_format(audios[0]),
+                    attach_audio=False,
+                )
+            else:
+                for audio in audios:
+                    chat.add_audio(audio, audio_format=infer_audio_format(audio))
             chat.end_turn()
 
     elif input_modality in INTERLEAVED_MODALITIES:

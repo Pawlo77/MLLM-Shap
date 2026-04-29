@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 from mllm_shap.connectors import ModelConfig
+from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.connectors.filters import ExcludePunctuationTokensFilter
 from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.shap.base.approx import BaseShapApproximation
@@ -119,6 +120,51 @@ def pick_device(name: Optional[str]) -> torch.device:
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
     return torch.device(name)
+
+
+def _iter_balanced_token_count_rows(
+    df: pd.DataFrame,
+    *,
+    token_counts: list[int],
+    samples_per_token_count: int,
+    start_index: int,
+    max_samples: int | None,
+    shuffle_seed: int | None,
+    allow_partial_buckets: bool,
+) -> list[tuple[int, Dict[str, Any]]]:
+    """Select a deterministic balanced slice by token_count buckets."""
+    if "token_count" not in df.columns:
+        raise KeyError(
+            "Balanced token-count selection requires a 'token_count' column."
+        )
+
+    selected: list[tuple[int, Dict[str, Any]]] = []
+    rng = shuffle_seed if shuffle_seed is not None else 0
+    for token_count in token_counts:
+        bucket = df[df["token_count"].astype(int) == int(token_count)]
+        if shuffle_seed is not None:
+            bucket = bucket.sample(frac=1.0, random_state=rng + int(token_count))
+        if len(bucket) < samples_per_token_count:
+            if not allow_partial_buckets:
+                raise ValueError(
+                    f"Only {len(bucket)} rows available for token_count={token_count}; "
+                    f"need {samples_per_token_count}."
+                )
+            LOGGER.warning(
+                "Only %d rows available for token_count=%s; using partial bucket.",
+                len(bucket),
+                token_count,
+            )
+        for row_idx, row in bucket.head(samples_per_token_count).iterrows():
+            selected.append((int(row_idx), row.to_dict()))
+
+    start = max(0, int(start_index))
+    end = (
+        len(selected)
+        if max_samples is None
+        else min(len(selected), start + max_samples)
+    )
+    return selected[start:end]
 
 
 def expand_variants(
@@ -330,6 +376,7 @@ def run_single_sentence_variant(
         "selection": cfg.selection.__dict__,
         "generation": cfg.generation.__dict__,
         "embedding": cfg.embedding.__dict__ if cfg.embedding else None,
+        "audio_segmentation": cfg.audio_segmentation.__dict__,
         "shap": cfg.shap.__dict__,
         "device": str(device),
     }
@@ -382,6 +429,7 @@ def run_single_sentence_variant(
     # ---- modality settings
     input_modality = cfg.modality.get_input_modality()
     output_modality = cfg.modality.get_output_modality()
+    audio_segmentation_method = cfg.audio_segmentation.method
 
     # ---- explainer
     explainer = build_explainer_for_variant(
@@ -407,6 +455,13 @@ def run_single_sentence_variant(
     text_col = choose_prompt_text_column(df)
     is_text_only = input_modality == InputModality.TEXT
     token_filter = ExcludePunctuationTokensFilter()
+    aligner = (
+        SpectrogramGuidedAligner(
+            device=torch.device(cfg.audio_segmentation.aligner_device)
+        )
+        if audio_segmentation_method == "sgpa"
+        else None
+    )
 
     min_t = cfg.selection.min_prompt_tokens
     max_t = cfg.selection.max_prompt_tokens
@@ -430,13 +485,26 @@ def run_single_sentence_variant(
     ge_min_ctr = 0
     matched_ctr = 0  # rows that passed bounds and we actually processed now (new)
 
+    if cfg.selection.balanced_token_counts:
+        row_iterable = _iter_balanced_token_count_rows(
+            df,
+            token_counts=cfg.selection.balanced_token_counts,
+            samples_per_token_count=int(cfg.selection.samples_per_token_count or 0),
+            start_index=cfg.selection.start_index,
+            max_samples=cfg.selection.max_samples,
+            shuffle_seed=cfg.selection.shuffle_seed,
+            allow_partial_buckets=cfg.selection.allow_partial_token_count_buckets,
+        )
+    else:
+        row_iterable = iter_rows_for_selection(
+            df=df,
+            start_index=cfg.selection.start_index,
+            max_samples=None,  # IMPORTANT: full scan; break on matched count.
+            shuffle_seed=cfg.selection.shuffle_seed,
+        )
+
     # Iterate ALL rows (post start_index, optional shuffle). max_samples=None -> full scan.
-    for row_idx, row in iter_rows_for_selection(
-        df=df,
-        start_index=cfg.selection.start_index,
-        max_samples=None,  # IMPORTANT: full scan; we will break on matched count
-        shuffle_seed=cfg.selection.shuffle_seed,
-    ):
+    for row_idx, row in row_iterable:
         # If we've collected enough, stop.
         if matched_ctr >= remaining_needed:
             break
@@ -451,6 +519,7 @@ def run_single_sentence_variant(
         audio_bytes_list: Optional[list[bytes]] = None
 
         # Determine which audio column to use based on modality
+        needs_original_audio = input_modality == InputModality.AUDIO_ORIGINAL
         needs_male_audio = input_modality in (
             InputModality.AUDIO_MALE,
             InputModality.INTERLEAVED_TEXT_FIRST_MALE,
@@ -462,7 +531,16 @@ def run_single_sentence_variant(
             InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
         )
 
-        if needs_male_audio:
+        if needs_original_audio:
+            if AudioCol.ORIGINAL.value in row:
+                audio_bytes_list = row[AudioCol.ORIGINAL.value]
+                if not isinstance(audio_bytes_list, (list, np.ndarray)):
+                    audio_bytes_list = [audio_bytes_list]
+            else:
+                raise KeyError(
+                    f"Expected '{AudioCol.ORIGINAL.value}' in row for {input_modality} input modality."
+                )
+        elif needs_male_audio:
             if AudioCol.MALE.value in row:
                 audio_bytes_list = row[AudioCol.MALE.value]
                 if not isinstance(audio_bytes_list, (list, np.ndarray)):
@@ -491,6 +569,8 @@ def run_single_sentence_variant(
             audio_bytes_list=audio_bytes_list,
             input_modality=input_modality,
             token_filter=token_filter,
+            audio_segmentation_method=audio_segmentation_method,
+            aligner=aligner,
         )
 
         # Ensure masks/tokens ready

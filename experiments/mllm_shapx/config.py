@@ -80,6 +80,9 @@ class SelectionConfig:
     start_index: int = 0
     max_prompt_tokens: Optional[int] = None
     min_prompt_tokens: Optional[int] = None
+    balanced_token_counts: Optional[List[int]] = None
+    samples_per_token_count: Optional[int] = None
+    allow_partial_token_count_buckets: bool = False
 
 
 @dataclass
@@ -104,6 +107,14 @@ class ModalityConfig:
     def get_output_modality(self) -> OutputModality:
         """Get OutputModality enum from string value."""
         return OutputModality(self.output_modality)
+
+
+@dataclass
+class AudioSegmentationConfig:
+    """Audio segmentation policy for audio SHAP tokens."""
+
+    method: str = "raw"  # raw | sgpa
+    aligner_device: str = "cpu"
 
 
 @dataclass
@@ -173,6 +184,9 @@ class ExperimentSet:
     wandb: WandBConfig = field(default_factory=WandBConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     modality: ModalityConfig = field(default_factory=ModalityConfig)
+    audio_segmentation: AudioSegmentationConfig = field(
+        default_factory=AudioSegmentationConfig
+    )
     shap: ShapConfig = field(default_factory=ShapConfig)
     embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
     experiments: List[ExplainerVariant] = field(default_factory=list)
@@ -229,6 +243,7 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
     wb = _subdict(raw, "wandb")
     gen = _subdict(raw, "generation")
     mod = _subdict(raw, "modality")
+    aud = _subdict(raw, "audio_segmentation")
     shp = _subdict(raw, "shap")
     emb = _subdict(raw, "embedding")
 
@@ -295,6 +310,11 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
             start_index=sel.get("start_index", 0),
             max_prompt_tokens=sel.get("max_prompt_tokens"),
             min_prompt_tokens=sel.get("min_prompt_tokens"),
+            balanced_token_counts=sel.get("balanced_token_counts"),
+            samples_per_token_count=sel.get("samples_per_token_count"),
+            allow_partial_token_count_buckets=bool(
+                sel.get("allow_partial_token_count_buckets", False)
+            ),
         ),
         wandb=WandBConfig(
             enabled=wb.get("enabled", True),
@@ -311,6 +331,10 @@ def parse_experiment_set(raw: Dict[str, Any]) -> ExperimentSet:
         modality=ModalityConfig(
             input_modality=mod.get("input_modality", InputModality.TEXT.value),
             output_modality=mod.get("output_modality", OutputModality.TEXT.value),
+        ),
+        audio_segmentation=AudioSegmentationConfig(
+            method=aud.get("method", "raw"),
+            aligner_device=aud.get("aligner_device", "cpu"),
         ),
         shap=ShapConfig(
             mode=shp.get("mode", ModeType.CONTEXTUAL.value),
@@ -335,20 +359,9 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
     errs: List[str] = []
 
     def _validate_dataset() -> None:
-        if cfg.dataset.subset not in (
-            DatasetType.SINGLE_SENTENCE.value,
-            DatasetType.MULTILINGUAL.value,
-            DatasetType.MULTI_SENTENCE.value,
-        ):
-            errs.append(
-                f"dataset.subset must be one of: {
-                    [
-                        DatasetType.SINGLE_SENTENCE.value,
-                        DatasetType.MULTILINGUAL.value,
-                        DatasetType.MULTI_SENTENCE.value,
-                    ]
-                }."
-            )
+        allowed_subsets = {dataset_type.value for dataset_type in DatasetType}
+        if cfg.dataset.subset not in allowed_subsets:
+            errs.append(f"dataset.subset must be one of: {sorted(allowed_subsets)}.")
         if cfg.dataset.split != DEFAULT_SPLIT:
             errs.append(f"Only dataset.split='{DEFAULT_SPLIT}' is supported.")
 
@@ -367,6 +380,27 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
             and cfg.selection.min_prompt_tokens <= 0
         ):
             errs.append("selection.min_prompt_tokens must be positive if provided.")
+        if cfg.selection.balanced_token_counts is not None:
+            if not cfg.selection.balanced_token_counts:
+                errs.append("selection.balanced_token_counts must be non-empty.")
+            bad_counts = [
+                count
+                for count in cfg.selection.balanced_token_counts
+                if not isinstance(count, int) or count <= 0
+            ]
+            if bad_counts:
+                errs.append(
+                    "selection.balanced_token_counts entries must be positive ints; "
+                    f"bad: {bad_counts}"
+                )
+            if (
+                cfg.selection.samples_per_token_count is None
+                or cfg.selection.samples_per_token_count <= 0
+            ):
+                errs.append(
+                    "selection.samples_per_token_count must be positive when "
+                    "balanced_token_counts is set."
+                )
 
     def _validate_wandb() -> None:
         if cfg.wandb.mode is not None and cfg.wandb.mode not in (
@@ -399,6 +433,15 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
                 errs.append(
                     "TransformersCausalText connector only supports text input."
                 )
+
+    def _validate_audio_segmentation() -> None:
+        if cfg.audio_segmentation.method not in ("raw", "sgpa"):
+            errs.append("audio_segmentation.method must be one of: raw | sgpa.")
+        if (
+            cfg.audio_segmentation.method == "sgpa"
+            and cfg.modality.input_modality == InputModality.TEXT.value
+        ):
+            errs.append("audio_segmentation.method='sgpa' requires audio input.")
 
     def _validate_shap() -> None:
         if cfg.shap.mode not in (ModeType.CONTEXTUAL.value, ModeType.STATIC.value):
@@ -550,6 +593,7 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
     _validate_selection()
     _validate_wandb()
     _validate_modality()
+    _validate_audio_segmentation()
     _validate_shap()
     _validate_variants()
     return errs

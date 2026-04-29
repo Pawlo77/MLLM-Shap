@@ -27,6 +27,7 @@ class InputModality(StrEnum):
     """Input modality options."""
 
     TEXT = "text"
+    AUDIO_ORIGINAL = "audio__original"
     AUDIO_MALE = "audio__male"
     AUDIO_FEMALE = "audio__female"
     # Interleaved modes: alternate between text and audio in subsequent turns
@@ -68,6 +69,7 @@ class TextCol(StrEnum):
 class AudioCol(StrEnum):
     """Audio column options in dataset."""
 
+    ORIGINAL = "audio__original"
     MALE = "audio__male"
     FEMALE = "audio__female"
 
@@ -82,6 +84,8 @@ class DatasetType(StrEnum):
     """Dataset subset options."""
 
     SINGLE_SENTENCE = "single_sentence"
+    SINGLE_SENTENCE_1K = "single_sentence_1k"
+    SINGLE_SENTENCE_500 = "single_sentence_500"
     MULTILINGUAL = "multi_lingual"
     MULTI_SENTENCE = "multi_sentence"
 
