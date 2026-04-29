@@ -17,7 +17,7 @@
 set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-${SLURM_SUBMIT_DIR:-$PWD}}"
-OUTPUT_DIR="${OUTPUT_DIR:-experiments/interspeech/outputs/faithfulness_deletion}"
+OUTPUT_DIR="${OUTPUT_DIR:-experiments/interspeech/outputs/faithfulness_deletion/job_${SLURM_ARRAY_JOB_ID:-manual}}"
 MAX_SAMPLES="${MAX_SAMPLES:-100}"
 ALIGNER_DEVICE="${ALIGNER_DEVICE:-cpu}"
 PARTITIONS_PER_VOICE="${PARTITIONS_PER_VOICE:-8}"
