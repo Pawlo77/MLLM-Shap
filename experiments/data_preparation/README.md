@@ -28,12 +28,12 @@ Published outputs are available on Hugging Face:
   - prepares single-sentence and multi-sentence subsets
   - source dataset: [hlt-lab/voicebench](https://huggingface.co/datasets/hlt-lab/voicebench)
 
-- `voice_bench_single_sentence_1k.ipynb`
-  - prepares a quality-filtered 1k single-sentence VoiceBench subset
+- `single_sentence_1k.ipynb`
+  - prepares a quality-filtered ~1k single-sentence VoiceBench subset
   - keeps `audio__original` normalized to bytes format and includes `audio__original__duration`
 
-- `librispeech_single_sentence_1k.ipynb`
-  - prepares a quality-filtered 1k single-sentence LibriSpeech-ASR subset
+- `single_sentence_500.ipynb`
+  - prepares a quality-filtered ~500 single-sentence LibriSpeech-ASR subset
   - source dataset: [openslr/librispeech_asr](https://huggingface.co/datasets/openslr/librispeech_asr) (`clean`, `train.100`)
 
 - `overview.ipynb`
