@@ -1,2 +1,0 @@
-sample_id,row_index,audio_column,transcript,n_segments,top_segment_idx,random_segment_idx,top_segment_token,random_segment_token,top_abs_sv,top_sv,original_similarity,top_similarity,random_similarity,top_drop,random_drop,drop_difference,top_start_sec,top_end_sec,random_start_sec,random_end_sec,mask_duration_sec,runtime_sec
-0,0,audio__male,When was Vasco Núñez de Balboa born?,7,3,1,Núñez,was,0.1910555362701416,0.1910555362701416,1.0,1.0,0.0,0.0,1.0,-1.0,1.0257083333333334,1.4667916666666667,0.176625,0.6177083333333333,0.4410833333333333,12.044811572999606
