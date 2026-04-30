@@ -2,7 +2,7 @@
 
 from types import SimpleNamespace
 
-from . import runner
+from ..src import runner
 
 
 def test_linear_sample_scaler_keeps_even_values() -> None:

@@ -57,5 +57,5 @@ PY
   echo "Running pipeline…"
   source ~/projects/MLLM-Shap/.venv/bin/activate
   python -c "import torch; print(torch.cuda.is_available(), torch.cuda.device_count())"
-  python -u -m mllm_shapx.cli run --config mllm_shapx/configs/package_exp/exact.json --resume 2>&1 | tee "$TEE_LOG"
+  python -u -m mllm_shapx.src.cli run --config mllm_shapx/configs/package_exp/exact.json --resume 2>&1 | tee "$TEE_LOG"
 '

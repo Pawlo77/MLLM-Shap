@@ -46,4 +46,4 @@ echo "[$(date)] node=$(hostname) job=${SLURM_JOB_ID} task=${SLURM_ARRAY_TASK_ID}
 CFG_BASENAME="$(basename "$CONFIG" .json)"
 TEE_LOG="logs/${CFG_BASENAME}__${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.log"
 
-srun uv run python -m mllm_shapx.cli run --config "$CONFIG" 2>&1 | tee "$TEE_LOG"
+srun uv run python -m mllm_shapx.src.cli run --config "$CONFIG" 2>&1 | tee "$TEE_LOG"

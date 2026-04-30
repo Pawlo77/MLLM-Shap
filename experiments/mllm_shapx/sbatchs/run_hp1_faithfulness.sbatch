@@ -95,7 +95,7 @@ srun --export=ALL bash -lc '
     extra_args+=(--all-rank-deletions)
   fi
 
-  "$PYTHON_RUNNER" -u -m experiments.interspeech.src.faithfulness_deletion \
+  "$PYTHON_RUNNER" -u -m experiments.interspeech.src.faithfulness.run \
       --run-dir "$RUN_DIR" \
       --spec-path "$SPEC_PATH" \
       --output-dir "$OUTPUT_DIR" \

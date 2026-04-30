@@ -99,7 +99,7 @@ srun --export=ALL bash -lc '
   echo "  CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-<unset>}"
   nvidia-smi || { echo "nvidia-smi failed in step"; exit 2; }
 
-  "$PYTHON_RUNNER" -u -m experiments.mllm_shapx.cli run \
+  "$PYTHON_RUNNER" -u -m experiments.mllm_shapx.src.cli run \
       --config "$TMP_CONFIG" \
       --resume
 '

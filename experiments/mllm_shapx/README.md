@@ -7,10 +7,50 @@
 
 # 📊 Runner Snapshot
 
-- **Execution model**: config-driven variant expansion
-- **Checkpointing**: built-in resume flow
+- **Execution model**: config-driven variant expansion with per-variant overrides
+- **Checkpointing**: built-in resume flow with versioned checkpoints
 - **Output granularity**: per-sample + aggregate metrics
-- **Supported connectors**: `liquid_audio`, `hf_text`
+- **Supported connectors**: `liquid_audio`, `hf_text` (extensible via registry)
+- **Dataset sources**: HuggingFace Parquet, HuggingFace Datasets, local Parquet, local CSV
+- **Sharding**: native `--shard-index` / `--num-shards` for SLURM parallelism
+
+# Package Layout
+
+```
+mllm_shapx/
+├── __init__.py          # package marker
+├── src/                 # core library modules
+│   ├── __init__.py      # public API exports
+│   ├── cli.py           # CLI: validate, plan, run subcommands
+│   ├── config.py        # Pydantic config models, inheritance, validation
+│   ├── constants.py     # enums, frozensets, modality helpers
+│   ├── data.py          # dataset loading, filtering, row selection
+│   ├── factory.py       # connector registry, explainer/chat builders
+│   ├── runner.py        # variant expansion, composable stages, orchestration
+│   ├── storage.py       # filesystem helpers, checkpoints, JSON I/O
+│   ├── serialization.py # conversation serialization
+│   ├── audio_utils.py   # audio artifact helpers
+│   └── wandb_utils.py   # Weights & Biases integration
+├── tests/               # test suite (169 tests)
+│   ├── test_cli.py
+│   ├── test_config.py
+│   ├── test_constants.py
+│   ├── test_data.py
+│   ├── test_factory.py
+│   ├── test_runner.py
+│   ├── test_runner_helpers.py
+│   ├── test_serialization.py
+│   └── test_storage.py
+├── configs/             # experiment configuration files
+│   ├── single_sentence/
+│   ├── multi_lingual/
+│   ├── package_grid/
+│   └── ...
+└── utils/               # standalone helper scripts
+    ├── hf_model_download.py
+    ├── sync_wandb_results.py
+    └── upload_past_artifacts.py
+```
 
 # Prerequisites
 
@@ -30,7 +70,8 @@ See `.env.example` for defaults.
 # CLI Entry Point
 
 ```bash
-python -m mllm_shapx.cli
+# From project root:
+python -m experiments.mllm_shapx.src.cli --help
 ```
 
 # Common Commands
@@ -38,13 +79,32 @@ python -m mllm_shapx.cli
 Validate configuration:
 
 ```bash
-python -m mllm_shapx.cli validate --config path/to/config.json --check-dataset
+python -m experiments.mllm_shapx.src.cli validate --config path/to/config.json --check-dataset
+```
+
+Preview experiment plan (dry run):
+
+```bash
+python -m experiments.mllm_shapx.src.cli plan --config path/to/config.json
 ```
 
 Run experiments:
 
 ```bash
-python -m mllm_shapx.cli run --config path/to/config.json --resume
+python -m experiments.mllm_shapx.src.cli run --config path/to/config.json --resume
+```
+
+Run with sharding (SLURM):
+
+```bash
+python -m experiments.mllm_shapx.src.cli run --config path/to/config.json \
+    --shard-index $SLURM_ARRAY_TASK_ID --num-shards $SLURM_ARRAY_TASK_COUNT --resume
+```
+
+Batch mode with glob:
+
+```bash
+python -m experiments.mllm_shapx.src.cli run --config "configs/package_grid/*.json" --resume
 ```
 
 Use `--resume` to continue interrupted runs using checkpoints.
@@ -56,11 +116,35 @@ Start from templates in `configs/`, especially:
 - `configs/mc_minimal.json`
 - `configs/single_sentence_grid.json`
 
-The runner supports:
-- connector selection (`liquid_audio`, `hf_text`)
-- dataset and row selection controls
-- SHAP explainer sweeps (`exact`, MC variants, complementary, Neyman, hierarchical)
-- W&B logging configuration
+## Key Features
+
+- **Config inheritance**: Use `"base": "path/to/parent.json"` to share common settings
+- **Per-variant overrides**: Set `shap_override`, `generation_override`, `embedding_override` per experiment
+- **Dataset sources**: `hf_parquet`, `hf_datasets`, `local_parquet`, `local_csv`
+- **Generic filters**: Filter dataset rows with `{"column": "lang", "op": "in", "value": ["en", "de"]}`
+- **Full generation control**: `text_temperature`, `text_top_k`, `audio_temperature`, `audio_top_k`
+- **Token filter**: `exclude_punctuation` or `none`
+- **Connector registry**: Register custom connectors at runtime
+
+## Connector Selection
+
+| Connector | Value | Description |
+|-----------|-------|-------------|
+| Liquid Audio | `liquid_audio` | Multi-modal audio+text model |
+| Transformers Text | `hf_text` | Text-only HuggingFace causal LM |
+
+## Explainer Types
+
+| Type | Value | Parameters |
+|------|-------|------------|
+| Exact (Precise) | `exact` | — |
+| Limited MC | `limited_mc` / `mc` | `num_samples`, `fractions`, `linear` |
+| Standard MC | `standard_mc` | `num_samples`, `fractions`, `linear` |
+| Limited Complementary | `limited_cc` / `cc` | `num_samples`, `fractions`, `linear` |
+| Standard Complementary | `standard_cc` | `num_samples`, `fractions`, `linear` |
+| Limited Neyman | `limited_neyman` / `neyman` | `num_samples`, `fractions`, `linear` |
+| Standard Neyman | `standard_neyman` | `num_samples`, `fractions`, `linear` |
+| Hierarchical | `hierarchical` | `hierarchical: {ks, shap_type, ...}` |
 
 For field-level validation and constraints, use the `validate` command before running large jobs.
 
@@ -72,12 +156,20 @@ Each resolved run writes to:
 
 with:
 - `spec.json` (resolved config)
-- `checkpoint.json` (resume state)
+- `checkpoint.json` (resume state, versioned)
 - `samples/sample_XXXXX_result.json` (per-sample outputs)
 - `summary/aggregate_metrics.json` (run summary)
 
+# Running Tests
+
+```bash
+python -m pytest experiments/mllm_shapx/tests/ -v
+```
+
 # 🛠️ Extension Points
 
-- Register new reducers/normalizers in `config.py`.
-- Add new connector wiring in `factory.py`.
-- Extend variant expansion/validation in `runner.py` and `config.py` for new explainer types.
+- Register new connectors at runtime via `register_connector(name, factory)`.
+- Register new reducers/normalizers in `src/config.py` maps.
+- Add new explainer types by extending `expand_variants()` in `src/runner.py`.
+- Use config inheritance (`"base"` key) to share settings across experiment configs.
+- Add per-variant overrides for shap, generation, or embedding settings.

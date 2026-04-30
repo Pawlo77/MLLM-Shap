@@ -125,7 +125,10 @@ def test_generate_text_response_and_history(
     chat = patched_connector.get_new_chat()
     chat._add_text("ab")
     response = patched_connector.generate(
-        chat=chat, max_new_tokens=2, model_config=ModelConfig(), keep_history=True
+        chat=chat,
+        max_new_tokens=2,
+        model_config=ModelConfig(audio_temperature=None, audio_top_k=None),
+        keep_history=True,
     )
     assert response.generated_text_tokens.tolist() == [5, 6]
     assert response.generated_audio_tokens.shape == (0, 0)

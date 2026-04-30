@@ -1,59 +1,78 @@
 {
   "experiment_set_id": "ss_linear_testing",
-  "output_root": "experiments_output",
-  "device": "cuda",
   "connector": "hf_text",
-
   "dataset": {
-    "subset": "single_sentence",
-    "split": "test",
-    "revision": "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf",
-    "repo_id": "Pawlo77/mllm-shap"
+    "revision": "e1a6f11d58749529f10cc520dfaeb2138fcfc0bf"
   },
-
   "selection": {
     "max_samples": 5,
     "shuffle_seed": 42,
-    "start_index": 0,
     "max_prompt_tokens": 10,
     "min_prompt_tokens": 10
   },
-
   "wandb": {
-    "enabled": true,
     "project": "mllm-shap-audio-text",
     "group": "single_sentence",
     "mode": "online",
-    "tags": ["single_sentence", "text-only", "linear_tests"]
+    "tags": [
+      "single_sentence",
+      "text-only",
+      "linear_tests"
+    ]
   },
-
   "generation": {
     "max_new_tokens": 25,
     "text_temperature": 0.0
   },
-
   "shap": {
-    "mode": "CONTEXTUAL",
-    "normalizer": "MinMaxNormalizer",
-    "reducer": "MeanReducer",
-    "similarity": "TfIdfCosineSimilarity"
+    "normalizer": "MinMaxNormalizer"
   },
-
   "embedding": {
     "model_id": "intfloat/e5-small-v2",
-    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
-    "max_length": 64,
-    "batch_size": 64,
-    "l2_normalize": true,
-    "local_files_only": false
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52"
   },
-
   "experiments": [
-    { "explainer_type": "limited_cc", "num_samples": [-1], "name": "cc_minimal" },
-    { "explainer_type": "limited_cc", "linear": [0.5, 1.0, 2.0], "name": "cc_linear" },
-    { "explainer_type": "limited_cc", "fractions": [0.01, 0.02, 0.03, 0.04, 0.05,
-                                                        0.06, 0.07, 0.08, 0.09, 0.1,
-                                                        0.11, 0.12, 0.13, 0.14, 0.15,
-                                                        0.16, 0.17, 0.18, 0.19, 0.2], "name": "cc_frac" }
+    {
+      "explainer_type": "limited_cc",
+      "num_samples": [
+        -1
+      ],
+      "name": "cc_minimal"
+    },
+    {
+      "explainer_type": "limited_cc",
+      "linear": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "name": "cc_linear"
+    },
+    {
+      "explainer_type": "limited_cc",
+      "fractions": [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.06,
+        0.07,
+        0.08,
+        0.09,
+        0.1,
+        0.11,
+        0.12,
+        0.13,
+        0.14,
+        0.15,
+        0.16,
+        0.17,
+        0.18,
+        0.19,
+        0.2
+      ],
+      "name": "cc_frac"
+    }
   ]
 }
