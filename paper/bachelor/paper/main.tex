@@ -1,0 +1,387 @@
+\documentclass[a4paper,11pt,twoside,openright]{report}
+% THIS FILE SHOULD BE COMPILED BY pdfLaTeX
+
+% ----------------------   PREAMBLE PART ------------------------------
+
+% ------------------------ ENCODING & LANGUAGES ----------------------
+
+\usepackage[utf8]{inputenc}
+%\usepackage[MeX]{polski} %Bridging Traditional Explainability Methods and Multimodal Multilingual Models: An XAI-Based Analysis Not needed unless You have a name with polish symbols or sth
+\usepackage[T1]{fontenc}
+\usepackage[english, polish]{babel}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{appendix}
+
+\makeatletter
+% Use the hooks provided by the appendix package instead of re-defining the whole environment
+\AtBeginEnvironment{appendices}{
+  \clearpage
+  \begingroup
+    \let\ps@plain\ps@empty
+    \appendixpage
+  \endgroup
+  \renewcommand{\thesection}{\Roman{section}}
+
+  % Redirect TOC entries to the .app file
+  \let\tf@toc\tf@app
+  \addtocontents{app}{\protect\setcounter{tocdepth}{1}}
+  \immediate\write\@auxout{\string\let\string\tf@toc\string\tf@app^^J}
+}
+\makeatother
+
+
+\usepackage{amsmath, amsfonts, amsthm, latexsym} % MOSTLY MATHEMATICAL SYMBOLS
+
+\usepackage[final]{pdfpages} % INPUTING TITLE PDF PAGE - GENERATE IT FIRST!
+%\usepackage[backend=bibtex, style=verbose-trad2]{biblatex}
+
+\usepackage{csquotes}
+\usepackage[
+  authordate,
+  backend=biber,
+  % shorten author lists
+  maxbibnames=3,     % show at most 3 names, then "et al."
+  minbibnames=1,
+  maxcitenames=2,    % in text: "Author & Author" or "Author et al."
+  giveninits=true,   % use initials instead of full first names
+  % control extra fields
+  doi=true,
+  url=true,
+  isbn=false,
+  eprint=true
+]{biblatex-chicago}
+\addbibresource{references.bib}
+% --- Global bibliography clean-up ---
+\AtEveryBibitem{%
+  % These fields make entries long and are usually not needed in a thesis
+  \clearfield{issn}%
+  \clearfield{isbn}%
+  \clearfield{series}%
+  \clearfield{month}%
+  \clearfield{urldate}%
+  \clearfield{note}% e.g. "GitHub repository", "MIT License", etc.
+  \clearfield{address}%
+  \clearlist{location}% same as address for many entries
+}
+
+% If a DOI is present, suppress the URL to avoid duplicates
+\AtEveryBibitem{%
+  \iffieldundef{doi}{}{%
+    \clearfield{url}%
+  }%
+}
+
+
+\usepackage{commath} % various commands which can make writing math expressions easier --- documentation available at: https://ctan.gust.org.pl/tex-archive/macros/latex/contrib/commath/commath.pdf
+
+\usepackage{xurl}
+\usepackage{graphicx}
+\usepackage{alltt}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage[useregional]{datetime2}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{arydshln}
+\usepackage{setspace}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{adjustbox}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{nameref}
+
+\renewcommand{\appendixtocname}{List of appendices}
+\renewcommand{\appendixpagename}{Appendices}
+
+\makeatletter
+\let\oldappendix\appendices
+
+\renewcommand{\appendices}{%
+  \clearpage
+  \renewcommand{\thesection}{\Roman{section}}
+  % From now, everything goes to the app - file and not to the toc
+  \let\tf@toc\tf@app
+  \addtocontents{app}{\protect\setcounter{tocdepth}{1}}
+  \immediate\write\@auxout{%
+    \string\let\string\tf@toc\string\tf@app^^J
+  }
+
+  \let\originalpsplain\ps@plain      % Save original 'plain' style
+  \let\ps@plain\ps@empty             % Redirect 'plain' to 'empty'
+  \oldappendix                       % \oldappendix calls \appendixpage, which uses 'plain' (now empty)
+  \let\ps@plain\originalpsplain      % Restore original 'plain' style for future pages
+}%
+
+\newcommand{\listofappendices}{%
+  \begingroup
+  \renewcommand{\contentsname}{\appendixtocname}
+  \let\@oldstarttoc\@starttoc
+  \def\@starttoc##1{\@oldstarttoc{app}}
+  \tableofcontents % Reusing the code for \tableofcontents with different \contentsname
+  \endgroup
+}
+
+\makeatother
+
+
+% ---------------- MARGINS, INDENTATION, LINESPREAD ------------------
+
+\usepackage[inner=20mm, outer=20mm, bindingoffset=10mm, top=25mm, bottom=25mm]{geometry} % MARGINS
+
+
+\linespread{1.5}
+\allowdisplaybreaks         % ALLOWS BREAKING PAGE IN MATH MODE
+
+\usepackage{indentfirst}    % IT MAKES THE FIRST PARAGRAPH INDENTED; NOT NEEDED
+\setlength{\parindent}{5mm} % WIDTH OF AN INDENTATION
+
+\raggedbottom
+
+
+%---------------- RUNNING HEAD - CHAPTER NAMES, PAGE NUMBERS ETC. -------------------
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+% PAGINATION: LEFT ALIGNMENT ON EVEN PAGES, RIGHT ALIGNMENT ON ODD PAGES
+\fancyfoot[LE,RO]{\thepage}
+% RIGHT HEADER: zawartość \rightmark do lewego, wewnętrznego (marginesu)
+\fancyhead[LO]{\sc \nouppercase{\rightmark}}
+% lewa pagina: zawartość \leftmark do prawego, wewnętrznego (marginesu)
+\fancyhead[RE]{\sc \leftmark}
+
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+
+% HEAD RULE - IT'S A LINE WHICH SEPARATES HEADER AND FOOTER FROM CONTENT
+\renewcommand{\headrulewidth}{0 pt} % 0 MEANS NO RULE, 0.5 MEANS FINE RULE, THE BIGGER VALUE THE THICKER RULE
+
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[LE,RO]{\thepage}
+
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.0pt}
+}
+
+
+
+% --------------------------- CHAPTER HEADERS ---------------------
+
+\usepackage{titlesec}
+\titleformat{\chapter}
+  {\normalfont\Large \bfseries}
+  {\thechapter.}{1ex}{\Large}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection.}{1ex}{}
+\titlespacing{\section}{0pt}{30pt}{20pt}
+
+
+\titleformat{\subsection}
+  {\normalfont \bfseries}
+  {\thesubsection.}{1ex}{}
+
+
+% ----------------------- TABLE OF CONTENTS SETUP ---------------------------
+
+\def\cleardoublepage{\clearpage\if@twoside
+\ifodd\c@page\else\hbox{}\thispagestyle{empty}\newpage
+\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+
+
+% THIS MAKES DOTS IN TOC FOR CHAPTERS
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\l@chapter}
+  {\hfil}
+  {\leaders\hbox{\normalfont$\m@th\mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill}
+  {}{}
+\makeatother
+
+\usepackage{titletoc}
+\makeatletter
+\titlecontents{chapter}% <section-type>
+  [0pt]% <left>
+  {}% <above-code>
+  {\bfseries \thecontentslabel.\quad}% <numbered-entry-format>
+  {\bfseries}% <numberless-entry-format>
+  {\bfseries\leaders\hbox{\normalfont$\m@th\mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill\contentspage}% <filler-page-format>
+
+\titlecontents{section}
+  [1em]
+  {}
+  {\thecontentslabel.\quad}
+  {}
+  {\leaders\hbox{\normalfont$\m@th\mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill\contentspage}
+
+\titlecontents{subsection}
+  [2em]
+  {}
+  {\thecontentslabel.\quad}
+  {}
+  {\leaders\hbox{\normalfont$\m@th\mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill\contentspage}
+\makeatother
+
+
+
+% ---------------------- TABLES AD FIGURES NUMBERING ----------------------
+
+\renewcommand*{\thetable}{\arabic{chapter}.\arabic{table}}
+\renewcommand*{\thefigure}{\arabic{chapter}.\arabic{figure}}
+
+
+% ------------- DEFINING ENVIRONMENTS FOR THEOREMS, DEFINITIONS ETC. ---------------
+
+\makeatletter
+\newtheoremstyle{definition}
+{3ex}%                           % Space above
+{3ex}%                           % Space below
+{\upshape}%                      % Body font
+{}%                              % Indent amount
+{\bfseries}%                     % Theorem head font
+{.}%                             % Punctuation after theorem head
+{.5em}%                          % Space after theorem head, ' ', or \newline
+{\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+\makeatother
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+% Load hyperref last, it redefines a lot of things
+\usepackage[hidelinks, pdftex]{hyperref} % for hyperlinks, for example, urls, references to equations, entries in a bibliography --- hidelinks option removes rectangles around hiperlinks
+
+% --------------------- END OF PREAMBLE PART (MOSTLY) --------------------------
+
+
+
+
+
+% -------------------------- USER SETTINGS ---------------------------
+
+\newcommand{\tytul}{Łączenie tradycyjnych metod wyjaśnialności z multimodalnymi i wielojęzycznymi modelami: analiza oparta na XAI}
+\renewcommand{\title}{Bridging Traditional Explainability Methods and Multimodal Multilingual Models: An XAI-Based Analysis}
+\newcommand{\type}{Engineer} % Master OR Engineer
+\newcommand{\supervisor}{dr hab. Maria Ganzha} % TITLE AND NAME OF THE SUPERVISOR
+
+
+
+\begin{document}
+\selectlanguage{english}
+
+\includepdf[pages=-]{titlepage-bsc-en.pdf} % THIS INPUTS THE TITLE PAGE
+
+\null\thispagestyle{empty}\newpage
+
+% ------------------ PAGE WITH SIGNATURES --------------------------------
+
+%\thispagestyle{empty}\newpage
+%\null
+%
+%\vfill
+%
+%\begin{center}
+%\begin{tabular}[t]{ccc}
+%............................................. & \hspace*{100pt} & .............................................\\
+%supervisor's signature & \hspace*{100pt} & author's signature
+%\end{tabular}
+%\end{center}
+%
+
+
+% ---------------------------- ABSTRACTS -----------------------------
+
+{ \fontsize{12}{14} \selectfont
+\begin{abstract}
+
+\begin{center}
+\title
+\end{center}
+
+Multimodal Large Language Models (MLLMs) can integrate text and audio to interpret context in interactive conversations. However, the mechanisms by which information from different modalities shapes model behavior remain difficult to analyze. Shapley values (SV) are widely used for local, model-agnostic explainability in simple text-based conversations, yet their direct application to multimodal data is nontrivial due to cross-channel dependencies, dialogue structure, and the prohibitive computational cost of native audio tokenization.
+
+This work introduces a multimodal extension of Shapley values (SV), where units of information -- such as text tokens and audio segments -- are treated as cooperative features. To make the approach feasible under real-world constraints, we pair this formulation with efficient estimation methods: exact Shapley computation for short inputs, and sampling-based approximations using Monte Carlo permutation and stratified sampling with Neyman allocation, balancing variance against a strict computational budget. Additionally, to address the granularity mismatch between text and audio, we propose Spectrogram-Guided Phonetic Alignment (SGPA), a pre-processing method that maps dense audio streams to interpretable, word-aligned segments.
+
+As an applied contribution, we provide a model-agnostic Python package for computing and visualizing multimodal Shapley values for text and audio. A companion GUI enables interactive inspection of attributions, side-by-side modality visualization, and method-specific estimates of computational cost. Furthermore, we curate resources derived from the VoiceBench and Infinity Instruct datasets, encompassing diverse modality configurations and multilingual scenarios. These resources are used in validation experiments which demonstrate that input modality appears to be a significant driver of attribution volatility, while syntactic importance proxies often fail to predict model attention across languages. \\
+
+\noindent \textbf{Keywords:} Multimodal Large Language Models, Multilingual Large Language Models, Shapley Values, XAI
+\end{abstract}
+}
+
+\null\thispagestyle{empty}\newpage
+
+
+{\selectlanguage{polish} \fontsize{12}{14}\selectfont
+\begin{abstract}
+
+\begin{center}
+\tytul
+\end{center}
+
+Wielomodalne duże modele językowe (MLLM) łączą tekst i dźwięk, aby interpretować kontekst w interaktywnych konwersacjach. Do tej pory zrozumienie, w jaki sposób informacje pochodzące z różnych modalności wpływają na zachowanie modelu, pozostaje mocno ograniczone. Wartości Shapleya (SV) są powszechnie stosowane jako lokalna, niezależna od modelu metoda wyjaśnialności w prostych rozmowach tekstowych, jednak ich bezpośrednie zastosowanie w środowisku wielomodalnym jest nietrywialne ze względu na zależności między różnymi kanałami, strukturę dialogu oraz wysoki koszt obliczeniowy natywnej tokenizacji audio.
+
+W niniejszej pracy przedstawiono wielomodalne rozszerzenie wartości Shapleya, w którym jednostki informacji, takie jak tokeny tekstowe i segmenty dźwięku, są traktowane jako współpracujące cechy. Aby uczynić to podejście praktycznym, połączono je z wydajnymi metodami estymacji: dokładnym obliczaniem wartości Shapleya dla krótkich wejść oraz aproksymacjami opartymi na próbkowaniu Monte Carlo i stratyfikowanym próbkowaniu z alokacją Neymana. Dodatkowo, aby rozwiązać problem różnicy w ziarnistości między tekstem a dźwiękiem, zaproponowano metodę Spectrogram-Guided Phonetic Alignment (SGPA), która mapuje gęste strumienie audio na interpretowalne segmenty wyrównane do słów.
+
+Jako wkład praktyczny opracowano pakiet w języku Python, umożliwiający obliczanie i wizualizację wielomodalnych wartości Shapleya niezależnie od wybranego modelu. Towarzyszący mu interfejs graficzny (GUI) pozwala na interaktywną analizę atrybucji, wizualizację modalności oraz estymację kosztów obliczeniowych. Ponadto przygotowano zbiory danych oparte na zestawach VoiceBench i Infinity Instruct, obejmujące różne konfiguracje modalne i scenariusze wielojęzyczne. Wykorzystano je w eksperymentach walidacyjnych, które wykazały, że modalność wejściowa jest znaczącym czynnikiem wpływającym na zmienność atrybucji, a syntaktyczne miary ważności słów często nie pokrywają się z uwagą modelu w różnych językach.
+
+\noindent \textbf{Słowa kluczowe:} Wielomodalne duże modele językowe, Wielojęzyczne duże modele językowe, Wartości Shapleya, Wyjaśnialna sztuczna inteligencja
+\end{abstract}
+}
+
+
+%% --------------------------- DECLARATIONS ------------------------------------
+%
+%%
+%%	IT IS NECESSARY OT ATTACH FILLED-OUT AUTORSHIP DEECLRATION. SCAN (IN PDF FORMAT) NEEDS TO BE PLACED IN scans FOLDER AND IT SHOULD BE CALLED, FOR EXAMPLE, DECLARATION_OF_AUTORSHIP.PDF. IF THE FILENAME OR FILEPATH IS DIFFERENT, THE FILEPATH IN THE NEXT COMMAND HAS TO BE ADJUSTED ACCORDINGLY.
+%%
+%%	command attacging the declarations of autorship
+%%
+%\includepdf[pages=-]{scans/declaration-of-autorship}
+%\null\thispagestyle{empty}\newpage
+%
+%% optional declaration
+%%
+%%	command attaching the declaataration on granting a license
+%%
+%\includepdf[pages=-]{scans/declaration-on-granting-a-license}
+%%
+%%	.tex corresponding to the above PDF files are present in the 3. declarations folder
+%
+\null\thispagestyle{empty}\newpage
+% ------------------- TABLE OF CONTENTS ---------------------
+% \selectlanguage{english} - for English
+\pagenumbering{gobble}
+\tableofcontents
+\thispagestyle{empty}
+% \newpage % IF YOU HAVE EVEN QUANTITY OD PAGES OF TOC, THEN REMOVE IT OR ADD \null\newpage FOR DOUBLE BLANK PAGE BEFORE INTRODUCTION
+
+
+% -------------------- THE BODY OF THE THESIS --------------------------------
+
+\null\thispagestyle{empty}\newpage
+\pagestyle{fancy}
+\pagenumbering{arabic}
+\setcounter{page}{11}
+
+
+\input{thesis-content.tex}
+
+\end{document}
