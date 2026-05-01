@@ -5,6 +5,7 @@ import glob
 import logging
 import os
 import sys
+import warnings
 
 import pandas as pd
 
@@ -20,6 +21,21 @@ def _setup_logging() -> None:
     logging.basicConfig(
         level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=(
+            r"An output with one or more elements was resized since it had shape "
+            r"\[\], which does not match the required output shape .*"
+        ),
+        category=UserWarning,
+        module=r"torch\.functional",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=r"The pynvml package is deprecated\. Please install nvidia-ml-py instead\..*",
+        category=FutureWarning,
+        module=r"torch\.cuda\.__init__",
     )
 
 
