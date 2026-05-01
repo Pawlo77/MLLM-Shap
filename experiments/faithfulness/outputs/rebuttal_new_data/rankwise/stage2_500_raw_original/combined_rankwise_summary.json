@@ -1,0 +1,49 @@
+{
+  "completed_deletions": 20,
+  "completed_samples": 5,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.476318359375,
+  "mean_top_rank_drop": 0.687890625,
+  "mean_non_top_rank_drop": 0.40579427083333336,
+  "mean_top_minus_non_top_drop": 0.2820963541666666,
+  "spearman_abs_sv_vs_drop": 0.32481203007518794,
+  "spearman_negative_rank_vs_drop": 0.6049420527769954,
+  "mean_within_sample_spearman_abs_sv_vs_drop": 0.6,
+  "median_within_sample_spearman_abs_sv_vs_drop": 0.6000000000000001,
+  "within_sample_spearman_n": 5,
+  "mean_top1_share": 0.3224423288822931,
+  "mean_top1_top2_gap": 0.006943535523799521,
+  "mean_abs_sv_entropy_norm": 0.9735529775040106,
+  "per_rank": {
+    "1": {
+      "n": 5.0,
+      "mean_drop": 0.687890625,
+      "median_drop": 0.765625,
+      "mean_abs_sv_share": 0.3224423288822932,
+      "mean_abs_sv": 0.04227893451849616
+    },
+    "2": {
+      "n": 5.0,
+      "mean_drop": 0.47421875,
+      "median_drop": 0.47265625,
+      "mean_abs_sv_share": 0.2669808440259939,
+      "mean_abs_sv": 0.0353353989946966
+    },
+    "3": {
+      "n": 5.0,
+      "mean_drop": 0.4978515625,
+      "median_drop": 0.4921875,
+      "mean_abs_sv_share": 0.23584670843400538,
+      "mean_abs_sv": 0.03170734424565338
+    },
+    "4": {
+      "n": 5.0,
+      "mean_drop": 0.2453125,
+      "median_drop": 0.25,
+      "mean_abs_sv_share": 0.17473011082484122,
+      "mean_abs_sv": 0.02379704181878978
+    }
+  },
+  "mean_runtime_sec_per_deletion": 2.045623726649501,
+  "results_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/combined_rankwise_results.csv"
+}
