@@ -1,0 +1,16 @@
+{
+  "completed_deletions": 0,
+  "completed_samples": 0,
+  "failed_samples": 0,
+  "run_dir": "/home/grid/users/plgjmuszynski/MLLM-Shap/experiments/interspeech/outputs/lem_runs/rebuttal_single_sentence_500_original/audio_original_audio_raw_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "all_rank_deletions": true,
+  "results_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part5-of-8_rankwise_results.csv",
+  "failures_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part5-of-8_failures.csv",
+  "random_draws": 20,
+  "strat_duration_bins": 4,
+  "strat_position_bins": 4,
+  "comprehensiveness_k": 3,
+  "sufficiency_k": 3,
+  "target_effect_size_dz": 0.5
+}
