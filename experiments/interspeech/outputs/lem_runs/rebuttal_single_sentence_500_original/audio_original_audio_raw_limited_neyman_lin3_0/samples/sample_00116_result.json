@@ -1,0 +1,515 @@
+{
+  "row_index": 116,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 2290.8771090507507,
+  "n_calls": 3538,
+  "prompt_texts": [
+    "FACE AND FIGURE I"
+  ],
+  "input_modality": "audio__original",
+  "output_modality": "audio",
+  "attr_summary": {
+    "abs_sum_text": 0.0,
+    "abs_sum_audio": 1.0000000270083547,
+    "frac_text": 0.0,
+    "frac_audio": 1.0,
+    "count_text_tokens": 0,
+    "count_audio_segments": 38
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n",
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " assistant",
+          ".",
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "user",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          }
+        ],
+        "shap_values": [
+          0.010252473875880241,
+          0.0,
+          0.018231593072414398,
+          0.01960003189742565,
+          0.029348284006118774,
+          0.03306782245635986,
+          0.01945410668849945,
+          0.0257452093064785,
+          0.016637593507766724,
+          0.030751165002584457,
+          0.0203134436160326,
+          0.012632430531084538,
+          0.025302529335021973,
+          0.025948606431484222,
+          0.031044745817780495,
+          0.03637520596385002,
+          0.02825109288096428,
+          0.033133987337350845,
+          0.031949300318956375,
+          0.035409219563007355,
+          0.025133909657597542,
+          0.0302451029419899,
+          0.020012492313981056,
+          0.02804809808731079,
+          0.02607128396630287,
+          0.027792014181613922,
+          0.02666442282497883,
+          0.025526423007249832,
+          0.03358399495482445,
+          0.03176414594054222,
+          0.028766948729753494,
+          0.030657395720481873,
+          0.03489047661423683,
+          0.033304858952760696,
+          0.04535322263836861,
+          0.022331226617097855,
+          0.021458538249135017,
+          0.024946630001068115
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          }
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ]
+  ],
+  "audio_artifacts": {
+    "input_modality": "audio__original",
+    "output_modality": "audio",
+    "input_audio": {
+      "input_modality": "audio__original",
+      "has_audio": true,
+      "audio_file": "sample_00116_input_audio.wav",
+      "sample_rate": 24000,
+      "format": "wav",
+      "size_bytes": 1,
+      "metadata": {
+        "input_modality": "audio__original"
+      }
+    },
+    "output_audio": {
+      "output_audio_error": "FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'",
+      "output_audio_debug": {
+        "audio_out_shape": [
+          8,
+          18
+        ]
+      }
+    }
+  },
+  "neyman_steps": 2
+}

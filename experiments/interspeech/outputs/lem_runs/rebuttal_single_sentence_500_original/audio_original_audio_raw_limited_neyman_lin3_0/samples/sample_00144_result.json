@@ -1,0 +1,455 @@
+{
+  "row_index": 144,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 1255.7016339302063,
+  "n_calls": 1864,
+  "prompt_texts": [
+    "HE SAID WHY YOU"
+  ],
+  "input_modality": "audio__original",
+  "output_modality": "audio",
+  "attr_summary": {
+    "abs_sum_text": 0.0,
+    "abs_sum_audio": 0.9999999376013875,
+    "frac_text": 0.0,
+    "frac_audio": 1.0,
+    "count_text_tokens": 0,
+    "count_audio_segments": 28
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n",
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " assistant",
+          ".",
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "user",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          }
+        ],
+        "shap_values": [
+          0.04141109064221382,
+          0.03889170661568642,
+          0.039838757365942,
+          0.04641077667474747,
+          0.047704655677080154,
+          0.024347053840756416,
+          0.029806530103087425,
+          0.0432366281747818,
+          0.039305612444877625,
+          0.03883356973528862,
+          0.0364680215716362,
+          0.04302288219332695,
+          0.014498074539005756,
+          0.03440844640135765,
+          0.0,
+          0.032628804445266724,
+          0.03691050410270691,
+          0.03514604642987251,
+          0.0375092551112175,
+          0.029143858700990677,
+          0.04543977975845337,
+          0.039249237626791,
+          0.036204274743795395,
+          0.031891077756881714,
+          0.04202072694897652,
+          0.032829344272613525,
+          0.03998545929789543,
+          0.042857762426137924
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          }
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ]
+  ],
+  "audio_artifacts": {
+    "input_modality": "audio__original",
+    "output_modality": "audio",
+    "input_audio": {
+      "input_modality": "audio__original",
+      "has_audio": true,
+      "audio_file": "sample_00144_input_audio.wav",
+      "sample_rate": 24000,
+      "format": "wav",
+      "size_bytes": 1,
+      "metadata": {
+        "input_modality": "audio__original"
+      }
+    },
+    "output_audio": {
+      "output_audio_error": "FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'",
+      "output_audio_debug": {
+        "audio_out_shape": [
+          8,
+          18
+        ]
+      }
+    }
+  },
+  "neyman_steps": 2
+}
