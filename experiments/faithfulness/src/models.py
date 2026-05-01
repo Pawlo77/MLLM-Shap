@@ -90,6 +90,25 @@ class FaithfulnessResult:
     seqmatch_top_drop: float
     seqmatch_mean_random_drop: float
     seqmatch_drop_difference: float
+    seqmatch_neg_sim: float
+    seqmatch_neg_drop: float
+    seqmatch_neg_mean_random_drop: float
+    seqmatch_neg_drop_improvement: float
+    seqmatch_comprehensiveness_sim: float
+    seqmatch_comprehensiveness_drop: float
+    seqmatch_comprehensiveness_mean_random_drop: float
+    seqmatch_comprehensiveness_drop_difference: float
+    seqmatch_sufficiency_sim: float
+    seqmatch_sufficiency_drop: float
+    seqmatch_sufficiency_mean_random_drop: float
+    seqmatch_sufficiency_advantage: float
+    seqmatch_monotonicity_spearman: float | None
+    seqmatch_monotonicity_score: float | None
+    seqmatch_monotonicity_violation_rate: float | None
+    pos_stratified_strict_match_rate: float | None
+    neg_stratified_strict_match_rate: float | None
+    comp_stratified_strict_match_rate: float | None
+    suff_stratified_strict_match_rate: float | None
     top_start_sec: float
     top_end_sec: float
     top_mask_duration_sec: float

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from experiments.faithfulness.src.helpers import (
+from experiments.faithfulness.src.sampling import (
     quantile_bins,
     sample_random_set_matching_targets,
 )
@@ -22,7 +22,7 @@ def test_sample_random_set_matching_targets_excludes_forbidden_indices() -> None
     duration_bins = np.asarray([0, 0, 1, 1, 2, 2], dtype=int)
     position_bins = np.asarray([0, 1, 0, 1, 0, 1], dtype=int)
 
-    picked = sample_random_set_matching_targets(
+    picked, strict_rate = sample_random_set_matching_targets(
         target_indices=[0, 2],
         n=6,
         duration_bins=duration_bins,
@@ -36,6 +36,8 @@ def test_sample_random_set_matching_targets_excludes_forbidden_indices() -> None
     assert len(set(picked)) == 2
     assert 0 not in picked
     assert 2 not in picked
+    assert strict_rate is not None
+    assert 0.0 <= strict_rate <= 1.0
 
 
 def test_sample_random_set_matching_targets_uniform_mode() -> None:
@@ -45,7 +47,7 @@ def test_sample_random_set_matching_targets_uniform_mode() -> None:
     duration_bins = np.asarray([0, 1, 2, 3], dtype=int)
     position_bins = np.asarray([0, 1, 0, 1], dtype=int)
 
-    picked = sample_random_set_matching_targets(
+    picked, strict_rate = sample_random_set_matching_targets(
         target_indices=[1],
         n=4,
         duration_bins=duration_bins,
@@ -57,3 +59,4 @@ def test_sample_random_set_matching_targets_uniform_mode() -> None:
 
     assert len(picked) == 1
     assert picked[0] in {0, 2, 3}
+    assert strict_rate is None

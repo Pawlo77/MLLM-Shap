@@ -35,6 +35,11 @@ def _rows() -> pd.DataFrame:
                 "tfidf_sufficiency_advantage": 0.03 + idx * 0.003,
                 "tfidf_sufficiency_stratified_advantage": 0.028 + idx * 0.003,
                 "tfidf_monotonicity_score": 0.10 + idx * 0.01,
+                "seqmatch_drop_difference": 0.07 + idx * 0.006,
+                "seqmatch_neg_drop_improvement": 0.05 + idx * 0.005,
+                "seqmatch_comprehensiveness_drop_difference": 0.08 + idx * 0.005,
+                "seqmatch_sufficiency_advantage": 0.04 + idx * 0.004,
+                "seqmatch_monotonicity_score": 0.15 + idx * 0.008,
                 "runtime_sec": 1.0 + idx * 0.1,
             }
         )
@@ -55,14 +60,26 @@ def test_summarize_includes_new_tests_and_power_block() -> None:
     assert "sufficiency_uniform" in summary["tests"]
     assert "monotonicity_embedding" in summary["tests"]
     assert "tfidf_pos_uniform" in summary["tests"]
+    assert "seqmatch_pos_uniform" in summary["tests"]
+    assert "seqmatch_neg_uniform" in summary["tests"]
+    assert "seqmatch_comprehensiveness_uniform" in summary["tests"]
+    assert "seqmatch_sufficiency_uniform" in summary["tests"]
+    assert "seqmatch_monotonicity" in summary["tests"]
 
     pos_uniform = summary["tests"]["pos_uniform"]
     assert pos_uniform["n"] == 6
     assert pos_uniform["mean"] > 0.0
     assert pos_uniform["wilcoxon_p_value"] is not None
     assert "wilcoxon_p_value_bh_fdr" in pos_uniform
+    assert "paired_t_p_value_bh_fdr" in pos_uniform
 
     power = summary["power_planning"]
     assert power["target_effect_size_dz"] == 0.4
     assert power["estimated_required_n"] is not None
     assert power["estimated_required_n"] > 0
+    assert "n_tests" in power
+    assert "family_corrected_alpha" in power
+    assert "family_corrected_estimated_required_n" in power
+    assert (
+        power["family_corrected_estimated_required_n"] > power["estimated_required_n"]
+    )
