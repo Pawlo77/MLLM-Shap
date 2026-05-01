@@ -23,7 +23,6 @@ def _is_commit_sha(s: str) -> bool:
 
 
 def download_model(
-    *,
     repo_id: str,
     revision: str,
     allow_patterns: Optional[list[str] | str] = None,

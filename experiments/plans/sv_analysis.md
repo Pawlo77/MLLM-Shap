@@ -59,51 +59,6 @@ The choice is not an implementation detail — it defines what the explanation m
 
 ---
 
-## 2. Audio Masking
-
-### 2.1 SHAP Computation: Segment Removal
-
-In the SHAP pipeline ([chat.py:156-270](mllm_shap/src/mllm_shap/connectors/base/chat.py#L156-L270)), masking removes segments: remaining audio pieces are concatenated, producing a *shorter* waveform. The model receives a compressed utterance without the masked words.
-
-### 2.2 Temporal Structure and Prosody Destruction
-
-**Problem**: Concatenating remaining segments eliminates natural pauses and inter-word gaps. The masked utterance has different rhythm, timing, and prosody than any natural speech. The model receives input that no speaker ever produced.
-
-**Concrete failure mode**: Removing a pause between two phrases fuses them into a single utterance. If the model uses prosodic boundaries to parse intent, the coalition response measures "response to prosodically malformed speech" rather than "response to speech minus segment X."
-
-**Alternative**: Replace masked segments with silence (zero-amplitude padding) to preserve the temporal positions of all remaining segments and keep utterance duration fixed.
-
-### 2.3 Position Shift Confound
-
-**Problem**: If the audio encoder uses absolute temporal position encodings (common in transformer-based audio models), removing an early segment shifts all subsequent segments forward in time. A high SV attributed to an early segment may partially reflect the position disruption it causes downstream, not its own semantic content.
-
-**Implication**: SVs for early segments are systematically confounded by positional influence on everything that follows. This confound is absent for the final segment, creating a structural asymmetry across positions.
-
-### 2.4 Baseline Choice Is Not Justified
-
-Deletion (concatenate remaining) is one of several valid masking strategies. The choice is equivalent to selecting a reference point for the SHAP game and determines what "absence" means:
-
-| Strategy | Semantics | Risk |
-|---|---|---|
-| Delete + concatenate | "Word never existed" | Prosody destruction, position shift |
-| Silence padding | "Word was silent" | May be out-of-distribution for encoder |
-| Noise replacement | "Word was noise" | Adds non-speech signal as reference |
-| Mean audio segment | "Word was average speech" | Reference is dataset-dependent |
-
-The current choice (deletion) is used without discussion or justification. **Note on silence padding**: the "OOD for encoder" risk is empirically testable by probing encoder activations on silence-padded vs. natural audio. Whether silence is more or less OOD than deletion depends on the specific encoder's training data and should be verified before adopting it as a fix, not assumed.
-
-### 2.5 Segment Granularity Is an Unanalyzed Hyperparameter
-
-The number and boundaries of segments determine which "features" exist in the game. No sensitivity analysis is present.
-
-- **Fine-grained** (phonemes, sub-word): large coalition space, high variance per feature, better locality.
-- **Coarse-grained** (words, phrases): stable estimates, but may pool semantically distinct units.
-- **Different aligners or confidence thresholds** produce different segmentations from identical audio; SVs are relative to a specific segmentation choice that is otherwise arbitrary.
-
-**Suggested check**: Run the full pipeline at 2×, 1×, and 0.5× the default segment count on a held-out set. If top-ranked segments change substantially across granularities, the segmentation choice dominates the result.
-
----
-
 ## 3. Approximation Methods
 
 ### 3.1 Monte Carlo: Unweighted Averaging is Banzhaf, Not Shapley

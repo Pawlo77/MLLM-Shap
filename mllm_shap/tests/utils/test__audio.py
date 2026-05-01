@@ -89,7 +89,7 @@ class TestTorchAudioHandler:
     ) -> None:
         """WAV path uses soundfile.write to a buffer and returns its contents."""
 
-        def fake_sf_write(buffer, data, sr, *, format, subtype):
+        def fake_sf_write(buffer, data, sr, format, subtype):
             # Validate basic invariants
             assert format == "WAV"
             assert subtype == "PCM_16"
@@ -120,7 +120,7 @@ class TestTorchAudioHandler:
         # Prepare a mock segment instance with export writing known bytes
         mock_segment = MagicMock()
 
-        def fake_export(buffer, *, format, bitrate):
+        def fake_export(buffer, format, bitrate):
             assert format == "mp3"
             assert bitrate == "192k"
             buffer.write(b"encoded_mp3_bytes")

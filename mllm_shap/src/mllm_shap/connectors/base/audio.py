@@ -186,7 +186,6 @@ class SpectrogramGuidedAligner:
         waveform: np.ndarray,
         sr: int,
         candidate_time: float,
-        *,
         left_time: float | None = None,
         right_time: float | None = None,
     ) -> tuple[float, bool]:

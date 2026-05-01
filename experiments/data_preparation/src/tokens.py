@@ -76,7 +76,6 @@ def compute_multi_turn_token_counts(
 def add_token_counts_and_filter(
     df: pd.DataFrame,
     model: LiquidAudio,
-    *,
     max_token_count: int = 10,
     text_column: str = "prompt",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:

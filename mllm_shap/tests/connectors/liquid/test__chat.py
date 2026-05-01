@@ -50,7 +50,6 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
 
         def __init__(
             self,
-            *,
             proc: ProcessorStub | None = None,
             text: Tensor | None = None,
             audio_in: Tensor | None = None,

@@ -56,7 +56,6 @@ class _FakeChat:
 class _FakeModel:
     def generate(
         self,
-        *,
         chat: _FakeChat,
         keep_history: bool = False,
         **_: dict[str, Any],

@@ -32,7 +32,7 @@ class _TokenizerStub:
 class _BaseModelStub:
     """Base model stub for contextual embeddings."""
 
-    def __call__(self, *, inputs_embeds: Tensor, use_cache: bool) -> SimpleNamespace:
+    def __call__(self, inputs_embeds: Tensor, use_cache: bool) -> SimpleNamespace:
         del use_cache
         return SimpleNamespace(last_hidden_state=inputs_embeds + 1)
 

@@ -222,7 +222,7 @@ class TestGenerateResponses:
             generated_modality_flag=torch.ones(3, dtype=torch.bool),
         )
 
-        def side_effect(*, verbose: bool, **kwargs):
+        def side_effect(verbose: bool, **kwargs):
             if side_effect.calls == 0:
                 side_effect.calls += 1
                 raise AllTextTokensFilteredOutError()
@@ -294,7 +294,7 @@ class TestGenerateResponses:
         model, chat, cache_manager = setup_env
         verbose_flags: list[bool] = []
 
-        def worker_side_effect(*, verbose: bool, **kwargs):
+        def worker_side_effect(verbose: bool, **kwargs):
             verbose_flags.append(verbose)
             return DummyChat(), ModelResponse(
                 chat=chat,

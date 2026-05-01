@@ -80,7 +80,6 @@ def semantic_dedup(
 def nlp_quality_filter(
     df: pd.DataFrame,
     device: str,
-    *,
     text_col: str = "prompt",
     interestingness_percentile: int = 20,
     similarity_threshold: float = 0.92,
