@@ -1,0 +1,59 @@
+{
+  "completed_deletions": 4,
+  "completed_samples": 1,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.45556640625,
+  "mean_top_rank_drop": 0.869140625,
+  "mean_non_top_rank_drop": 0.3177083333333333,
+  "mean_top_minus_non_top_drop": 0.5514322916666667,
+  "spearman_abs_sv_vs_drop": 0.7999999999999999,
+  "spearman_negative_rank_vs_drop": 0.7999999999999999,
+  "mean_within_sample_spearman_abs_sv_vs_drop": 0.7999999999999999,
+  "median_within_sample_spearman_abs_sv_vs_drop": 0.7999999999999999,
+  "within_sample_spearman_n": 1,
+  "mean_top1_share": 0.2771877074029583,
+  "mean_top1_top2_gap": 0.000314695877023,
+  "mean_abs_sv_entropy_norm": 0.9955900382182912,
+  "per_rank": {
+    "1": {
+      "n": 1.0,
+      "mean_drop": 0.869140625,
+      "median_drop": 0.869140625,
+      "mean_abs_sv_share": 0.2771877074029583,
+      "mean_abs_sv": 0.0296677718870341
+    },
+    "2": {
+      "n": 1.0,
+      "mean_drop": 0.25390625,
+      "median_drop": 0.25390625,
+      "mean_abs_sv_share": 0.2742474856359403,
+      "mean_abs_sv": 0.0293530760100111
+    },
+    "3": {
+      "n": 1.0,
+      "mean_drop": 0.44921875,
+      "median_drop": 0.44921875,
+      "mean_abs_sv_share": 0.2377162685025661,
+      "mean_abs_sv": 0.0254430908709764
+    },
+    "4": {
+      "n": 1.0,
+      "mean_drop": 0.25,
+      "median_drop": 0.25,
+      "mean_abs_sv_share": 0.2108485291154774,
+      "mean_abs_sv": 0.0225674007087945
+    }
+  },
+  "mean_runtime_sec_per_deletion": 2.079037078499823,
+  "run_dir": "/home/grid/users/plgjmuszynski/MLLM-Shap/experiments/interspeech/outputs/lem_runs/rebuttal_single_sentence_500_original/audio_original_audio_raw_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "all_rank_deletions": true,
+  "results_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part3-of-8_rankwise_results.csv",
+  "failures_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part3-of-8_failures.csv",
+  "random_draws": 20,
+  "strat_duration_bins": 4,
+  "strat_position_bins": 4,
+  "comprehensiveness_k": 3,
+  "sufficiency_k": 3,
+  "target_effect_size_dz": 0.5
+}
