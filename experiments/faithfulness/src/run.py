@@ -133,7 +133,7 @@ def run_faithfulness(
     model = build_model(
         device=torch_device,
         connector=cfg.connector,
-        output_modality=cfg.modality.get_output_modality(),
+        output_modality=cfg.modality.output_modality,
     )
     max_new_tokens = (
         int(max_new_tokens_override)
