@@ -20,11 +20,9 @@ from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.utils.audio import TorchAudioHandler
 from tqdm.auto import tqdm
 
-from experiments.mllm_shapx import (
-    OutputModality,
-    build_model,
-)
-from experiments.mllm_shapx.src import extract_texts_from_row
+from experiments.mllm_shapx.src.constants import OutputModality
+from experiments.mllm_shapx.src.data import extract_texts_from_row
+from experiments.mllm_shapx.src.factory import build_model
 
 from .helpers import (
     aggregate_sv_to_segments,
@@ -46,7 +44,6 @@ DEFAULT_OUTPUT_DIR = Path("experiments/faithfulness/outputs")
 
 
 def run_faithfulness(
-    *,
     run_dir: Path,
     spec_path: Path | None,
     output_dir: Path,
@@ -61,7 +58,15 @@ def run_faithfulness(
     all_rank_deletions: bool = False,
     max_new_tokens_override: int | None = None,
     text_temperature_override: float | None = None,
+    random_draws: int = 20,
+    strat_duration_bins: int = 4,
+    strat_position_bins: int = 4,
+    comprehensiveness_k: int = 3,
+    sufficiency_k: int = 3,
+    target_effect_size_dz: float = 0.5,
 ) -> dict[str, Any]:
+    """Run the faithfulness evaluation for a given run directory
+    and return a summary dictionary of results and metadata."""
     run_dir = run_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     spec = load_spec(run_dir, spec_path=spec_path)
@@ -178,6 +183,11 @@ def run_faithfulness(
                         max_new_tokens=max_new_tokens,
                         text_temperature=text_temperature,
                         rng=rng,
+                        random_draws=random_draws,
+                        strat_duration_bins=strat_duration_bins,
+                        strat_position_bins=strat_position_bins,
+                        comprehensiveness_k=comprehensiveness_k,
+                        sufficiency_k=sufficiency_k,
                     )
                 )
         except Exception as exc:  # noqa: BLE001
@@ -224,7 +234,9 @@ def run_faithfulness(
     summary_data = (
         summarize_rankwise(final_results, final_failures)
         if all_rank_deletions
-        else summarize(final_results, final_failures)
+        else summarize(
+            final_results, final_failures, target_effect_size_dz=target_effect_size_dz
+        )
     )
     summary_data.update(
         {
@@ -233,6 +245,12 @@ def run_faithfulness(
             "all_rank_deletions": all_rank_deletions,
             "results_csv": str(results_path),
             "failures_csv": str(failures_path),
+            "random_draws": int(random_draws),
+            "strat_duration_bins": int(strat_duration_bins),
+            "strat_position_bins": int(strat_position_bins),
+            "comprehensiveness_k": int(comprehensiveness_k),
+            "sufficiency_k": int(sufficiency_k),
+            "target_effect_size_dz": float(target_effect_size_dz),
         }
     )
     summary_path.write_text(json.dumps(summary_data, indent=2))
@@ -240,13 +258,16 @@ def run_faithfulness(
 
 
 def _preflight_one_sample(
-    *,
     sample_path: Path,
     row: dict[str, Any],
     aligner: SpectrogramGuidedAligner,
     audio_column: str,
     rng: np.random.Generator,
 ) -> dict[str, Any]:
+    """Perform preflight checks for a single sample to ensure it can be processed without
+    errors during the main run. This includes loading the audio, performing alignment,
+    and identifying segments and SV values. Returns a dictionary summarizing the checks
+    performed and any issues encountered."""
     sample_id = parse_sample_id(sample_path)
     sample_json = json.loads(sample_path.read_text(encoding="utf-8"))
     row_index = int(sample_json.get("row_index", sample_id))
@@ -269,7 +290,7 @@ def _preflight_one_sample(
     segment_sv_values, sv_bins = aggregate_sv_to_segments(
         sv_values, segments, total_samples=waveform.size(-1)
     )
-    top_idx = int(np.argmax(np.abs(np.asarray(segment_sv_values, dtype=float))))
+    top_idx = int(np.argmax(np.asarray(segment_sv_values, dtype=float)))
     candidate_indices = [i for i in range(len(segments)) if i != top_idx]
     random_idx = int(rng.choice(candidate_indices))
     top_start, top_end = segment_interval(segments[top_idx])
@@ -317,6 +338,12 @@ def build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--num-partitions", type=int, default=None)
     p.add_argument("--max-new-tokens", type=int, default=None)
     p.add_argument("--text-temperature", type=float, default=None)
+    p.add_argument("--random-draws", type=int, default=20)
+    p.add_argument("--strat-duration-bins", type=int, default=4)
+    p.add_argument("--strat-position-bins", type=int, default=4)
+    p.add_argument("--comprehensiveness-k", type=int, default=3)
+    p.add_argument("--sufficiency-k", type=int, default=3)
+    p.add_argument("--target-effect-size-dz", type=float, default=0.5)
     p.add_argument("--resume", action="store_true")
     p.add_argument("--all-rank-deletions", action="store_true")
     p.add_argument("--preflight-only", action="store_true")
@@ -325,6 +352,9 @@ def build_argparser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Parse command-line arguments and run the faithfulness evaluation, or combine existing
+    partition outputs if --combine-only is specified. The results and summary will be saved
+    to the specified output directory."""
     args = build_argparser().parse_args()
     if args.combine_only:
         print(
@@ -353,6 +383,12 @@ def main() -> None:
         all_rank_deletions=args.all_rank_deletions,
         max_new_tokens_override=args.max_new_tokens,
         text_temperature_override=args.text_temperature,
+        random_draws=args.random_draws,
+        strat_duration_bins=args.strat_duration_bins,
+        strat_position_bins=args.strat_position_bins,
+        comprehensiveness_k=args.comprehensiveness_k,
+        sufficiency_k=args.sufficiency_k,
+        target_effect_size_dz=args.target_effect_size_dz,
     )
     print(json.dumps(summary, indent=2))
 

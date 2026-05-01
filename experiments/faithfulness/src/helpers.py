@@ -3,6 +3,7 @@
 import difflib
 import json
 import math
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -12,24 +13,150 @@ from mllm_shap.connectors.base.audio import AudioSegment
 from mllm_shap.connectors.config import ModelConfig
 from mllm_shap.shap.embeddings import MeanReducer
 from mllm_shap.shap.similarity import CosineSimilarity
+from scipy import stats
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity as _sklearn_cosine
 
-from experiments.mllm_shapx import (
-    ExperimentSet,
-    InputModality,
-    build_chat,
-    load_df,
-)
-from experiments.mllm_shapx.src import (
+from experiments.mllm_shapx.src.config import ExperimentSet
+from experiments.mllm_shapx.src.constants import InputModality
+from experiments.mllm_shapx.src.data import (
     choose_prompt_text_column,
     iter_rows_for_selection,
+    load_df,
 )
+from experiments.mllm_shapx.src.factory import build_chat
 
 EPS: float = 1e-9
+"""Small constant used to avoid divide-by-zero and numerical instabilities."""
+
+
+def response_drop(full_similarity: float, perturbed_similarity: float) -> float:
+    """Return similarity drop induced by a perturbation.
+
+    Positive values indicate that the perturbation reduced similarity.
+    """
+    return float(full_similarity - perturbed_similarity)
+
+
+def quantile_bins(values: Sequence[float], n_bins: int) -> np.ndarray:
+    """Discretize values into quantile bins with safe fallbacks.
+
+    If values are constant or insufficiently diverse, returns a single zero bin.
+    """
+    arr = np.asarray(values, dtype=float)
+    if arr.size == 0:
+        return np.asarray([], dtype=int)
+    if n_bins <= 1:
+        return np.zeros(arr.shape[0], dtype=int)
+    cuts = np.unique(np.quantile(arr, np.linspace(0.0, 1.0, n_bins + 1)))
+    if cuts.size <= 2:
+        return np.zeros(arr.shape[0], dtype=int)
+    return np.digitize(arr, cuts[1:-1], right=True).astype(int)
+
+
+def sample_uniform_index(
+    n: int,
+    exclude: set[int],
+    rng: np.random.Generator,
+) -> int:
+    """Sample one index uniformly from ``range(n)`` excluding forbidden indices."""
+    candidates = [idx for idx in range(n) if idx not in exclude]
+    if not candidates:
+        raise ValueError("No candidates left for uniform random sampling.")
+    return int(rng.choice(candidates))
+
+
+def sample_stratified_index(
+    target_idx: int,
+    duration_bins: np.ndarray,
+    position_bins: np.ndarray,
+    exclude: set[int],
+    rng: np.random.Generator,
+) -> int:
+    """Sample one index with duration/position matching to a target segment.
+
+    Sampling prefers strict duration+position-bin matches and progressively
+    relaxes to duration-only, then position-only, then fully uniform fallback.
+    """
+    n = len(duration_bins)
+    candidates = np.asarray([idx for idx in range(n) if idx not in exclude], dtype=int)
+    if candidates.size == 0:
+        raise ValueError("No candidates left for stratified random sampling.")
+
+    # First try strict matching on duration and position, then relax to either one.
+    strict = candidates[
+        (duration_bins[candidates] == duration_bins[target_idx])
+        & (position_bins[candidates] == position_bins[target_idx])
+    ]
+    if strict.size:
+        return int(rng.choice(strict))
+
+    dur_only = candidates[duration_bins[candidates] == duration_bins[target_idx]]
+    if dur_only.size:
+        return int(rng.choice(dur_only))
+
+    pos_only = candidates[position_bins[candidates] == position_bins[target_idx]]
+    if pos_only.size:
+        return int(rng.choice(pos_only))
+
+    return int(rng.choice(candidates))
+
+
+def sample_random_set_matching_targets(
+    target_indices: Sequence[int],
+    n: int,
+    duration_bins: np.ndarray,
+    position_bins: np.ndarray,
+    rng: np.random.Generator,
+    baseline_type: str,
+    global_exclude: set[int] | None = None,
+) -> list[int]:
+    """Sample a random index set aligned to a target set under a baseline policy.
+
+    Each target index gets one random counterpart and sampled indices are unique.
+    """
+    selected: list[int] = []
+    used = set(global_exclude or set())
+    for target_idx in target_indices:
+        if baseline_type == "uniform_random":
+            rand_idx = sample_uniform_index(n=n, exclude=used, rng=rng)
+        elif baseline_type == "stratified_random":
+            rand_idx = sample_stratified_index(
+                target_idx=int(target_idx),
+                duration_bins=duration_bins,
+                position_bins=position_bins,
+                exclude=used,
+                rng=rng,
+            )
+        else:
+            raise ValueError(f"Unsupported baseline_type={baseline_type!r}")
+        selected.append(int(rand_idx))
+        used.add(int(rand_idx))
+    return selected
+
+
+def estimate_required_paired_n(
+    target_effect_size_dz: float,
+    alpha: float = 0.05,
+    power: float = 0.8,
+) -> int | None:
+    """Approximate required n for a paired t-test using normal approximation.
+
+    This is a planning approximation only and should be treated as conservative.
+    """
+    if target_effect_size_dz <= 0.0:
+        return None
+    if not (0.0 < alpha < 1.0 and 0.0 < power < 1.0):
+        return None
+
+    z_alpha = stats.norm.ppf(1.0 - alpha / 2.0)
+    z_beta = stats.norm.ppf(power)
+    required = ((z_alpha + z_beta) / target_effect_size_dz) ** 2
+    return int(math.ceil(required))
 
 
 def as_list(value: Any) -> list[Any]:
+    """Normalize a scalar/array/list value into a Python list."""
     if isinstance(value, np.ndarray):
         return value.tolist()
     if isinstance(value, list):
@@ -40,6 +167,7 @@ def as_list(value: Any) -> list[Any]:
 
 
 def load_spec(run_dir: Path, spec_path: Path | None = None) -> dict[str, Any]:
+    """Load an mllm_shapx experiment spec from disk."""
     spec_path = spec_path or (run_dir / "spec.json")
     if not spec_path.exists():
         raise FileNotFoundError(f"Missing mllm_shapx spec: {spec_path}")
@@ -47,6 +175,11 @@ def load_spec(run_dir: Path, spec_path: Path | None = None) -> dict[str, Any]:
 
 
 def experiment_set_from_spec(spec: dict[str, Any]) -> ExperimentSet:
+    """Build an ``ExperimentSet`` from a persisted run spec.
+
+    The faithfulness experiment consumes only the subset required for replay,
+    and explicitly disables W&B side effects.
+    """
     raw = {
         "experiment_set_id": spec["experiment_set_id"],
         "output_root": "experiments_output",
@@ -67,14 +200,8 @@ def experiment_set_from_spec(spec: dict[str, Any]) -> ExperimentSet:
 def load_selected_rows(
     cfg: ExperimentSet, max_samples: int | None
 ) -> dict[int, dict[str, Any]]:
-    df = load_df(
-        cfg.dataset.repo_id,
-        cfg.dataset.subset,
-        cfg.dataset.split,
-        cfg.dataset.revision,
-        use_parquet=cfg.dataset.use_parquet,
-        trust_remote_code=cfg.dataset.trust_remote_code,
-    )
+    """Load and index dataset rows selected by the original experiment config."""
+    df = load_df(cfg.dataset)
     text_col = choose_prompt_text_column(df)
     selected: dict[int, dict[str, Any]] = {}
     for row_idx, row in iter_rows_for_selection(
@@ -90,6 +217,7 @@ def load_selected_rows(
 
 
 def extract_audio_sv(sample_json: dict[str, Any]) -> list[float]:
+    """Extract finite audio SHAP values from a saved sample JSON payload."""
     for turn in sample_json.get("conversation", []):
         for entry in turn:
             if entry.get("content_type") != 1:
@@ -148,6 +276,7 @@ def aggregate_sv_to_segments(
 
 
 def sample_paths(run_dir: Path, max_samples: int | None) -> list[Path]:
+    """Return sorted sample result files from a run directory."""
     paths = sorted((run_dir / "samples").glob("sample_*_result.json"))
     if max_samples is not None:
         paths = paths[:max_samples]
@@ -157,6 +286,7 @@ def sample_paths(run_dir: Path, max_samples: int | None) -> list[Path]:
 
 
 def parse_sample_id(sample_path: Path) -> int:
+    """Parse integer sample id from a ``sample_<id>_result.json`` path."""
     return int(sample_path.name.split("_")[1])
 
 
@@ -174,6 +304,7 @@ def remove_interval(waveform: torch.Tensor, start: int, end: int) -> torch.Tenso
 
 
 def segment_interval(seg: AudioSegment) -> tuple[int, int]:
+    """Return segment [start, end] sample indices, validating availability."""
     if seg.start_sample is None or seg.end_sample is None:
         raise ValueError("Segment is missing sample indices.")
     return int(seg.start_sample), int(seg.end_sample)
@@ -182,6 +313,7 @@ def segment_interval(seg: AudioSegment) -> tuple[int, int]:
 def embedding_similarities(
     model: Any, base: Any, others: list[Any]
 ) -> tuple[float, list[float]]:
+    """Compute cosine similarities in model embedding space against a base output."""
     embeddings = model.get_static_embeddings([base, *others])
     reduced = MeanReducer()(embeddings)
     sims = CosineSimilarity()(base=reduced[0], other=reduced)
@@ -237,6 +369,7 @@ def sequence_match_similarities(
 
 
 def rank_abs_sv(segment_sv_values: list[float]) -> dict[str, Any]:
+    """Compute absolute-SV ranking and concentration diagnostics for segments."""
     values = np.asarray(segment_sv_values, dtype=float)
     abs_values = np.abs(values)
     order = np.argsort(-abs_values, kind="mergesort")
@@ -293,6 +426,7 @@ def generate_response(
     text_temperature: float,
     user_texts: list[str] | None = None,
 ) -> Any:
+    """Generate one model response for provided audio bytes and prompt texts."""
     chat = build_chat(
         model,
         user_texts=user_texts,

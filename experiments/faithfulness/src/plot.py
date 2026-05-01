@@ -39,6 +39,7 @@ VOICE_ORDER: list[str] = ["Male TTS", "Female TTS"]
 def _regression_line(
     x: np.ndarray, y: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """Return OLS regression line (xh, yh) and stats (r, p) for x vs y."""
     mask = np.isfinite(x) & np.isfinite(y)
     slope, intercept, r, p, _ = stats.linregress(x[mask], y[mask])
     xh = np.linspace(x[mask].min(), x[mask].max(), 120)
@@ -46,15 +47,18 @@ def _regression_line(
 
 
 def _voice_palette() -> dict[str, tuple]:
+    """Return a color palette mapping each voice to a distinct color."""
     return dict(zip(VOICE_ORDER, sns.color_palette("Set2", n_colors=len(VOICE_ORDER))))
 
 
 def _apply_style() -> None:
+    """Apply consistent styling for all plots."""
     plt.rcParams.update(STYLES["paper_rc"])
     sns.set_theme(style="white", rc=STYLES["paper_rc"])
 
 
 def _clean_spines(axes) -> None:
+    """Remove top and right spines from all axes."""
     for ax in axes.flat if hasattr(axes, "flat") else axes:
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
@@ -259,6 +263,7 @@ def plot_deletion(
 def _build_deletion_meta(
     df: pd.DataFrame, top_col: str, random_col: str, diff_col: str
 ) -> dict:
+    """Compute summary statistics for the deletion comparison to include as metadata."""
     top = df[top_col].to_numpy(float)
     rand = df[random_col].to_numpy(float)
     diff = df[diff_col].to_numpy(float)
@@ -303,6 +308,7 @@ def _build_deletion_meta(
 
 
 def _within_sample_spearmans(df: pd.DataFrame, drop_col: str) -> list[float]:
+    """Compute within-sample Spearman correlations between |SV| and deletion drop."""
     corrs: list[float] = []
     for _, grp in df.groupby(["audio_column", "sample_id"]):
         if grp["segment_abs_sv"].nunique() < 2 or grp[drop_col].nunique() < 2:
@@ -477,6 +483,7 @@ def plot_rankwise(
 
 
 def _load_rankwise_summary(result_dir: Path) -> dict:
+    """Load pre-computed summary statistics for rank-wise deletion from the result directory, if available."""
     for name in ("combined_rankwise_summary.json", "combined_summary.json"):
         p = result_dir / name
         if p.exists():
@@ -492,6 +499,7 @@ def _build_rankwise_meta(
     ols_r: float,
     ols_p: float,
 ) -> dict:
+    """Compute summary statistics for the rank-wise deletion comparison to include as metadata."""
     samples = df[["audio_column", "sample_id"]].drop_duplicates()
     drop = df[drop_col]
     return {
