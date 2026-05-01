@@ -4,6 +4,11 @@ This plan extends on work for the InterSpeech conference.
 
 All those should be ran on the tuned hyperparameters of the mllm-shap package. We have currently suspicions that current utility function significantly affects the final faithfulness results. We do not have precise estimations on SV approximation accuracy as well.
 
+We should use 4 datasets there:
+- voice_bench single_sentence of 500 entries 6-10 tokens length, 100 per length, english only, original audio + male tts + female tts
+- librispeech single_sentence of 500 entries 6-10 tokens length, 100 per length, english only, original audio
+- 2 additional languages that differs significantly in phonetic structure and have proper models and datasets available. LMF2 should have had those languages in the training data, so we can expect good performance. *According to gemini, it was trained on English, Arabic, Chinese, French, German, Japanese, Korean, Spanish - suggestion is to use Japanese and Arabic. AP1 for details*.
+
 ---
 
 ## Phase 1: Core Pipeline & Parameter Refinement
@@ -41,6 +46,13 @@ All those should be ran on the tuned hyperparameters of the mllm-shap package. W
     *   **Context:** Validates the 40ms VOT padding motivation.
     *   **Action:** Categorize each word boundary by its flanking phoneme type using the CMU Pronouncing Dictionary.
     *   **Implementation:** Report Stage 3 flux reduction and fallback rate by phoneme category. (Re-analysis of existing boundary data).
+*   [ ] **Ablation: Masking Strategy and Temporal Confound**
+    *   **Context:** Standard segment removal (deletion + concatenation) destroys natural prosody and introduces a systematic "position shift confound" for early segments, while silence padding may be out-of-distribution (OOD) for the encoder.
+    *   **Action:** Conduct a formal comparison of three masking baselines:
+    *   1. **Deletion + Concatenation:** (Current baseline)
+    *   2. **Silence Padding:** (Preserves temporal structure)
+    *   3. **Ambient Noise Replacement:** (Preserves structure and reduces OOD risk)
+    *   **Implementation:** Compare all three on the faithfulness AUC metric. Additionally, empirically test the "OOD for encoder" risk by probing the encoder's activation shifts on silence-padded vs. natural vs. noise-padded audio. This explicitly justifies the baseline choice (addressing Section 2.4) and proves whether fixing the position shift confound yields more faithful Shapley Values.
 
 ## Phase 3: Large-Scale Evaluation & Generalizability
 *Objective: Run the heavy-compute experiments using the locked-in pipeline to prove feasibility and generalizability.*
@@ -99,3 +111,19 @@ All those should be ran on the tuned hyperparameters of the mllm-shap package. W
     *   **Context:** Crucial for reviewer validation.
     *   **Action:** Provide a fully pinned Docker image or conda lockfile.
     *   **Implementation:** Pin the exact `mllm-shap` version. Include GPU memory profiling output to empirically confirm the "16 GB VRAM" claim.
+
+# Appendix
+
+## A: Languages
+
+Out of the languages supported by the LFM2-Audio model, here are the two best choices that maximize linguistic variance from English and from each other, while still having excellent dataset availability:
+
+### 1. Japanese (Japonic family)
+*   **Why it differs:** As mentioned earlier, Japanese is an **agglutinative** language (stacking suffixes for grammatical meaning) and is **mora-timed** (rhythm is based on equal-length beats rather than stress). It also uses subject-object-verb (SOV) word order, unlike English's SVO.
+*   **Why it tests your pipeline:** Its moraic rhythm makes it the perfect stress test for your masking ablation (deletion vs. silence padding). Deleting a segment will abruptly break the mathematical regularity of the spoken rhythm, which might severely confuse the model.
+*   **Datasets:** Mozilla Common Voice, Corpus of Spontaneous Japanese (CSJ), FLEURS.
+
+### 2. Arabic (Afroasiatic family)
+*   **Why it differs:** Arabic uses **non-concatenative (root-and-pattern) morphology**. Unlike English (which adds separate words) or Japanese (which stacks suffixes onto the end of a word), Arabic often changes the internal vowels of a root word to alter its meaning. For example, the root *k-t-b* (writing) becomes *kitāb* (book), *kātib* (writer), or *maktab* (desk/office).
+*   **Why it tests your pipeline:** Because semantic concepts are interwoven directly into the phonetic structure of a single word, it fundamentally challenges how Shapley Values assign "importance." It will test if your word-level CTC aligner can handle attributions when the core semantic meaning is distributed across vowels *inside* the consonants.
+*   **Datasets:** Mozilla Common Voice, FLEURS, MGB (Multi-Genre Broadcast) Challenge datasets.
