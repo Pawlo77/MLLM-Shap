@@ -9,7 +9,6 @@ import seaborn as sns
 
 def get_sample_df(
     df_to_sample: pd.DataFrame,
-    *,
     group_col: str = "datasets",
     text_col: str = "sentences",
 ) -> pd.DataFrame:
@@ -37,7 +36,6 @@ def get_sample_df(
 
 def get_df_stats(
     df_to_analyze: pd.DataFrame,
-    *,
     text_col: str = "prompt",
     sentences_col: str = "sentences",
     include_audio: bool = True,
@@ -90,7 +88,6 @@ def get_df_stats(
 
 def get_df_stats__by_source(
     df_to_analyze: pd.DataFrame,
-    *,
     group_col: str = "datasets",
     text_col: str = "prompt",
     sentences_num_col: str = "sentences__num",
@@ -99,7 +96,7 @@ def get_df_stats__by_source(
 
     Parameters
     ----------
-    df_to_analyze    : DataFrame with *group_col*, *text_col*, and *sentences_num_col*.
+    df_to_analyze    : DataFrame with *group_col *text_col and *sentences_num_col*.
     group_col        : Column to explode and group on.
     text_col         : Column with raw text strings.
     sentences_num_col: Column with sentence counts.
@@ -135,7 +132,6 @@ def plot_token_count_comparison(
     pool_df: pd.DataFrame,
     final_df: pd.DataFrame,
     n_label: int | str,
-    *,
     token_col: str = "token_count",
 ) -> None:
     """Side-by-side histogram of token counts: candidate pool vs final sample."""

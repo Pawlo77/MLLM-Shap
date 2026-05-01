@@ -238,7 +238,6 @@ def iter_rows_for_selection(
 
 def iter_balanced_token_count_rows(
     df: pd.DataFrame,
-    *,
     token_counts: List[int],
     samples_per_token_count: int,
     start_index: int,

@@ -93,7 +93,6 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
         def __init__(
             self,
-            *,
             device: torch.device,
             processor: Any | None = None,
             codebooks: int = 2,
@@ -127,7 +126,6 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
         def append(
             self,
-            *,
             text: Tensor,
             audio_out: Tensor,
             modality_flag: Tensor,

@@ -13,7 +13,6 @@ from .statistics import get_sample_df
 
 def prepare_for_save(
     df: pd.DataFrame,
-    *,
     cols_to_drop: list[str] | None = None,
     audio_cols: list[str] | None = None,
 ) -> pd.DataFrame:
@@ -43,7 +42,6 @@ def save_dataset_and_sample(
     df: pd.DataFrame,
     data_dir: Path,
     name: str,
-    *,
     group_col: str = "datasets",
     text_col: str = "sentences",
 ) -> pd.DataFrame:

@@ -56,7 +56,6 @@ class _GenerationAccumulator:
 
     def append(
         self,
-        *,
         mask: Tensor,
         mask_hash: int,
         masked_chat: BaseMllmChat | None,
@@ -83,7 +82,7 @@ class _MaskProcessor:
         self._context = context
 
     def process(
-        self, *, mask: Tensor, mask_hash: int, i: int
+        self, mask: Tensor, mask_hash: int, i: int
     ) -> tuple[BaseMllmChat | None, ModelResponse]:
         """Process one mask.
 
@@ -226,7 +225,6 @@ def _process_mask(
 
 
 def _create_accumulator(
-    *,
     masks: list[Tensor],
     responses: list[ModelResponse],
     verbose: bool,

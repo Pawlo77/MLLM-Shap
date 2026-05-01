@@ -8,7 +8,7 @@ from mllm_shap.connectors import LiquidAudio
 from mllm_shap.connectors.enums import ModelHistoryTrackingMode
 
 
-def get_device(*, include_mps: bool = True) -> torch.device:
+def get_device(include_mps: bool = True) -> torch.device:
     """Detect the best available accelerator."""
     if torch.cuda.is_available():
         return torch.device("cuda")

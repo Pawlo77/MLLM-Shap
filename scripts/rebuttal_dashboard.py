@@ -82,7 +82,6 @@ def _count_samples(run_dir: Path) -> int:
 
 
 def _config_status(
-    *,
     stage: str,
     config_path: Path,
     project_dir: Path,

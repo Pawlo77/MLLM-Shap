@@ -17,7 +17,7 @@ from .base.embeddings import BaseEmbeddingReducer, BaseExternalEmbedding
 
 
 class ZeroReducer(BaseEmbeddingReducer):
-    """Dummy reducer that returns embeddings unchanged."""
+    """Reducer that flattens and stacks embeddings into (N, S*H)."""
 
     def __call__(self, embeddings: list[Tensor]) -> Tensor:
         embeddings = self._prepare(embeddings)
@@ -25,11 +25,14 @@ class ZeroReducer(BaseEmbeddingReducer):
         shapes = [tuple(e.shape) for e in embeddings]
         if len(set(shapes)) != 1:
             raise ValueError(
-                f"All embeddings must have the same shape for ZeroReducer. "
+                f"All embeddings must have the same shape for ZeroReducer flattening. "
                 f"Got shapes: {shapes}"
             )
 
-        return torch.stack(embeddings, dim=0)
+        # Flatten each tensor from (S, H) to (S*H,)
+        # then stack into (N, S*H)
+        flattened = [e.reshape(-1) for e in embeddings]
+        return torch.stack(flattened, dim=0)
 
 
 class MeanReducer(BaseEmbeddingReducer):
@@ -96,10 +99,10 @@ class CustomEmbedding(BaseExternalEmbedding):
     External embeddings using a **local** encoder model (e.g., E5/SBERT).
 
     For each :class:`ModelResponse`, we:
-      1) take ``generated_text_tokens`` (shape [T]),
-      2) decode **each token id** with the **generation tokenizer** to a short text piece,
-      3) embed each piece independently with the **embedding encoder**,
-      4) return a tensor of shape **[T, hidden]** per response (aligned 1:1 with tokens).
+    1) take ``generated_text_tokens`` (shape [T]),
+    2) decode **each token id** with the **generation tokenizer** to a short text piece,
+    3) embed each piece independently with the **embedding encoder*
+    4) return a tensor of shape **[T, hidden]** per response (aligned 1:1 with tokens).
     """
 
     tokenizer_decode: PreTrainedTokenizerBase
@@ -113,7 +116,6 @@ class CustomEmbedding(BaseExternalEmbedding):
 
     def __init__(
         self,
-        *,
         generation_tokenizer: PreTrainedTokenizerBase,
         embed_model_id: str,
         embed_revision: str,
