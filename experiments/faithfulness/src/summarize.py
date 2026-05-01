@@ -159,25 +159,42 @@ def summarize(
         "tfidf_sufficiency_uniform": "tfidf_sufficiency_advantage",
         "tfidf_sufficiency_stratified": "tfidf_sufficiency_stratified_advantage",
         "monotonicity_tfidf": "tfidf_monotonicity_score",
+        "seqmatch_pos_uniform": "seqmatch_drop_difference",
+        "seqmatch_neg_uniform": "seqmatch_neg_drop_improvement",
+        "seqmatch_comprehensiveness_uniform": "seqmatch_comprehensiveness_drop_difference",
+        "seqmatch_sufficiency_uniform": "seqmatch_sufficiency_advantage",
+        "seqmatch_monotonicity": "seqmatch_monotonicity_score",
     }
 
     test_stats: dict[str, dict[str, float | int | None]] = {}
-    pvals: list[float | None] = []
+    wilcoxon_pvals: list[float | None] = []
+    t_pvals: list[float | None] = []
     pval_keys: list[str] = []
     for test_name, col in tests.items():
         values = results_df[col].dropna().to_numpy(dtype=float)
         stats_row = _summarize_delta(values)
         test_stats[test_name] = stats_row
-        pvals.append(
+        wilcoxon_pvals.append(
             stats_row["wilcoxon_p_value"] if isinstance(stats_row, dict) else None
+        )
+        t_pvals.append(
+            stats_row["paired_t_p_value"] if isinstance(stats_row, dict) else None
         )
         pval_keys.append(test_name)
 
-    qvals = _bh_fdr(pvals)
-    for key, qval in zip(pval_keys, qvals):
-        test_stats[key]["wilcoxon_p_value_bh_fdr"] = qval
+    wilcoxon_qvals = _bh_fdr(wilcoxon_pvals)
+    t_qvals = _bh_fdr(t_pvals)
+    for key, wq, tq in zip(pval_keys, wilcoxon_qvals, t_qvals):
+        test_stats[key]["wilcoxon_p_value_bh_fdr"] = wq
+        test_stats[key]["paired_t_p_value_bh_fdr"] = tq
 
+    n_tests = len(tests)
     required_n = estimate_required_paired_n(target_effect_size_dz=target_effect_size_dz)
+    # Family-corrected alpha accounts for multiple simultaneous tests via Bonferroni.
+    family_alpha = 0.05 / n_tests
+    family_required_n = estimate_required_paired_n(
+        target_effect_size_dz=target_effect_size_dz, alpha=family_alpha
+    )
 
     return {
         "completed_samples": int(len(results_df)),
@@ -199,6 +216,9 @@ def summarize(
             "alpha": 0.05,
             "power": 0.8,
             "estimated_required_n": required_n,
+            "n_tests": n_tests,
+            "family_corrected_alpha": float(family_alpha),
+            "family_corrected_estimated_required_n": family_required_n,
         },
         "mean_runtime_sec": float(results_df["runtime_sec"].mean()),
     }
