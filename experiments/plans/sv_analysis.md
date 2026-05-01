@@ -163,40 +163,9 @@ Shapley values sum to the total "game value" (efficiency): `Σ φ_i = v(N) - v(�
 
 ---
 
-## 5. Faithfulness Evaluation Design
+## 5. Structural / Design Issues
 
-*Note: §5.1 and §5.2 are independent bugs. Fixing §5.2 (normalization corruption) does not resolve §5.1 (duration-biased baseline) — both require separate fixes.*
-
-### 5.1 Equal-Duration Random Baseline Introduces Bias
-
-The random baseline segment is recentered to match the duration of the top-SV segment. This is correct for controlling confound (duration), but it means the random segment is selected from a non-uniform distribution over position and content — it can never overlap the top-SV segment region and is constrained by duration. This may systematically under- or over-sample certain segment types.
-
-### 5.2 Faithfulness Evaluation Selects Segments from Corrupted SVs
-
-**Problem**: The faithfulness experiment selects the "top-SV segment" to remove. If PowerShiftNormalizer is applied before selection (§4.1), the selection criterion uses sign-destroyed values — a segment with a strongly negative raw SV may rank higher than a moderately positive one after normalization. The experiment then tests "does removing the top segment from a corrupted ranking degrade output?" — not "does removing the highest-attributed segment degrade output?".
-
-**Implication**: Reported faithfulness numbers cannot be interpreted as evidence that the SV ranking is faithful until the normalization issue is resolved. The evaluation design and the normalization bug are coupled failures.
-
-### 5.3 One-Sided Testing Misses Half the Attribution Signal
-
-The current evaluation removes the top-positive-SV segment and checks for degradation. This validates one direction only. Missing tests:
-
-- **Negative SV direction**: removing a negative-SV segment should *improve* model output relative to baseline. If it does not, negative attributions are wrong.
-- **Comprehensiveness**: does removing all positive-SV segments degrade output more than removing the same count of random segments?
-- **Sufficiency**: do the top-k positive-SV segments alone reproduce the full-input response?
-- **Monotonicity**: does removing the 2nd-ranked segment degrade output less than removing the 1st? Violations indicate ranking inconsistency.
-
-Without these tests, faithfulness is one data point on a much larger evaluation surface.
-
-### 5.4 No Statistical Significance Testing
-
-The faithfulness evaluation reports differences (top-SV removal vs. random removal) but does not test whether those differences are statistically significant. A paired test (e.g., Wilcoxon signed-rank or paired t-test) across all evaluation samples is necessary before claiming any faithfulness result holds. Given MLLM inference cost, a power analysis to determine required sample size should be run **before** data collection to ensure the evaluation set is large enough to detect meaningful effect sizes.
-
----
-
-## 6. Structural / Design Issues
-
-### 6.1 No Uncertainty Quantification
+### 5.1 No Uncertainty Quantification
 
 SVs are point estimates. The sampling-based approximators (MC, Complementary, Neyman) accumulate enough information to estimate variance per feature but never expose it. Without confidence intervals, two features with SVs of 0.31 and 0.29 look meaningfully different even if their 95% CIs heavily overlap.
 
@@ -204,33 +173,33 @@ Exposing `shap_values_variance` (estimable from MC samples) would let downstream
 
 **Inter-run stability is also unaddressed**: Beyond within-run variance, it is unknown whether two runs of the full pipeline on identical input with the same seed produce the same segment rankings. High cross-run instability means that even features with narrow within-run CIs are not reproducible in practice — a distinct failure mode from high within-run variance.
 
-### 6.2 No Multimodal Interaction Capture
+### 5.2 No Multimodal Interaction Capture
 
 Standard Shapley values capture *individual* contributions. When both text and audio tokens are present in the input, the game treats them as independent features. Interactions between modalities (e.g., "this word only matters when the tone is also uncertain") are invisible. **Shapley interaction indices** (also called SHAP-interaction values) extend the framework to pairwise interactions, at the cost of `O(n^2)` additional evaluations.
 
-### 6.3 Alignment Confidence Unused
+### 5.3 Alignment Confidence Unused
 
 Each `AudioSegment` carries a `confidence` score from the forced aligner ([audio.py:35-91](mllm_shap/src/mllm_shap/connectors/base/audio.py#L35-L91)). Low-confidence alignments mean the segment boundary is uncertain — the token may be attributed to the wrong audio region. This confidence is never used to weight or flag SV estimates. A low-confidence alignment producing a high SV is suspicious and should be flagged.
 
 **Potential feedback loop**: If the forced aligner uses a speech or language model that shares weights or training data with the model being explained, segment boundaries are not chosen independently of the model's behavior. The explainer and the explanation target become entangled. Whether the current aligner introduces this dependency should be confirmed explicitly — this is checkable in under an hour by reviewing the aligner's model card and training data description.
 
-### 6.4 Caching Assumes Determinism
+### 5.4 Caching Assumes Determinism
 
 The mask cache ([_masks_manager.py:66-104](mllm_shap/src/mllm_shap/shap/base/_masks_manager.py#L66-L104)) deduplicates by hash. This is only correct if the model is deterministic. With temperature > 0, two evaluations of the same mask produce different outputs, but only the first is stored. Any non-zero-temperature runs silently use cached (wrong) values for repeated masks.
 
-### 6.5 Adjacency Between Segments Violates Feature Independence
+### 5.5 Adjacency Between Segments Violates Feature Independence
 
 The Shapley framework treats players as interchangeable and independent. Adjacent audio segments are not: neighboring phonemes and words are sequentially correlated by the structure of speech, and their combined presence is qualitatively different from either in isolation.
 
-This is related to but distinct from §6.2:
-- §6.2: *given* features are treated independently, can we compute pairwise interactions?
-- §6.5: is the independence assumption valid enough for the game model to apply at all?
+This is related to but distinct from §5.2:
+- §5.2: *given* features are treated independently, can we compute pairwise interactions?
+- §5.5: is the independence assumption valid enough for the game model to apply at all?
 
 For coarse-grained segments (full words, phrases), independence is a reasonable approximation. For fine-grained segmentation (phonemes, sub-word units), sequential correlation is severe and the game model may be structurally inappropriate. **Granularity floor**: word-level segments should be treated as the minimum granularity at which the independence assumption is defensible; any sub-word or phoneme-level experiments must be explicitly labeled as violating the game-theoretic foundation and interpreted accordingly.
 
-### 6.6 Text Token Masking Is Unaddressed
+### 5.6 Text Token Masking Is Unaddressed
 
-§6.2 refers to "both text and audio tokens" as features in the game, but the masking strategy for **text tokens** is never described or critiqued. All issues in §2 have symmetric counterparts on the text side:
+§5.2 refers to "both text and audio tokens" as features in the game, but the masking strategy for **text tokens** is never described or critiqued. All issues in §2 have symmetric counterparts on the text side:
 - What constitutes "absence" for a text token — zero embedding, pad token, removal (shifting positional indices), or a mask token?
 - Does removing a text token shift positional encodings of subsequent tokens in the same way §2.3 describes for audio?
 - What granularity is used — character, subword, word, phrase — and is there a sensitivity analysis?
@@ -239,9 +208,9 @@ The analysis treats text masking as given when it is subject to the same categor
 
 ---
 
-## 7. Process and Repair-Readiness
+## 6. Process and Repair-Readiness
 
-### 7.1 No Dependency Graph Between Fixes
+### 6.1 No Dependency Graph Between Fixes
 
 Multiple issues are coupled. Implementing fixes in the wrong order wastes effort or requires rework. The load-bearing dependencies are:
 
@@ -249,7 +218,7 @@ Multiple issues are coupled. Implementing fixes in the wrong order wastes effort
 2. **§4.1/§4.2 → §5.2**: Normalization must be fixed before rerunning faithfulness. Current faithfulness numbers are built on corrupted selection criteria.
 3. **§3.1 decision → §4.2**: The Banzhaf vs. Shapley decision must be made before treating §4.2 as load-bearing. If Banzhaf is accepted, §4.2's efficiency concern is moot for MC results and fixing MC weights for Shapley becomes unnecessary.
 4. **§1.1 (log P) → §1.4**: Under log P, v(N) also requires explicit computation alongside v(∅).
-5. **§1.1 (log P) → §6.4**: The cache key must include the base sequence under log P framing.
+5. **§1.1 (log P) → §5.4**: The cache key must include the base sequence under log P framing.
 
 **Sequenced fix plan**:
 1. Define v(∅) and v(N) under target value function (hours)
@@ -259,7 +228,7 @@ Multiple issues are coupled. Implementing fixes in the wrong order wastes effort
 5. Adopt log P value function; update cache key (days)
 6. Neyman consistency: formally verify or exclude results from publication claims (days–weeks)
 
-### 7.2 No Acceptance Criteria or Regression Tests
+### 6.2 No Acceptance Criteria or Regression Tests
 
 The analysis identifies what to fix but not what "fixed" looks like. Without acceptance criteria, fixes cannot be verified and may introduce new errors silently.
 
@@ -268,7 +237,7 @@ The analysis identifies what to fix but not what "fixed" looks like. Without acc
 - Normalization must preserve sign in a signed test case.
 - TF-only similarity must return 1.0 for identical sequences and < 1.0 for any single-token change.
 
-### 7.3 Rollback Strategy for Stored Results
+### 6.3 Rollback Strategy for Stored Results
 
 Existing experiment outputs (under `experiments/faithfulness/outputs/`, `experiments/interspeech/outputs/`) were computed with the current pipeline. Fixes to the value function, normalization, or masking invalidate stored results. Before applying fixes:
 - Tag all existing outputs with a `pipeline_version=pre-fix` label to distinguish them from post-fix runs.
@@ -277,7 +246,7 @@ Existing experiment outputs (under `experiments/faithfulness/outputs/`, `experim
 
 Failing to do this makes it impossible to distinguish pre-fix and post-fix results in comparison tables or figures.
 
-### 7.4 No Ablation Design for Competing Alternatives
+### 6.4 No Ablation Design for Competing Alternatives
 
 Multiple alternatives are proposed across sections (log P vs. KL, silence vs. deletion, static vs. contextual embeddings, TF vs. TF-IDF). No controlled ablation design is specified. Changing two things simultaneously makes it impossible to attribute observed differences to a specific fix.
 
@@ -285,7 +254,7 @@ Multiple alternatives are proposed across sections (log P vs. KL, silence vs. de
 
 ---
 
-## 8. Summary Table
+## 7. Summary Table
 
 | Area | Current Approach | Issue | Suggested Direction | Severity | Est. Cost |
 |---|---|---|---|---|---|
