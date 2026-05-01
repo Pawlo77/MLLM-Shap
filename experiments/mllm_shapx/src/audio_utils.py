@@ -368,12 +368,13 @@ def serialize_result_with_audio(
         InputModality.AUDIO_MALE,
         InputModality.AUDIO_FEMALE,
     ):
-        # Normalize to list
-        audio_list = (
-            [input_audio_bytes]
-            if isinstance(input_audio_bytes, (bytes, np.ndarray))
-            else input_audio_bytes
-        )
+        # Normalize to list of byte blobs.
+        if isinstance(input_audio_bytes, bytes):
+            audio_list = [input_audio_bytes]
+        elif isinstance(input_audio_bytes, np.ndarray):
+            audio_list = input_audio_bytes.tolist()
+        else:
+            audio_list = list(input_audio_bytes)
         if len(audio_list) == 1:
             # Single audio - save with original naming
             serialized["input_audio"] = save_input_audio(
