@@ -9,37 +9,203 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .helpers import EPS
+from .helpers import EPS, estimate_required_paired_n
 
 
-def summarize(results_df: pd.DataFrame, failures_df: pd.DataFrame) -> dict[str, Any]:
+def _wilcoxon_greater(values: np.ndarray) -> tuple[float | None, float | None]:
+    """One-sided Wilcoxon signed-rank test (greater).
+
+    Returns the test statistic and one-sided p-value when applicable; otherwise
+    returns (None, None) for insufficient data or degenerate inputs.
+    """
+    if values.size < 3:
+        return None, None
+    if np.allclose(values, 0.0):
+        return None, None
+    try:
+        stat, p_value = stats.wilcoxon(
+            values, alternative="greater", zero_method="wilcox"
+        )
+    except ValueError:
+        return None, None
+    return float(stat), float(p_value)
+
+
+def _paired_t_greater(values: np.ndarray) -> tuple[float | None, float | None]:
+    """One-sided paired t-test proxy.
+
+    Computes a one-sample t-test against zero and converts the two-sided
+    p-value into a one-sided p-value in the direction of the observed mean.
+    Returns (stat, p) or (None, None) if not applicable.
+    """
+    if values.size < 2:
+        return None, None
+    if np.allclose(values, 0.0):
+        return None, None
+    stat, p_value_two_sided = stats.ttest_1samp(values, popmean=0.0)
+    if not np.isfinite(stat) or not np.isfinite(p_value_two_sided):
+        return None, None
+    # Convert two-sided p-value into one-sided in the expected direction.
+    if stat >= 0:
+        p_value = p_value_two_sided / 2.0
+    else:
+        p_value = 1.0 - (p_value_two_sided / 2.0)
+    return float(stat), float(p_value)
+
+
+def _bh_fdr(p_values: list[float | None]) -> list[float | None]:
+    """Benjamini–Hochberg false discovery rate correction.
+
+    Accepts a list of p-values (or None) and returns a list of adjusted q-values
+    (or None for entries that were not valid p-values).
+    """
+    valid = [
+        (idx, p) for idx, p in enumerate(p_values) if p is not None and np.isfinite(p)
+    ]
+    if not valid:
+        return [None] * len(p_values)
+
+    order = np.argsort([p for _, p in valid])
+    ranked = [(valid[i][0], valid[i][1]) for i in order]
+    m = len(ranked)
+    adjusted = [0.0] * m
+    prev = 1.0
+    for i in range(m - 1, -1, -1):
+        rank = i + 1
+        raw = ranked[i][1] * m / rank
+        prev = min(prev, raw)
+        adjusted[i] = min(prev, 1.0)
+
+    out: list[float | None] = [None] * len(p_values)
+    for i, (orig_idx, _) in enumerate(ranked):
+        out[orig_idx] = float(adjusted[i])
+    return out
+
+
+def _summarize_delta(values: np.ndarray) -> dict[str, float | int | None]:
+    """Produce summary statistics for a paired-delta array.
+
+    Returns a dictionary with n, mean, std, median, positive_rate, effect size
+    (Cohen's dz), and test statistics (Wilcoxon and paired t where available).
+    """
+    n = int(values.size)
+    if n == 0:
+        return {
+            "n": 0,
+            "mean": None,
+            "std": None,
+            "median": None,
+            "positive_rate": None,
+            "cohen_dz": None,
+            "wilcoxon_stat": None,
+            "wilcoxon_p_value": None,
+            "paired_t_stat": None,
+            "paired_t_p_value": None,
+        }
+
+    std = float(np.std(values, ddof=1)) if n >= 2 else None
+    wilcoxon_stat, wilcoxon_p = _wilcoxon_greater(values)
+    t_stat, t_p = _paired_t_greater(values)
+    return {
+        "n": n,
+        "mean": float(np.mean(values)),
+        "std": std,
+        "median": float(np.median(values)),
+        "positive_rate": float(np.mean(values > 0.0)),
+        "cohen_dz": float(np.mean(values) / ((std if std is not None else 0.0) + EPS))
+        if n >= 2
+        else None,
+        "wilcoxon_stat": wilcoxon_stat,
+        "wilcoxon_p_value": wilcoxon_p,
+        "paired_t_stat": t_stat,
+        "paired_t_p_value": t_p,
+    }
+
+
+def summarize(
+    results_df: pd.DataFrame,
+    failures_df: pd.DataFrame,
+    target_effect_size_dz: float = 0.5,
+) -> dict[str, Any]:
+    """Summarize a set of per-sample `results` into aggregated statistics.
+
+    Produces top-vs-random comparisons, multiple test statistics (Wilcoxon,
+    paired t proxy), BH-FDR corrected q-values, basic descriptive stats, and
+    a simple power-planning estimate using `estimate_required_paired_n`.
+    """
     if results_df.empty:
         return {"completed_samples": 0, "failed_samples": int(len(failures_df))}
-    top = results_df["top_drop"].to_numpy(dtype=float)
-    rand = results_df["mean_random_drop"].to_numpy(dtype=float)
-    diff = top - rand
-    has_pairs = len(results_df) >= 2
-    t_stat, p_val = stats.ttest_rel(top, rand) if has_pairs else (None, None)
+
+    primary_diff = results_df["drop_difference"].to_numpy(dtype=float)
+    legacy_top = results_df["top_drop"].to_numpy(dtype=float)
+    legacy_rand = results_df["mean_random_drop"].to_numpy(dtype=float)
+
+    tests = {
+        "pos_uniform": "drop_difference",
+        "pos_stratified": "pos_stratified_drop_difference",
+        "neg_uniform": "neg_drop_improvement",
+        "neg_stratified": "neg_stratified_drop_improvement",
+        "comprehensiveness_uniform": "comprehensiveness_drop_difference",
+        "comprehensiveness_stratified": "comprehensiveness_stratified_drop_difference",
+        "sufficiency_uniform": "sufficiency_advantage",
+        "sufficiency_stratified": "sufficiency_stratified_advantage",
+        "monotonicity_embedding": "monotonicity_score",
+        "tfidf_pos_uniform": "tfidf_drop_difference",
+        "tfidf_pos_stratified": "tfidf_pos_stratified_drop_difference",
+        "tfidf_neg_uniform": "tfidf_neg_drop_improvement",
+        "tfidf_neg_stratified": "tfidf_neg_stratified_drop_improvement",
+        "tfidf_comprehensiveness_uniform": "tfidf_comprehensiveness_drop_difference",
+        "tfidf_comprehensiveness_stratified": "tfidf_comprehensiveness_stratified_drop_difference",
+        "tfidf_sufficiency_uniform": "tfidf_sufficiency_advantage",
+        "tfidf_sufficiency_stratified": "tfidf_sufficiency_stratified_advantage",
+        "monotonicity_tfidf": "tfidf_monotonicity_score",
+    }
+
+    test_stats: dict[str, dict[str, float | int | None]] = {}
+    pvals: list[float | None] = []
+    pval_keys: list[str] = []
+    for test_name, col in tests.items():
+        values = results_df[col].dropna().to_numpy(dtype=float)
+        stats_row = _summarize_delta(values)
+        test_stats[test_name] = stats_row
+        pvals.append(
+            stats_row["wilcoxon_p_value"] if isinstance(stats_row, dict) else None
+        )
+        pval_keys.append(test_name)
+
+    qvals = _bh_fdr(pvals)
+    for key, qval in zip(pval_keys, qvals):
+        test_stats[key]["wilcoxon_p_value_bh_fdr"] = qval
+
+    required_n = estimate_required_paired_n(target_effect_size_dz=target_effect_size_dz)
+
     return {
         "completed_samples": int(len(results_df)),
         "failed_samples": int(len(failures_df)),
-        "mean_top_drop": float(np.mean(top)),
-        "std_top_drop": float(np.std(top, ddof=1)) if has_pairs else None,
-        "mean_random_drop": float(np.mean(rand)),
-        "std_random_drop": float(np.std(rand, ddof=1)) if has_pairs else None,
-        "mean_drop_difference": float(np.mean(diff)),
-        "median_drop_difference": float(np.median(diff)),
-        "paired_t_stat": float(t_stat) if t_stat is not None else None,
-        "paired_p_value": float(p_val) if p_val is not None else None,
-        "cohen_dz": float(np.mean(diff) / (np.std(diff, ddof=1) + EPS))
-        if has_pairs
+        "mean_top_drop": float(np.mean(legacy_top)),
+        "std_top_drop": float(np.std(legacy_top, ddof=1))
+        if len(legacy_top) >= 2
         else None,
-        "top_greater_than_random_rate": float(np.mean(diff > 0)),
+        "mean_random_drop": float(np.mean(legacy_rand)),
+        "std_random_drop": float(np.std(legacy_rand, ddof=1))
+        if len(legacy_rand) >= 2
+        else None,
+        "mean_drop_difference": float(np.mean(primary_diff)),
+        "median_drop_difference": float(np.median(primary_diff)),
+        "top_greater_than_random_rate": float(np.mean(primary_diff > 0)),
+        "tests": test_stats,
+        "power_planning": {
+            "target_effect_size_dz": float(target_effect_size_dz),
+            "alpha": 0.05,
+            "power": 0.8,
+            "estimated_required_n": required_n,
+        },
         "mean_runtime_sec": float(results_df["runtime_sec"].mean()),
     }
 
 
 def _safe_spearman(x: pd.Series, y: pd.Series) -> float | None:
+    """Compute Spearman correlation safely, returning None for invalid inputs."""
     if len(x) < 2 or x.nunique(dropna=True) < 2 or y.nunique(dropna=True) < 2:
         return None
     corr = stats.spearmanr(x.to_numpy(dtype=float), y.to_numpy(dtype=float)).statistic
@@ -49,6 +215,12 @@ def _safe_spearman(x: pd.Series, y: pd.Series) -> float | None:
 def summarize_rankwise(
     results_df: pd.DataFrame, failures_df: pd.DataFrame
 ) -> dict[str, Any]:
+    """Summarize rank-wise deletion results across samples.
+
+    Aggregates deletion drops by absolute-SV rank, computes within-sample and
+    global Spearman correlations between absolute-SV and deletion drop, and
+    returns per-rank descriptive statistics and diagnostics.
+    """
     if results_df.empty:
         return {
             "completed_deletions": 0,
@@ -144,6 +316,12 @@ def summarize_rankwise(
 def combine_partition_outputs(
     output_dir: Path, all_rank_deletions: bool = False
 ) -> dict[str, Any]:
+    """Combine per-partition CSV outputs into consolidated CSV/JSON summaries.
+
+    Scans `output_dir` for per-partition CSV files, concatenates them,
+    deduplicates, writes combined CSVs, and writes per-voice and combined
+    summary JSON files using `summarize` / `summarize_rankwise`.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     summaries: dict[str, Any] = {}
     combined_frames: list[pd.DataFrame] = []
