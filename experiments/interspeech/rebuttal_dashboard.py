@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Generate a static HTML dashboard for rebuttal SLURM runs."""
 
 from __future__ import annotations
@@ -14,10 +13,10 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_CONFIG_LISTS = [
-    "experiments/interspeech/configs/rebuttal_stage1_1k_sgpa_configs.txt",
-    "experiments/interspeech/configs/rebuttal_stage2_500_original_configs.txt",
-    "experiments/interspeech/configs/rebuttal_stage3_1k_raw_configs.txt",
+DEFAULT_CONFIG_LISTS: list[Path] = [
+    Path("experiments/interspeech/configs/rebuttal_stage1_1k_sgpa_configs.txt"),
+    Path("experiments/interspeech/configs/rebuttal_stage2_500_original_configs.txt"),
+    Path("experiments/interspeech/configs/rebuttal_stage3_1k_raw_configs.txt"),
 ]
 
 
@@ -38,6 +37,7 @@ class ConfigStatus:
 
 
 def _read_json(path: Path) -> dict[str, Any]:
+    """Read a JSON file and return its contents as a dictionary."""
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -56,6 +56,11 @@ def _expand_config_lists(config_lists: list[Path]) -> list[tuple[str, Path]]:
 
 
 def _variant_slug(config: dict[str, Any]) -> str:
+    """Generate a slug for the run variant based on its config.
+    This is used to identify the run directory and display it in the dashboard.
+    The slug is based on the explainer type and key parameters that differentiate runs,
+    such as linearity, number of samples, or fraction of samples.
+    The exact format can be adjusted as needed to ensure uniqueness and readability."""
     variant = config["experiments"][0]
     name = variant.get("name") or variant["explainer_type"]
     if variant.get("linear"):
@@ -70,11 +75,14 @@ def _variant_slug(config: dict[str, Any]) -> str:
 
 
 def _expected_samples(config: dict[str, Any], default: int) -> int:
+    """Determine the expected number of samples for a run based on its config,
+    falling back to a default if not specified."""
     selection = config.get("selection", {})
     return int(selection.get("max_samples") or default)
 
 
 def _count_samples(run_dir: Path) -> int:
+    """Count the number of completed sample result files in the run directory."""
     samples_dir = run_dir / "samples"
     if not samples_dir.exists():
         return 0
@@ -87,6 +95,7 @@ def _config_status(
     project_dir: Path,
     expected_default: int,
 ) -> ConfigStatus:
+    """Load the config and count completed samples to build a ConfigStatus summary."""
     config = _read_json(project_dir / config_path)
     run_slug = _variant_slug(config)
     run_dir = (
@@ -110,6 +119,7 @@ def _config_status(
 
 
 def _run_command(command: list[str]) -> str:
+    """Run a command and return its output, or an error message if it fails. Designed to be robust for dashboard use, so it won't raise exceptions or crash the dashboard if something goes wrong with the command execution."""
     try:
         proc = subprocess.run(
             command,
@@ -125,6 +135,7 @@ def _run_command(command: list[str]) -> str:
 
 
 def _sacct_rows(job_ids: list[str]) -> list[dict[str, str]]:
+    """Get sacct rows for the given job IDs, or return an empty list if no job IDs are provided."""
     if not job_ids:
         return []
     output = _run_command(
@@ -155,12 +166,14 @@ def _sacct_rows(job_ids: list[str]) -> list[dict[str, str]]:
 
 
 def _squeue_output(job_ids: list[str]) -> str:
+    """Get the raw squeue output for the given job IDs, or return an empty string if no job IDs are provided."""
     if not job_ids:
         return ""
     return _run_command(["squeue", "-j", ",".join(job_ids)])
 
 
 def _state_counts(rows: list[dict[str, str]]) -> dict[str, int]:
+    """Count the occurrences of each SLURM state in the sacct rows."""
     counts: dict[str, int] = {}
     for row in rows:
         # Count array tasks only, not .batch/.extern/.0 steps.
@@ -173,14 +186,17 @@ def _state_counts(rows: list[dict[str, str]]) -> dict[str, int]:
 
 
 def _pct(done: int, total: int) -> float:
+    """Calculate percentage completion, handling edge cases."""
     return 0.0 if total <= 0 else min(100.0, 100.0 * done / total)
 
 
 def _esc(value: object) -> str:
+    """Escape a value for safe HTML rendering."""
     return html.escape(str(value))
 
 
 def _render_progress_bar(done: int, total: int) -> str:
+    """Render an HTML progress bar for the given completion status."""
     pct = _pct(done, total)
     return (
         '<div class="bar">'
@@ -197,6 +213,7 @@ def _render_html(
     job_ids: list[str],
     refresh_seconds: int,
 ) -> str:
+    """Render the HTML dashboard content."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     total_expected = sum(status.expected_samples for status in statuses)
     total_completed = sum(status.completed_samples for status in statuses)
@@ -294,6 +311,7 @@ def _render_html(
 
 
 def _write_csv(statuses: list[ConfigStatus], output_path: Path) -> None:
+    """Write a CSV summary of the config statuses alongside the HTML dashboard."""
     csv_path = output_path.with_suffix(".csv")
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(
@@ -324,6 +342,7 @@ def _write_csv(statuses: list[ConfigStatus], output_path: Path) -> None:
 
 
 def build_argparser() -> argparse.ArgumentParser:
+    """Build argument parser for the dashboard script."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-dir", type=Path, default=Path.cwd())
     parser.add_argument(

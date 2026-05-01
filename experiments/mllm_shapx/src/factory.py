@@ -443,9 +443,14 @@ def build_chat(
                     raise ValueError("SGPA audio segmentation requires an aligner.")
                 if len(audios) != 1:
                     raise ValueError("SGPA audio segmentation expects one audio clip.")
+                transcript_text = (
+                    user_texts
+                    if isinstance(user_texts, str)
+                    else " ".join(t for t in (user_texts or []) if t and t.strip())
+                )
                 chat.add_audio_with_transcript(
                     audios[0],
-                    transcript=user_texts or "",
+                    transcript=transcript_text,
                     aligner=aligner,
                     audio_format=infer_audio_format(audios[0]),
                     attach_audio=False,

@@ -9,6 +9,8 @@ We should use 4 datasets there:
 - librispeech single_sentence of 500 entries 6-10 tokens length, 100 per length, english only, original audio
 - 2 additional languages that differs significantly in phonetic structure and have proper models and datasets available. LMF2 should have had those languages in the training data, so we can expect good performance. *According to gemini, it was trained on English, Arabic, Chinese, French, German, Japanese, Korean, Spanish - suggestion is to use Japanese and Arabic. AP1 for details*.
 
+> For now either connector to LFM2-Audio doesn't work correctly, or that model doesn't work correctly. It should be replaced before any of the below experiments. This might require choosing different languages as well, depending on which ones are supported by the working model and its training corpus.
+
 ---
 
 ## Phase 1: Core Pipeline & Parameter Refinement
@@ -111,6 +113,13 @@ We should use 4 datasets there:
     *   **Context:** Crucial for reviewer validation.
     *   **Action:** Provide a fully pinned Docker image or conda lockfile.
     *   **Implementation:** Pin the exact `mllm-shap` version. Include GPU memory profiling output to empirically confirm the "16 GB VRAM" claim.
+
+## Phase 6: Additional Ablations & Explorations
+
+*   [ ] **Extension: non-token-based audio models**
+    * **Context:** SGPA is designed for token-based models, but the core idea of "aligning to meaningful segments" could apply to non-token-based models (e.g., end-to-end ASR or audio classification).
+    * **Action:** Test whether a similar segmentation and masking approach can yield meaningful attributions for a non-token-based model.
+    * **Implementation:** Choose a non-token-based model (e.g., an end-to-end ASR model without explicit tokenization). Use the same CTC-based segmentation to define "coalitions" of audio segments. Compute Shapley Values based on masking these segments. Report whether the resulting attributions align with human intuition and whether they are more faithful than random segment masking.
 
 # Appendix
 
