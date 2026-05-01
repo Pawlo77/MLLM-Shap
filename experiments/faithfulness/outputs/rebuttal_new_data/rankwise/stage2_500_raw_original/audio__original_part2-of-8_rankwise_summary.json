@@ -1,0 +1,59 @@
+{
+  "completed_deletions": 4,
+  "completed_samples": 1,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.37890625,
+  "mean_top_rank_drop": 0.4375,
+  "mean_non_top_rank_drop": 0.359375,
+  "mean_top_minus_non_top_drop": 0.078125,
+  "spearman_abs_sv_vs_drop": 0.19999999999999998,
+  "spearman_negative_rank_vs_drop": 0.19999999999999998,
+  "mean_within_sample_spearman_abs_sv_vs_drop": 0.19999999999999998,
+  "median_within_sample_spearman_abs_sv_vs_drop": 0.19999999999999998,
+  "within_sample_spearman_n": 1,
+  "mean_top1_share": 0.4336500135790574,
+  "mean_top1_top2_gap": 0.0184479258954525,
+  "mean_abs_sv_entropy_norm": 0.9071839447761544,
+  "per_rank": {
+    "1": {
+      "n": 1.0,
+      "mean_drop": 0.4375,
+      "median_drop": 0.4375,
+      "mean_abs_sv_share": 0.4336500135790574,
+      "mean_abs_sv": 0.0469248313456773
+    },
+    "2": {
+      "n": 1.0,
+      "mean_drop": 0.517578125,
+      "median_drop": 0.517578125,
+      "mean_abs_sv_share": 0.2631657926313915,
+      "mean_abs_sv": 0.0284769054502248
+    },
+    "3": {
+      "n": 1.0,
+      "mean_drop": 0.529296875,
+      "median_drop": 0.529296875,
+      "mean_abs_sv_share": 0.2157104494649699,
+      "mean_abs_sv": 0.0233418105469484
+    },
+    "4": {
+      "n": 1.0,
+      "mean_drop": 0.03125,
+      "median_drop": 0.03125,
+      "mean_abs_sv_share": 0.087473735083205,
+      "mean_abs_sv": 0.0094654447997787
+    }
+  },
+  "mean_runtime_sec_per_deletion": 2.024630526750116,
+  "run_dir": "/home/grid/users/plgjmuszynski/MLLM-Shap/experiments/interspeech/outputs/lem_runs/rebuttal_single_sentence_500_original/audio_original_audio_raw_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "all_rank_deletions": true,
+  "results_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part2-of-8_rankwise_results.csv",
+  "failures_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_raw_original/audio__original_part2-of-8_failures.csv",
+  "random_draws": 20,
+  "strat_duration_bins": 4,
+  "strat_position_bins": 4,
+  "comprehensiveness_k": 3,
+  "sufficiency_k": 3,
+  "target_effect_size_dz": 0.5
+}

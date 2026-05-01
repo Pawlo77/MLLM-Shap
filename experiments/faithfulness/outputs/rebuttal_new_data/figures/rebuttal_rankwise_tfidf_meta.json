@@ -1,0 +1,88 @@
+{
+  "metric": "tfidf",
+  "rows": 2557,
+  "top_minus_rest": [
+    {
+      "condition": "1k SGPA / Female TTS",
+      "count": 100,
+      "mean": -0.06162904144822887,
+      "median": -0.06128440894986535,
+      "std": 0.21757433430880102
+    },
+    {
+      "condition": "1k SGPA / Male TTS",
+      "count": 94,
+      "mean": -0.047840762669696564,
+      "median": -0.06892789543177852,
+      "std": 0.21849768997896374
+    },
+    {
+      "condition": "1k SGPA / Original",
+      "count": 99,
+      "mean": 0.017181891458957568,
+      "median": -0.01713656897200988,
+      "std": 0.26248865332048693
+    },
+    {
+      "condition": "500 Raw / Original",
+      "count": 5,
+      "mean": 0.14589052385219287,
+      "median": 0.08067901583755122,
+      "std": 0.40766752365075554
+    },
+    {
+      "condition": "500 SGPA / Original",
+      "count": 100,
+      "mean": 0.10746766248630076,
+      "median": 0.06742515886371278,
+      "std": 0.3594893585317351
+    }
+  ],
+  "rank_informativeness": [
+    {
+      "condition": "1k SGPA / Male TTS",
+      "samples": 94,
+      "tied_abs_sv_rate": 1.0,
+      "mean_unique_abs_sv": 1.0,
+      "mean_top1_top2_gap": 0.0,
+      "mean_top1_share": 0.15288331642111333,
+      "mean_entropy": 0.9999999999351119
+    },
+    {
+      "condition": "1k SGPA / Female TTS",
+      "samples": 100,
+      "tied_abs_sv_rate": 1.0,
+      "mean_unique_abs_sv": 1.0,
+      "mean_top1_top2_gap": 0.0,
+      "mean_top1_share": 0.1512936507681532,
+      "mean_entropy": 0.9999999999352172
+    },
+    {
+      "condition": "1k SGPA / Original",
+      "samples": 99,
+      "tied_abs_sv_rate": 1.0,
+      "mean_unique_abs_sv": 1.0,
+      "mean_top1_top2_gap": 0.0,
+      "mean_top1_share": 0.15080166744298307,
+      "mean_entropy": 0.9999999999353277
+    },
+    {
+      "condition": "500 SGPA / Original",
+      "samples": 100,
+      "tied_abs_sv_rate": 1.0,
+      "mean_unique_abs_sv": 1.0,
+      "mean_top1_top2_gap": 0.0,
+      "mean_top1_share": 0.2191190475699548,
+      "mean_entropy": 0.9999999999276592
+    },
+    {
+      "condition": "500 Raw / Original",
+      "samples": 5,
+      "tied_abs_sv_rate": 0.0,
+      "mean_unique_abs_sv": 4.0,
+      "mean_top1_top2_gap": 0.006943535523799521,
+      "mean_top1_share": 0.3224423288822931,
+      "mean_entropy": 0.9735529775040106
+    }
+  ]
+}

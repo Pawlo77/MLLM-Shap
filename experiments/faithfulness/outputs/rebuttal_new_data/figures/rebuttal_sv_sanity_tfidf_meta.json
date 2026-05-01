@@ -1,0 +1,51 @@
+{
+  "metric": "tfidf",
+  "interpretation": "Positive values mean the highest-SV segment deletion changes the response more than deleting the average other segment. Values near or below zero do not support rank-wise SV faithfulness.",
+  "conditions": [
+    {
+      "condition": "1k SGPA / Male TTS",
+      "n": 94,
+      "mean": -0.047840762669696564,
+      "median": -0.06892789543177852,
+      "ci_low": -0.0931182959473904,
+      "ci_high": -0.0037786960934517635,
+      "tied_abs_sv_rate": 1.0
+    },
+    {
+      "condition": "1k SGPA / Female TTS",
+      "n": 100,
+      "mean": -0.061629041448228866,
+      "median": -0.06128440894986535,
+      "ci_low": -0.10431558067853758,
+      "ci_high": -0.018670681826812852,
+      "tied_abs_sv_rate": 1.0
+    },
+    {
+      "condition": "1k SGPA / Original",
+      "n": 99,
+      "mean": 0.017181891458957568,
+      "median": -0.01713656897200988,
+      "ci_low": -0.03422322288366566,
+      "ci_high": 0.06905859299577398,
+      "tied_abs_sv_rate": 1.0
+    },
+    {
+      "condition": "500 SGPA / Original",
+      "n": 100,
+      "mean": 0.10746766248630074,
+      "median": 0.06742515886371278,
+      "ci_low": 0.0392777625906999,
+      "ci_high": 0.17845367568980783,
+      "tied_abs_sv_rate": 1.0
+    },
+    {
+      "condition": "500 Raw / Original",
+      "n": 5,
+      "mean": 0.14589052385219287,
+      "median": 0.08067901583755122,
+      "ci_low": -0.1674499852503435,
+      "ci_high": 0.4727263302675088,
+      "tied_abs_sv_rate": 0.0
+    }
+  ]
+}
