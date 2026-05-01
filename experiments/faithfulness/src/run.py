@@ -73,8 +73,8 @@ def run_faithfulness(
     output_dir.mkdir(parents=True, exist_ok=True)
     spec = load_spec(run_dir, spec_path=spec_path)
     cfg = experiment_set_from_spec(spec)
-    input_modality = cfg.modality.get_input_modality()
-    if cfg.modality.get_output_modality() != OutputModality.AUDIO:
+    input_modality = cfg.modality.input_modality
+    if cfg.modality.output_modality != OutputModality.AUDIO:
         raise ValueError("HP-1 faithfulness expects audio-output runs.")
     audio_column = cfg.modality.input_modality
 
