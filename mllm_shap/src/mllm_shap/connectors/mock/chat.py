@@ -26,15 +26,16 @@ class MockChat(BaseMllmChat):
     """
 
     tokenizer: PreTrainedTokenizerBase
+    """Tokenizer used for encoding and decoding text tokens."""
     _text_ids: Tensor
-    _TWO_DIMS: int = 2
-    _SINGLE_BATCH: int = 1
+    """Tensor storing the current text token IDs in the chat history."""
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
         {
             "tokenizer",
             "_logger",
         }
     )
+    """Shared attributes for deepcopy operations."""
 
     def __init__(
         self,
@@ -151,7 +152,7 @@ class MockChat(BaseMllmChat):
             return 0, 0
 
         # Expect [1, T]; accept other simple shapes
-        if text.dim() == self._TWO_DIMS and text.shape[0] == self._SINGLE_BATCH:
+        if text.dim() == 2 and text.shape[0] == 1:
             text = text.squeeze(0)
         elif text.dim() == 0:
             text = text.unsqueeze(0)

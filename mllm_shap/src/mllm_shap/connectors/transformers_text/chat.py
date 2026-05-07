@@ -24,9 +24,11 @@ class TransformersTextChat(BaseMllmChat):
     """
 
     tokenizer: PreTrainedTokenizerBase
+    """Tokenizer for encoding and decoding text tokens."""
     _text_ids: Tensor
-    _TWO_DIMS: int = 2
-    _SINGLE_BATCH: int = 1
+    """Tensor of shape [T] containing the token IDs for all text tokens in the chat, in order.
+    This is the main source of truth for the text tokens in the chat.
+    The input_tokens property is derived from this tensor, and all text token manipulations should update this tensor accordingly."""
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
         {
             "tokenizer",  # Large read-only object, safe to share across copies
@@ -149,7 +151,7 @@ class TransformersTextChat(BaseMllmChat):
             return 0, 0
 
         # Expect [1, T]; accept other simple shapes
-        if text.dim() == self._TWO_DIMS and text.shape[0] == self._TWO_DIMS:
+        if text.dim() == 2 and text.shape[0] == 2:
             text = text.squeeze(0)
         elif text.dim() == 0:
             text = text.unsqueeze(0)
