@@ -12,7 +12,11 @@ from .base.shap_explainer import BaseShapExplainer
 class PreciseShapExplainer(BaseShapExplainer):
     """Precise SHAP implementation generating all possible masks."""
 
+    _tqdm_desc: str = "Precise SHAP"
+    """Default progress-bar label used during mask generation for precise SHAP."""
+
     __splits_generator: Generator[Tensor, None, None] | None = None
+    """Internal generator for producing all possible binary masks."""
 
     def _get_next_split(
         self,
@@ -53,10 +57,9 @@ class PreciseShapExplainer(BaseShapExplainer):
         indices[0] = 1.0
         factorials = torch.cumprod(indices, dim=0)
 
-        # Precompute hash values for all subsets
-        subset_hashes = (masks * (2 ** torch.arange(num_features, device=device))).sum(
-            dim=1
-        )
+        # Precompute hash values for all subsets using powers of 2
+        power_of_2 = 2 ** torch.arange(num_features, device=device)
+        subset_hashes = (masks * power_of_2).sum(dim=1)
         sorted_hashes, sort_idx = subset_hashes.sort()
         sorted_outputs = similarities[sort_idx]
 
@@ -69,16 +72,12 @@ class PreciseShapExplainer(BaseShapExplainer):
             include_mask = masks[:, i]
 
             # All subsets that include i - IN = {S : i ∈ S}
-            included_subsets = masks[include_mask]
             included_outputs = similarities[include_mask]  # f(IN)
 
-            # Corresponding subsets with i removed - OUT = {S \ {i} : S ∈ IN}
-            excluded_subsets = included_subsets.clone()
-            excluded_subsets[:, i] = False
-            excluded_hash = (
-                excluded_subsets
-                * (2 ** torch.arange(num_features, device=masks.device))
-            ).sum(dim=1)
+            # Compute excluded hash by subtracting 2^i (removes bit i)
+            # This avoids .clone() and full hash recomputation
+            included_hashes = subset_hashes[include_mask]
+            excluded_hash = included_hashes - power_of_2[i]
             excluded_outputs = sorted_outputs[
                 torch.searchsorted(sorted_hashes, excluded_hash)
             ]  # f(OUT)

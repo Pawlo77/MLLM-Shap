@@ -214,6 +214,24 @@ class TestGetNextSplitBase:
         with pytest.raises(RuntimeError, match="Not enough sampling budget"):
             self.explainer._get_next_split_base(self.n, self.device, 0)
 
+    def test_returns_none_when_minimal_generator_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Defensive branch: if minimal split generation fails, no base split is returned."""
+
+        monkeypatch.setattr(
+            BaseShapApproximation,
+            "_generate_minimal_splits",
+            staticmethod(lambda n, device: None),
+        )
+
+        result = self.explainer._get_next_split_base(
+            n=self.n,
+            device=self.device,
+            generated_masks_num=0,
+        )
+        assert result is None
+
 
 class TestGetRandomSplit:
     """Tests for the random split helper."""

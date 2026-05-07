@@ -106,13 +106,21 @@ class CustomEmbedding(BaseExternalEmbedding):
     """
 
     tokenizer_decode: PreTrainedTokenizerBase
+    """Tokenizer from the generation model used to decode token IDs into text pieces."""
     emb_tokenizer: PreTrainedTokenizerBase
+    """Tokenizer used by the external embedding encoder model."""
     emb_model: PreTrainedModel
+    """External embedding encoder model used for text piece embedding."""
     device: torch.device
+    """Torch device where embedding inference is executed."""
     max_length: int
+    """Maximum sequence length passed to the embedding tokenizer."""
     batch_size: int
+    """Batch size used for encoder forward passes during embedding."""
     l2_normalize: bool
+    """Whether to L2-normalize pooled embedding vectors."""
     _hidden_size: int
+    """Fallback/derived embedding width used for empty-response tensors."""
 
     def __init__(
         self,
@@ -184,16 +192,17 @@ class CustomEmbedding(BaseExternalEmbedding):
                 )
                 continue
 
-            # Decode each token id to its text piece (keep specials to preserve alignment)
-            pieces: List[str] = []
-            for tid in token_ids.tolist():
-                piece = self.tokenizer_decode.decode(
-                    [int(tid)], skip_special_tokens=False
+            # Batch-decode all token IDs at once for efficiency
+            ids_list = [[int(tid)] for tid in token_ids.tolist()]
+            if hasattr(self.tokenizer_decode, "batch_decode"):
+                pieces: List[str] = self.tokenizer_decode.batch_decode(
+                    ids_list, skip_special_tokens=False
                 )
-                if isinstance(piece, list):
-                    pieces.append("".join(piece))
-                else:
-                    pieces.append(piece)
+            else:
+                pieces = [
+                    self.tokenizer_decode.decode(ids, skip_special_tokens=False)
+                    for ids in ids_list
+                ]
 
             emb = self._embed_texts(pieces)  # [T, hidden]
             result.append(emb)

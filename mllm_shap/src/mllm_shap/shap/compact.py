@@ -2,7 +2,7 @@
 
 from logging import Logger
 from time import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 
 from ..connectors.base.chat import BaseMllmChat
@@ -11,6 +11,9 @@ from .base.explainer import BaseExplainer
 from .base.shap_explainer import BaseShapExplainer
 from .explainer_result import ExplainerResult
 from .precise import PreciseShapExplainer
+
+if TYPE_CHECKING:
+    from .core.telemetry import TelemetryProbe
 
 logger: Logger = get_logger(__name__)
 
@@ -37,9 +40,9 @@ class Explainer(BaseExplainer):
 
     def __call__(
         self,
-        *_: Any,
         chat: BaseMllmChat,
         generation_kwargs: dict[str, Any] | None = None,
+        probe: "TelemetryProbe | None" = None,
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
         generation_kwargs = generation_kwargs or {}
@@ -48,6 +51,7 @@ class Explainer(BaseExplainer):
         super().__call__(
             chat=chat,
             generation_kwargs=generation_kwargs,
+            probe=probe,
             **explanation_kwargs,
         )
 
@@ -66,6 +70,7 @@ class Explainer(BaseExplainer):
             model=self.model,
             source_chat=chat,
             response=response,
+            probe=probe,
             **explanation_kwargs,
             **generation_kwargs,
         )

@@ -8,13 +8,16 @@ import torch
 from torch import Tensor
 
 from ...utils.logger import get_logger
-from ..base.complementary import BaseComplementaryShapApproximation
+from ._approximation import BaseComplementaryShapApproximation
 
 logger: Logger = get_logger(__name__)
 
 
 class BaseComplementaryShapExplainer(BaseComplementaryShapApproximation):
     """Complementary SHAP implementation class."""
+
+    _tqdm_desc: str = "Complementary SHAP"
+    """Default progress-bar label used during complementary SHAP sampling."""
 
     def _calculate_shap_values(
         self, masks: Tensor, similarities: Tensor, device: torch.device

@@ -6,11 +6,12 @@ from enum import Enum
 import gc
 from logging import Logger
 import math
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 from functools import lru_cache
 
 import torch
 from torch import Tensor
+from tqdm.auto import tqdm
 
 from ...connectors.base.chat import BaseMllmChat
 from ...connectors.enums import SystemRolesSetup, Role
@@ -20,7 +21,11 @@ from ...utils.logger import get_logger
 from ..base._cache_manager import CacheManager
 from ..base._masks_manager import MasksManager
 from ..base._validators import BaseShapCallConfig
-from ..base.complementary import BaseComplementaryShapApproximation
+from ..complementary._approximation import BaseComplementaryShapApproximation
+from ._sampling import NeymanStateMachineSamplingStrategy
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
 
 logger: Logger = get_logger(__name__)
 
@@ -56,6 +61,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         otherwise would be rejected by connectors as invalid. It requires at least
         one turn for assistant and some system messages to be present.
     """
+
+    _tqdm_desc: str = "Neyman SHAP"
+    """Default progress-bar label used during Neyman SHAP sampling."""
 
     initial_num_samples: int | None
     """Initial number of samples to draw in the first step."""
@@ -102,6 +110,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
     __j: int
     """Indices for tracking position in the _M matrix."""
 
+    __sampling_strategy: NeymanStateMachineSamplingStrategy | None
+    """Sampling strategy instance for generating splits according to Neyman allocation."""
+
     def __init__(
         self,
         *args: Any,
@@ -147,6 +158,37 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__j = 0
         self.__C_squared = None
         self.initial_steps = 0
+        self.__sampling_strategy = NeymanStateMachineSamplingStrategy(
+            get_num_splits=lambda n: self._get_num_splits(n=n),
+            get_random_split=lambda **kwargs: self._get_random_split(**kwargs),
+            get_m_matrix=lambda: self._M,
+            get_m_hat=lambda: self.__M_hat,
+            update_m_position=lambda: self.__update_M_position(),
+            get_initial_num_splits=lambda: self.__initial_num_splits,
+            get_use_standard_method=lambda: self.use_standard_method,
+            get_first_call=lambda: self._first_call,
+            set_first_call=lambda value: setattr(self, "_first_call", value),
+            get_step=lambda: int(self.__step),
+            set_step=lambda value: setattr(
+                self,
+                "_BaseComplementaryNeymanShapExplainer__step",
+                _Step(value),
+            ),
+            get_i=lambda: self.__i,
+            set_i=lambda value: setattr(
+                self,
+                "_BaseComplementaryNeymanShapExplainer__i",
+                value,
+            ),
+            get_j=lambda: self.__j,
+            set_j=lambda value: setattr(
+                self,
+                "_BaseComplementaryNeymanShapExplainer__j",
+                value,
+            ),
+            initial_step=int(_Step.INITIAL_SAMPLING),
+            allocation_step=int(_Step.NEYMAN_ALLOCATION),
+        )
 
     @lru_cache(maxsize=1)
     def _get_num_splits(self, n: int) -> int:
@@ -217,76 +259,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         generated_masks_num: int,
         existing_masks: list[Tensor] | None = None,
     ) -> Tensor | None:
-        if self._M is None:
-            raise RuntimeError("M matrix must be initialized before sampling.")
-
-        if self.__step == _Step.INITIAL_SAMPLING:  # initial sampling
-            logger.debug(
-                "Min %f, Sum %f, Zero count %d",
-                self._M.min().item(),
-                self._M.sum().item(),
-                (self._M == 0).sum().item(),
-            )
-
-            if generated_masks_num >= self._get_num_splits(n=n):
-                logger.warning("Initial sampling exceeded total number of splits.")
-                return None
-
-            if (
-                not self._first_call and self.__update_M_position()
-            ):  # stopping condition
-                logger.debug("Moving to Neyman allocation step.")
-                self.__step = _Step.NEYMAN_ALLOCATION
-                return None
-            self._first_call = False
-
-            if self.use_standard_method:
-                return self._get_random_split(
-                    n=n,
-                    device=device,
-                    true_values_num=self.__j,
-                )
-
-            # our modified method with pre-defined members
-            if not self._M[self.__i, self.__j] < self.__initial_num_splits:
-                raise RuntimeError(
-                    "__update_M_position did not update position correctly."
-                )
-
-            # `self.__j == 0` --> include no tokens
-            # generate split of size `self.__j` with required token `self.__i`
-            new_mask = self._get_random_split(
-                n=n,
-                device=device,
-                true_values_num=self.__j,
-                include_token=self.__i if self.__j > 0 else None,
-            )
-            if self.__j > 0 and not new_mask.squeeze()[self.__i]:
-                raise RuntimeError(
-                    "Generated mask does not include the required token."
-                )
-
-            return new_mask
-
-        if self.__M_hat is None:
-            raise RuntimeError("M_hat matrix must be initialized before sampling.")
-        # dont end on total budget exceeded here, as it might slightly differ
-        # from one estimated with `self.__M_hat`. This difference should be minimal.
-        if self.__j == self.__M_hat.shape[0]:  # end of sampling
-            return None
-
-        # generate split of size `self.__j`
-        if self.__M_hat[self.__j] > 0:
-            new_mask = self._get_random_split(
-                n=n,
-                device=device,
-                true_values_num=self.__j,
-            )
-            self.__M_hat[self.__j] -= 1
-            return new_mask
-
-        self.__j += 1
-        return self._get_next_split(
+        if self.__sampling_strategy is None:
+            raise RuntimeError("Sampling strategy is not initialized.")
+        return self.__sampling_strategy.get_next_split(
             n=n,
             device=device,
             generated_masks_num=generated_masks_num,
@@ -316,31 +291,37 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         if 2 * m != masks.shape[0]:
             raise ValueError("Masks should be in complementary pairs.")
 
-        # change: include C squared calculation within same loop
+        # Vectorized: process all pairs at once
+        S_masks = masks[0::2]  # even indices
+        NS_masks = masks[1::2]  # odd indices
+
+        if not torch.all(S_masks == ~NS_masks):
+            raise ValueError("Masks are not complementary pairs.")
+
+        s_sizes = S_masks.sum(dim=1)
+        ns_sizes = masks.shape[1] - s_sizes
+        u = similarities[0::2] - similarities[1::2]
+        u_squared = u * u
+
         for i in range(m):
-            if not torch.all(masks[2 * i] == ~masks[2 * i + 1]):
-                raise ValueError("Masks are not complementary pairs.")
+            s_size = int(s_sizes[i].item())
+            ns_size = int(ns_sizes[i].item())
+            u_val = u[i]
+            u_sq_val = u_squared[i]
 
-            S = masks[2 * i]
-            NS = masks[2 * i + 1]  # complement of S
-            s_size = int(S.sum().item())
-            ns_size = masks.shape[1] - s_size
+            if s_size == 0:
+                self._C[:, 0] += u_val
+                self.__C_squared[:, 0] += u_sq_val
+            else:
+                self._C[S_masks[i], s_size] += u_val
+                self.__C_squared[S_masks[i], s_size] += u_sq_val
 
-            u = similarities[2 * i] - similarities[2 * i + 1]
-            u_squared = u * u
-
-            BaseComplementaryShapApproximation._increment_coalition_val(
-                self._C, S, s_size, u
-            )
-            BaseComplementaryShapApproximation._increment_coalition_val(
-                self._C, NS, ns_size, -u
-            )
-            BaseComplementaryShapApproximation._increment_coalition_val(
-                self.__C_squared, S, s_size, u_squared
-            )
-            BaseComplementaryShapApproximation._increment_coalition_val(
-                self.__C_squared, NS, ns_size, u_squared
-            )
+            if ns_size == 0:
+                self._C[:, 0] -= u_val
+                self.__C_squared[:, 0] += u_sq_val
+            else:
+                self._C[NS_masks[i], ns_size] -= u_val
+                self.__C_squared[NS_masks[i], ns_size] += u_sq_val
 
     def _calculate_shap_values(
         self,
@@ -483,6 +464,65 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         self.__M_hat[left:right] = torch.ceil((m / inner.sum()) * inner)
         logger.debug("M hat %s", self.__M_hat)
 
+        # Log Neyman allocation metrics
+        probe = getattr(self, "_probe", None)
+        if probe is None:
+            return
+
+        probe.custom_metric("neyman_allocation_step_remaining_samples", int(m))
+        probe.custom_metric("neyman_allocation_coalition_left", left)
+        probe.custom_metric("neyman_allocation_coalition_right", right)
+        probe.custom_metric("neyman_m_hat_sum", float(self.__M_hat.sum().item()))
+        probe.custom_metric("neyman_m_hat_min", float(self.__M_hat.min().item()))
+        probe.custom_metric("neyman_m_hat_max", float(self.__M_hat.max().item()))
+        probe.custom_metric(
+            "neyman_m_hat_mean", float(self.__M_hat[left:right].float().mean().item())
+        )
+
+        # Log variance estimates for critical coalitions
+        probe.custom_metric(
+            "neyman_sigma_squared_min", float(sigma_squared_hat.min().item())
+        )
+        probe.custom_metric(
+            "neyman_sigma_squared_max", float(sigma_squared_hat.max().item())
+        )
+        probe.custom_metric(
+            "neyman_sigma_squared_mean", float(sigma_squared_hat.mean().item())
+        )
+
+        # Log normalization factor (denominator of allocation formula)
+        probe.custom_metric("neyman_inner_sum_normalization", float(inner.sum().item()))
+        probe.custom_metric(
+            "neyman_allocation_scaling_factor",
+            float(m / inner.sum().item()) if inner.sum().item() > 0 else 0.0,
+        )
+
+        # Log allocation range statistics
+        if right > left:
+            allocation_range = self.__M_hat[left:right]
+            probe.custom_metric("neyman_allocation_num_coalitions", right - left)
+            probe.custom_metric(
+                "neyman_allocation_std_dev",
+                float(allocation_range.float().std().item()),
+            )
+            probe.custom_metric(
+                "neyman_allocation_cv",
+                float(
+                    allocation_range.float().std().item()
+                    / allocation_range.float().mean().item()
+                )
+                if allocation_range.float().mean().item() > 0
+                else 0.0,
+            )
+
+        # Log per-coalition allocation
+        for coalition_idx in range(left, right):
+            if coalition_idx < len(self.__M_hat):
+                probe.custom_metric(
+                    f"neyman_allocation_coalition_{coalition_idx}",
+                    int(self.__M_hat[coalition_idx].item()),
+                )
+
     def __call__(
         self,
         model: BaseMllmModel,
@@ -490,6 +530,7 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
         response: ModelResponse,
         progress_bar: bool = True,
         verbose: bool = False,
+        probe: "TelemetryProbe | None" = None,
         **generate_kwargs: Any,
     ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None:
         generate_kwargs.pop("n_generator_jobs", None)  # not parallelizable
@@ -519,21 +560,57 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 "No assistant role found, make sure that existing messages cover it."
             )
 
-        mask_manager = MasksManager(chat=source_chat, log_stats=True)
+        self._probe = probe
+
+        mask_manager = MasksManager(chat=source_chat, log_stats=True, probe=probe)
         cache_manager = CacheManager(
             chat=response_chat,
             explainer_hash=hash(self),
+            probe=probe,
         )
 
         masks = [mask_manager.get_initial_mask(device=device)]
         responses = [__config.response]
 
         # fist step - initial sampling
-        _ = self._get_num_splits(n=mask_manager.n)  # calculate _initial_num_splits
+        num_splits = self._get_num_splits(n=mask_manager.n)
         logger.info(
             "Starting initial sampling step with %d samples per entry in M",
             self.__initial_num_splits,
         )
+
+        # Log Neyman initial setup
+        if probe:
+            probe.custom_metric("neyman_n_features", mask_manager.n)
+            probe.custom_metric("neyman_total_splits", num_splits)
+            probe.custom_metric(
+                "neyman_use_default_initial_formula",
+                int(self.__use_default_initial_sampling_formula),
+            )
+            probe.custom_metric(
+                "neyman_initial_num_samples_config",
+                self.initial_num_samples
+                if self.initial_num_samples is not None
+                else -1,
+            )
+            probe.custom_metric(
+                "neyman_initial_fraction_config",
+                float(self.initial_fraction)
+                if self.initial_fraction is not None
+                else -1.0,
+            )
+            probe.custom_metric("neyman_initial_num_splits", self.__initial_num_splits)
+            probe.custom_metric(
+                "neyman_use_standard_method", int(self.use_standard_method)
+            )
+            probe.custom_metric("neyman_stage_1_start", 1)
+
+        pbar = (
+            tqdm(total=num_splits, desc="Neyman SHAP [stage 1/2]")
+            if __config.progress_bar
+            else None
+        )
+
         chats_skipped, history = self._generate_step(
             mask_manager=mask_manager,
             masks=masks,
@@ -543,8 +620,9 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             model=__config.model,
             cache_manager=cache_manager,
             n_generator_jobs=1,
-            progress_bar=__config.progress_bar,
+            progress_bar=False,
             verbose=__config.verbose,
+            tqdm_bar=pbar,
             **generate_kwargs,
         )
 
@@ -563,6 +641,22 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
             "Initial sampling step completed with %d calls.", self.initial_steps
         )
 
+        # Log stage 1 completion metrics
+        if probe:
+            probe.custom_metric(
+                "neyman_stage_1_masks_generated", len(masks) - 1
+            )  # exclude base mask
+            if self._M is not None:
+                probe.custom_metric(
+                    "neyman_stage_1_m_matrix_min", int(self._M.min().item())
+                )
+                probe.custom_metric(
+                    "neyman_stage_1_m_matrix_max", int(self._M.max().item())
+                )
+                probe.custom_metric(
+                    "neyman_stage_1_m_matrix_mean", float(self._M.float().mean().item())
+                )
+
         # otherwise initial sampling exceeded entire budget
         if self.__step == _Step.NEYMAN_ALLOCATION:
             # prepare for step 2
@@ -576,6 +670,17 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 "Starting Neyman allocation step with %d remaining samples",
                 cast(Tensor, self.__M_hat).sum().item(),
             )
+
+            # Log stage 2 setup
+            if probe:
+                probe.custom_metric("neyman_stage_2_start", 1)
+                probe.custom_metric(
+                    "neyman_stage_2_remaining_budget",
+                    int(cast(Tensor, self.__M_hat).sum().item()),
+                )
+
+            if pbar is not None:
+                pbar.set_description("Neyman SHAP [stage 2/2]")
             new_chats_skipped, new_history = self._generate_step(
                 mask_manager=mask_manager,
                 masks=masks,
@@ -585,38 +690,75 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 model=__config.model,
                 cache_manager=cache_manager,
                 n_generator_jobs=1,
-                progress_bar=__config.progress_bar,
+                progress_bar=False,
                 verbose=__config.verbose,
+                tqdm_bar=pbar,
                 **generate_kwargs,
             )
 
-            new_masks_tensor = torch.stack(masks[existing_masks_num:], dim=0)
-            # pass initial mask response as well, but don't store its similarity
-            new_similarities = self._get_similarities(
-                responses=[responses[0]] + responses[existing_masks_num:], model=model
-            )[1:]
-            # update C matrix with new masks
-            self._calculate_C_matrix(
-                masks=new_masks_tensor[..., source_chat.shap_values_mask],
-                similarities=new_similarities,
-                device=device,
-            )
+            new_masks_list = masks[existing_masks_num:]
+            if new_masks_list:
+                new_masks_tensor = torch.stack(new_masks_list, dim=0)
+                # pass initial mask response as well, but don't store its similarity
+                new_similarities = self._get_similarities(
+                    responses=[responses[0]] + responses[existing_masks_num:],
+                    model=model,
+                )[1:]
+                # update C matrix with new masks
+                self._calculate_C_matrix(
+                    masks=new_masks_tensor[..., source_chat.shap_values_mask],
+                    similarities=new_similarities,
+                    device=device,
+                )
+
+                # merge results
+                masks_tensor = torch.cat((masks_tensor, new_masks_tensor), dim=0)
+                similarities = torch.cat((similarities, new_similarities), dim=0)
+
+                del new_masks_tensor
+                del new_similarities
+            else:
+                logger.warning(
+                    "Neyman allocation step produced no new masks; "
+                    "budget may have been exhausted during initial sampling."
+                )
+
+            # Log stage 2 completion metrics
+            if probe:
+                stage_2_masks_generated = len(masks) - existing_masks_num
+                probe.custom_metric(
+                    "neyman_stage_2_masks_generated", stage_2_masks_generated
+                )
+                probe.custom_metric(
+                    "neyman_stage_2_actual_samples", stage_2_masks_generated
+                )
+                probe.custom_metric(
+                    "neyman_total_masks_generated", len(masks) - 1
+                )  # exclude base mask
+                # Log allocation success - how much of planned budget was actually used
+                if self.__M_hat is not None:
+                    planned_budget = int(self.__M_hat.sum().item())
+                    probe.custom_metric("neyman_stage_2_planned_budget", planned_budget)
+                    probe.custom_metric(
+                        "neyman_stage_2_budget_utilization",
+                        stage_2_masks_generated / planned_budget
+                        if planned_budget > 0
+                        else 0.0,
+                    )
 
             # edge case from :class:`BaseShapExplainer` does not apply here
             # as we have :attr:`_initial_num_splits` >= 1
 
-            # merge results
             chats_skipped += new_chats_skipped
             if history is not None and new_history is not None:
                 history += new_history
-            masks_tensor = torch.cat((masks_tensor, new_masks_tensor), dim=0)
-            similarities = torch.cat((similarities, new_similarities), dim=0)
 
             # clean up
             del new_chats_skipped
             del new_history
-            del new_masks_tensor
-            del new_similarities
+
+        if pbar is not None:
+            pbar.close()
 
         if cache_manager.extracted_num > 0:
             logger.info(

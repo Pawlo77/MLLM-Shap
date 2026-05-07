@@ -2,6 +2,7 @@
 
 import math
 from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
@@ -11,7 +12,7 @@ from mllm_shap.shap.hierarchical import HierarchicalExplainer
 from mllm_shap.shap.hierarchical.enums import Mode
 from mllm_shap.shap.precise import PreciseShapExplainer
 from mllm_shap.shap.base.approx import BaseShapApproximation
-from ...dummy import DummyModel
+from ...dummy import DummyChat as BaseDummyChat, DummyModel
 
 
 class DummyApproxExplainer(BaseShapApproximation):
@@ -308,3 +309,221 @@ class TestHierarchicalExplainerCore:
         assert torch.isnan(out[0])
         assert out[1].item() == 1.0
         assert out[2].item() == 1.0
+
+    def test_update_progress_updates_tqdm_bar(self) -> None:
+        """Progress updater should forward explainer calls to active progress bar."""
+        explainer = HierarchicalExplainer(
+            k=4,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+        )
+        bar = MagicMock()
+        explainer._progress_bar = bar
+        explainer.n_calls = 0
+        explainer.total_n_calls = 0
+        called_explainer = SimpleNamespace(total_n_calls=7)
+
+        explainer._HierarchicalExplainer__update_progress(explainer=called_explainer)
+
+        assert explainer.n_calls == 1
+        assert explainer.total_n_calls == 7
+        bar.update.assert_called_once_with(7)
+
+    def test_calculate_group_shap_values_requires_mask_or_group_ids(self) -> None:
+        """Missing both group_ids and shap_values_mask should raise validation error."""
+        explainer = HierarchicalExplainer(
+            k=4,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+
+        with pytest.raises(
+            ValidationError, match="Either shap_values_mask or group_ids"
+        ):
+            explainer._HierarchicalExplainer__calculate_group_normalized_shap_values(
+                chat=chat,
+                response=response,
+                shap_values_mask=None,
+                group_ids=None,
+            )
+
+    def test_importance_sampling_raises_when_fraction_missing(self) -> None:
+        """Importance sampling path should fail fast when base fraction is None."""
+        shap_explainer = DummyApproxExplainer(num_samples=4, fraction=None)
+        explainer = HierarchicalExplainer(
+            k=4,
+            shap_explainer=shap_explainer,
+            model=DummyModel(),
+            use_importance_sampling=False,
+        )
+        explainer.use_importance_sampling = True
+        chat = DummyChat()
+        response = SimpleNamespace(chat=DummyChat())
+        mask = torch.tensor([True, True, False, False], dtype=torch.bool)
+
+        with pytest.raises(RuntimeError, match="fraction is None"):
+            explainer._HierarchicalExplainer__calculate_group_normalized_shap_values(
+                chat=chat,
+                response=response,
+                shap_values_mask=mask,
+            )
+
+    def test_compute_verbose_records_skipped_and_recursive_children(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Verbose compute should add placeholder node for zero subgroup and child for non-zero subgroup."""
+        explainer = HierarchicalExplainer(
+            k=2,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+        group_mask = torch.tensor([True, True, True, True], dtype=torch.bool)
+
+        def _fake_calc(*args, **kwargs):
+            group_ids = kwargs.get("group_ids")
+            shap_values_mask = kwargs.get("shap_values_mask")
+            if group_ids is not None:
+                return torch.tensor([0.0, 0.0, 0.5, 0.5], dtype=torch.float)
+            r = torch.zeros_like(shap_values_mask, dtype=torch.float)
+            r[shap_values_mask] = 1.0
+            return r
+
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__calculate_group_normalized_shap_values",
+            _fake_calc,
+        )
+
+        values, graph = explainer._HierarchicalExplainer__compute(
+            chat=chat,
+            response=response,
+            group_mask=group_mask,
+            _verbose=True,
+        )
+
+        assert graph is not None
+        assert len(graph.children) == 2
+        assert graph.children[0] is not None
+        assert torch.isfinite(values[2:]).all()
+
+    def test_handle_with_first_level_verbose_tracks_children(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """First-level verbose path should save graph and include skipped/recursive children."""
+        explainer = HierarchicalExplainer(
+            k=2,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+            mode=Mode.MULTI_MODAL,
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+
+        monkeypatch.setattr(
+            HierarchicalExplainer,
+            "_HierarchicalExplainer__get_group_ids",
+            staticmethod(lambda chat, include_role=True: torch.tensor([1, 1, 2, 2])),
+        )
+
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__calculate_group_normalized_shap_values",
+            lambda **kwargs: torch.tensor([0.0, 0.0, 0.6, 0.6]),
+        )
+
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__compute",
+            lambda **kwargs: (torch.ones(4), SimpleNamespace(tag="child")),
+        )
+
+        result = explainer._HierarchicalExplainer__handle_with_first_level(
+            chat=chat,
+            response=response,
+            _verbose=True,
+        )
+
+        assert result.shape == (4,)
+        assert explainer.computation_graph is not None
+        assert len(explainer.computation_graph.children) == 2
+
+    def test_handle_with_first_level_skips_zero_group_without_verbose(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Zero-SHAP subgroup should skip recursion cleanly when verbose=False."""
+        explainer = HierarchicalExplainer(
+            k=2,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+            mode=Mode.MULTI_MODAL,
+        )
+        chat = DummyChat()
+        response = SimpleNamespace(chat=chat)
+
+        monkeypatch.setattr(
+            HierarchicalExplainer,
+            "_HierarchicalExplainer__get_group_ids",
+            staticmethod(lambda chat, include_role=True: torch.tensor([1, 1, 2, 2])),
+        )
+
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__calculate_group_normalized_shap_values",
+            lambda **kwargs: torch.tensor([0.0, 0.0, 0.5, 0.5]),
+        )
+
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__compute",
+            lambda **kwargs: (torch.ones(4), None),
+        )
+
+        out = explainer._HierarchicalExplainer__handle_with_first_level(
+            chat=chat,
+            response=response,
+            _verbose=False,
+        )
+        assert out.shape == (4,)
+
+    @patch("mllm_shap.shap.hierarchical.explainer.tqdm")
+    @patch("mllm_shap.shap.hierarchical.explainer.BaseExplainer.__call__")
+    def test_call_creates_and_closes_progress_bar(
+        self,
+        _mock_base_call: MagicMock,
+        mock_tqdm: MagicMock,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """When progress_bar=True, __call__ should create tqdm and close it at end."""
+        explainer = HierarchicalExplainer(
+            k=2,
+            shap_explainer=DummyApproxExplainer(fraction=0.5),
+            model=DummyModel(),
+            mode=Mode.TEXT,
+        )
+        bar = MagicMock()
+        mock_tqdm.return_value = bar
+
+        fake_chat = BaseDummyChat(num_tokens=3)
+        fake_response = SimpleNamespace(chat=fake_chat)
+
+        monkeypatch.setattr(explainer.model, "generate", lambda **kwargs: fake_response)
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__compute",
+            lambda **kwargs: (torch.ones(3), None),
+        )
+        monkeypatch.setattr(
+            explainer,
+            "_HierarchicalExplainer__save_to_cache",
+            lambda **kwargs: None,
+        )
+
+        _ = explainer(chat=fake_chat, progress_bar=True)
+
+        mock_tqdm.assert_called_once()
+        bar.close.assert_called_once()
+        assert explainer._progress_bar is None
