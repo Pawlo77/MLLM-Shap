@@ -14,11 +14,17 @@ if TYPE_CHECKING:
     from IPython.display import Audio
 
 TARGET_SAMPLE_RATE = 24_000
+"""Default sample rate used for audio serialization and conversion operations."""
 PCM16_SAMPLE_WIDTH_BYTES = 2
+"""PCM16 sample width in bytes used when constructing raw AudioSegment buffers."""
 WAVEFORM_2D_DIM = 2
+"""Tensor rank representing channel-first waveform tensors ``[C, T]``."""
 MONO_CHANNELS = 1
+"""Number of channels for mono audio representations."""
 AUDIO_FORMAT_WAV = "wav"
+"""Identifier for WAV audio format in conversion helpers."""
 AUDIO_FORMAT_MP3 = "mp3"
+"""Identifier for MP3 audio format in conversion helpers."""
 
 
 def display_audio(audio_content: bytes) -> "Audio":
