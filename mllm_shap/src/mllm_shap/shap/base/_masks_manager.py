@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from logging import Logger
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any, Generator
 
 import torch
 from torch import Tensor
@@ -11,40 +11,39 @@ from torch import Tensor
 from ...connectors.base.chat import BaseMllmChat
 from ...errors import MaskError
 from ...utils.logger import get_logger
+from ..masks import MaskCodec, MaskDedupIndex, MaskSpace
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
 
 logger: Logger = get_logger(__name__)
 
 
-class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
-    """Generator for producing unique masks for SHAP explainability."""
+class NoTokensToExplainError(Exception):
+    """Raised when chat has no explainable tokens."""
 
-    generated_masks: int
+
+class MaskGenerator(ABC):
+    """Compatibility iterator wrapper for mask generation strategies."""
 
     def __init__(self) -> None:
-        """Initialize the MaskGenerator."""
-        super().__init__()
-        self.generated_masks = 0
-        self._iter = self._mask_iter()
-
-    def send(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
-        return self._iter.send(*args, **kwargs)
-
-    def throw(self, *args: Any, **kwargs: Any) -> tuple[Tensor | None, int]:
-        return self._iter.throw(*args, **kwargs)
+        self._iterator = self._mask_iter()
 
     @abstractmethod
-    def _mask_iter(self) -> Generator[tuple[Tensor | None, int], None, None]:
-        """Iterator that yields unique masks and their hashes."""
+    def _mask_iter(self) -> Generator[tuple[Tensor, int], Any, None]:
+        """Return the internal generator producing `(mask, count)` tuples."""
 
     def __iter__(self) -> "MaskGenerator":
         return self
 
-    def __next__(self) -> tuple[Tensor | None, int]:
-        return next(self._iter)
+    def __next__(self) -> tuple[Tensor, int]:
+        return next(self._iterator)
 
+    def send(self, value: Any) -> tuple[Tensor, int]:
+        return self._iterator.send(value)
 
-class NoTokensToExplainError(Exception):
-    """Raised when chat has no explainable tokens."""
+    def throw(self, exc: BaseException) -> tuple[Tensor, int]:
+        return self._iterator.throw(exc)
 
 
 class MasksManager:
@@ -89,7 +88,7 @@ class MasksManager:
 
         @staticmethod
         def hash(mask: Tensor) -> int:
-            """Hash mask bytes.
+            """Hash mask bytes using bit-packing to minimize GPU→CPU transfer.
 
             Args:
                 mask: Mask tensor to hash.
@@ -98,18 +97,21 @@ class MasksManager:
                 Integer hash value.
             """
             normalized = MasksManager._MaskHashStrategy.normalize(mask)
-            packed = (
-                normalized.contiguous().to(dtype=torch.uint8).cpu().numpy().tobytes()
-            )
-            return hash(packed)
+            return MaskCodec.hash(normalized)
 
-    def __init__(self, chat: BaseMllmChat, log_stats: bool = False) -> None:
+    def __init__(
+        self,
+        chat: BaseMllmChat,
+        log_stats: bool = False,
+        probe: "TelemetryProbe | None" = None,
+    ) -> None:
         """
         Initialize the MasksManager.
 
         Args:
             chat: The chat object containing the mask and token information.
             log_stats: Whether to log statistics about the mask generation.
+            probe: Optional TelemetryProbe for metrics collection.
         Raises:
             NoTokensToExplainError: If there are no tokens to explain in the provided chat.
         """
@@ -119,6 +121,10 @@ class MasksManager:
                 "There are no tokens to explain in the provided chat."
             )
         self.shap_values_mask = mask
+        self._mask_space = MaskSpace(
+            shap_values_mask=mask,
+            target_length=chat.input_tokens_num,
+        )
 
         self.target_length = chat.input_tokens_num
         logger.debug(
@@ -132,6 +138,8 @@ class MasksManager:
         self.n = n
 
         self._seen_masks = set()
+        self._dedup_index = MaskDedupIndex()
+        self._probe = probe
 
         if log_stats:
             logger.info(
@@ -156,8 +164,12 @@ class MasksManager:
             mask_hash: Hash of the mask to mark as seen.
         """
         mask_hash = MasksManager.__get_mask_hash(mask=mask, mask_hash=mask_hash)
-        if mask_hash not in self._seen_masks:
+        is_unique = self._dedup_index.add(mask_hash)
+        if is_unique:
             self._seen_masks.add(mask_hash)
+        # Record in telemetry whether this is a unique or duplicate mask
+        if self._probe:
+            self._probe.mask_generated(is_unique=is_unique, is_invalid=False)
 
     def seen(self, mask: Tensor | None = None, mask_hash: int | None = None) -> bool:
         """
@@ -170,7 +182,7 @@ class MasksManager:
             True if the mask has been seen, False otherwise.
         """
         mask_hash = MasksManager.__get_mask_hash(mask=mask, mask_hash=mask_hash)
-        return mask_hash in self._seen_masks
+        return self._dedup_index.contains(mask_hash)
 
     def get_initial_mask(self, device: torch.device) -> Tensor:
         """
@@ -202,18 +214,19 @@ class MasksManager:
             Tensor of shape [target_length, ], dtype=torch.bool representing the final mask,
                 or None if the final mask has no True values.
         """
-        prepared_mask = torch.zeros(
-            (self.target_length,), dtype=torch.bool, device=device
+        # Keep behavior resilient when tests/runtime mutate shap_values_mask directly.
+        mask_space = MaskSpace(
+            shap_values_mask=self.shap_values_mask,
+            target_length=self.target_length,
         )
-
-        # Set masked positions according to splits
-        prepared_mask[self.shap_values_mask] = split
-        # Keep unmasked positions always True
-        prepared_mask[~self.shap_values_mask] = True
+        prepared_mask = mask_space.materialize(split=split, device=device)
 
         # Filter out rows that have no True values (completely empty masks)
         # it is a case scenario when all tokens are taken into account for splitting
         if not prepared_mask.any():
+            # Track invalid mask generation
+            if self._probe:
+                self._probe.mask_generated(is_unique=False, is_invalid=True)
             return None
         return prepared_mask
 

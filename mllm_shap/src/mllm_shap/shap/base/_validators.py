@@ -11,9 +11,6 @@ from .similarity import BaseEmbeddingSimilarity
 from ...connectors.base.model_response import ModelResponse
 
 
-# duplicates with shap/_explainers/explainer.py
-
-
 class BaseShapConfig(BaseModel):
     """
     Configuration model for BaseShap.
@@ -23,11 +20,17 @@ class BaseShapConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     mode: Mode
+    """SHAP execution mode controlling how attribution values are computed."""
     embedding_model: BaseExternalEmbedding | None
+    """Optional external embedding model used before similarity evaluation."""
     embedding_reducer: BaseEmbeddingReducer
+    """Reducer that maps token-level embeddings to the comparison representation."""
     similarity_measure: BaseEmbeddingSimilarity
+    """Similarity function applied between reduced embeddings."""
     normalizer: BaseNormalizer
+    """Normalizer applied to raw SHAP scores before returning results."""
     allow_mask_duplicates: bool
+    """Whether duplicate masks are allowed during sampling/exploration."""
 
 
 class BaseShapCallConfig(BaseModel):
@@ -39,10 +42,15 @@ class BaseShapCallConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     model: BaseMllmModel
+    """Model connector used for response generation and embedding extraction."""
     source_chat: BaseMllmChat
+    """Original chat state from which perturbations/masks are derived."""
     response: ModelResponse
+    """Reference model response for the unmasked input."""
     progress_bar: bool
+    """Whether to display progress information during SHAP computation."""
     verbose: bool
+    """Whether to enable verbose diagnostic output while running SHAP."""
 
     @model_validator(mode="after")
     def check_same_chat_device(self) -> "BaseShapCallConfig":

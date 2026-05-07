@@ -10,6 +10,7 @@ class MaskGenerator(Generator[tuple[Tensor | None, int], None, None], ABC):
     """Generator for producing unique masks for SHAP explainability."""
 
     generated_masks: int
+    """Counter for the number of masks generated so far. This can be used for tracking progress and for debugging purposes."""
 
     def __init__(self) -> None:
         """Initialize the MaskGenerator."""
