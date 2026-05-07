@@ -3,10 +3,11 @@
 """Hierarchical SHAP explainer module."""
 
 import math
+import sys
 from copy import deepcopy
 from logging import Logger
 from time import time
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import torch
 from torch import Tensor
@@ -26,6 +27,9 @@ from ..precise import PreciseShapExplainer
 from ..normalizers import MinMaxNormalizer
 from .enums import Mode
 from .graph import GraphNode
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
 
 logger: Logger = get_logger(__name__)
 
@@ -112,9 +116,14 @@ class HierarchicalExplainer(BaseExplainer):
         )
 
         if not isinstance(self.shap_explainer.normalizer, MinMaxNormalizer):
+            msg = (
+                "It is strongly recommended to use MinMaxNormalizer with "
+                "HierarchicalExplainer for correct results."
+            )
             logger.warning(
                 "It is strongly recommended to use MinMaxNormalizer with HierarchicalExplainer for correct results."
             )
+            print(msg, file=sys.stderr)
 
         if k < 2 or int(k) != k:
             raise ValidationError("k must be an integer, at least 2.")
@@ -148,12 +157,17 @@ class HierarchicalExplainer(BaseExplainer):
                 not self.shap_explainer.normalizer.__class__
                 == first_layer_explainer.normalizer.__class__
             ):
+                msg = (
+                    "It is strongly recommended that first_layer_explainer "
+                    "uses the same normalizer as shap_explainer for correct results."
+                )
                 logger.warning(
                     (
                         "It is strongly recommended that first_layer_explainer "
                         "uses the same normalizer as shap_explainer for correct results."
                     )
                 )
+                print(msg, file=sys.stderr)
         self.first_layer_explainer = first_layer_explainer
 
     def __get_subgroups_num(self, n: int) -> int:
@@ -224,10 +238,14 @@ class HierarchicalExplainer(BaseExplainer):
                 r[shap_values_mask] = 1.0
                 return r
             chat.external_shap_values_mask = shap_values_mask
+            n_tokens = shap_values_mask.sum().item()
             logger.debug(
                 "Calculating SHAP values for %d tokens.",
-                shap_values_mask.sum().item(),
+                n_tokens,
             )
+            probe = getattr(self, "_probe", None)
+            if probe:
+                probe.custom_metric("hierarchical_explain_n_tokens", n_tokens)
         else:
             group_ids = cast(Tensor, group_ids)
             chat.external_group_ids = group_ids
@@ -239,11 +257,16 @@ class HierarchicalExplainer(BaseExplainer):
                 )
                 r[group_ids == 1] = 1.0
                 return r
+            n_tokens = (group_ids > 0).sum().item()
             logger.debug(
                 "Calculating SHAP values for %d groups of %d tokens.",
                 n_groups,
-                (group_ids > 0).sum().item(),
+                n_tokens,
             )
+            probe = getattr(self, "_probe", None)
+            if probe:
+                probe.custom_metric("hierarchical_explain_n_groups", n_groups)
+                probe.custom_metric("hierarchical_explain_n_tokens_in_groups", n_tokens)
 
         if self.use_importance_sampling:
             # set fraction based on importance
@@ -263,6 +286,16 @@ class HierarchicalExplainer(BaseExplainer):
                 new_fraction,
                 importance,
             )
+            probe = getattr(self, "_probe", None)
+            if probe:
+                probe.custom_metric("hierarchical_base_fraction", float(base_fraction))
+                probe.custom_metric("hierarchical_adjusted_fraction", new_fraction)
+                probe.custom_metric("hierarchical_importance_value", importance)
+                # Log adjustment factor
+                probe.custom_metric(
+                    "hierarchical_importance_adjustment_factor",
+                    new_fraction / base_fraction if base_fraction > 0 else 0.0,
+                )
 
         _ = self.shap_explainer(
             model=self.model,
@@ -310,6 +343,12 @@ class HierarchicalExplainer(BaseExplainer):
             A tuple of tensor containing the hierarchical SHAP values for the group,
             computation graph root or None if `verbose` is False.
         """
+        # Track recursion depth
+        self._recursion_depth = getattr(self, "_recursion_depth", 0) + 1
+        self._max_recursion_depth = max(
+            getattr(self, "_max_recursion_depth", 0), self._recursion_depth
+        )
+
         start_idx, end_idx, n = HierarchicalExplainer.__get_group_props(group_mask)
         subgroups_num = self.__get_subgroups_num(n=n)
         computation_graph = None
@@ -321,6 +360,21 @@ class HierarchicalExplainer(BaseExplainer):
             n,
             subgroups_num,
         )
+
+        # Log hierarchical decomposition metrics
+        probe = getattr(self, "_probe", None)
+        if probe:
+            probe.custom_metric(f"hierarchical_group_{start_idx}_{end_idx}_size", n)
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_subgroups", subgroups_num
+            )
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_importance",
+                float(importance),
+            )
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_depth", self._recursion_depth
+            )
 
         if subgroups_num <= 1:  # base case - group size <= k
             r = self.__calculate_group_normalized_shap_values(
@@ -361,6 +415,8 @@ class HierarchicalExplainer(BaseExplainer):
             )
 
         # calculate SHAP values for next levels
+        recursive_calls = 0
+        skipped_subgroups = 0
         for subgroup_id in range(1, subgroups_num + 1):
             subgroup_mask = group_mask & (group_ids == subgroup_id)
             sv = normalized_shap_values[subgroup_mask][0].item()
@@ -369,10 +425,12 @@ class HierarchicalExplainer(BaseExplainer):
                     "Skipping group %d explanation as its SHAP value is zero.",
                     subgroup_id,
                 )
+                skipped_subgroups += 1
                 if _verbose:
                     computation_graph.children.append(GraphNode())
                 continue
 
+            recursive_calls += 1
             subgroup_shap_values, subgroup_computation_graph = self.__compute(
                 chat=chat,
                 response=response,
@@ -384,6 +442,29 @@ class HierarchicalExplainer(BaseExplainer):
             normalized_shap_values[subgroup_mask] *= subgroup_shap_values[subgroup_mask]
             if _verbose:
                 computation_graph.children.append(subgroup_computation_graph)
+
+        # Log hierarchical recursion metrics
+        probe = getattr(self, "_probe", None)
+        if probe:
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_subgroup_size", subgroup_size
+            )
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_recursive_calls",
+                recursive_calls,
+            )
+            probe.custom_metric(
+                f"hierarchical_group_{start_idx}_{end_idx}_skipped_subgroups",
+                skipped_subgroups,
+            )
+
+        # Update total recursive calls
+        self._total_recursive_calls = (
+            getattr(self, "_total_recursive_calls", 0) + recursive_calls
+        )
+
+        # Decrement recursion depth
+        self._recursion_depth -= 1
 
         return normalized_shap_values, computation_graph
 
@@ -553,6 +634,7 @@ class HierarchicalExplainer(BaseExplainer):
         progress_bar: bool = True,
         first_layer_explanation_kwargs: dict[str, Any] | None = None,
         verbose: bool = False,
+        probe: "TelemetryProbe | None" = None,
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
         """
@@ -579,6 +661,7 @@ class HierarchicalExplainer(BaseExplainer):
         super().__call__(
             chat=chat,
             generation_kwargs=generation_kwargs,
+            probe=probe,
             **explanation_kwargs,
         )
         self.n_calls = 0
@@ -596,7 +679,7 @@ class HierarchicalExplainer(BaseExplainer):
 
         if progress_bar:
             self._progress_bar = tqdm(
-                desc="Calculating SHAP values",
+                desc="Hierarchical SHAP",
             )
         t0 = time()
 
@@ -631,6 +714,38 @@ class HierarchicalExplainer(BaseExplainer):
             source_chat=chat,
             normalized_shap_values=normalized_shap_values,
         )
+
+        if probe:
+            # Log final recursion metrics
+            probe.custom_metric(
+                "hierarchical_max_recursion_depth", self._max_recursion_depth
+            )
+            probe.custom_metric(
+                "hierarchical_total_recursive_calls", self._total_recursive_calls
+            )
+
+            # Log hierarchical configuration metrics (end of execution)
+            n_features = (
+                chat.shap_values_mask.sum().item()
+                if hasattr(chat, "shap_values_mask")
+                else 0
+            )
+            probe.custom_metric("hierarchical_n_features", n_features)
+            probe.custom_metric("hierarchical_mode", 1 if self.mode == Mode.TEXT else 0)
+            probe.custom_metric(
+                "hierarchical_use_importance_sampling",
+                int(self.use_importance_sampling),
+            )
+            probe.custom_metric("hierarchical_group_size", self.group_size)
+
+            # Initialize recursion tracking
+            self._recursion_depth = 0
+            self._max_recursion_depth = 0
+            self._total_recursive_calls = 0
+            probe.custom_metric(
+                "hierarchical_subgroups_num",
+                self.__get_subgroups_num(n_features) if n_features > 0 else 0,
+            )
 
         return ExplainerResult(
             source_chat=chat,

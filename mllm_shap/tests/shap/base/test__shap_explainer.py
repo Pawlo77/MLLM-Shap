@@ -10,6 +10,7 @@ from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.base.model_response import ModelResponse
 from mllm_shap.connectors.base.explainer_cache import ExplainerCache
+from mllm_shap.observability.sink import InMemoryObservabilitySink
 from mllm_shap.shap.base.shap_explainer import (
     BaseShapExplainer,
     NotEnoughTokensToExplainError,
@@ -238,6 +239,65 @@ class TestBaseShapExplainer:
         for obtained, expected in zip(valid_masks, expected_masks):
             assert torch.equal(obtained, expected)
 
+    def test_masks_generator_skips_when_prepare_mask_returns_none(
+        self, dummy_chat_instance: BaseMllmChat, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Generator should skip splits when mask manager cannot prepare a valid mask."""
+
+        class SingleSplitExplainer(DummyShapExplainer):
+            def __init__(self) -> None:
+                super().__init__()
+                self._splits = [
+                    torch.tensor([[True, False, True]], dtype=torch.bool),
+                    None,
+                ]
+
+            def _get_num_splits(self, n: int) -> int:
+                del n
+                return 1
+
+            def _get_next_split(
+                self,
+                n: int,
+                device: torch.device,
+                generated_masks_num: int,
+                existing_masks: list[Tensor] | None = None,
+            ) -> Tensor | None:
+                del n, device, generated_masks_num, existing_masks
+                return self._splits.pop(0)
+
+        explainer = SingleSplitExplainer()
+        mask_manager = MasksManager(chat=dummy_chat_instance)
+        monkeypatch.setattr(mask_manager, "prepare_mask", lambda split, device: None)
+
+        produced = list(
+            explainer._get_masks_generator(
+                mask_manager=mask_manager,
+                device=dummy_chat_instance.torch_device,
+                masks=[],
+            )
+        )
+
+        assert produced == []
+
+    def test_save_to_cache_raises_when_cache_already_exists(
+        self,
+        explainer_instance: BaseShapExplainer,
+        dummy_chat_instance: BaseMllmChat,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """_save_to_cache should reject overwriting existing cache."""
+        dummy_chat_instance.cache = MagicMock()
+        with pytest.raises(ValueError, match="SHAP cache already exists"):
+            explainer_instance._save_to_cache(
+                chat=dummy_chat_instance,
+                source_chat=deepcopy(dummy_chat_instance),
+                responses=[dummy_response_instance],
+                masks=torch.ones((2, 3), dtype=torch.bool),
+                shap_values=torch.zeros(3),
+                normalized_shap_values=torch.zeros(3),
+            )
+
     def test_get_similarities_uses_embeddings(
         self,
         explainer_instance: BaseShapExplainer,
@@ -289,6 +349,69 @@ class TestBaseShapExplainer:
         assert isinstance(result, torch.Tensor)
         spy.assert_not_called()
         similarity.assert_called_once_with(base=responses[0], other=responses)
+
+    def test_get_similarities_uses_embedding_model_when_provided(
+        self,
+        explainer_instance: BaseShapExplainer,
+        dummy_model_instance: DummyModel,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """Embedding model path should bypass model embedding methods."""
+        responses = [dummy_response_instance, deepcopy(dummy_response_instance)]
+        similarity = MagicMock(return_value=torch.tensor([0.2, 0.3]))
+        similarity.operates_on_embeddings = True
+        explainer_instance.similarity_measure = similarity
+        explainer_instance.embedding_model = lambda responses: [
+            torch.tensor([1.0, 0.0]),
+            torch.tensor([0.0, 1.0]),
+        ]
+        explainer_instance.embedding_reducer = lambda embeddings: torch.stack(
+            embeddings
+        )
+
+        with (
+            patch.object(dummy_model_instance, "get_static_embeddings") as static_spy,
+            patch.object(dummy_model_instance, "get_contextual_embeddings") as ctx_spy,
+        ):
+            _ = explainer_instance._get_similarities(
+                responses=responses, model=dummy_model_instance
+            )
+
+        static_spy.assert_not_called()
+        ctx_spy.assert_not_called()
+
+    def test_get_similarities_static_mode_uses_static_embeddings(
+        self,
+        explainer_instance: BaseShapExplainer,
+        dummy_model_instance: DummyModel,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """STATIC mode without embedding_model should call model.get_static_embeddings."""
+        responses = [dummy_response_instance, deepcopy(dummy_response_instance)]
+        similarity = MagicMock(return_value=torch.tensor([0.4, 0.5]))
+        similarity.operates_on_embeddings = True
+        explainer_instance.similarity_measure = similarity
+        explainer_instance.embedding_model = None
+        explainer_instance.mode = Mode.STATIC
+
+        with (
+            patch.object(
+                dummy_model_instance,
+                "get_static_embeddings",
+                wraps=dummy_model_instance.get_static_embeddings,
+            ) as static_spy,
+            patch.object(
+                dummy_model_instance,
+                "get_contextual_embeddings",
+                wraps=dummy_model_instance.get_contextual_embeddings,
+            ) as ctx_spy,
+        ):
+            _ = explainer_instance._get_similarities(
+                responses=responses, model=dummy_model_instance
+            )
+
+        static_spy.assert_called_once()
+        ctx_spy.assert_not_called()
 
     def test_get_shap_values_with_external_groups(
         self,
@@ -435,3 +558,114 @@ class TestBaseShapExplainer:
         assert result is None
         assert isinstance(dummy_response_instance.chat.cache, ExplainerCache)
         assert explainer_instance.total_n_calls >= 1
+
+    @patch("mllm_shap.shap.base.shap_explainer.CacheManager")
+    @patch("mllm_shap.shap.base.shap_explainer.logger.info")
+    def test_call_logs_cache_deduplication_info(
+        self,
+        mock_log_info: MagicMock,
+        mock_cache_manager_cls: MagicMock,
+        dummy_model_instance: DummyModel,
+        dummy_chat_instance: BaseMllmChat,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """__call__ should log deduplication stats when cache hits are extracted."""
+        explainer = DummyShapExplainer()
+        mock_cache_manager_cls.return_value.extracted_num = 1
+
+        def _fake_generate_step(
+            mask_manager: MasksManager,
+            device: torch.device,
+            masks: list[Tensor],
+            responses: list[ModelResponse],
+            **kwargs,
+        ) -> tuple[
+            int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
+        ]:
+            del kwargs
+            masks.append(mask_manager.get_initial_mask(device=device))
+            responses.append(deepcopy(dummy_response_instance))
+            return 0, None
+
+        with (
+            patch.object(explainer, "_generate_step", side_effect=_fake_generate_step),
+            patch.object(
+                explainer,
+                "_get_shap_values",
+                return_value=(torch.zeros(3), torch.zeros(3)),
+            ),
+            patch.object(explainer, "_save_to_cache"),
+        ):
+            _ = explainer(
+                model=dummy_model_instance,
+                source_chat=dummy_chat_instance,
+                response=dummy_response_instance,
+                progress_bar=False,
+                verbose=False,
+            )
+
+        mock_log_info.assert_any_call(
+            "Deduplicated %d/%d masks using existing cache.",
+            1,
+            1,
+        )
+
+    def test_call_auto_injects_observability_sink_when_enabled(
+        self,
+        dummy_model_instance: DummyModel,
+        dummy_chat_instance: BaseMllmChat,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """Enabling observability should auto-create an in-memory sink."""
+        explainer = DummyShapExplainer()
+        mask_sequence = [torch.tensor([[True, False, True]], dtype=torch.bool), None]
+
+        with (
+            patch.object(explainer, "_get_next_split", side_effect=mask_sequence),
+            patch.object(explainer, "_get_num_splits", return_value=1),
+        ):
+            _ = explainer(
+                model=dummy_model_instance,
+                source_chat=dummy_chat_instance,
+                response=dummy_response_instance,
+                progress_bar=False,
+                verbose=False,
+                observability_enabled=True,
+            )
+
+        assert isinstance(explainer.last_observability_sink, InMemoryObservabilitySink)
+        sink = explainer.last_observability_sink
+        assert sink is not None
+        assert len(sink.events) > 0
+        assert any(event.name == "stage_start" for event in sink.events)
+        assert any(event.name == "stage_end" for event in sink.events)
+
+    def test_call_uses_user_observability_sink_and_run_id(
+        self,
+        dummy_model_instance: DummyModel,
+        dummy_chat_instance: BaseMllmChat,
+        dummy_response_instance: ModelResponse,
+    ) -> None:
+        """Provided sink and run id should propagate to pipeline observability events."""
+        explainer = DummyShapExplainer()
+        sink = InMemoryObservabilitySink()
+        mask_sequence = [torch.tensor([[True, False, True]], dtype=torch.bool), None]
+
+        with (
+            patch.object(explainer, "_get_next_split", side_effect=mask_sequence),
+            patch.object(explainer, "_get_num_splits", return_value=1),
+        ):
+            _ = explainer(
+                model=dummy_model_instance,
+                source_chat=dummy_chat_instance,
+                response=dummy_response_instance,
+                progress_bar=False,
+                verbose=False,
+                observability_sink=sink,
+                observability_run_id="test-run-id",
+            )
+
+        assert explainer.last_observability_sink is sink
+        assert len(sink.events) > 0
+        assert all(event.run_id == "test-run-id" for event in sink.events)
+        assert all(span.run_id == "test-run-id" for span in sink.spans)

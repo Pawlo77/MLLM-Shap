@@ -65,13 +65,13 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
 
     operates_on_embeddings: bool = False
 
-    __tokenize_map: dict[bytes, int] = {}
-    __tokenize_counter: int = 0
     __vectorizer: TfidfVectorizer
 
     def __init__(self) -> None:
         """Initialize the TF-IDF vectorizer."""
         self.__vectorizer = TfidfVectorizer(analyzer=lambda x: x)
+        self.__tokenize_map: dict[bytes, int] = {}
+        self.__tokenize_counter: int = 0
 
     def __call__(self, base: ModelResponse, other: list[ModelResponse]) -> Tensor:
         """

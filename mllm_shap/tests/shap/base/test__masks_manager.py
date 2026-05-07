@@ -1,12 +1,46 @@
 """Unit tests for MasksManager class."""
 
+from unittest.mock import patch
+
 import pytest
 import torch
 from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.errors import MaskError
-from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
+from mllm_shap.shap.base._masks_manager import (
+    MaskGenerator,
+    MasksManager,
+    NoTokensToExplainError,
+)
 
 from ...dummy import DummyChat
+
+
+class _ForwardingMaskGenerator(MaskGenerator):
+    """Concrete generator used to validate MaskGenerator forwarding methods."""
+
+    def _mask_iter(self):
+        received = yield torch.tensor([True], dtype=torch.bool), 1
+        if received == "boom":
+            raise RuntimeError("boom")
+        yield torch.tensor([False], dtype=torch.bool), 2
+
+
+class TestMaskGenerator:
+    """Coverage-focused tests for MaskGenerator wrapper behavior."""
+
+    def test_send_and_iter_and_next_forward_to_internal_iterator(self) -> None:
+        """Checks that send and iter and next forward to internal iterator."""
+        generator = _ForwardingMaskGenerator()
+        assert iter(generator) is generator
+        assert next(generator)[1] == 1
+        assert generator.send("ok")[1] == 2
+
+    def test_throw_is_forwarded_to_internal_iterator(self) -> None:
+        """Checks that throw is forwarded to internal iterator."""
+        generator = _ForwardingMaskGenerator()
+        _ = next(generator)
+        with pytest.raises(RuntimeError, match="boom"):
+            _ = generator.throw(RuntimeError("boom"))
 
 
 class TestMasksManager:
@@ -32,6 +66,25 @@ class TestMasksManager:
         )
         with pytest.raises(NoTokensToExplainError, match="no tokens to explain"):
             _ = MasksManager(chat)
+
+    def test_init_raises_when_mask_sum_is_zero_despite_any_true(self) -> None:
+        """Defensive branch: if sum()==0 while any()==True, manager should still reject."""
+
+        class _MaskInconsistent:
+            def any(self) -> bool:
+                return True
+
+            def sum(self) -> torch.Tensor:
+                return torch.tensor(0)
+
+        class _Chat:
+            shap_values_mask = _MaskInconsistent()
+            input_tokens_num = 5
+
+        with pytest.raises(
+            NoTokensToExplainError, match="Mask must have at least one True value"
+        ):
+            _ = MasksManager(chat=_Chat())
 
     def test_init_sets_correct_attributes(
         self, manager: MasksManager, chat: BaseMllmChat
@@ -209,3 +262,10 @@ class TestMasksManager:
         """Repeated calls to get_hash should be deterministic."""
         mask = torch.tensor([False, True, False, True, False], dtype=torch.bool)
         assert manager.get_hash(mask) == manager.get_hash(mask)
+
+    def test_init_with_log_stats_logs_max_masks(self, chat: BaseMllmChat) -> None:
+        """When log_stats=True, init should emit max-mask statistics."""
+        with patch("mllm_shap.shap.base._masks_manager.logger.info") as mock_info:
+            _ = MasksManager(chat=chat, log_stats=True)
+        mock_info.assert_called_once()
+        assert "Number of tokens for explainability" in mock_info.call_args.args[0]

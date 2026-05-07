@@ -99,4 +99,5 @@ class TestBaseEmbeddingReducer:
         torch.manual_seed(0)
         result = reducer(embeddings)
         assert result[0].shape[0] == 0
-        assert result[0].shape[-1] == 0
+        # n=2 samples 2 columns from last dim (5) → shape (0, 2)
+        assert result[0].shape[-1] == 2

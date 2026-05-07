@@ -95,6 +95,18 @@ class TestCacheManager:
         with pytest.raises(ValueError, match="different chat instance"):
             _ = CacheManager(chat=chat, explainer_hash=123)
 
+    def test_init_keeps_working_when_cache_had_different_masks(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
+        """If had_different_masks flag is set, CacheManager should not use the cache."""
+        cache.had_different_masks = True
+        chat.cache = cache
+
+        manager = CacheManager(chat=chat, explainer_hash=123)
+
+        assert manager.cache is None
+        assert chat.cache is None
+
     @patch("mllm_shap.shap.base._cache_manager.MasksManager")
     def test_contains_returns_true_if_seen(
         self, mock_mask_manager: MagicMock, chat: BaseMllmChat
@@ -157,3 +169,17 @@ class TestCacheManager:
             ValueError, match="Either mask or mask_hash must be provided"
         ):
             _ = manager.extract()
+
+    def test_extract_with_explicit_mask_hash(
+        self, chat: BaseMllmChat, cache: ExplainerCache
+    ) -> None:
+        """extract() should use provided mask_hash without requiring mask tensor."""
+        chat.cache = cache
+        manager = CacheManager(chat=chat, explainer_hash=123)
+        manager.cache = cache
+
+        mask_hash = manager._masks_manager.get_hash(cache.masks[1])
+        manager._responses_map[mask_hash] = 1
+
+        response = manager.extract(mask_hash=mask_hash)
+        assert response is cache.responses[1]
