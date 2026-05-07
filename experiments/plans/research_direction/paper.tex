@@ -1,0 +1,242 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Warsaw}
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+
+\title{MLLM-SHAP Research Direction Plan}
+\subtitle{Roadmap, Compute Demand, and Execution Timeline}
+\author{Warsaw University of Technology}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Talk map (10 min)}
+  \begin{itemize}
+    \item Current plan status: blockers and execution gates
+    \item Research tracks: audio/multimodal, text-to-text, extended program, infrastructure
+    \item Compute demand model with explicit assumptions and dataset scales
+    \item Integrated timeline with interleaved workstreams
+    \item Scope for the master's thesis and conference papers
+    \item Team extension
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Research scope}
+  \begin{itemize}
+    \item \textbf{Reproducibility requirement:} versioned artifacts, pinned environment, benchmark protocol.
+    \item \textbf{T2T track:} estimand correctness, exact-vs-approx estimator validation, utility-function ablations.
+    \item \textbf{SGPA track:} segmentation quality, masking ablations, faithfulness, stability, human validation.
+    \item \textbf{Cross-model requirement:} primary model + secondary local model + secondary API model.
+    \item \textbf{Cross-lingual requirement:} English + at least two typologically distinct languages.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Current blockers and execution risks}
+  \begin{enumerate}
+    \item \textbf{Faithfulness evidence gap:} core faithfulness experiments are still incomplete and must be finished before strong claims.
+    \item \textbf{Hyperparameter-grid validation:} segmentation/masking hyperparameters need full validation on natural speech and multi-annotator protocol.
+    \item \textbf{Compute bottleneck:} planned experiment matrix is larger than single-GPU practical capacity; cluster scheduling is required.
+    \item \textbf{Rerun risk:} if ablations change the best masking strategy, previously reported results must be recomputed.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Research steps: text-to-text core}
+  \begin{itemize}
+    \item \textbf{Phase 0:} immediate data integrity audit for estimand identity (Shapley vs Banzhaf) across existing T2T outputs.
+    \item \textbf{Phase 1--2:} freeze 3-model text matrix and held-out prompt suite; enforce connector and masking invariants.
+    \item \textbf{Phase 3:} synthetic toy games with exact ground truth plus convergence checks against a precise explainer reference.
+    \item \textbf{Phase 4:} utility-function/scoring ablations (greedy similarity, log-probability, distribution-aware alternatives).
+    \item \textbf{Phase 5--6:} faithfulness and robustness tests (AOPC/AUC, rank stability, FDR correction), then benchmark/reporting hardening.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Research steps: infrastructure and tooling}
+  \begin{itemize}
+    \item \textbf{Data/artifacts:} move heavy results out of git, add artifact metadata (pipeline version, commit, config hash).
+    \item \textbf{Framework outputs:} per-sample structured records with masks, responses, and hardware traces.
+    \item \textbf{Performance:} optimize bottlenecks in masking/sampling and reduce RAM footprint for 10k+ coalition calls.
+    \item \textbf{Reporting/visualization:} reproducible benchmark sidecars and notebook/GUI views for faithfulness and variance comparisons.
+    \item \textbf{Role in program:} infrastructure track that enables reproducible scale-up of all scientific phases above.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Research steps: audio/multimodal core}
+  \begin{itemize}
+    \item \textbf{Phase 0 (gate):} lock model matrix, resolve Shapley/Banzhaf labeling, formalize multimodal coalition game.
+    \item \textbf{Phase 1:} verify additivity assumptions, retune segmentation hyperparameters on real speech with multi-annotator protocol, add audio preprocessing.
+    \item \textbf{Phase 2:} CTC alignment benchmark vs naive baselines; masking strategy ablation (deletion vs silence vs ambient noise) as go/no-go gate.
+    \item \textbf{Phase 3:} full-dataset execution, cross-lingual runs, replication on secondary models, and power-analysis-driven sample sizing.
+    \item \textbf{Phase 4--6:} faithfulness/stability/K-sensitivity, human validation, theory/reproducibility, and explicit failure-mode characterization.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Research steps: extended research program}
+  \begin{itemize}
+    \item \textbf{Phase 1:} multimodal interaction values (pairwise tractable SII-style studies), broader audio K-sensitivity, and plausibility/OOD metrics.
+    \item \textbf{Phase 2:} generalization beyond current setup: encoder backbones, task families, gradient/attention baselines, model-size effects.
+    \item \textbf{Phase 2:} modality trade-off analysis and fine-tuning impact on attribution rank structure.
+    \item \textbf{Phase 3:} longer-horizon method work: learned coalition sampling, hierarchical grouping, KL-based scoring, contrastive explanations.
+    \item \textbf{Phase 3:} input-space vs latent-space explanation layer comparison where internal representations are available.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conference and thesis status}
+  \begin{itemize}
+    \item \textbf{INTERSPEECH 2025}
+      \begin{itemize}
+        \item SGPA method paper focused on spectrogram-guided phonetic alignment for feasible audio SV analysis.
+        \item Core content: feasibility bottleneck diagnosis, 4-stage SGPA pipeline, segmentation diagnostics, and evaluation reductions (calls/time) for audio explainability.
+        \item \textbf{Status:} rebuttal stage; likely rejection.
+      \end{itemize}
+    \item \textbf{ACL 2026 System Demonstration}
+      \begin{itemize}
+        \item \texttt{mllm-shap} platform/demo paper focused on system architecture and tooling.
+        \item Core content: multimodal masking, multi-turn token-role tracking, estimator suite (Exact/MC/CC/Neyman/Hierarchical), GUI workflow, and package-level benchmarking.
+        \item \textbf{Status:} accepted.
+      \end{itemize}
+    \item \textbf{Bachelor thesis}
+      \begin{itemize}
+        \item Thesis track aligned with the explainability platform and research program.
+        \item \textbf{Status:} final grade 5.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What is already evidenced in submitted work}
+  \begin{itemize}
+    \item \textbf{From the SGPA conference paper:} demonstrated feasibility improvement for audio explainability, including strong reduction in model calls per sample and improved boundary-quality diagnostics.
+    \item \textbf{From the ACL system demo paper:} end-to-end platform scope is already demonstrated (multimodal masking, estimator suite, GUI workflow, package integration).
+    \item \textbf{Reviewer perspective (current signal):} engineering feasibility and system integration are seen as strengths; faithfulness depth, broader validation, and stronger replication are the main pressure points.
+    \item \textbf{Planning implication:} next steps are scale-up, replication, and stricter validation, rather than proof-of-concept work.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Dataset sizes driving compute volume}
+  \scriptsize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{2.0cm}}
+    \toprule
+    \textbf{Dataset block} & \textbf{Planned scope} & \textbf{Size} \\
+    \midrule
+    VoiceBench single-sentence subset & initial controlled English set with original + male TTS + female TTS variants & \(500\) \\
+    LibriSpeech single-sentence subset & initial controlled natural-speech English set & \(500\) \\
+    Full VoiceBench corpus & mandatory full run in large-scale phase & \(854\) \\
+    Full single-sentence corpus & mandatory full run in large-scale phase & \(448\) \\
+    Cross-lingual evaluation & at least two additional languages, minimum planned sample count & \(\ge 2 \times 100\) \\
+    Power-analysis pilot set & pilot for effect-size estimation before full commitments & \(20\) \\
+    Stability protocol set & repeated-seed and temperature protocols on fixed samples & \(20\) \\
+    K-sensitivity validation set & \(K \in \{50,100,200,500,1000\}\) on fixed audio samples & \(20\) \\
+    Human-study set & user validation study for highlighted segments & \(n \ge 15\) participants \\
+    T2T held-out prompt suite & 6 prompt buckets (QA, extraction, rewrite, constrained gen, multi-turn, long-context) & \(50\)--\(100\) per bucket \\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}{Lower-bound run count and runtime translation}
+  \scriptsize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{2.0cm}}
+    \toprule
+    \textbf{Component} & \textbf{Derivation from plan minima} & \textbf{Sample-runs} \\
+    \midrule
+    Core full-corpus faithfulness matrix & \(1302 \times 3\) methods \(\times 2\) full models & \(7812\) \\
+    Cross-lingual minimum matrix & \((2 \times 100)\times 3\) methods \(\times 2\) full models & \(1200\) \\
+    Stability + K checks & \((20\times10) + (20\times5)\) from repeated seeds and K-sweep & \(300\) \\
+    Additional explicit subsets & 30-sample independence + 100-sample granularity + 40 failure-mode cases & \(170\) \\
+    \midrule
+    \textbf{Audio lower bound} & sum of explicit minima above (before secondary B and reruns) & \(\mathbf{9482}\) \\
+    \bottomrule
+  \end{tabularx}
+\vspace{0.35em}
+\begin{itemize}
+  \item \textbf{Definition:} one \emph{sample-run} means one explained sample for one method-model configuration.
+  \item \textbf{No-SGPA runtime mapping:} \(9482\) sample-runs \(\approx 9482\) GPU-hours \(\approx 395\) GPU-days (single GPU).
+  \item \textbf{Mixed-runtime mapping:} if only the SGPA branch gets large speedup while native and LOO stay near baseline cost, total remains on the order of \(\sim 6.4\)k GPU-hours.
+  \item \textbf{T2T suite scale note:} \(6\) buckets \(\times (50\text{ to }100)\) prompts gives \(300\) to \(600\) prompts; replicated across 2 research models and multiple explainers/scoring backends, this adds a substantial second compute block.
+  \item \textbf{Lower-bound interpretation:} \(\sim 10\)k GPU-hours covers only the SGPA-focused lower bound; remaining components and the T2T grid add further demand.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Timeline (interleaved by workstream)}
+  \scriptsize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X}
+    \toprule
+    \textbf{Window} & \textbf{Primary focus and sequencing} \\
+    \midrule
+    Months 1--2 & \textbf{Fix package and unblock execution:} connector stability, experiment metadata/reporting, estimand labeling, baseline reproducibility checks. \\
+    Months 3--5 & \textbf{T2T full grid:} held-out prompt-suite matrix, explainer/scoring ablations, two-model replication, significance/FDR-ready outputs. \\
+    Months 5--8 & \textbf{SGPA core:} segmentation and masking ablations, alignment benchmarking, full-corpus faithfulness/stability/K-sensitivity runs. \\
+    Months 8--10 & \textbf{Multilingual and cross-model stage:} additional-language runs, TTS vs natural stratification, secondary-model verification of core rankings. \\
+    Months 10--13 & \textbf{Multimodal extensions:} interaction-value studies, modality trade-off analysis, encoder/task generalization, advanced metrics beyond faithfulness. \\
+    Months 13--15 & \textbf{Other/finalization:} failure-mode closure, theory appendix, reproducibility packaging, artifact governance, and performance optimization. \\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}{Risk register and mitigation}
+  \begin{itemize}
+    \item \textbf{Connector/model instability} \(\rightarrow\) lock fallback model candidates early.
+    \item \textbf{Underpowered experiments} \(\rightarrow\) pilot-based power analysis before full runs.
+    \item \textbf{Circular faithfulness evaluation} \(\rightarrow\) separate utility for SHAP computation vs evaluation.
+    \item \textbf{Compute bottlenecks} \(\rightarrow\) cluster queue planning and phase-gated high-information ablations.
+    \item \textbf{Cross-model claim fragility} \(\rightarrow\) explicit scoping if replication diverges.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Master's thesis and team needs}
+  \begin{itemize}
+    \item Separate deliverables into thesis-oriented contributions and conference-paper contributions.
+    \item Add dedicated DevOps support for cluster scheduling, artifact storage, and reproducible experiment orchestration.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conference timeline and scope fit (May 2026 -- Q1 2027)}
+  \scriptsize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.7cm} >{\raggedright\arraybackslash}p{1.9cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{1.2cm}}
+    \toprule
+    \textbf{Venue} & \textbf{Apply by} & \textbf{Scope link and expected deliverable} & \textbf{Fit} \\
+    \midrule
+    EMNLP 2026 main & May 25, 2026 & Only viable if Paper 1 results are already in hand; otherwise forces premature writing & Low (skip) \\
+    BlackboxNLP 2026 & \(\sim\) mid-Aug 2026 & Primary Paper 1 target: cross-modal grounding diagnostics with archival NLP interpretability audience & High \\
+    AAAI 2027 & \(\sim\) late Jul/early Aug 2026 & Secondary/main-track backup for Paper 1 variant if results mature early & Medium \\
+    ICASSP 2027 & \(\sim\) early Sep 2026 & SGPA plan-B venue and optional audio-flavored Paper 1 variant (4-page format) & High \\
+    NeurIPS workshops 2026 & late Aug--mid Sep 2026 & Short-form Paper 1 for additional audience exposure and feedback cycle & High \\
+    ICLR 2027 & abs \(\sim\) Sep 19; full \(\sim\) Sep 24, 2026 & Primary Paper 2 benchmark submission (SV/IG/attention/LIME/ablation suite) & Medium \\
+    ARR route (NAACL/EACL/ACL) & Oct 2026 / Feb 2027 cycles & Resubmission/escalation path after ICLR/workshop outcomes & Medium--High \\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}{Funding and compute applications}
+  \scriptsize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}X}
+    \toprule
+    \textbf{Target} & \textbf{Apply by} & \textbf{Role and gating dependency} \\
+    \midrule
+    PRELUDIUM 25 & Jun 16, 2026 & Feasible only with fast WUT host confirmation; otherwise skip and defer to next call \\
+    OPUS 31 & Jun 16, 2026 & High-leverage path if Maria leads PI role and proposal can be aligned quickly \\
+    FNP START 2027 & Q4 2026 call & Prestige track aligned with accepted/archival publication outputs \\
+    LIDER UP 1/2027 & Q1 2027 (eligibility-gated) & Requires doctoral-student or WUT employment status before call opens \\
+    Anthropic / OpenAI / Google credits & rolling (apply immediately) & Short-term API compute to de-risk benchmark and ablation execution \\
+    PLGrid / EuroHPC access & rolling/quarterly & Primary cluster backbone for high-volume phase 2--4 experiment matrices \\
+    \bottomrule
+  \end{tabularx}
+  \vspace{0.25em}
+  \begin{itemize}
+    \item \textbf{Prioritization rule:} if bandwidth is constrained, deliver Paper 1 + SGPA plan B first; defer Paper 2.
+    \item \textbf{Immediate actions (next 2 weeks):} apply for rolling compute credits and PLGrid access; finalize OPUS/PRELUDIUM decision with WUT stakeholders.
+  \end{itemize}
+\end{frame}
+
+\end{document}

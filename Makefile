@@ -1,4 +1,4 @@
-.PHONY: install update clean activate pre-commit pre-commit-all benchmarks coverage
+.PHONY: install update clean activate pre-commit pre-commit-all benchmarks bench-light coverage tests
 
 help:
 	@echo "Available targets:"
@@ -9,8 +9,10 @@ help:
 	@echo "  pre-commit       Run pre-commit checks on changed files"
 	@echo "  pre-commit-all   Run pre-commit checks on all files"
 	@echo "  tests            Run the test suite"
+	@echo "  bench-light      Run tests with lightweight performance tracking"
+	@echo "  benchmarks       Run detailed performance benchmarks"
+	@echo "  coverage         Run tests with coverage report"
 	@echo "  docs             Build the documentation"
-	@echo "  benchmarks       Run performance benchmarks"
 
 install:
 	uv python install 3.12
@@ -40,11 +42,14 @@ pre-commit-all:
 tests:
 	uv run pytest mllm_shap/tests/
 
-docs:
-	uv run sphinx-apidoc -o mllm_shap/docs/ mllm_shap/src/ && uv run make -C mllm_shap/docs clean html
+bench-light:
+	uv run pytest mllm_shap/tests/ --benchmark-light
 
 benchmarks:
 	uv run python -m mllm_shap.benchmarks.bench_api_perf --bench all
 
 coverage:
 	uv run pytest --cov=./mllm_shap/src/mllm_shap --cov-report=term-missing mllm_shap/tests/
+
+docs:
+	uv run sphinx-apidoc -o mllm_shap/docs/ mllm_shap/src/ && uv run make -C mllm_shap/docs clean html

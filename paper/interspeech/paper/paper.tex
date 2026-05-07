@@ -31,7 +31,7 @@
 \maketitle
 
 \begin{abstract}
-    End-to-end audio language models process speech without explicit linguistic structure, making it difficult to identify which parts of an utterance drive a given response. Shapley value attribution offers a theoretically grounded remedy, but applying it to audio is intractable under native tokenization: a typical utterance yields over $150$ encoder frames, inflating the coalition space by roughly $10^{42}$ relative to text; individual frames lack standalone meaning; and token boundaries that bisect phonetic transitions introduce masking artifacts. We introduce Spectrogram-Guided Phonetic Alignment (SGPA), a four-stage pipeline that combines Connectionist Temporal Classification forced alignment with spectral boundary refinement to produce acoustically stable, word-aligned audio segments. Controlled diagnostics on LFM2-Audio-1.5B with VoiceBench show that SGPA yields a 43$\times$ reduction in model evaluations. Statistical testing confirms that SGPA significantly alters attribution concentration while preserving the global cumulative profile, establishing it as a feasibility-enabling layer for audio explainability.
+  End-to-end audio language models process speech without explicit linguistic structure, making it difficult to identify which parts of an utterance drive a given response. Shapley value attribution offers a theoretically grounded remedy, but applying it to audio is intractable under native tokenization: a typical utterance yields over $150$ encoder frames, inflating the coalition space by roughly $10^{42}$ relative to text; individual frames lack standalone meaning; and token boundaries that bisect phonetic transitions introduce masking artifacts. We introduce Spectrogram-Guided Phonetic Alignment (SGPA), a four-stage pipeline that combines Connectionist Temporal Classification forced alignment with spectral boundary refinement to produce acoustically stable, word-aligned audio segments. Controlled diagnostics on LFM2-Audio-1.5B show that SGPA yields up to $79\times$ fewer model evaluations and up to $53\times$ lower total execution time on matched mode-dataset conditions. Statistical testing confirms that SGPA significantly alters attribution concentration while preserving the global cumulative profile, establishing it as a feasibility-enabling layer for audio explainability.
 \end{abstract}
 
 \section{Introduction}
@@ -46,9 +46,9 @@ The root cause is native audio tokenization. Unlike text, which discretizes natu
     \item \textbf{Boundary artifacts.} Native token boundaries frequently bisect phonetic transitions such as co-articulations~\cite{ladefoged2014course, hardcastle1999coarticulation}. Masking tokens at these positions introduces audible discontinuities and out-of-distribution perturbations that degrade the fidelity of SV estimates.
 \end{itemize}
 
-This work addresses these challenges by introducing \textbf{Spectrogram-Guided Phonetic Alignment (SGPA)}, a four-stage preprocessing pipeline that maps raw audio waveforms to word-aligned segments using Connectionist Temporal Classification (CTC)~\cite{graves2006connectionist} and local spectral refinement~\cite{mcfee2015librosa}. By replacing architecture-specific encoder frames with semantically grounded word-level segments, SGPA reduces the effective player count by $10$--$50\times$, compressing the required model evaluations from ${\approx}2{,}552$ to ${\approx}59$ per sample -- making SV-based audio attribution computationally feasible on consumer hardware.\penalty-10000
+This work addresses these challenges by introducing \textbf{Spectrogram-Guided Phonetic Alignment (SGPA)}, a four-stage preprocessing pipeline that maps raw audio waveforms to word-aligned segments using Connectionist Temporal Classification (CTC)~\cite{graves2006connectionist} and local spectral refinement~\cite{mcfee2015librosa}. By replacing architecture-specific encoder frames with semantically grounded word-level segments, SGPA reduces the effective player count by $10$--$50\times$, cutting required model evaluations from ${\approx}6{,}322$ to ${\approx}80$ per sample in the \texttt{SO2S-single\_sentence\_1k} condition -- making SV-based audio attribution computationally feasible on consumer hardware.\penalty-10000
 
-Our contributions are threefold: (i)~we present SGPA, a model-agnostic alignment layer for audio SV computation; (ii)~we provide controlled diagnostics demonstrating that SGPA is not a neutral transformation -- it significantly alters attribution concentration (Cohen's~$d$~\cite{cohen1988statistical} up to \textit{$-1.37$}) while preserving the global cumulative SV profile; and (iii)~we release an open-source Python package, \texttt{mllm-shap}\footnote{\url{https://pypi.org/project/mllm-shap/}}, implementing the full pipeline. SGPA is integrated into a broader explainability platform available in the accompanying package~\cite{pozorskimuszynskimllmshap}.
+Our contributions are threefold: (i)~we present SGPA, a model-agnostic alignment layer for audio SV computation; (ii)~we provide controlled diagnostics demonstrating that SGPA is not a neutral transformation -- it significantly alters attribution concentration (Cohen's~$d$~\cite{cohen1988statistical} up to \textit{$-1.61$}) while preserving the global cumulative SV profile; and (iii)~we release an open-source Python package, \texttt{mllm-shap}\footnote{\url{https://pypi.org/project/mllm-shap/}}, implementing the full pipeline. SGPA is integrated into a broader explainability platform available in the accompanying package~\cite{pozorskimuszynskimllmshap}.
 
 The central contribution is not the individual components -- CTC alignment and spectral boundary refinement are established tools -- but their composition into a feasibility-enabling layer that makes SV attribution on audio computationally tractable and linguistically interpretable.
 
@@ -140,7 +140,7 @@ To validate SGPA, we conduct a controlled comparison between two segmentation re
 
   \item[Datasets] We evaluate our approach using two single-sentence English corpora derived from industry-standard benchmarks: (i)~\texttt{voice\_bench\_single\_sentence\_1k}, adapted from \textbf{VoiceBench}~\cite{chen2024voicebench}, which features paired synthetic (male and female) audio alongside original speech; and (ii)~\texttt{single\_sentence\_500}, adapted from \textbf{LibriSpeech-ASR}~\cite{panayotov2015librispeech}, which consists entirely of natural human speech. By leveraging these two datasets, we are able to analyze our contribution comprehensively across both artificial and authentic speech domains. Both curated corpora are publicly released alongside this work\footnote{\url{https://huggingface.co/datasets/Pawlo77/mllm-shap}}. For selected analyses we use limited variants of these corpora due to compute constraints; whenever this applies, the exact subset and size are stated explicitly in the corresponding subsection. Full details regarding the construction pipeline---including deduplication, sentence filtering, semantic quality filtering, token-budget filtering, and sampling---are provided in Appendix~\ref{app:dataset_creation}. \penalty-10000
 
-  \item[Modes] Since SGPA targets audio inputs, we evaluate two speech-to-speech configurations: male voice (\texttt{SM2S}) and female voice (\texttt{SF2S}). Each prompt is synthesized in both variants to assess SGPA's consistency across speaker characteristics.
+  \item[Modes] Since SGPA targets audio inputs, we evaluate three speech-to-speech configurations available in the refreshed runs: synthetic male voice (\texttt{SM2S}), synthetic female voice (\texttt{SM2F}), and original speech (\texttt{SO2S}).
 
   \item[SV approximation] We employ the Neyman-allocated complementary-contributions estimator~\cite{shapleyapproximations}, which reuses each coalition's complementary contribution across all players it contains, combined with the Neyman stratified sampling formula~\cite{nayman} for optimal budget allocation. The total budget is set to $3n^2$ model evaluations, where $n$ is the number of players. The algorithm proceeds in two phases: Phase~1 draws $m_{\mathrm{init}} = \max(2, \lfloor m / 2n^2 \rfloor)$ samples per stratum to initialize variance estimates; Phase~2 allocates the remaining budget proportionally to the estimated standard deviations, minimizing the total SV variance.
 
@@ -151,7 +151,7 @@ To validate SGPA, we conduct a controlled comparison between two segmentation re
 \label{subsec:feasibility}
 
 \begin{table}[t]
-  \caption{Effect of SGPA on Neyman SV estimation cost and phase budget distribution. Mean model calls, total execution time, and proportion of samples per Neyman step count over $100$ VoiceBench single-sentence prompts.}
+  \caption{Effect of SGPA on Neyman SV estimation cost and phase budget distribution in refreshed \texttt{lem\_runs}. Mean model calls, total execution time, and proportion of samples per Neyman step count are reported per mode-dataset condition.}
   \label{tab:sgpa_cost_extended}
   \centering
   \small
@@ -160,21 +160,25 @@ To validate SGPA, we conduct a controlled comparison between two segmentation re
     \toprule
     & & & & \multicolumn{2}{c}{\textbf{Phase (\%)}} \\
     \cmidrule(lr){5-6}
-    \textbf{SGPA} & \textbf{Mode} & \textbf{Calls (mean)} & \textbf{Time (s)} & \textbf{1} & \textbf{2} \\
+    \textbf{SGPA} & \textbf{Mode-dataset} & \textbf{Calls (mean)} & \textbf{Time (s)} & \textbf{1} & \textbf{2} \\
     \midrule
-    \checkmark & SM2S & 59.4 & 67.5 & 37 & 63 \\
-    \checkmark & SF2S & 59.3 & 66.1 & 37 & 63 \\
+    \checkmark & SM2S-1k & 80.6 & 142.4 & 15 & 85 \\
+    \checkmark & SM2F-1k & 80.7 & 142.9 & 15 & 85 \\
+    \checkmark & SO2S-1k & 79.8 & 137.6 & 15 & 85 \\
+    \checkmark & SO2S-500 & 21.7 & 28.9 & 86 & 14 \\
     \midrule
-    --         & SM2S & 2365.8 & 1696.5 & 0 & 100 \\
-    --         & SF2S & 2552.1 & 1819.9 & 2 & 98 \\
+    --         & SM2S-1k & 1984.2 & 2416.0 & 0 & 100 \\
+    --         & SM2F-1k & 2364.2 & 2820.7 & 0 & 100 \\
+    --         & SO2S-1k & 6321.6 & 7362.1 & 0 & 100 \\
+    --         & SO2S-500 & 2306.4 & 2653.6 & 0 & 100 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 
-Table~\ref{tab:sgpa_cost_extended} reports computational cost under both segmentation regimes. Without SGPA, native audio tokenization produces long feature sequences and the Neyman estimator requires ${\approx}2{,}552$ model calls per sample (mode~\texttt{SF2S}), with a mean total execution time of \SI{1820}{\second}. With SGPA, word-level aggregation compresses the player set to ${\approx}7$ segments, reducing calls to ${\approx}59$ per sample -- a $43\times$ reduction -- and total execution time to ${\approx}\SI{66}{\second}$ ($28\times$ faster).
+Table~\ref{tab:sgpa_cost_extended} reports computational cost under both segmentation regimes. Without SGPA, native audio tokenization produces long feature sequences and the Neyman estimator reaches ${\approx}6{,}322$ model calls per sample in \texttt{SO2S-1k}, with a mean total execution time of \SI{7362}{\second}. With SGPA, word-level aggregation reduces this to ${\approx}80$ calls and \SI{138}{\second} in the same condition, i.e., about $79\times$ fewer calls and $53\times$ lower total execution time.
 
-Figure~\ref{fig:token_dist} illustrates the shift in feature-count distributions. With SGPA enabled, explainable lengths concentrate in a narrow, low-count regime (interquartile range $\approx$2); without SGPA, they expand substantially and become more dispersed, directly increasing coalition complexity.
+Figure~\ref{fig:token_dist} illustrates the shift in feature-count distributions. With SGPA enabled, explainable lengths concentrate in a narrow, low-count regime (interquartile range $\approx$3); without SGPA, they expand substantially and become more dispersed (interquartile range $\approx$10), directly increasing coalition complexity.
 
 \begin{figure}[t]
   \centering
@@ -183,7 +187,7 @@ Figure~\ref{fig:token_dist} illustrates the shift in feature-count distributions
   \label{fig:token_dist}
 \end{figure}
 
-The Neyman budget allocation also shifts qualitatively (Table~\ref{tab:sgpa_cost_extended}). With SGPA, the estimator distributes $37\%$ of its budget to the initial variance-estimation phase (Phase~1) and $63\%$ to the optimized phase (Phase~2). Without SGPA, the large game forces nearly all budget ($\geq98\%$) into Phase~2, leaving minimal room for reliable variance estimation and yielding a less stable approximation.
+The Neyman budget allocation also shifts qualitatively (Table~\ref{tab:sgpa_cost_extended}). For \texttt{*-1k} conditions with SGPA, the estimator allocates $15\%$ of samples to Phase~1 and $85\%$ to Phase~2, while \texttt{SO2S-500} allocates $86\%$ to Phase~1 and $14\%$ to Phase~2. Without SGPA, all refreshed conditions allocate $100\%$ to Phase~2, leaving no practical budget for variance-initialization sampling.
 
 \subsection{Attribution Statistics}
 \label{subsec:attribution}
@@ -196,7 +200,7 @@ As secondary characterizations we report \textbf{Top-$20\%$ mass} $\sum_{i=1}^{\
 
 A conceptual note: SGPA does not assert that more concentrated attribution is normatively correct. The shift in attribution statistics observed below is a descriptive consequence of redefining the player partition -- an inherent property of Shapley values, which depend on the chosen player set~\cite{RM-670-PR}. For a sentence where all words contribute equally, SGPA would assign equal SVs across segments. The entropy and Gini changes reflect the distributional consequences of aggregating ${\approx}50$ noisy frame-level attributions into ${\approx}7$ interpretable word-level scores.
 
-\subsubsection{Results} We apply paired $t$-tests with Bonferroni correction ($\alpha = 0.05$). Table~\ref{tab:sgpa_stats} reports the results. Nearly all comparisons are significant, confirming that SGPA systematically alters attribution concentration.
+\subsubsection{Results} We apply paired $t$-tests with Bonferroni correction ($\alpha = 0.05$). Table~\ref{tab:sgpa_stats} reports matched SGPA-on vs SGPA-off comparisons from refreshed runs. Entropy effects remain significant for synthetic speech modes; Gini and Top-$20\%$ effects are directionally consistent but do not survive correction.
 
 \begin{table}[t]
   \caption{Paired significance tests of per-observation SV summary metrics (SGPA~\emph{on} vs.\  \emph{off}), Bonferroni-corrected $\alpha = 0.05$. Entropy is normalized by $\sqrt{n}$ (secondary metric; see text).}
@@ -206,20 +210,20 @@ A conceptual note: SGPA does not assert that more concentrated attribution is no
     \toprule
     \textbf{Mode} & \textbf{Metric} & $p$ & \textbf{Cohen's $d$} & \textbf{Sig.} \\
     \midrule
-    SM2S & Gini        & $<$0.01 & 0.50  & \checkmark \\
-         & Entropy     & $<$0.01 & $-$1.37 & \checkmark \\
-         & Top-20\%    & $<$0.01 & 0.86  & \checkmark \\
+        SM2S-1k & Gini        & 0.02    & 0.89  & --- \\
+          & Entropy     & $<$0.01 & $-$1.61 & \checkmark \\
+          & Top-20\%    & 0.01    & 1.06  & --- \\
     \addlinespace
-    SF2S & Gini        & 0.01    & 0.21  & --- \\
-         & Entropy     & $<$0.01 & $-$0.97 & \checkmark \\
-         & Top-20\%    & $<$0.01 & 0.72  & \checkmark \\
+        SM2F-1k & Gini        & 0.04    & 0.77  & --- \\
+          & Entropy     & $<$0.01 & $-$1.45 & \checkmark \\
+          & Top-20\%    & 0.01    & 1.08  & --- \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The Gini coefficient is statistically significant for \texttt{SM2S} ($p < 0.01$, $d = 0.50$) and directionally consistent for \texttt{SF2S}. This provides length-normalization-free evidence that SGPA shifts attribution concentration. The large negative Cohen's~$d$ for normalized entropy ($-1.37$ for \texttt{SM2S}, $-0.97$ for \texttt{SF2S}) indicates that SGPA \emph{increases} entropy, spreading attribution more evenly across the fewer word-level players -- consistent with consolidating many noisy frame-level scores into fewer, more stable word-level attributions. The positive~$d$ for top-$20\%$ mass reflects the mechanical consequence that each player's share grows as the total count shrinks.
+The Gini coefficient is directionally consistent for both synthetic speech modes (positive $d$), but does not remain significant after Bonferroni correction. This provides suggestive, but not conclusive, length-normalization-free evidence of concentration change. The large negative Cohen's~$d$ for normalized entropy ($-1.61$ for \texttt{SM2S-1k}, $-1.45$ for \texttt{SM2F-1k}) indicates that SGPA \emph{reduces} normalized entropy in the refreshed runs. The positive~$d$ for top-$20\%$ mass is consistent with stronger attribution concentration under the SGPA partition.
 
-The sole non-significant comparison (\texttt{SF2S}~Gini, $d{=}0.21$) suggests that overall inequality is less sensitive to segmentation for female-voice inputs. Figure~\ref{fig:entropy} visualizes this effect: SGPA expands the interquartile range of normalized entropy, indicating a broader set of concentration regimes across observations.
+Figure~\ref{fig:entropy} visualizes the entropy-shift effect: SGPA lowers the central tendency of normalized entropy while expanding its interquartile range (higher dispersion across observations).
 
 \begin{figure}[t]
   \centering
@@ -268,12 +272,22 @@ Across all runs, SGPA reduces mean boundary spectral flux by $42.72\%$ (24.64 $\
 
 A key methodological question is whether SGPA alters the qualitative attribution trajectory. Figure~\ref{fig:cumulative_sv} addresses this by comparing position-normalized cumulative SV profiles. Both conditions exhibit an ''early mass'' pattern -- the first few positions accumulate a disproportionate share of total attribution -- followed by gradual decay. SGPA modifies local allocation density (the fine-scale derivative structure) while preserving the broader accumulation profile. This is expected: SGPA aggregates fine-grained audio units into semantically interpretable segments, which dampens high-frequency variations attributable to micro-boundary differences under native tokenization, while the global trajectory remains intact.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{../figures/cumulative_sv.png}
-  \caption{Position-normalized cumulative SV profile (with derivative) for speech-to-speech mode, illustrating the preserved ''early mass'' macro-trend under SGPA.}
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \textbf{(a) With SGPA}\\[0.5em]
+    \includegraphics[width=\linewidth]{../figures/cumulative_shapley_and_derivative_1.png}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \textbf{(b) Without SGPA}\\[0.5em]
+    \includegraphics[width=\linewidth]{../figures/cumulative_shapley_and_derivative_2.png}
+  \end{minipage}
+  \caption{Position-normalized cumulative SV profile (with derivative) for speech-to-speech mode. Both conditions exhibit an ''early mass'' pattern, illustrating preserved macro-trend structure under SGPA.}
   \label{fig:cumulative_sv}
-\end{figure}
+\end{figure*}
 
 %==================================================================================
 \section{Discussion and Conclusion}
@@ -282,9 +296,9 @@ A key methodological question is whether SGPA alters the qualitative attribution
 We introduced SGPA, a four-stage alignment pipeline that converts raw audio waveforms into word-aligned segments for SV attribution. By combining CTC-based forced alignment with spectrogram-guided boundary refinement, SGPA addresses the three barriers that make SV computation on audio intractable under native tokenization. Our controlled diagnostics on LFM2-Audio-1.5B with VoiceBench yield three principal findings:
 
 \begin{enumerate}
-    \item \textbf{Feasibility.} SGPA compresses the player set from ${\approx}50$ native tokens to ${\approx}7$ word-aligned segments, reducing model evaluations by $43\times$ (from 2{,}552 to 59) and total execution time from ${\approx}30$~minutes to roughly one minute per sample on a consumer-grade GPU.
+    \item \textbf{Feasibility.} SGPA compresses the player set from ${\approx}50$ native tokens to ${\approx}7$ word-aligned segments. In refreshed \texttt{SO2S-1k} runs this reduces model evaluations by about $79\times$ (6{,}322 to 80) and total execution time by about $53\times$ (7{,}362~s to 138~s) on a consumer-grade GPU.
 
-    \item \textbf{Non-neutrality.} SGPA fundamentally changes the cooperative game being solved. The Gini coefficient -- a length-normalization-free primary metric -- is statistically significant for \texttt{SM2S} ($d = 0.50$), and directionally consistent for \texttt{SF2S}, confirming that word-level segmentation shifts attribution concentration. SGPA also increases normalized entropy ($d = -1.37$ for \texttt{SM2S}) and raises top-quintile mass ($d = 0.86$). This redistribution is an inherent property of Shapley values: explanations depend on the chosen player partition~\cite{RM-670-PR}, and any change to that partition necessarily changes the resulting attributions. The trade-off is deliberate -- interpretability over fidelity to the model's internal tokenization. Crucially, SGPA does not enforce concentrated attribution: for a sentence where all words contribute equally, SGPA assigns equal SVs across segments.
+    \item \textbf{Non-neutrality.} SGPA fundamentally changes the cooperative game being solved. In refreshed runs, entropy shifts are large and significant for synthetic speech modes (up to $d = -1.61$), while Gini and top-quintile mass changes are directionally consistent but not Bonferroni-significant. This redistribution is an inherent property of Shapley values: explanations depend on the chosen player partition~\cite{RM-670-PR}, and any change to that partition necessarily changes the resulting attributions. The trade-off is deliberate -- interpretability over fidelity to the model's internal tokenization. Crucially, SGPA does not enforce concentrated attribution: for a sentence where all words contribute equally, SGPA assigns equal SVs across segments.
 
     \item \textbf{Structural preservation.} Despite altering local allocation density, SGPA preserves the global cumulative SV profile and its characteristic ''early mass'' pattern, indicating that the word-level partition retains the model's broad attribution structure.
 \end{enumerate}

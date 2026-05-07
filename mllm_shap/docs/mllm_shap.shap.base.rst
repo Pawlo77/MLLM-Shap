@@ -12,14 +12,6 @@ mllm\_shap.shap.base.approx module
    :show-inheritance:
    :undoc-members:
 
-mllm\_shap.shap.base.complementary module
------------------------------------------
-
-.. automodule:: mllm_shap.shap.base.complementary
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 mllm\_shap.shap.base.embeddings module
 --------------------------------------
 
