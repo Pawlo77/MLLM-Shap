@@ -1,6 +1,7 @@
 """Cache manager for SHAP explainers."""
 
 from logging import Logger
+from typing import TYPE_CHECKING
 
 from torch import Tensor
 
@@ -10,6 +11,9 @@ from ._masks_manager import MasksManager
 from ...connectors.base.chat import BaseMllmChat
 from ...connectors.base.model_response import ModelResponse
 from ...connectors.base.explainer_cache import ExplainerCache
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
 
 
 logger: Logger = get_logger(__name__)
@@ -30,19 +34,29 @@ class CacheManager:
     _responses_map: dict[int, int] = {}
     """Map of mask hashes to model responses."""
 
-    def __init__(self, chat: BaseMllmChat, explainer_hash: int) -> None:
+    _probe: "TelemetryProbe | None"
+    """Telemetry probe for metrics collection."""
+
+    def __init__(
+        self,
+        chat: BaseMllmChat,
+        explainer_hash: int,
+        probe: "TelemetryProbe | None" = None,
+    ) -> None:
         """
         Initialize CacheManager by extracting SHAP explainer cache from the full chat.
 
         Args:
             chat: The chat instance to manage the cache for.
             explainer_hash: The hash of the explainer instance.
+            probe: Optional TelemetryProbe for metrics collection.
         Raises:
             ValueError: If existing cache is invalid.
         """
         logger.debug("Getting or setting SHAP explainer cache for chat %s.", chat)
+        self._probe = probe
 
-        self._masks_manager = MasksManager(chat=chat)
+        self._masks_manager = MasksManager(chat=chat, probe=self._probe)
 
         cache = chat.cache
         if cache is not None:
@@ -58,16 +72,18 @@ class CacheManager:
                 logger.warning(
                     "Existing SHAP cache for chat was calculated with external mask, no retrieval will be done.",
                 )
+                # Do not use the cache if the masks were calculated with a different target mask
+                cache = None
+            else:
+                # Extend existing masks to match new masks size
+                cache.extend_masks()
 
-            # Extend existing masks to match new masks size
-            cache.extend_masks()
+                for i, mask in enumerate(cache.masks):
+                    mask_hash = self._masks_manager.get_hash(mask)
+                    self._masks_manager.mark_seen(mask_hash=mask_hash)
+                    self._responses_map[mask_hash] = i
 
-            for i, mask in enumerate(cache.masks):
-                mask_hash = self._masks_manager.get_hash(mask)
-                self._masks_manager.mark_seen(mask_hash=mask_hash)
-                self._responses_map[mask_hash] = i
-
-            logger.debug("Found existing SHAP cache for chat %s.", chat)
+                logger.debug("Found existing SHAP cache for chat %s.", chat)
 
         self.cache = cache
         chat.cache = None
@@ -84,7 +100,11 @@ class CacheManager:
         Returns:
             True if the mask is present in cache, False otherwise.
         """
-        return self._masks_manager.seen(mask=mask, mask_hash=mask_hash)
+        is_present = self._masks_manager.seen(mask=mask, mask_hash=mask_hash)
+        # Record cache hit or miss
+        if self._probe:
+            self._probe.cache_operation(is_hit=is_present)
+        return is_present
 
     def extract(
         self, mask: Tensor | None = None, mask_hash: int | None = None

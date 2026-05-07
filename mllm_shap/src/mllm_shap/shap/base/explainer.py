@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -11,6 +11,9 @@ from ...connectors.base.model import BaseMllmModel
 from ...utils.logger import get_logger
 from ..explainer_result import ExplainerResult
 from .shap_explainer import BaseShapExplainer
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
 
 logger: Logger = get_logger(__name__)
 
@@ -66,6 +69,7 @@ class BaseExplainer(ABC):
         *_: Any,
         chat: BaseMllmChat,
         generation_kwargs: dict[str, Any] | None = None,
+        probe: "TelemetryProbe | None" = None,
         **explanation_kwargs: Any,
     ) -> ExplainerResult:
         """
@@ -75,6 +79,7 @@ class BaseExplainer(ABC):
         Args:
             chat: The chat instance.
             generation_kwargs: The generation kwargs for the model.generate method.
+            probe: Optional telemetry probe forwarded to the underlying SHAP explainer.
             explanation_kwargs: The explanation kwargs for the SHAP explainer. Should not contain
                 duplicate keys with generation_kwargs.
         Returns:
