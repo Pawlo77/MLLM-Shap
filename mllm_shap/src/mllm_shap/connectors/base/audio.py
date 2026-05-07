@@ -27,9 +27,15 @@ warnings.filterwarnings("ignore", message=".*forced_align has been deprecated.*"
 
 
 ASCII_SPACE: str = " "
+"""ASCII space character, used for transcript normalization and CTC blank token replacement."""
 UNICODE_CATEGORY_NONSPACING_MARK: str = "Mn"
+"""Unicode category for non-spacing marks, used to strip diacritics during transcript normalization."""
 _SILENCE_THRESHOLD_RATIO: float = 0.5
+"""When refining boundaries, the minimum RMS must be less than this ratio of the mean
+ RMS in the search window to be accepted as a valid silence point. Prevents false positives in continuous speech."""
 _MIN_REFINE_SAMPLES: int = 256
+"""Minimum number of audio samples required in the boundary refinement search region to perform analysis.
+Prevents unreliable refinements in very short segments."""
 
 
 @dataclass
@@ -41,7 +47,6 @@ class AudioSegment:
 
     start_time: float
     """Start time in seconds."""
-
     end_time: float
     """End time in seconds."""
 
@@ -53,13 +58,11 @@ class AudioSegment:
 
     audio_format: str = field(default="wav")
     """Audio format of the raw audio bytes."""
-
     sample_rate: int | None = field(default=None, repr=False)
     """Sample rate for `start_sample`/`end_sample` (if set)."""
 
     start_sample: int | None = field(default=None, repr=False)
     """Start sample index in the source waveform (if set)."""
-
     end_sample: int | None = field(default=None, repr=False)
     """End sample index in the source waveform (if set)."""
 
@@ -116,6 +119,17 @@ class SpectrogramGuidedAligner:
         boundary_energy_weight: float = 0.8,
         boundary_flux_weight: float = 0.2,
     ):
+        """Initialize the aligner with the specified configuration.
+
+        Args:
+            device: The torch device to run the model on.
+            model_name: The Hugging Face model name for the Wav2Vec2 CTC model.
+            model_revision: The revision of the model to load.
+            sample_rate: The sample rate to use for audio processing.
+            ctc_separator: The character used to replace spaces in the transcript for CTC processing.
+            boundary_energy_weight: Weight for energy in boundary refinement (0 to 1).
+            boundary_flux_weight: Weight for spectral flux in boundary refinement (0 to 1).
+        """
         if boundary_energy_weight < 0 or boundary_flux_weight < 0:
             raise ValueError("Boundary refinement weights must be non-negative.")
         if boundary_energy_weight + boundary_flux_weight <= 0:
@@ -149,6 +163,7 @@ class SpectrogramGuidedAligner:
 
     @staticmethod
     def normalize_text(text: str) -> str:
+        """Normalize text by removing diacritics, non-alphanumeric characters, and converting to uppercase."""
         text_nfd = unicodedata.normalize("NFD", text)
         text_no_diacritics = "".join(
             char
@@ -160,6 +175,7 @@ class SpectrogramGuidedAligner:
     def __compute_emissions(
         self, waveform: torch.Tensor, original_sr: int
     ) -> torch.Tensor:
+        """Compute the emission probabilities from the audio waveform using the Wav2Vec2 model."""
         if original_sr != self.sample_rate:
             resampler = torchaudio.transforms.Resample(
                 orig_freq=original_sr, new_freq=self.sample_rate
@@ -206,11 +222,11 @@ class SpectrogramGuidedAligner:
         found).
 
         Args:
-            waveform:       Full audio waveform as a 1-D numpy array.
-            sr:             Sampling rate.
+            waveform: Full audio waveform as a 1-D numpy array.
+            sr: Sampling rate.
             candidate_time: Raw CTC boundary estimate in seconds.
-            left_time:      Start of the blank gap (seconds). Optional.
-            right_time:     End of the blank gap (seconds). Optional.
+            left_time: Start of the blank gap (seconds). Optional.
+            right_time: End of the blank gap (seconds). Optional.
 
         Returns:
             (refined_time_seconds, was_refined)
@@ -260,6 +276,7 @@ class SpectrogramGuidedAligner:
         return refined_sample / sr, True
 
     def __save_wav_mem(self, tensor: torch.Tensor, sample_rate: int) -> bytes:
+        """Convert a tensor to WAV format and return as bytes."""
         src = tensor.cpu()
         if src.dim() == 1:
             src = src.unsqueeze(0)
@@ -315,6 +332,7 @@ class SpectrogramGuidedAligner:
     def __prepare_transcript(
         self, transcript: str | list[str]
     ) -> tuple[str, list[str], str, list[int]]:
+        """Prepare the transcript for alignment by normalizing and tokenizing."""
         if isinstance(transcript, str):
             full_transcript = transcript
             target_segments = transcript.split()
@@ -348,6 +366,7 @@ class SpectrogramGuidedAligner:
     def __perform_forced_alignment(
         self, waveform: torch.Tensor, original_sr: int, valid_tokens: list[int]
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Perform forced alignment between the audio waveform and the transcript."""
         emissions_gpu = self.__compute_emissions(waveform, original_sr).squeeze(0)
 
         emissions_cpu = emissions_gpu.unsqueeze(0).cpu()
@@ -476,6 +495,7 @@ class SpectrogramGuidedAligner:
         char_segments: list[dict[str, str | float | bool]],
         target_segments: list[str],
     ) -> list[AudioSegment]:
+        """Aggregate character-level segments into user-defined token segments."""
         final_segments = []
         current_char_idx = 0
 
@@ -532,6 +552,7 @@ class SpectrogramGuidedAligner:
         waveform: torch.Tensor,
         original_sr: int,
     ) -> torch.Tensor:
+        """Set the start_sample and end_sample indices for each segment based on the refined start_time and end_time."""
         cpu_waveform = waveform.cpu()
         if cpu_waveform.dim() == 1:
             cpu_waveform = cpu_waveform.unsqueeze(0)
@@ -577,6 +598,8 @@ class SpectrogramGuidedAligner:
         original_sr: int | None = None,
         audio_format: str = "mp3",
     ) -> None:
+        """Attach audio bytes to existing segments using provided audio input.
+        This can be used when segments are generated without audio and need to be enriched later."""
         if audio_content is None and (waveform is None or original_sr is None):
             raise ValueError(
                 "Either audio_content or both waveform and original_sr must be provided."
@@ -601,6 +624,20 @@ class SpectrogramGuidedAligner:
         audio_format: str = "mp3",
         attach_audio: bool = False,
     ) -> list[AudioSegment]:
+        """Align the provided transcript to the audio and return a list of AudioSegments with refined boundaries.
+
+        Args:
+            transcript: The transcript to align, either as a single string or a list of token strings.
+            audio_content: Raw audio bytes (optional if waveform and original_sr are provided).
+            waveform: Pre-loaded audio waveform tensor (optional if audio_content is provided).
+            original_sr: Original sample rate of the audio (required if waveform is provided).
+            audio_format: Format of the input audio bytes (default: "mp3").
+            attach_audio: Whether to attach raw audio bytes to each segment (default: False).
+        Returns:            A list of AudioSegment instances with aligned tokens and refined timestamps.
+            If attach_audio is True, each segment will also include the corresponding audio bytes in WAV format.
+        Raises:
+            ValueError: If neither audio_content nor both waveform and original_sr are provided, or if the transcript contains no valid characters for the model.
+        """
         if audio_content is None and (waveform is None or original_sr is None):
             raise ValueError(
                 "Either audio_content or both waveform and original_sr must be provided."

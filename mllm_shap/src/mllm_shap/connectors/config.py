@@ -8,7 +8,6 @@ class HuggingFaceModelConfig(BaseModel):
 
     repo_id: str
     """The repository ID of the model on Hugging Face."""
-
     revision: str
     """The specific revision or branch of the model to use."""
 
@@ -18,12 +17,10 @@ class ModelConfig(BaseModel):
 
     text_temperature: float | None = 0.0
     """Controls the randomness in text generation."""
-
     text_top_k: int | None = 1
     """Restricts text sampling to the top-k most probable tokens."""
 
     audio_temperature: float | None = 0.0
     """Controls the randomness in audio generation."""
-
     audio_top_k: int | None = 1
     """Restricts audio sampling to the top-k most probable tokens."""

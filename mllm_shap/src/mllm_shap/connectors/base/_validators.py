@@ -19,9 +19,13 @@ class BaseChatConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     device: torch.device
+    """The device the chat is operating on."""
     token_filter: TokenFilter
+    """Token filter instance for filtering input tokens."""
     system_roles_setup: SystemRolesSetup
+    """System roles setup for the chat."""
     empty_turn_sequences: set[str]
+    """Set of empty turn sequences."""
 
 
 class BaseModelConfig(BaseModel):
@@ -33,10 +37,15 @@ class BaseModelConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     config: HuggingFaceModelConfig
+    """The Hugging Face model configuration."""
     device: torch.device
+    """The device the model is operating on."""
     processor: Any
+    """The processor instance for the model."""
     model: Any
+    """The model instance."""
     history_tracking_mode: ModelHistoryTrackingMode
+    """The history tracking mode for the model."""
 
 
 class BaseModelGenerateConfig(BaseModel):
@@ -46,8 +55,11 @@ class BaseModelGenerateConfig(BaseModel):
     """
 
     max_new_tokens: int
+    """The maximum number of new tokens to generate."""
     model_config_: ModelConfig
+    """The model configuration for generation."""
     keep_history: bool
+    """Whether to keep the generation history."""
 
     @field_validator("max_new_tokens")
     @classmethod

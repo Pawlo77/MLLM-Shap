@@ -73,14 +73,21 @@ class BaseMllmChat(ABC):
     """A callable to create a new chat instance."""
 
     _audio_added_in_last_turn: bool = False
+    """Whether audio was added in the last turn, used for validation when adding new content."""
     _system_roles: set[Role]
+    """Set of roles considered as system roles based on system_roles_setup configuration."""
     _audio_segments: dict[int, list[AudioSegment]] | None = None
+    """Optional dictionary mapping turn numbers to lists of audio segments in that turn."""
     _audio_waveforms: dict[int, tuple[Tensor, int, str]] | None = None
+    """Optional dictionary mapping turn numbers to tuples of (waveform tensor, sample rate, audio format) for that turn."""
 
     __shap: ExplainerCache | None = None
+    """Optional SHAP explainer cache associated with this chat instance."""
 
     __external_shap_values_mask: Tensor | None = None
+    """An optional external SHAP values mask that can be set to further filter which tokens are considered for SHAP value calculations."""
     __external_group_ids: Tensor | None = None
+    """An optional external group IDs tensor that can be set to specify custom token groupings for SHAP value calculations."""
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
         {
             "system_roles_setup",
@@ -91,6 +98,8 @@ class BaseMllmChat(ABC):
             "token_sequences_to_exclude",
         }
     )
+    """A set of attribute names that should be shared across chat instances created from each other,
+    to ensure consistency in SHAP calculations and token filtering across derived chat instances."""
 
     def __init__(
         self,
@@ -187,35 +196,36 @@ class BaseMllmChat(ABC):
         text_mask_relative = mask[chat.text_tokens_mask]
         audio_mask_relative = mask[chat.audio_tokens_mask]
 
-        # filter out empty turn sequences
-        new_chat_text_tokens = chat.text_tokens[text_mask_relative]
-        new_chat_text_tokens_mask = torch.ones_like(
-            new_chat_text_tokens, dtype=torch.bool, device=chat.torch_device
-        )
-        for seq_tensor in chat.empty_turn_sequences:
-            seq_len = seq_tensor.shape[0]
-            # assume _detect is protected not private
-            match_indices = chat._detect(
-                tokens=new_chat_text_tokens,
-                seq_tensor=seq_tensor,
-                mark=False,
+        # filter out empty turn sequences (skip entirely when none defined)
+        if chat.empty_turn_sequences:
+            new_chat_text_tokens = chat.text_tokens[text_mask_relative]
+            new_chat_text_tokens_mask = torch.ones_like(
+                new_chat_text_tokens, dtype=torch.bool, device=chat.torch_device
             )
+            for seq_tensor in chat.empty_turn_sequences:
+                seq_len = seq_tensor.shape[0]
+                # assume _detect is protected not private
+                match_indices = chat._detect(
+                    tokens=new_chat_text_tokens,
+                    seq_tensor=seq_tensor,
+                    mark=False,
+                )
 
-            for idx in match_indices:
-                turn_number = chat.token_turns[idx].item()
-                turn_mask = chat.token_turns == turn_number
+                for idx in match_indices:
+                    turn_number = chat.token_turns[idx].item()
+                    turn_mask = chat.token_turns == turn_number
 
-                audio_turn_mask = turn_mask[chat.audio_tokens_mask]
-                if audio_mask_relative[
-                    audio_turn_mask
-                ].any():  # there is still used audio in the turn
-                    continue
+                    audio_turn_mask = turn_mask[chat.audio_tokens_mask]
+                    if audio_mask_relative[
+                        audio_turn_mask
+                    ].any():  # there is still used audio in the turn
+                        continue
 
-                new_chat_text_tokens_mask[idx : idx + seq_len] = False
+                    new_chat_text_tokens_mask[idx : idx + seq_len] = False
 
-        # update masks
-        text_mask_relative[text_mask_relative.clone()] = new_chat_text_tokens_mask
-        mask[chat.text_tokens_mask] = text_mask_relative
+            # update masks
+            text_mask_relative[text_mask_relative.clone()] = new_chat_text_tokens_mask
+            mask[chat.text_tokens_mask] = text_mask_relative
 
         if not text_mask_relative.any():
             raise AllTextTokensFilteredOutError(
@@ -228,12 +238,11 @@ class BaseMllmChat(ABC):
 
             def _pcm16_roundtrip(wf: Tensor) -> Tensor:
                 """Match the historical WAV(PCM16) encode/decode quantization without allocating bytes."""
-                wf = wf.to(torch.float32)
-                wf = torch.nan_to_num(wf, nan=0.0, posinf=0.0, neginf=0.0).clamp_(
-                    -1.0, 1.0
-                )
-                q = (wf * 32767.0).round().clamp_(-32768.0, 32767.0)
-                return (q / 32767.0).contiguous()
+                wf = torch.nan_to_num(
+                    wf.to(torch.float32), nan=0.0, posinf=0.0, neginf=0.0
+                ).clamp_(-1.0, 1.0)
+                wf.mul_(32767.0).round_().clamp_(-32768.0, 32767.0).div_(32767.0)
+                return wf.contiguous()
 
             for turn in range(1, chat.turn_number + 1):
                 turn_mask = chat.token_turns == turn
@@ -590,7 +599,7 @@ class BaseMllmChat(ABC):
 
                 # mark number of audio segments as True for shap calculations
                 audio_indices = torch.where(audio_turn_mask)[0]
-                if audio_indices.numel() > 0:
+                if audio_indices.numel() > 0:  # pragma: no branch
                     mask[audio_indices[:num_segments]] = True
 
         if self.external_group_ids is not None:
@@ -1098,7 +1107,7 @@ class BaseMllmChat(ABC):
                 last_modality = current_modality
 
             # Append final segment
-            if content:
+            if content:  # pragma: no branch
                 turn_conversation.append(
                     ChatEntry(
                         content_type=cast(ModalityFlag, last_modality).value,
