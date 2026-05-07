@@ -29,9 +29,7 @@ class Mock(BaseMllmModel):
     """
 
     processor: PreTrainedTokenizerBase
-    _KW_HISTORY_TRACKING_MODE = "history_tracking_mode"
-    _TOKEN_EMB_RANK = 2
-    _PLACEHOLDER_TOKEN_ID = 0  # Use token ID 0 as placeholder
+    """Processor for tokenization and detokenization, initialized with a simple tokenizer (GPT-2) for text encoding/decoding."""
 
     def __init__(self, device: torch.device, **kwargs: Any) -> None:
         # configure logger and debug toggle
@@ -49,14 +47,14 @@ class Mock(BaseMllmModel):
 
         # Force text-only history tracking
         if (
-            self._KW_HISTORY_TRACKING_MODE in kwargs
-            and kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT
+            "history_tracking_mode" in kwargs
+            and kwargs["history_tracking_mode"] != ModelHistoryTrackingMode.TEXT
         ):
             warnings.warn(
                 "Non-TEXT history tracking requested but this connector is text-only. Forcing TEXT mode.",
                 stacklevel=2,
             )
-            kwargs[self._KW_HISTORY_TRACKING_MODE] = ModelHistoryTrackingMode.TEXT
+            kwargs["history_tracking_mode"] = ModelHistoryTrackingMode.TEXT
 
         super().__init__(
             config=CONFIG,
@@ -64,7 +62,7 @@ class Mock(BaseMllmModel):
             processor=tokenizer,
             model=dummy_model,
             history_tracking_mode=kwargs.pop(
-                self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT
+                "history_tracking_mode", ModelHistoryTrackingMode.TEXT
             ),
         )
 
@@ -98,7 +96,7 @@ class Mock(BaseMllmModel):
         # create generated tokens on CPU to avoid holding GPU memory in responses/cache
         generated = torch.full(
             (max_new_tokens,),
-            self._PLACEHOLDER_TOKEN_ID,
+            0,
             dtype=torch.long,
             device=torch.device("cpu"),
         )
