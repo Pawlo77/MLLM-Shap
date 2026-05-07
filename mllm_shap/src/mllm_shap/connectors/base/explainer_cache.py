@@ -103,7 +103,7 @@ class ExplainerCache(BaseModel):
 
             if torch.any(chat.shap_values_mask != shap_values_mask):
                 self.had_different_masks = True
-        else:
+        else:  # pragma: no cover
             self.had_different_masks = False
 
     @classmethod

@@ -235,6 +235,46 @@ class TestExplainerCache:
         assert cache.masks.shape[1] == cache.chat.input_tokens_num
         assert torch.all(~cache.masks[:, 3:])
 
+    def test_init_raises_when_extended_mask_size_is_still_wrong(
+        self,
+        chat: BaseMllmChat,
+        base_responses: list[ModelResponse],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Defensive branch: malformed extension result should be rejected."""
+        masks = torch.ones(2, 3, dtype=torch.bool)
+
+        original_cat = torch.cat
+
+        def _bad_cat(tensors, dim=0):
+            out = original_cat(tensors, dim=dim)
+            return out[:, :-1]
+
+        monkeypatch.setattr(torch, "cat", _bad_cat)
+        with pytest.raises(ValueError, match="Masks size does not match"):
+            ExplainerCache(
+                chat=chat,
+                calculated_by=1,
+                n=3,
+                responses=base_responses,
+                masks=masks,
+                shap_values_mask=chat.shap_values_mask,
+            )
+
+    def test_values_setter_raises_when_extended_shape_mismatch(
+        self, cache: ExplainerCache, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Defensive branch: invalid extend_values output shape must raise."""
+        cache.shap_values_mask = torch.tensor([True, True, False, False, False])
+
+        def _bad_extend(*args, **kwargs):
+            del args, kwargs
+            return torch.tensor([1.0, 2.0])
+
+        monkeypatch.setattr(ExplainerCache, "extend_values", _bad_extend)
+        with pytest.raises(ValueError, match="SHAP values size does not match"):
+            cache.values = torch.tensor([1.0, 2.0, float("nan")])
+
     def test_del_resets_references(self, cache: ExplainerCache) -> None:
         """Test that __del__ sets all internal refs to None."""
         cache.__del__()
