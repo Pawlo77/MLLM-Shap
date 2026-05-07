@@ -54,7 +54,8 @@ def _load_hf_parquet(
     _ensure_pinned_revision(revision)
     filename = f"{subset}/{split}/0000.parquet"
     LOGGER.info(
-        "Downloading dataset from HF Hub repo '%s', file '%s', revision '%s'",
+        "Loading dataset from HuggingFace Hub: repo=%s, file=%s, revision=%s. "
+        "Dataset will be cached locally after download.",
         repo_id,
         filename,
         revision,
@@ -78,7 +79,8 @@ def _load_hf_datasets(
     """Load dataset from HF using datasets library."""
     _ensure_pinned_revision(revision)
     LOGGER.info(
-        "Loading dataset '%s', subset '%s', split '%s', revision '%s' via datasets lib",
+        "Loading dataset from HuggingFace datasets library: "
+        "repo=%s, subset=%s, split=%s, revision=%s",
         repo_id,
         subset,
         split,
@@ -101,7 +103,7 @@ def _load_local_parquet(path: Optional[str]) -> pd.DataFrame:
     resolved = Path(path).expanduser().resolve()
     if not resolved.exists():
         raise FileNotFoundError(f"Local parquet file not found: {resolved}")
-    LOGGER.info("Loading local parquet: %s", resolved)
+    LOGGER.info("Loading dataset from local parquet file: %s", resolved)
     return pd.read_parquet(resolved)
 
 
@@ -112,7 +114,7 @@ def _load_local_csv(path: Optional[str]) -> pd.DataFrame:
     resolved = Path(path).expanduser().resolve()
     if not resolved.exists():
         raise FileNotFoundError(f"Local CSV file not found: {resolved}")
-    LOGGER.info("Loading local CSV: %s", resolved)
+    LOGGER.info("Loading dataset from local CSV file: %s", resolved)
     return pd.read_csv(resolved)
 
 
@@ -154,7 +156,12 @@ def apply_filters(df: pd.DataFrame, filters: List[FilterPredicate]) -> pd.DataFr
     for filt in filters:
         col = filt.column
         if col not in df.columns:
-            LOGGER.warning("Filter column '%s' not found in DataFrame; skipping.", col)
+            LOGGER.warning(
+                "Filter column '%s' not found in dataset; skipping this filter. "
+                "Available columns: %s",
+                col,
+                ", ".join(df.columns.tolist()[:5]),
+            )
             continue
 
         if filt.op == "in":
@@ -168,7 +175,13 @@ def apply_filters(df: pd.DataFrame, filters: List[FilterPredicate]) -> pd.DataFr
             op_fn = _OP_MAP[filt.op]
             df = df[df[col].apply(lambda x, v=filt.value, fn=op_fn: fn(x, v))]
         else:
-            LOGGER.warning("Unknown filter op '%s'; skipping.", filt.op)
+            valid_ops = list(_OP_MAP.keys()) + ["in", "not_in", "between"]
+            LOGGER.warning(
+                "Unknown filter operator '%s'; skipping this filter. "
+                "Valid operators: %s",
+                filt.op,
+                ", ".join(valid_ops),
+            )
 
     return df.reset_index(drop=True)
 
@@ -265,9 +278,11 @@ def iter_balanced_token_count_rows(
                     f"need {samples_per_token_count}."
                 )
             LOGGER.warning(
-                "Only %d rows available for token_count=%s; using partial bucket.",
-                len(bucket),
+                "Insufficient samples for token_count=%s: only %d available (need %d). "
+                "Using partial bucket; results may be less representative.",
                 token_count,
+                len(bucket),
+                samples_per_token_count,
             )
         for row_idx, row in bucket.head(samples_per_token_count).iterrows():
             selected.append((int(row_idx), row.to_dict()))

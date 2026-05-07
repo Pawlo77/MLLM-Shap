@@ -1,0 +1,689 @@
+{
+  "row_index": 623,
+  "language": "unknown",
+  "original_language": "unknown",
+  "runtime_sec": 13125.647122859955,
+  "n_calls": 11344,
+  "prompt_texts": [
+    "When was Charles the Great born?"
+  ],
+  "input_modality": "audio__original",
+  "output_modality": "audio",
+  "attr_summary": {
+    "abs_sum_text": 0.0,
+    "abs_sum_audio": 0.9999999804422259,
+    "frac_text": 0.0,
+    "frac_audio": 1.0,
+    "count_text_tokens": 0,
+    "count_audio_segments": 66
+  },
+  "conversation": [
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n",
+          "You",
+          " are",
+          " a",
+          " helpful",
+          " assistant",
+          ".",
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "user",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          },
+          {
+            "_binary": true,
+            "num_bytes": 0
+          }
+        ],
+        "shap_values": [
+          0.015719551593065262,
+          0.013130434788763523,
+          0.010294094681739807,
+          0.014061412774026394,
+          0.013936877250671387,
+          0.012948240153491497,
+          0.013079035095870495,
+          0.013583363965153694,
+          0.014003438875079155,
+          0.013618310913443565,
+          0.014651890844106674,
+          0.016321556642651558,
+          0.012740565463900566,
+          0.014071899466216564,
+          0.014225129038095474,
+          0.012867352925240993,
+          0.010676217265427113,
+          0.014242809265851974,
+          0.013643049634993076,
+          0.013564713299274445,
+          0.014274765737354755,
+          0.013192517682909966,
+          0.015409606508910656,
+          0.01897975616157055,
+          0.01645262911915779,
+          0.011537319980561733,
+          0.018744315952062607,
+          0.022624699398875237,
+          0.03881983086466789,
+          0.022520218044519424,
+          0.017897281795740128,
+          0.021332385018467903,
+          0.018420249223709106,
+          0.02342096157371998,
+          0.016151372343301773,
+          0.018877215683460236,
+          0.019785746932029724,
+          0.02022421546280384,
+          0.02164849080145359,
+          0.023707102984189987,
+          0.016464730724692345,
+          0.01656678318977356,
+          0.029099153354763985,
+          0.01919889822602272,
+          0.012853629887104034,
+          0.008978846482932568,
+          0.0,
+          0.009853929281234741,
+          0.017369311302900314,
+          0.01677681691944599,
+          0.01084454357624054,
+          0.011858727782964706,
+          0.01330725196748972,
+          0.012129207141697407,
+          0.0115719735622406,
+          0.01020409632474184,
+          0.012391333468258381,
+          0.010685893706977367,
+          0.011719893664121628,
+          0.010978017002344131,
+          0.012299726717174053,
+          0.00941313337534666,
+          0.013459514826536179,
+          0.010356415063142776,
+          0.011631779372692108,
+          0.014585748314857483
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ],
+    [
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2,
+          2
+        ],
+        "content": [
+          "<|im_start|>",
+          "assistant",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 1,
+        "roles": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "content": [
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          },
+          {
+            "_binary": true,
+            "num_bytes": 3884
+          }
+        ],
+        "shap_values": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "content_type": 0,
+        "roles": [
+          2,
+          2
+        ],
+        "content": [
+          "<|im_end|>",
+          "\n"
+        ],
+        "shap_values": [
+          null,
+          null
+        ]
+      }
+    ]
+  ],
+  "audio_artifacts": {
+    "input_modality": "audio__original",
+    "output_modality": "audio",
+    "input_audio": {
+      "input_modality": "audio__original",
+      "has_audio": true,
+      "audio_file": "sample_00623_input_audio.wav",
+      "sample_rate": 24000,
+      "format": "wav",
+      "size_bytes": 167968,
+      "metadata": {
+        "input_modality": "audio__original"
+      }
+    },
+    "output_audio": {
+      "output_audio": {
+        "audio_file": "sample_00623_output_output.wav",
+        "sample_rate": 24000,
+        "format": "wav",
+        "size_bytes": 30284,
+        "metadata": {
+          "source": "chat_audio_out",
+          "shape": [
+            8,
+            18
+          ]
+        }
+      }
+    }
+  },
+  "neyman_steps": 2
+}

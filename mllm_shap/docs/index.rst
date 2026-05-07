@@ -14,6 +14,8 @@
 - :doc:`documentation` - generated API module reference
 - :doc:`experiments_mllm_shapx` - experiment runner documentation
 - :doc:`extension_gui` - GUI extension notes
+- :doc:`benchmarking` - lightweight benchmarking guide
+- :doc:`benchmarking_quickstart` - benchmark quickstart reference
 - :doc:`release_notes` - version history
 - :doc:`references` - papers, datasets, and repository links
 - :doc:`additional_notes` - implementation and memory notes
@@ -27,6 +29,8 @@
    documentation
    experiments_mllm_shapx
    extension_gui
+   benchmarking
+   benchmarking_quickstart
    release_notes
    references
    additional_notes

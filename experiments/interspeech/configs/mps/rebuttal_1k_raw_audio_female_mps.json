@@ -11,7 +11,7 @@
     "subset": "single_sentence_1k"
   },
   "selection": {
-    "max_samples": 100,
+    "max_samples": 10,
     "shuffle_seed": 42,
     "start_index": 0,
     "max_prompt_tokens": 1000,

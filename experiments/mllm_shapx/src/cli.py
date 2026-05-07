@@ -9,6 +9,17 @@ import warnings
 
 import pandas as pd
 
+# Suppress torch warnings that fire at import time (before _setup_logging).
+warnings.filterwarnings(  # noqa: E402
+    "ignore",
+    message=r"The pynvml package is deprecated\. Please install nvidia-ml-py instead\..*",
+    category=FutureWarning,
+    module=r"torch\.cuda",
+)
+logging.getLogger("torch.distributed.elastic.multiprocessing.redirects").setLevel(
+    logging.ERROR
+)
+
 
 _MLLM_SHAP_SRC = os.environ.get("MLLM_SHAP_SRC")
 if _MLLM_SHAP_SRC and _MLLM_SHAP_SRC not in sys.path:
@@ -31,12 +42,10 @@ def _setup_logging() -> None:
         category=UserWarning,
         module=r"torch\.functional",
     )
-    warnings.filterwarnings(
-        "ignore",
-        message=r"The pynvml package is deprecated\. Please install nvidia-ml-py instead\..*",
-        category=FutureWarning,
-        module=r"torch\.cuda\.__init__",
-    )
+
+    # Suppress benign 404 logs from httpx when HuggingFace Hub probes for non-existent files
+    # (e.g., additional_chat_templates) during model metadata fetching.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
@@ -143,13 +152,17 @@ def cmd_plan(args: argparse.Namespace) -> None:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Execute all configured variants, with optional sharding."""
+    from pathlib import Path
+
     from .config import ExperimentSet, validate_config
     from .data import load_df
     from .runner import expand_variants, run_single_sentence_variant
+    from .storage import existing_completed_from_disk
 
     configs = _resolve_configs(args)
 
-    for config_path in configs:
+    for cfg_idx, config_path in enumerate(configs, 1):
+        print(f"\n[Config {cfg_idx}/{len(configs)}] {os.path.basename(config_path)}")
         cfg = ExperimentSet.from_json(config_path)
         if args.max_samples is not None:
             cfg.selection.max_samples = int(args.max_samples)
@@ -177,17 +190,35 @@ def cmd_run(args: argparse.Namespace) -> None:
                 print("  -", e)
             sys.exit(2)
 
-        df: pd.DataFrame = load_df(cfg.dataset)
         variants = expand_variants(cfg)
         if not variants:
             print(f"Nothing to run for {config_path}.")
             continue
 
-        for run in variants:
-            print(
-                f"\n=== Running variant: {run.run_slug} (type={run.variant.explainer_type}, "
-                f"num_samples={run.num_samples}, fraction={run.fraction}) ==="
+        df: pd.DataFrame | None = None
+        for var_idx, run in enumerate(variants, 1):
+            # Check how many samples are already done for this variant
+            run_dir = Path(cfg.output_root) / cfg.experiment_set_id / run.run_slug
+            already_done = (
+                len(existing_completed_from_disk(run_dir))
+                if args.resume and run_dir.exists()
+                else 0
             )
+            desired = cfg.selection.max_samples
+            status = f"{already_done}/{desired}" if desired else f"{already_done}/?"
+
+            if desired and already_done >= desired:
+                print(
+                    f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} "
+                    f"[{status} done] — skipped"
+                )
+                continue
+
+            print(
+                f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} [{status} done]"
+            )
+            if df is None:
+                df = load_df(cfg.dataset)
             run_single_sentence_variant(cfg, run, df, resume=args.resume)
 
     print("\nAll variants complete.")

@@ -427,9 +427,12 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
     known_subsets = {dt.value for dt in DatasetType}
     if cfg.dataset.subset not in known_subsets:
         LOGGER.warning(
-            "dataset.subset '%s' is not a known subset (%s). Proceeding anyway.",
+            "Unknown dataset subset '%s': not in known subsets %s. "
+            "Proceeding anyway; this may indicate a typo or custom subset. "
+            "Known subsets: %s",
             cfg.dataset.subset,
             sorted(known_subsets),
+            ", ".join(sorted(known_subsets)),
         )
 
     # Selection validation
@@ -576,8 +579,8 @@ def validate_config(cfg: ExperimentSet) -> List[str]:
             # Warning for normalizer
             if cfg.shap.normalizer != "MinMaxNormalizer":
                 LOGGER.warning(
-                    "HierarchicalExplainer should use MinMaxNormalizer; you set %s.",
-                    cfg.shap.normalizer,
+                    "HierarchicalExplainer typically uses MinMaxNormalizer for better hierarchical attribution; "
+                    "you configured %s instead. Verify this is intentional.",
                 )
 
     return errs

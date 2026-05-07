@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 import numpy as np
 import pandas as pd
 import torch
+from tqdm.auto import tqdm
 from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.shap.base._masks_manager import MasksManager
 from mllm_shap.shap.base.approx import BaseShapApproximation
@@ -624,7 +625,10 @@ def run_single_sentence_variant(
     ckpt = load_checkpoint(ckpt_path)
 
     if disable_checkpoint:
-        LOGGER.info("Checkpointing disabled for run '%s'.", run.run_slug)
+        LOGGER.info(
+            "Skipping checkpoint loading for run '%s': checkpointing disabled by config.",
+            run.run_slug,
+        )
     elif resume:
         already = existing_completed_from_disk(run_dir)
         ckpt["completed_indices"] = sorted(
@@ -632,7 +636,7 @@ def run_single_sentence_variant(
         )
         ckpt.setdefault("next_index", 0)
         LOGGER.info(
-            "Resuming run '%s': %d completed samples.",
+            "Resuming run '%s': %d samples already completed, resuming from next batch.",
             run.run_slug,
             len(ckpt["completed_indices"]),
         )
@@ -722,15 +726,25 @@ def run_single_sentence_variant(
 
     if remaining_needed == 0:
         LOGGER.info(
-            "Target max_samples=%s already satisfied. Nothing to do.",
+            "Dataset selection complete: target max_samples=%s already reached with %d completed samples. Skipping sample generation.",
             str(cfg.selection.max_samples),
+            len(completed_set),
         )
 
     # Counters
     scanned_ctr = 0
     ge_min_ctr = 0
     matched_ctr = 0
-    runtimes_for_eta: List[float] = []
+
+    samples_bar = (
+        tqdm(
+            total=int(remaining_needed),
+            desc=f"Samples ({run.run_slug})",
+            unit="sample",
+        )
+        if remaining_needed != float("inf") and remaining_needed > 0
+        else None
+    )
 
     for row_idx, row in row_selector.iterate():
         if matched_ctr >= remaining_needed:
@@ -783,14 +797,30 @@ def run_single_sentence_variant(
             continue
 
         # ---- Matched row: run explainer
-        LOGGER.info("Running sample index %d for variant '%s'.", row_idx, run.run_slug)
-        LOGGER.info(" | ".join(user_texts))
+        total_target = (
+            int(cfg.selection.max_samples)
+            if cfg.selection.max_samples is not None
+            else None
+        )
+        current_progress = len(completed_set) + matched_ctr + 1
+        LOGGER.info(
+            "Processing sample %d/%s (row_idx=%d, variant='%s'): %s",
+            current_progress,
+            total_target if total_target is not None else "unlimited",
+            row_idx,
+            run.run_slug,
+            " | ".join(user_texts)[:100],  # truncate long texts
+        )
 
         if run.linear:
             scaled_num_samples = _LinearSampleScaler(factor=run.linear).scale(
                 n_pre=n_pre
             )
-            LOGGER.info("Linear scaling: num_samples=%d.", scaled_num_samples)
+            LOGGER.info(
+                "Applying linear scaling to mask samples: scaled from %d to %d masks.",
+                n_pre,
+                scaled_num_samples,
+            )
             if not _try_set_num_samples(
                 explainer=explainer, num_samples=scaled_num_samples
             ):
@@ -813,7 +843,13 @@ def run_single_sentence_variant(
         n_post = int(MasksManager(getattr(result, "base_chat", chat)).n)
         if n_post != n_pre:
             LOGGER.warning(
-                "Token drift: pre=%d post=%d (row=%d).", n_pre, n_post, row_idx
+                "Token count mismatch detected during mask application (row=%d): "
+                "expected %d tokens post-masking, got %d. "
+                "This may indicate tokens were dropped or added during mask creation. "
+                "Results may be unreliable.",
+                row_idx,
+                n_pre,
+                n_post,
             )
 
         # ---- Serialize + metrics
@@ -839,22 +875,15 @@ def run_single_sentence_variant(
         completed_set.add(row_idx)
         matched_ctr += 1
 
-        # ---- ETA logging
-        runtimes_for_eta.append(runtime_sec)
-        if len(runtimes_for_eta) >= 3 and remaining_needed != float("inf"):
-            avg_rt = np.mean(runtimes_for_eta[-10:])
-            remaining = remaining_needed - matched_ctr
-            eta_sec = avg_rt * remaining
-            LOGGER.info(
-                "Progress: %d/%d | ETA: %.0fs (avg %.1fs/sample)",
-                matched_ctr,
-                int(remaining_needed),
-                eta_sec,
-                avg_rt,
-            )
+        # ---- Progress bar update
+        if samples_bar is not None:
+            samples_bar.update(1)
 
         # ---- GPU cleanup
         _cleanup_gpu(result, cfg.runtime)
+
+    if samples_bar is not None:
+        samples_bar.close()
 
     # ---- Aggregate summary
     result_writer.save_aggregate(run.run_slug)
@@ -862,15 +891,20 @@ def run_single_sentence_variant(
     # ---- Filter logs
     if is_text and min_t is not None:
         LOGGER.info(
-            "Token filter: >= %d matched %d / %d rows.",
+            "Token count filter applied: minimum_tokens=%d selected %d / %d samples (%.1f%%).",
             int(min_t),
             ge_min_ctr,
             scanned_ctr,
+            100.0 * ge_min_ctr / scanned_ctr if scanned_ctr else 0,
         )
     if is_text and max_t is not None:
         denom = ge_min_ctr if min_t is not None else scanned_ctr
         LOGGER.info(
-            "Token filter: <= %d matched %d / %d rows.", int(max_t), matched_ctr, denom
+            "Token count filter applied: maximum_tokens=%d selected %d / %d samples (%.1f%%).",
+            int(max_t),
+            matched_ctr,
+            denom,
+            100.0 * matched_ctr / denom if denom else 0,
         )
 
     if wb_run is not None:

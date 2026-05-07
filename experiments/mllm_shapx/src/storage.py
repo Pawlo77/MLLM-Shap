@@ -66,7 +66,8 @@ def load_checkpoint(path: Path) -> Dict[str, Any]:
         stored_version = ckpt.get("version", 1)
         if stored_version < CHECKPOINT_VERSION:
             LOGGER.info(
-                "Migrating checkpoint from version %d to %d.",
+                "Upgrading checkpoint format: version %d → %d. "
+                "Checkpoint will be re-saved with new format.",
                 stored_version,
                 CHECKPOINT_VERSION,
             )
@@ -75,7 +76,11 @@ def load_checkpoint(path: Path) -> Dict[str, Any]:
 
         return ckpt
     except json.JSONDecodeError:
-        LOGGER.warning("Ignoring malformed checkpoint file: %s", path)
+        LOGGER.warning(
+            "Checkpoint file corrupted or invalid JSON: %s. "
+            "Starting fresh with default checkpoint.",
+            path,
+        )
         return _default_checkpoint()
 
 
@@ -103,5 +108,8 @@ def existing_completed_from_disk(run_dir: Path) -> set[int]:
             num = int(p.stem.split("_")[1])
             done.add(num)
         except (ValueError, IndexError):
-            LOGGER.debug("Ignoring filename that does not match pattern: %s", p.name)
+            LOGGER.debug(
+                "Skipping file that doesn't match sample result pattern (expected: sample_<idx>_result.json): %s",
+                p.name,
+            )
     return done
