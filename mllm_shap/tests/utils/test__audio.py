@@ -145,3 +145,142 @@ class TestTorchAudioHandler:
 
         # Export was invoked once
         mock_segment.export.assert_called_once()
+
+    def test_to_bytes_unsupported_format_raises(
+        self, dummy_waveform: torch.Tensor
+    ) -> None:
+        """Should raise ValueError for unsupported audio format."""
+        with pytest.raises(ValueError, match="Unsupported audio_format"):
+            TorchAudioHandler.to_bytes(dummy_waveform, audio_format="ogg")
+
+    def test_to_bytes_handles_nan_inf(self) -> None:
+        """NaN and Inf values clamped to valid range (no crash)."""
+        waveform = torch.tensor([[float("nan"), float("inf"), float("-inf"), 0.5]])
+        result = TorchAudioHandler.to_bytes(waveform, audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_to_bytes_stereo_to_mono(self) -> None:
+        """Stereo waveform (2, N) is averaged to mono in to_bytes."""
+        stereo = torch.tensor([[0.5, 0.5], [-0.5, -0.5]], dtype=torch.float32)
+        result = TorchAudioHandler.to_bytes(stereo, audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_to_bytes_1d_waveform(self) -> None:
+        """1D waveform passes through correctly."""
+        waveform = torch.tensor([0.1, -0.1, 0.2], dtype=torch.float32)
+        result = TorchAudioHandler.to_bytes(waveform, audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_to_bytes_fallback_path_handles_higher_rank_waveform(self) -> None:
+        """Higher-rank tensors should use fallback mean(dim=0) path without crashing."""
+        waveform = torch.tensor(
+            [[[0.1, -0.1, 0.2]], [[0.3, -0.3, 0.4]]], dtype=torch.float32
+        )
+        result = TorchAudioHandler.to_bytes(waveform, audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    @patch("mllm_shap.utils.audio.sf.read")
+    def test_from_bytes_2d_input_transposed(self, mock_read: MagicMock) -> None:
+        """2D numpy array from sf.read gets transposed correctly."""
+        # sf.read returns (samples, channels) format for multichannel
+        import numpy as np
+
+        stereo_np = np.array([[0.1, 0.5], [0.2, 0.6], [0.3, 0.7], [0.4, 0.8]])
+        mock_read.return_value = (stereo_np, 44100)
+        waveform, sr = TorchAudioHandler.from_bytes(b"data", audio_format="wav")
+        # Should be mono (1, 4) after T and mean
+        assert waveform.shape == (1, 4)
+        assert sr == 44100
+
+    @patch("mllm_shap.utils.audio.sf.read")
+    def test_from_bytes_single_channel_2d_keeps_channel_after_transpose(
+        self, mock_read: MagicMock
+    ) -> None:
+        """(samples, 1) input should transpose to (1, samples) without averaging."""
+        import numpy as np
+
+        mono_np = np.array([[0.1], [0.2], [0.3], [0.4]], dtype=np.float32)
+        mock_read.return_value = (mono_np, 22050)
+
+        waveform, sr = TorchAudioHandler.from_bytes(b"mono", audio_format="wav")
+
+        assert waveform.shape == (1, 4)
+        torch.testing.assert_close(
+            waveform,
+            torch.tensor([[0.1, 0.2, 0.3, 0.4]], dtype=torch.float32),
+        )
+        assert sr == 22050
+
+    @patch("mllm_shap.utils.audio.sf.read")
+    def test_from_bytes_higher_rank_waveform_skips_transpose_branch(
+        self, mock_read: MagicMock
+    ) -> None:
+        """Higher-rank waveform should bypass 1D/2D shape branches and still return tensor."""
+        import numpy as np
+
+        waveform_np = np.zeros((2, 3, 4), dtype=np.float32)
+        mock_read.return_value = (waveform_np, 8000)
+
+        waveform, sr = TorchAudioHandler.from_bytes(b"3d", audio_format="wav")
+
+        assert waveform.dim() == 3
+        assert waveform.shape[0] == 1
+        assert sr == 8000
+
+    def test_combine_empty_list_returns_empty(self) -> None:
+        """Combine with no segments returns empty bytes."""
+        result = TorchAudioHandler.combine([])
+        assert result == b""
+
+    def test_combine_single_segment(self) -> None:
+        """Combine single segment returns valid audio bytes."""
+        from mllm_shap.connectors.base.audio import AudioSegment
+
+        # Create a real WAV segment
+        waveform = torch.randn(1, 1000)
+        wav_bytes = TorchAudioHandler.to_bytes(
+            waveform, sample_rate=24000, audio_format="wav"
+        )
+        seg = AudioSegment(
+            token="test",
+            start_time=0.0,
+            end_time=0.04,
+            confidence=1.0,
+            audio=wav_bytes,
+            audio_format="wav",
+        )
+        result = TorchAudioHandler.combine([seg], target_audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_combine_resamples_different_rates(self) -> None:
+        """Combine resamples to first segment's rate when rates differ."""
+        from mllm_shap.connectors.base.audio import AudioSegment
+
+        wf1 = torch.randn(1, 2400)
+        wf2 = torch.randn(1, 1600)
+        wav1 = TorchAudioHandler.to_bytes(wf1, sample_rate=24000, audio_format="wav")
+        wav2 = TorchAudioHandler.to_bytes(wf2, sample_rate=16000, audio_format="wav")
+        seg1 = AudioSegment(
+            token="a",
+            start_time=0.0,
+            end_time=0.1,
+            confidence=1.0,
+            audio=wav1,
+            audio_format="wav",
+        )
+        seg2 = AudioSegment(
+            token="b",
+            start_time=0.1,
+            end_time=0.2,
+            confidence=1.0,
+            audio=wav2,
+            audio_format="wav",
+        )
+        result = TorchAudioHandler.combine([seg1, seg2], target_audio_format="wav")
+        assert isinstance(result, bytes)
+        assert len(result) > len(wav1)  # combined is longer

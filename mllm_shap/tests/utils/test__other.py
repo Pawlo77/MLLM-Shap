@@ -45,18 +45,21 @@ class TestSafeMask:
     """Tests for safe_mask function."""
 
     def test_regular_mask(self, tensor: torch.Tensor) -> None:
+        """Checks that regular mask."""
         mask = torch.tensor([True, False, True])
         masked = safe_mask(tensor, mask)
         expected = torch.tensor([[1.0, 3.0], [4.0, 6.0]])
         assert torch.equal(masked, expected)
 
     def test_empty_mask(self, tensor: torch.Tensor) -> None:
+        """Checks that empty mask."""
         mask = torch.tensor([False, False, False])
         masked = safe_mask(tensor, mask)
         assert masked.shape == (2, 0)  # maintains batch dimension
         assert masked.numel() == 0
 
     def test_single_dim_tensor(self) -> None:
+        """Checks that single dim tensor."""
         tensor = torch.tensor([1.0, 2.0, 3.0])
         mask = torch.tensor([True, False, True])
         masked = safe_mask(tensor, mask)
@@ -68,6 +71,7 @@ class TestSafeMaskUnsqueeze:
     """Tests for safe_mask_unsqueeze function."""
 
     def test_regular_mask(self, tensor: torch.Tensor) -> None:
+        """Checks that regular mask."""
         mask = torch.tensor([True, False, True])
         masked = safe_mask_unsqueeze(tensor, mask)
         expected = torch.tensor([[1.0, 3.0]])
@@ -75,6 +79,7 @@ class TestSafeMaskUnsqueeze:
         assert torch.equal(masked, expected)
 
     def test_empty_mask(self, tensor: torch.Tensor) -> None:
+        """Checks that empty mask."""
         mask = torch.tensor([False, False, False])
         masked = safe_mask_unsqueeze(tensor, mask)
         expected_shape = (tensor.shape[0], 0)
