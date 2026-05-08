@@ -1,6 +1,6 @@
 [project]
 name = "mllm-shap"
-version = "0.1.10"
+version = "0.1.11"
 description = "SHAP implementation for multimodal large language models supporting audio and text input."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
