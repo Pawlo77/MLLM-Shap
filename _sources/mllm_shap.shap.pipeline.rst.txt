@@ -1,0 +1,53 @@
+mllm\_shap.shap.pipeline package
+================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mllm_shap.shap.pipeline.stages
+
+Submodules
+----------
+
+mllm\_shap.shap.pipeline.context module
+---------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.context
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.contracts module
+-----------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.contracts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.pipeline module
+----------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.pipeline
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.presets module
+---------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.presets
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.shap.pipeline
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,53 @@
+mllm\_shap.shap.pipeline.stages package
+=======================================
+
+Submodules
+----------
+
+mllm\_shap.shap.pipeline.stages.attribution\_stage module
+---------------------------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages.attribution_stage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.stages.finalize\_stage module
+------------------------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages.finalize_stage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.stages.sampling\_adapter module
+--------------------------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages.sampling_adapter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.stages.sampling\_stage module
+------------------------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages.sampling_stage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.pipeline.stages.similarity\_stage module
+--------------------------------------------------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages.similarity_stage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.shap.pipeline.stages
+   :members:
+   :show-inheritance:
+   :undoc-members:

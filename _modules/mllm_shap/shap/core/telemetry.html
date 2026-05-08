@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mllm_shap.shap.core.telemetry &#8212; mllm-shap  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=3160fef2" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="../../../../_static/documentation_options.js?v=8a448e45"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mllm_shap/shap/core/telemetry';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">mllm-shap  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../benchmarking.html">
+    Lightweight Benchmarking
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../benchmarking_quickstart.html">
+    Benchmark Quickstart
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../../../additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../benchmarking.html">
+    Lightweight Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../benchmarking_quickstart.html">
+    Benchmark Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap.core.telemetry</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for mllm_shap.shap.core.telemetry</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Telemetry and metrics collection for SHAP explainability.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">dumps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">perf_counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">...utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CacheMetrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.CacheMetrics">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CacheMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics for cache operations.&quot;&quot;&quot;</span>
+
+    <span class="n">hits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of cache hits.&quot;&quot;&quot;</span>
+
+    <span class="n">misses</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of cache misses.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Total cache operations.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">misses</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hit_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cache hit rate (0-1).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span>
+
+<div class="viewcode-block" id="CacheMetrics.to_dict">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.CacheMetrics.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert metrics to dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;hits&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hits</span><span class="p">,</span>
+            <span class="s2">&quot;misses&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">misses</span><span class="p">,</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;hit_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hit_rate</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MaskMetrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.MaskMetrics">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaskMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics for mask generation and deduplication.&quot;&quot;&quot;</span>
+
+    <span class="n">generated</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total masks generated.&quot;&quot;&quot;</span>
+
+    <span class="n">unique</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total unique masks (after dedup).&quot;&quot;&quot;</span>
+
+    <span class="n">invalid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total invalid/empty masks.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dedup_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rate of duplicates caught (0-1).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="n">duplicates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique</span>
+        <span class="k">return</span> <span class="n">duplicates</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated</span>
+
+<div class="viewcode-block" id="MaskMetrics.to_dict">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.MaskMetrics.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert metrics to dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;generated&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated</span><span class="p">,</span>
+            <span class="s2">&quot;unique&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">unique</span><span class="p">,</span>
+            <span class="s2">&quot;invalid&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">invalid</span><span class="p">,</span>
+            <span class="s2">&quot;dedup_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dedup_rate</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TimingMetrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TimingMetrics">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimingMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics for per-stage timing.&quot;&quot;&quot;</span>
+
+    <span class="n">sampling_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time spent in mask sampling (milliseconds).&quot;&quot;&quot;</span>
+
+    <span class="n">dedup_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time spent in deduplication checks (milliseconds).&quot;&quot;&quot;</span>
+
+    <span class="n">masking_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time spent in mask preparation (milliseconds).&quot;&quot;&quot;</span>
+
+    <span class="n">model_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time spent in model inference (milliseconds).&quot;&quot;&quot;</span>
+
+    <span class="n">scoring_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time spent in SHAP value computation (milliseconds).&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Total time across all stages.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sampling_ms</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dedup_ms</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">masking_ms</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_ms</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_ms</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="TimingMetrics.to_dict">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TimingMetrics.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert metrics to dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;sampling_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_ms</span><span class="p">,</span>
+            <span class="s2">&quot;dedup_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dedup_ms</span><span class="p">,</span>
+            <span class="s2">&quot;masking_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">masking_ms</span><span class="p">,</span>
+            <span class="s2">&quot;model_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_ms</span><span class="p">,</span>
+            <span class="s2">&quot;scoring_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring_ms</span><span class="p">,</span>
+            <span class="s2">&quot;total_ms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_ms</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StageTimer">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.StageTimer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StageTimer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for timing code blocks with probe integration.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probe</span><span class="p">:</span> <span class="s2">&quot;TelemetryProbe&quot;</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize StageTimer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            probe: TelemetryProbe to record timing to.</span>
+<span class="sd">            stage: Name of the stage being timed (sampling, dedup, masking, model, scoring).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">probe</span> <span class="o">=</span> <span class="n">probe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage</span> <span class="o">=</span> <span class="n">stage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;StageTimer&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start timing.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop timing and record to probe.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">elapsed_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probe</span><span class="o">.</span><span class="n">record_timing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stage</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StageTimer.measure">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.StageTimer.measure">[docs]</a>
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alternate context manager interface.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">yield</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TelemetryData">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryData">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TelemetryData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for all telemetry data collected during a run.&quot;&quot;&quot;</span>
+
+    <span class="n">cache_metrics</span><span class="p">:</span> <span class="n">CacheMetrics</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">CacheMetrics</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cache operation metrics.&quot;&quot;&quot;</span>
+
+    <span class="n">mask_metrics</span><span class="p">:</span> <span class="n">MaskMetrics</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">MaskMetrics</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mask generation metrics.&quot;&quot;&quot;</span>
+
+    <span class="n">timing_metrics</span><span class="p">:</span> <span class="n">TimingMetrics</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TimingMetrics</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-stage timing metrics.&quot;&quot;&quot;</span>
+
+    <span class="n">custom_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom metrics dictionary.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TelemetryData.to_dict">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryData.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert all telemetry to dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;cache&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_metrics</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;masks&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_metrics</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;timing&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_metrics</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;custom&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_metrics</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProbeSink">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbeSink</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for telemetry sinks.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProbeSink.record_cache_operation">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.record_cache_operation">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_cache_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a cache operation (hit or miss).&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProbeSink.record_mask_generated">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.record_mask_generated">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_mask_generated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_unique</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">is_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a generated mask and whether it was unique/invalid.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProbeSink.record_timing">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.record_timing">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record timing for a stage (sampling, dedup, masking, model, scoring).&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProbeSink.record_custom_metric">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.record_custom_metric">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_custom_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a custom metric.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProbeSink.get_metrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.get_metrics">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TelemetryData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get collected telemetry data.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProbeSink.reset">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.ProbeSink.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset collected metrics. Optional override.&quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LogProbeSink">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogProbeSink</span><span class="p">(</span><span class="n">ProbeSink</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Telemetry sink that logs metrics to logger.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize LogProbeSink.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            verbose: If True, log every operation. If False, only log summary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="LogProbeSink.record_cache_operation">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.record_cache_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_cache_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a cache operation.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">is_hit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Mask cache hit: reusing previously computed SHAP values &quot;</span>
+                    <span class="s2">&quot;(cumulative hits: </span><span class="si">%d</span><span class="s2">)&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Mask cache miss: mask not in cache, will compute SHAP values &quot;</span>
+                    <span class="s2">&quot;(cumulative misses: </span><span class="si">%d</span><span class="s2">)&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogProbeSink.record_mask_generated">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.record_mask_generated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_mask_generated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_unique</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">is_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a generated mask.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">is_invalid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Invalid mask generated: failed validation (e.g., no tokens to explain). &quot;</span>
+                    <span class="s2">&quot;Cumulative invalid masks: </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">is_unique</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Unique mask generated: new mask pattern added to cache. &quot;</span>
+                    <span class="s2">&quot;Cumulative unique masks: </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Duplicate mask skipped: mask pattern already cached, &quot;</span>
+                    <span class="s2">&quot;will use existing results (duplicates save computation). &quot;</span>
+                    <span class="s2">&quot;Cumulative duplicates: </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogProbeSink.record_timing">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.record_timing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record timing for a stage.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sampling&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;dedup&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;masking&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;scoring&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="n">stage_descriptions</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;sampling&quot;</span><span class="p">:</span> <span class="s2">&quot;sampling mask generation strategy&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;dedup&quot;</span><span class="p">:</span> <span class="s2">&quot;mask deduplication and caching&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;masking&quot;</span><span class="p">:</span> <span class="s2">&quot;applying mask to chat&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;model inference on masked input&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;scoring&quot;</span><span class="p">:</span> <span class="s2">&quot;scoring computation&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">stage_descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">stage</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Stage completed: </span><span class="si">%s</span><span class="s2"> took </span><span class="si">%.2f</span><span class="s2"> ms&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="p">,</span>
+                <span class="n">elapsed_ms</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogProbeSink.record_custom_metric">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.record_custom_metric">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_custom_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a custom metric.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Custom telemetry metric recorded: </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2"> (type: </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="n">key</span><span class="p">,</span>
+                <span class="n">value</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogProbeSink.get_metrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.get_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TelemetryData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get collected telemetry data.&quot;&quot;&quot;</span>
+        <span class="n">cache_metrics</span> <span class="o">=</span> <span class="n">CacheMetrics</span><span class="p">(</span><span class="n">hits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span><span class="p">,</span> <span class="n">misses</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span><span class="p">)</span>
+        <span class="n">mask_metrics</span> <span class="o">=</span> <span class="n">MaskMetrics</span><span class="p">(</span>
+            <span class="n">generated</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span><span class="p">,</span>
+            <span class="n">unique</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span><span class="p">,</span>
+            <span class="n">invalid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">timing_metrics</span> <span class="o">=</span> <span class="n">TimingMetrics</span><span class="p">(</span>
+            <span class="n">sampling_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span><span class="p">,</span>
+            <span class="n">dedup_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span><span class="p">,</span>
+            <span class="n">masking_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span><span class="p">,</span>
+            <span class="n">model_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span><span class="p">,</span>
+            <span class="n">scoring_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">TelemetryData</span><span class="p">(</span>
+            <span class="n">cache_metrics</span><span class="o">=</span><span class="n">cache_metrics</span><span class="p">,</span>
+            <span class="n">mask_metrics</span><span class="o">=</span><span class="n">mask_metrics</span><span class="p">,</span>
+            <span class="n">timing_metrics</span><span class="o">=</span><span class="n">timing_metrics</span><span class="p">,</span>
+            <span class="n">custom_metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogProbeSink.reset">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.LogProbeSink.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset collected metrics.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="JSONProbeSink">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JSONProbeSink</span><span class="p">(</span><span class="n">ProbeSink</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Telemetry sink that collects metrics for JSON serialization.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize JSONProbeSink.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="JSONProbeSink.record_cache_operation">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.record_cache_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_cache_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a cache operation.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">is_hit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.record_mask_generated">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.record_mask_generated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_mask_generated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_unique</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">is_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a generated mask.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">is_invalid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">is_unique</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.record_timing">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.record_timing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record timing for a stage.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;sampling&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;dedup&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;masking&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="s2">&quot;scoring&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">+=</span> <span class="n">elapsed_ms</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.record_custom_metric">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.record_custom_metric">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_custom_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a custom metric.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.get_metrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.get_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TelemetryData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get collected telemetry data.&quot;&quot;&quot;</span>
+        <span class="n">cache_metrics</span> <span class="o">=</span> <span class="n">CacheMetrics</span><span class="p">(</span><span class="n">hits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span><span class="p">,</span> <span class="n">misses</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span><span class="p">)</span>
+        <span class="n">mask_metrics</span> <span class="o">=</span> <span class="n">MaskMetrics</span><span class="p">(</span>
+            <span class="n">generated</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span><span class="p">,</span>
+            <span class="n">unique</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span><span class="p">,</span>
+            <span class="n">invalid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">timing_metrics</span> <span class="o">=</span> <span class="n">TimingMetrics</span><span class="p">(</span>
+            <span class="n">sampling_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span><span class="p">,</span>
+            <span class="n">dedup_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span><span class="p">,</span>
+            <span class="n">masking_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span><span class="p">,</span>
+            <span class="n">model_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span><span class="p">,</span>
+            <span class="n">scoring_ms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">TelemetryData</span><span class="p">(</span>
+            <span class="n">cache_metrics</span><span class="o">=</span><span class="n">cache_metrics</span><span class="p">,</span>
+            <span class="n">mask_metrics</span><span class="o">=</span><span class="n">mask_metrics</span><span class="p">,</span>
+            <span class="n">timing_metrics</span><span class="o">=</span><span class="n">timing_metrics</span><span class="p">,</span>
+            <span class="n">custom_metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.to_json">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.to_json">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize collected metrics to JSON string.&quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_metrics</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JSONProbeSink.reset">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.JSONProbeSink.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset collected metrics.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_hits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_misses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_generated</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_unique</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_invalid</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dedup_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masking_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scoring_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_custom_metrics</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TelemetryProbe">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TelemetryProbe</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main interface for collecting telemetry during SHAP computation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sink</span><span class="p">:</span> <span class="n">ProbeSink</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize TelemetryProbe.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sink: Optional ProbeSink to collect metrics. If None, no metrics collected.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sink</span> <span class="o">=</span> <span class="n">sink</span>
+
+<div class="viewcode-block" id="TelemetryProbe.cache_operation">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.cache_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cache_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a cache operation (hit or miss).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">record_cache_operation</span><span class="p">(</span><span class="n">is_hit</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.mask_generated">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.mask_generated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mask_generated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_unique</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">is_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a generated mask and whether it was unique/invalid.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">record_mask_generated</span><span class="p">(</span><span class="n">is_unique</span><span class="p">,</span> <span class="n">is_invalid</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.record_timing">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.record_timing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record timing for a stage (sampling, dedup, masking, model, scoring).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">record_timing</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">elapsed_ms</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.timing">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.timing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">timing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StageTimer</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a context manager for timing a stage.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">StageTimer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.custom_metric">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.custom_metric">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">custom_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record a custom metric.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">record_custom_metric</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.get_metrics">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.get_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TelemetryData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get collected telemetry data, or None if no sink.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">get_metrics</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.reset">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset collected metrics.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sink</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.noop">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.noop">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">noop</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;TelemetryProbe&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a no-op probe (no sink, no collection).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TelemetryProbe</span><span class="p">(</span><span class="n">sink</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.with_log_sink">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.with_log_sink">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_log_sink</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TelemetryProbe&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a probe with log sink.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TelemetryProbe</span><span class="p">(</span><span class="n">sink</span><span class="o">=</span><span class="n">LogProbeSink</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="TelemetryProbe.with_json_sink">
+<a class="viewcode-back" href="../../../../mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe.with_json_sink">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_json_sink</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;TelemetryProbe&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a probe with JSON sink.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TelemetryProbe</span><span class="p">(</span><span class="n">sink</span><span class="o">=</span><span class="n">JSONProbeSink</span><span class="p">())</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Paweł Pozorski, Jakub Muszyński.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

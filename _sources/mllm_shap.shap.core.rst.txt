@@ -1,0 +1,53 @@
+mllm\_shap.shap.core package
+============================
+
+Submodules
+----------
+
+mllm\_shap.shap.core.contracts module
+-------------------------------------
+
+.. automodule:: mllm_shap.shap.core.contracts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.core.engine module
+----------------------------------
+
+.. automodule:: mllm_shap.shap.core.engine
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.core.estimation module
+--------------------------------------
+
+.. automodule:: mllm_shap.shap.core.estimation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.core.sampling module
+------------------------------------
+
+.. automodule:: mllm_shap.shap.core.sampling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.shap.core.telemetry module
+-------------------------------------
+
+.. automodule:: mllm_shap.shap.core.telemetry
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.shap.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

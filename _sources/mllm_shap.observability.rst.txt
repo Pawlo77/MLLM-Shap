@@ -1,0 +1,37 @@
+mllm\_shap.observability package
+================================
+
+Submodules
+----------
+
+mllm\_shap.observability.bridge module
+--------------------------------------
+
+.. automodule:: mllm_shap.observability.bridge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.observability.events module
+--------------------------------------
+
+.. automodule:: mllm_shap.observability.events
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mllm\_shap.observability.sink module
+------------------------------------
+
+.. automodule:: mllm_shap.observability.sink
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.observability
+   :members:
+   :show-inheritance:
+   :undoc-members:

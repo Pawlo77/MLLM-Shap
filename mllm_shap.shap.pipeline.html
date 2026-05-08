@@ -1,0 +1,1527 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mllm_shap.shap.pipeline package &#8212; mllm-shap  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=3160fef2" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="_static/documentation_options.js?v=8a448e45"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'mllm_shap.shap.pipeline';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">mllm-shap  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="benchmarking.html">
+    Lightweight Benchmarking
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="benchmarking_quickstart.html">
+    Benchmark Quickstart
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    🚀 Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation.html">
+    🧩 API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="experiments_mllm_shapx.html">
+    🧪 Experiments Runner
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="extension_gui.html">
+    🖥️ Companion GUI
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="benchmarking.html">
+    Lightweight Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="benchmarking_quickstart.html">
+    Benchmark Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="release_notes.html">
+    📦 Release Notes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="references.html">
+    📚 References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="additional_notes.html">
+    📝 Additional Notes
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Pawlo77/MLLM-Shap" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/mllm-shap/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-solid fa-box fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mllm_shap.shap.pipeline package</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="mllm-shap-shap-pipeline-package">
+<h1>mllm_shap.shap.pipeline package<a class="headerlink" href="#mllm-shap-shap-pipeline-package" title="Link to this heading">#</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html">mllm_shap.shap.pipeline.stages package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages.attribution_stage">mllm_shap.shap.pipeline.stages.attribution_stage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.attribution_stage.AttributionStage"><code class="docutils literal notranslate"><span class="pre">AttributionStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.attribution_stage.AttributionStage.get_shap_values"><code class="docutils literal notranslate"><span class="pre">AttributionStage.get_shap_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.attribution_stage.AttributionStage.run"><code class="docutils literal notranslate"><span class="pre">AttributionStage.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages.finalize_stage">mllm_shap.shap.pipeline.stages.finalize_stage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.finalize_stage.FinalizeStage"><code class="docutils literal notranslate"><span class="pre">FinalizeStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.finalize_stage.FinalizeStage.run"><code class="docutils literal notranslate"><span class="pre">FinalizeStage.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.finalize_stage.FinalizeStage.save_to_cache"><code class="docutils literal notranslate"><span class="pre">FinalizeStage.save_to_cache</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages.sampling_adapter">mllm_shap.shap.pipeline.stages.sampling_adapter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_adapter.build_masks_generator"><code class="docutils literal notranslate"><span class="pre">build_masks_generator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_adapter.run_sampling_generation"><code class="docutils literal notranslate"><span class="pre">run_sampling_generation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages.sampling_stage">mllm_shap.shap.pipeline.stages.sampling_stage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.InsufficientMasksError"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.InsufficientMasksError.add_note"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.add_note()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.InsufficientMasksError.args"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.InsufficientMasksError.with_traceback"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.with_traceback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage"><code class="docutils literal notranslate"><span class="pre">SamplingStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.allow_full_or_empty"><code class="docutils literal notranslate"><span class="pre">SamplingStage.allow_full_or_empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">SamplingStage.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.cache_manager_factory"><code class="docutils literal notranslate"><span class="pre">SamplingStage.cache_manager_factory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.generate_kwargs"><code class="docutils literal notranslate"><span class="pre">SamplingStage.generate_kwargs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.generate_step"><code class="docutils literal notranslate"><span class="pre">SamplingStage.generate_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.get_next_split"><code class="docutils literal notranslate"><span class="pre">SamplingStage.get_next_split</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.get_num_splits"><code class="docutils literal notranslate"><span class="pre">SamplingStage.get_num_splits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.masks_manager_factory"><code class="docutils literal notranslate"><span class="pre">SamplingStage.masks_manager_factory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.n_generator_jobs"><code class="docutils literal notranslate"><span class="pre">SamplingStage.n_generator_jobs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.progress_bar"><code class="docutils literal notranslate"><span class="pre">SamplingStage.progress_bar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.run"><code class="docutils literal notranslate"><span class="pre">SamplingStage.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.tqdm_desc"><code class="docutils literal notranslate"><span class="pre">SamplingStage.tqdm_desc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.sampling_stage.SamplingStage.verbose"><code class="docutils literal notranslate"><span class="pre">SamplingStage.verbose</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages.similarity_stage">mllm_shap.shap.pipeline.stages.similarity_stage module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.similarity_stage.SimilarityStage"><code class="docutils literal notranslate"><span class="pre">SimilarityStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.similarity_stage.SimilarityStage.get_similarities"><code class="docutils literal notranslate"><span class="pre">SimilarityStage.get_similarities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.similarity_stage.SimilarityStage.run"><code class="docutils literal notranslate"><span class="pre">SimilarityStage.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#module-mllm_shap.shap.pipeline.stages">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.AttributionStage"><code class="docutils literal notranslate"><span class="pre">AttributionStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.AttributionStage.get_shap_values"><code class="docutils literal notranslate"><span class="pre">AttributionStage.get_shap_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.AttributionStage.run"><code class="docutils literal notranslate"><span class="pre">AttributionStage.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.FinalizeStage"><code class="docutils literal notranslate"><span class="pre">FinalizeStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.FinalizeStage.run"><code class="docutils literal notranslate"><span class="pre">FinalizeStage.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.FinalizeStage.save_to_cache"><code class="docutils literal notranslate"><span class="pre">FinalizeStage.save_to_cache</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.InsufficientMasksError"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.InsufficientMasksError.add_note"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.add_note()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.InsufficientMasksError.args"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.InsufficientMasksError.with_traceback"><code class="docutils literal notranslate"><span class="pre">InsufficientMasksError.with_traceback()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage"><code class="docutils literal notranslate"><span class="pre">SamplingStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.allow_full_or_empty"><code class="docutils literal notranslate"><span class="pre">SamplingStage.allow_full_or_empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">SamplingStage.allow_mask_duplicates</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.cache_manager_factory"><code class="docutils literal notranslate"><span class="pre">SamplingStage.cache_manager_factory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.generate_kwargs"><code class="docutils literal notranslate"><span class="pre">SamplingStage.generate_kwargs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.generate_step"><code class="docutils literal notranslate"><span class="pre">SamplingStage.generate_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.get_next_split"><code class="docutils literal notranslate"><span class="pre">SamplingStage.get_next_split</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.get_num_splits"><code class="docutils literal notranslate"><span class="pre">SamplingStage.get_num_splits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.masks_manager_factory"><code class="docutils literal notranslate"><span class="pre">SamplingStage.masks_manager_factory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.n_generator_jobs"><code class="docutils literal notranslate"><span class="pre">SamplingStage.n_generator_jobs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.progress_bar"><code class="docutils literal notranslate"><span class="pre">SamplingStage.progress_bar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.run"><code class="docutils literal notranslate"><span class="pre">SamplingStage.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.tqdm_desc"><code class="docutils literal notranslate"><span class="pre">SamplingStage.tqdm_desc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SamplingStage.verbose"><code class="docutils literal notranslate"><span class="pre">SamplingStage.verbose</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SimilarityStage"><code class="docutils literal notranslate"><span class="pre">SimilarityStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SimilarityStage.get_similarities"><code class="docutils literal notranslate"><span class="pre">SimilarityStage.get_similarities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="mllm_shap.shap.pipeline.stages.html#mllm_shap.shap.pipeline.stages.SimilarityStage.run"><code class="docutils literal notranslate"><span class="pre">SimilarityStage.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-mllm_shap.shap.pipeline.context">
+<span id="mllm-shap-shap-pipeline-context-module"></span><h2>mllm_shap.shap.pipeline.context module<a class="headerlink" href="#module-mllm_shap.shap.pipeline.context" title="Link to this heading">#</a></h2>
+<p>Pipeline context/state for composition-first SHAP execution.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">ExplainContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">response_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MappingProxyType</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Immutable input context for one explanation run.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.base_response">
+<span class="sig-name descname"><span class="pre">base_response</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.base_response" title="Link to this definition">#</a></dt>
+<dd><p>Reference model response for the unmasked input.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.budget">
+<span class="sig-name descname"><span class="pre">budget</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.budget" title="Link to this definition">#</a></dt>
+<dd><p>Optional cap on the number of generated masks/samples.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.device">
+<span class="sig-name descname"><span class="pre">device</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.device" title="Link to this definition">#</a></dt>
+<dd><p>Torch device where SHAP computations are executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.model" title="Link to this definition">#</a></dt>
+<dd><p>Model connector used to generate responses and embeddings.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.params">
+<span class="sig-name descname"><span class="pre">params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MappingProxyType</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.params" title="Link to this definition">#</a></dt>
+<dd><p>Immutable free-form parameters passed to pipeline stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.response_chat">
+<span class="sig-name descname"><span class="pre">response_chat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.response_chat" title="Link to this definition">#</a></dt>
+<dd><p>Chat instance representing the reference/response branch.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.seed" title="Link to this definition">#</a></dt>
+<dd><p>Optional random seed controlling stochastic sampling behavior.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainContext.source_chat">
+<span class="sig-name descname"><span class="pre">source_chat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainContext.source_chat" title="Link to this definition">#</a></dt>
+<dd><p>Original chat instance to explain.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.context.</span></span><span class="sig-name descname"><span class="pre">ExplainState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized_shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list[tuple[~torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~mllm_shap.connectors.base.chat.BaseMllmChat</span> <span class="pre">|</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~mllm_shap.connectors.base.model_response.ModelResponse]]</span> <span class="pre">|</span> <span class="pre">None</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mutable run state passed across pipeline stages.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.add_metadata">
+<span class="sig-name descname"><span class="pre">add_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainState.add_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.add_metadata" title="Link to this definition">#</a></dt>
+<dd><p>Attach stage-local metadata for diagnostics/telemetry.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.history">
+<span class="sig-name descname"><span class="pre">history</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.history" title="Link to this definition">#</a></dt>
+<dd><p>Optional per-iteration generation history for debugging/analysis.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.masks">
+<span class="sig-name descname"><span class="pre">masks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.masks" title="Link to this definition">#</a></dt>
+<dd><p>Accumulated masks generated across sampling stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.metadata" title="Link to this definition">#</a></dt>
+<dd><p>Stage-level telemetry and diagnostic metadata.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.normalized_shap_values">
+<span class="sig-name descname"><span class="pre">normalized_shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.normalized_shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Post-processed SHAP values after normalization.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.responses">
+<span class="sig-name descname"><span class="pre">responses</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.responses" title="Link to this definition">#</a></dt>
+<dd><p>Model responses aligned with the generated masks.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.shap_values">
+<span class="sig-name descname"><span class="pre">shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Raw SHAP attribution values before normalization.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.context.ExplainState.similarities">
+<span class="sig-name descname"><span class="pre">similarities</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.context.ExplainState.similarities" title="Link to this definition">#</a></dt>
+<dd><p>Similarity scores computed for current responses/masks.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.pipeline.contracts">
+<span id="mllm-shap-shap-pipeline-contracts-module"></span><h2>mllm_shap.shap.pipeline.contracts module<a class="headerlink" href="#module-mllm_shap.shap.pipeline.contracts" title="Link to this heading">#</a></h2>
+<p>Contracts for composition-first SHAP pipeline stages and policies.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.EstimationPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">EstimationPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#EstimationPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.EstimationPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy estimating SHAP values from masks/similarities.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.EstimationPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.EstimationPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.NormalizationPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">NormalizationPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#NormalizationPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.NormalizationPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy normalizing raw SHAP values.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.NormalizationPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.NormalizationPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.PersistencePolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">PersistencePolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PersistencePolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.PersistencePolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy persisting results (for example cache storage).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.PersistencePolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.PersistencePolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.PipelineStage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">PipelineStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PipelineStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Single pipeline stage that can mutate ExplainState.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.PipelineStage.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PipelineStage.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.PipelineStage.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.SamplingPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">SamplingPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#SamplingPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.SamplingPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy producing masks and response samples.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.SamplingPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.SamplingPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.SimilarityPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.contracts.</span></span><span class="sig-name descname"><span class="pre">SimilarityPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#SimilarityPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.SimilarityPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy computing similarities from responses.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.contracts.SimilarityPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.contracts.SimilarityPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.pipeline.pipeline">
+<span id="mllm-shap-shap-pipeline-pipeline-module"></span><h2>mllm_shap.shap.pipeline.pipeline module<a class="headerlink" href="#module-mllm_shap.shap.pipeline.pipeline" title="Link to this heading">#</a></h2>
+<p>Generic explain pipeline executor.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.pipeline.ExplainPipeline">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.pipeline.</span></span><span class="sig-name descname"><span class="pre">ExplainPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><span class="pre">PipelineStage</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/pipeline.html#ExplainPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Ordered stage executor for SHAP runs.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.pipeline.ExplainPipeline.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/pipeline.html#ExplainPipeline.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stages in order and return mutated state.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.pipeline.ExplainPipeline.stages">
+<span class="sig-name descname"><span class="pre">stages</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><span class="pre">PipelineStage</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline.stages" title="Link to this definition">#</a></dt>
+<dd><p>Ordered tuple of pipeline stages to execute. Each stage should be
+an instance of a class that implements the PipelineStage protocol,
+meaning it should have a run method that takes
+an ExplainContext, ExplainState, and optional TelemetryProbe as</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.pipeline.presets">
+<span id="mllm-shap-shap-pipeline-presets-module"></span><h2>mllm_shap.shap.pipeline.presets module<a class="headerlink" href="#module-mllm_shap.shap.pipeline.presets" title="Link to this heading">#</a></h2>
+<p>Pipeline presets for explainers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.presets.</span></span><span class="sig-name descname"><span class="pre">PipelinePreset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_next_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_num_splits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_similarities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_cache</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mask_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_full_or_empty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_generator_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tqdm_desc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generate_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks_manager_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_manager_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generate_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_sampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_attribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_finalize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/presets.html#PipelinePreset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Factory that wires explainer callbacks into composition pipeline.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.allow_full_or_empty">
+<span class="sig-name descname"><span class="pre">allow_full_or_empty</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.allow_full_or_empty" title="Link to this definition">#</a></dt>
+<dd><p>Whether all-on/all-off masks are allowed during sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether duplicate masks are allowed in the sampling stage.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline" title="mllm_shap.shap.pipeline.pipeline.ExplainPipeline"><span class="pre">ExplainPipeline</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/presets.html#PipelinePreset.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.build" title="Link to this definition">#</a></dt>
+<dd><p>Create executable pipeline for current explainer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.cache_manager_factory">
+<span class="sig-name descname"><span class="pre">cache_manager_factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.cache_manager_factory" title="Link to this definition">#</a></dt>
+<dd><p>Optional factory overriding cache manager construction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.generate_kwargs">
+<span class="sig-name descname"><span class="pre">generate_kwargs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.generate_kwargs" title="Link to this definition">#</a></dt>
+<dd><p>Extra keyword arguments forwarded into generation routines.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.generate_step">
+<span class="sig-name descname"><span class="pre">generate_step</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.generate_step" title="Link to this definition">#</a></dt>
+<dd><p>Optional custom generation callable replacing default sampling adapter.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.get_next_split">
+<span class="sig-name descname"><span class="pre">get_next_split</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_next_split" title="Link to this definition">#</a></dt>
+<dd><p>Callback that returns the next split/mask proposal.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.get_num_splits">
+<span class="sig-name descname"><span class="pre">get_num_splits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_num_splits" title="Link to this definition">#</a></dt>
+<dd><p>Callback that reports expected number of splits, if known.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.get_shap_values">
+<span class="sig-name descname"><span class="pre">get_shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Callback converting similarities into SHAP attributions.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.get_similarities">
+<span class="sig-name descname"><span class="pre">get_similarities</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_similarities" title="Link to this definition">#</a></dt>
+<dd><p>Callback computing similarities from sampled responses.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.include_attribution">
+<span class="sig-name descname"><span class="pre">include_attribution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_attribution" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the attribution stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.include_finalize">
+<span class="sig-name descname"><span class="pre">include_finalize</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_finalize" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the finalize/cache stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.include_sampling">
+<span class="sig-name descname"><span class="pre">include_sampling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_sampling" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the sampling stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.masks_manager_factory">
+<span class="sig-name descname"><span class="pre">masks_manager_factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.masks_manager_factory" title="Link to this definition">#</a></dt>
+<dd><p>Optional factory overriding mask manager construction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.n_generator_jobs">
+<span class="sig-name descname"><span class="pre">n_generator_jobs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.n_generator_jobs" title="Link to this definition">#</a></dt>
+<dd><p>Number of parallel jobs used for generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.progress_bar">
+<span class="sig-name descname"><span class="pre">progress_bar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.progress_bar" title="Link to this definition">#</a></dt>
+<dd><p>Whether to show progress bars in pipeline stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.save_to_cache">
+<span class="sig-name descname"><span class="pre">save_to_cache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.save_to_cache" title="Link to this definition">#</a></dt>
+<dd><p>Callback persisting final values into the explainer cache.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.tqdm_desc">
+<span class="sig-name descname"><span class="pre">tqdm_desc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.tqdm_desc" title="Link to this definition">#</a></dt>
+<dd><p>Progress bar label used by generation stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.presets.PipelinePreset.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.verbose" title="Link to this definition">#</a></dt>
+<dd><p>Whether to enable verbose diagnostic logging.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-mllm_shap.shap.pipeline">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mllm_shap.shap.pipeline" title="Link to this heading">#</a></h2>
+<p>Composition-first SHAP execution pipeline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.EstimationPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">EstimationPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#EstimationPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.EstimationPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy estimating SHAP values from masks/similarities.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.EstimationPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.EstimationPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">ExplainContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">response_chat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MappingProxyType</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Immutable input context for one explanation run.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.base_response">
+<span class="sig-name descname"><span class="pre">base_response</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.base_response" title="Link to this definition">#</a></dt>
+<dd><p>Reference model response for the unmasked input.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.budget">
+<span class="sig-name descname"><span class="pre">budget</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.budget" title="Link to this definition">#</a></dt>
+<dd><p>Optional cap on the number of generated masks/samples.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.device">
+<span class="sig-name descname"><span class="pre">device</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.device" title="Link to this definition">#</a></dt>
+<dd><p>Torch device where SHAP computations are executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model.BaseMllmModel" title="mllm_shap.connectors.base.model.BaseMllmModel"><span class="pre">BaseMllmModel</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.model" title="Link to this definition">#</a></dt>
+<dd><p>Model connector used to generate responses and embeddings.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.params">
+<span class="sig-name descname"><span class="pre">params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MappingProxyType</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.params" title="Link to this definition">#</a></dt>
+<dd><p>Immutable free-form parameters passed to pipeline stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.response_chat">
+<span class="sig-name descname"><span class="pre">response_chat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.response_chat" title="Link to this definition">#</a></dt>
+<dd><p>Chat instance representing the reference/response branch.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.seed" title="Link to this definition">#</a></dt>
+<dd><p>Optional random seed controlling stochastic sampling behavior.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainContext.source_chat">
+<span class="sig-name descname"><span class="pre">source_chat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainContext.source_chat" title="Link to this definition">#</a></dt>
+<dd><p>Original chat instance to explain.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainPipeline">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">ExplainPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><span class="pre">PipelineStage</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/pipeline.html#ExplainPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainPipeline" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Ordered stage executor for SHAP runs.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainPipeline.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/pipeline.html#ExplainPipeline.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainPipeline.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stages in order and return mutated state.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainPipeline.stages">
+<span class="sig-name descname"><span class="pre">stages</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><span class="pre">PipelineStage</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainPipeline.stages" title="Link to this definition">#</a></dt>
+<dd><p>Ordered tuple of pipeline stages to execute. Each stage should be
+an instance of a class that implements the PipelineStage protocol,
+meaning it should have a run method that takes
+an ExplainContext, ExplainState, and optional TelemetryProbe as</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">ExplainState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">responses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized_shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list[tuple[~torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~mllm_shap.connectors.base.chat.BaseMllmChat</span> <span class="pre">|</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~mllm_shap.connectors.base.model_response.ModelResponse]]</span> <span class="pre">|</span> <span class="pre">None</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mutable run state passed across pipeline stages.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.add_metadata">
+<span class="sig-name descname"><span class="pre">add_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/context.html#ExplainState.add_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.add_metadata" title="Link to this definition">#</a></dt>
+<dd><p>Attach stage-local metadata for diagnostics/telemetry.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.history">
+<span class="sig-name descname"><span class="pre">history</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.history" title="Link to this definition">#</a></dt>
+<dd><p>Optional per-iteration generation history for debugging/analysis.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.masks">
+<span class="sig-name descname"><span class="pre">masks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.masks" title="Link to this definition">#</a></dt>
+<dd><p>Accumulated masks generated across sampling stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.metadata" title="Link to this definition">#</a></dt>
+<dd><p>Stage-level telemetry and diagnostic metadata.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.normalized_shap_values">
+<span class="sig-name descname"><span class="pre">normalized_shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.normalized_shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Post-processed SHAP values after normalization.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.responses">
+<span class="sig-name descname"><span class="pre">responses</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.responses" title="Link to this definition">#</a></dt>
+<dd><p>Model responses aligned with the generated masks.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.shap_values">
+<span class="sig-name descname"><span class="pre">shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Raw SHAP attribution values before normalization.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.ExplainState.similarities">
+<span class="sig-name descname"><span class="pre">similarities</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.ExplainState.similarities" title="Link to this definition">#</a></dt>
+<dd><p>Similarity scores computed for current responses/masks.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.NormalizationPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">NormalizationPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#NormalizationPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.NormalizationPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy normalizing raw SHAP values.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.NormalizationPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.NormalizationPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PersistencePolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">PersistencePolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PersistencePolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.PersistencePolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy persisting results (for example cache storage).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PersistencePolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PersistencePolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelinePreset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_next_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_num_splits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_similarities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_shap_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_cache</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_mask_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_full_or_empty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_generator_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tqdm_desc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generate_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks_manager_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_manager_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generate_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_sampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_attribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_finalize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/presets.html#PipelinePreset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Factory that wires explainer callbacks into composition pipeline.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.allow_full_or_empty">
+<span class="sig-name descname"><span class="pre">allow_full_or_empty</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.allow_full_or_empty" title="Link to this definition">#</a></dt>
+<dd><p>Whether all-on/all-off masks are allowed during sampling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.allow_mask_duplicates">
+<span class="sig-name descname"><span class="pre">allow_mask_duplicates</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.allow_mask_duplicates" title="Link to this definition">#</a></dt>
+<dd><p>Whether duplicate masks are allowed in the sampling stage.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline" title="mllm_shap.shap.pipeline.pipeline.ExplainPipeline"><span class="pre">ExplainPipeline</span></a></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/presets.html#PipelinePreset.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.build" title="Link to this definition">#</a></dt>
+<dd><p>Create executable pipeline for current explainer.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.cache_manager_factory">
+<span class="sig-name descname"><span class="pre">cache_manager_factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.cache_manager_factory" title="Link to this definition">#</a></dt>
+<dd><p>Optional factory overriding cache manager construction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.generate_kwargs">
+<span class="sig-name descname"><span class="pre">generate_kwargs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.generate_kwargs" title="Link to this definition">#</a></dt>
+<dd><p>Extra keyword arguments forwarded into generation routines.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.generate_step">
+<span class="sig-name descname"><span class="pre">generate_step</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.generate_step" title="Link to this definition">#</a></dt>
+<dd><p>Optional custom generation callable replacing default sampling adapter.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.get_next_split">
+<span class="sig-name descname"><span class="pre">get_next_split</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.get_next_split" title="Link to this definition">#</a></dt>
+<dd><p>Callback that returns the next split/mask proposal.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.get_num_splits">
+<span class="sig-name descname"><span class="pre">get_num_splits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.get_num_splits" title="Link to this definition">#</a></dt>
+<dd><p>Callback that reports expected number of splits, if known.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.get_shap_values">
+<span class="sig-name descname"><span class="pre">get_shap_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.get_shap_values" title="Link to this definition">#</a></dt>
+<dd><p>Callback converting similarities into SHAP attributions.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.get_similarities">
+<span class="sig-name descname"><span class="pre">get_similarities</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.get_similarities" title="Link to this definition">#</a></dt>
+<dd><p>Callback computing similarities from sampled responses.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.include_attribution">
+<span class="sig-name descname"><span class="pre">include_attribution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.include_attribution" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the attribution stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.include_finalize">
+<span class="sig-name descname"><span class="pre">include_finalize</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.include_finalize" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the finalize/cache stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.include_sampling">
+<span class="sig-name descname"><span class="pre">include_sampling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.include_sampling" title="Link to this definition">#</a></dt>
+<dd><p>Whether to include the sampling stage in the built pipeline.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.masks_manager_factory">
+<span class="sig-name descname"><span class="pre">masks_manager_factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.masks_manager_factory" title="Link to this definition">#</a></dt>
+<dd><p>Optional factory overriding mask manager construction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.n_generator_jobs">
+<span class="sig-name descname"><span class="pre">n_generator_jobs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.n_generator_jobs" title="Link to this definition">#</a></dt>
+<dd><p>Number of parallel jobs used for generation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.progress_bar">
+<span class="sig-name descname"><span class="pre">progress_bar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.progress_bar" title="Link to this definition">#</a></dt>
+<dd><p>Whether to show progress bars in pipeline stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.save_to_cache">
+<span class="sig-name descname"><span class="pre">save_to_cache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.save_to_cache" title="Link to this definition">#</a></dt>
+<dd><p>Callback persisting final values into the explainer cache.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.tqdm_desc">
+<span class="sig-name descname"><span class="pre">tqdm_desc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.tqdm_desc" title="Link to this definition">#</a></dt>
+<dd><p>Progress bar label used by generation stages.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelinePreset.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelinePreset.verbose" title="Link to this definition">#</a></dt>
+<dd><p>Whether to enable verbose diagnostic logging.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelineStage">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">PipelineStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PipelineStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelineStage" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Single pipeline stage that can mutate ExplainState.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.PipelineStage.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#PipelineStage.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.PipelineStage.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.SamplingPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">SamplingPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#SamplingPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.SamplingPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy producing masks and response samples.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.SamplingPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.SamplingPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.SimilarityPolicy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mllm_shap.shap.pipeline.</span></span><span class="sig-name descname"><span class="pre">SimilarityPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mllm_shap/shap/pipeline/contracts.html#SimilarityPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mllm_shap.shap.pipeline.SimilarityPolicy" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mllm_shap.shap.pipeline.contracts.PipelineStage" title="mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">PipelineStage</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>Policy computing similarities from responses.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.shap.pipeline.SimilarityPolicy.run">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainContext" title="mllm_shap.shap.pipeline.context.ExplainContext"><span class="pre">ExplainContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#mllm_shap.shap.pipeline.context.ExplainState" title="mllm_shap.shap.pipeline.context.ExplainState"><span class="pre">ExplainState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">probe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.shap.core.html#mllm_shap.shap.core.telemetry.TelemetryProbe" title="mllm_shap.shap.core.telemetry.TelemetryProbe"><span class="pre">TelemetryProbe</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#mllm_shap.shap.pipeline.SimilarityPolicy.run" title="Link to this definition">#</a></dt>
+<dd><p>Execute stage logic and mutate state.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.pipeline.context">mllm_shap.shap.pipeline.context module</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext"><code class="docutils literal notranslate"><span class="pre">ExplainContext</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.base_response"><code class="docutils literal notranslate"><span class="pre">ExplainContext.base_response</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.budget"><code class="docutils literal notranslate"><span class="pre">ExplainContext.budget</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.device"><code class="docutils literal notranslate"><span class="pre">ExplainContext.device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.model"><code class="docutils literal notranslate"><span class="pre">ExplainContext.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.params"><code class="docutils literal notranslate"><span class="pre">ExplainContext.params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.response_chat"><code class="docutils literal notranslate"><span class="pre">ExplainContext.response_chat</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.seed"><code class="docutils literal notranslate"><span class="pre">ExplainContext.seed</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainContext.source_chat"><code class="docutils literal notranslate"><span class="pre">ExplainContext.source_chat</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState"><code class="docutils literal notranslate"><span class="pre">ExplainState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.add_metadata"><code class="docutils literal notranslate"><span class="pre">ExplainState.add_metadata()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.history"><code class="docutils literal notranslate"><span class="pre">ExplainState.history</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.masks"><code class="docutils literal notranslate"><span class="pre">ExplainState.masks</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.metadata"><code class="docutils literal notranslate"><span class="pre">ExplainState.metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.normalized_shap_values"><code class="docutils literal notranslate"><span class="pre">ExplainState.normalized_shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.responses"><code class="docutils literal notranslate"><span class="pre">ExplainState.responses</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.shap_values"><code class="docutils literal notranslate"><span class="pre">ExplainState.shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.context.ExplainState.similarities"><code class="docutils literal notranslate"><span class="pre">ExplainState.similarities</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.pipeline.contracts">mllm_shap.shap.pipeline.contracts module</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.EstimationPolicy"><code class="docutils literal notranslate"><span class="pre">EstimationPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.EstimationPolicy.run"><code class="docutils literal notranslate"><span class="pre">EstimationPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.NormalizationPolicy"><code class="docutils literal notranslate"><span class="pre">NormalizationPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.NormalizationPolicy.run"><code class="docutils literal notranslate"><span class="pre">NormalizationPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.PersistencePolicy"><code class="docutils literal notranslate"><span class="pre">PersistencePolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.PersistencePolicy.run"><code class="docutils literal notranslate"><span class="pre">PersistencePolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.PipelineStage"><code class="docutils literal notranslate"><span class="pre">PipelineStage</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.PipelineStage.run"><code class="docutils literal notranslate"><span class="pre">PipelineStage.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.SamplingPolicy"><code class="docutils literal notranslate"><span class="pre">SamplingPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.SamplingPolicy.run"><code class="docutils literal notranslate"><span class="pre">SamplingPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.SimilarityPolicy"><code class="docutils literal notranslate"><span class="pre">SimilarityPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.contracts.SimilarityPolicy.run"><code class="docutils literal notranslate"><span class="pre">SimilarityPolicy.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.pipeline.pipeline">mllm_shap.shap.pipeline.pipeline module</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline.run"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.pipeline.ExplainPipeline.stages"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline.stages</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.pipeline.presets">mllm_shap.shap.pipeline.presets module</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset"><code class="docutils literal notranslate"><span class="pre">PipelinePreset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.allow_full_or_empty"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.allow_full_or_empty</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.build"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.build()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.cache_manager_factory"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.cache_manager_factory</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.generate_kwargs"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.generate_kwargs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.generate_step"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.generate_step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_next_split"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_next_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_num_splits"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_num_splits</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_shap_values"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.get_similarities"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_similarities</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_attribution"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_attribution</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_finalize"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_finalize</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.include_sampling"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_sampling</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.masks_manager_factory"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.masks_manager_factory</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.n_generator_jobs"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.n_generator_jobs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.progress_bar"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.progress_bar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.save_to_cache"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.save_to_cache</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.tqdm_desc"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.tqdm_desc</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.presets.PipelinePreset.verbose"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.verbose</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-mllm_shap.shap.pipeline">Module contents</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.EstimationPolicy"><code class="docutils literal notranslate"><span class="pre">EstimationPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.EstimationPolicy.run"><code class="docutils literal notranslate"><span class="pre">EstimationPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext"><code class="docutils literal notranslate"><span class="pre">ExplainContext</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.base_response"><code class="docutils literal notranslate"><span class="pre">ExplainContext.base_response</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.budget"><code class="docutils literal notranslate"><span class="pre">ExplainContext.budget</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.device"><code class="docutils literal notranslate"><span class="pre">ExplainContext.device</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.model"><code class="docutils literal notranslate"><span class="pre">ExplainContext.model</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.params"><code class="docutils literal notranslate"><span class="pre">ExplainContext.params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.response_chat"><code class="docutils literal notranslate"><span class="pre">ExplainContext.response_chat</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.seed"><code class="docutils literal notranslate"><span class="pre">ExplainContext.seed</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainContext.source_chat"><code class="docutils literal notranslate"><span class="pre">ExplainContext.source_chat</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainPipeline"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainPipeline.run"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainPipeline.stages"><code class="docutils literal notranslate"><span class="pre">ExplainPipeline.stages</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState"><code class="docutils literal notranslate"><span class="pre">ExplainState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.add_metadata"><code class="docutils literal notranslate"><span class="pre">ExplainState.add_metadata()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.history"><code class="docutils literal notranslate"><span class="pre">ExplainState.history</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.masks"><code class="docutils literal notranslate"><span class="pre">ExplainState.masks</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.metadata"><code class="docutils literal notranslate"><span class="pre">ExplainState.metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.normalized_shap_values"><code class="docutils literal notranslate"><span class="pre">ExplainState.normalized_shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.responses"><code class="docutils literal notranslate"><span class="pre">ExplainState.responses</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.shap_values"><code class="docutils literal notranslate"><span class="pre">ExplainState.shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.ExplainState.similarities"><code class="docutils literal notranslate"><span class="pre">ExplainState.similarities</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.NormalizationPolicy"><code class="docutils literal notranslate"><span class="pre">NormalizationPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.NormalizationPolicy.run"><code class="docutils literal notranslate"><span class="pre">NormalizationPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PersistencePolicy"><code class="docutils literal notranslate"><span class="pre">PersistencePolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PersistencePolicy.run"><code class="docutils literal notranslate"><span class="pre">PersistencePolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset"><code class="docutils literal notranslate"><span class="pre">PipelinePreset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.allow_full_or_empty"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.allow_full_or_empty</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.allow_mask_duplicates"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.allow_mask_duplicates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.build"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.build()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.cache_manager_factory"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.cache_manager_factory</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.generate_kwargs"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.generate_kwargs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.generate_step"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.generate_step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.get_next_split"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_next_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.get_num_splits"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_num_splits</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.get_shap_values"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_shap_values</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.get_similarities"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.get_similarities</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.include_attribution"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_attribution</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.include_finalize"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_finalize</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.include_sampling"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.include_sampling</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.masks_manager_factory"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.masks_manager_factory</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.n_generator_jobs"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.n_generator_jobs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.progress_bar"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.progress_bar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.save_to_cache"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.save_to_cache</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.tqdm_desc"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.tqdm_desc</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelinePreset.verbose"><code class="docutils literal notranslate"><span class="pre">PipelinePreset.verbose</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelineStage"><code class="docutils literal notranslate"><span class="pre">PipelineStage</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.PipelineStage.run"><code class="docutils literal notranslate"><span class="pre">PipelineStage.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.SamplingPolicy"><code class="docutils literal notranslate"><span class="pre">SamplingPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.SamplingPolicy.run"><code class="docutils literal notranslate"><span class="pre">SamplingPolicy.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.SimilarityPolicy"><code class="docutils literal notranslate"><span class="pre">SimilarityPolicy</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.shap.pipeline.SimilarityPolicy.run"><code class="docutils literal notranslate"><span class="pre">SimilarityPolicy.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="_sources/mllm_shap.shap.pipeline.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Paweł Pozorski, Jakub Muszyński.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.17.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
