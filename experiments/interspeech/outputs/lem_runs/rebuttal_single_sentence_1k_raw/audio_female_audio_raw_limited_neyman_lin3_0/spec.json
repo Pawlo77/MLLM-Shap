@@ -1,0 +1,100 @@
+{
+  "experiment_set_id": "rebuttal_single_sentence_1k_raw",
+  "run_slug": "audio_female_audio_raw_limited_neyman_lin3_0",
+  "connector": "liquid_audio",
+  "modality": {
+    "input_modality": "audio__female",
+    "output_modality": "audio"
+  },
+  "variant": {
+    "explainer_type": "limited_neyman",
+    "num_samples": null,
+    "fraction": null,
+    "linear": 3.0,
+    "hierarchical": {
+      "k": null,
+      "shap_type": null,
+      "shap_num_samples": null,
+      "shap_fraction": null,
+      "first_layer_type": null,
+      "first_layer_num_samples": null,
+      "first_layer_fraction": null,
+      "use_importance_sampling": true,
+      "importance_min_fraction": null,
+      "mode": null
+    }
+  },
+  "dataset": {
+    "source": "hf_parquet",
+    "subset": "single_sentence_1k",
+    "split": "test",
+    "revision": "6c046d6c94a76ddb2bb9e5577fd51e7fb77bb691",
+    "repo_id": "Pawlo77/mllm-shap",
+    "trust_remote_code": true,
+    "path": null,
+    "column_mapping": {
+      "text": null,
+      "audio": null,
+      "language": "language",
+      "original_language": "original_language",
+      "token_count": "token_count"
+    }
+  },
+  "selection": {
+    "max_samples": 10,
+    "shuffle_seed": 42,
+    "start_index": 0,
+    "max_prompt_tokens": 1000,
+    "min_prompt_tokens": 1,
+    "balanced_token_counts": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "samples_per_token_count": 20,
+    "allow_partial_token_count_buckets": false,
+    "filters": []
+  },
+  "generation": {
+    "max_new_tokens": 30,
+    "text_temperature": 0.0,
+    "text_top_k": null,
+    "audio_temperature": null,
+    "audio_top_k": null
+  },
+  "embedding": {
+    "model_id": "intfloat/e5-small-v2",
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+    "max_length": 64,
+    "batch_size": 64,
+    "l2_normalize": true,
+    "local_files_only": false,
+    "device": null
+  },
+  "audio_segmentation": {
+    "method": "raw",
+    "aligner_device": "cpu"
+  },
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "MinMaxNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "TfIdfCosineSimilarity",
+    "allow_mask_duplicates": false,
+    "token_filter": "exclude_punctuation"
+  },
+  "chat": {
+    "system_roles_setup": "SYSTEM_ASSISTANT",
+    "system_prompt": "You are a helpful assistant.",
+    "assistant_prefill": null
+  },
+  "runtime": {
+    "verbose": true,
+    "progress_bar": true,
+    "gc_after_each_sample": true,
+    "cuda_empty_cache": true
+  },
+  "device": "mps"
+}

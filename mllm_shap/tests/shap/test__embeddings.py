@@ -29,12 +29,13 @@ class TestEmbeddingReducers:
     def test_zero_reducer_returns_unchanged(
         self, embeddings: list[torch.Tensor]
     ) -> None:
-        """Test that ZeroReducer returns stacked embeddings unchanged."""
+        """Test that ZeroReducer flattens and stacks embeddings into (N, S*H)."""
         reducer = ZeroReducer()
         result = reducer(embeddings)
-        expected = torch.stack(embeddings, dim=0)
+        # ZeroReducer flattens (S, H) -> (S*H,) then stacks -> (N, S*H)
+        expected = torch.stack([e.reshape(-1) for e in embeddings], dim=0)
         torch.testing.assert_close(result, expected)
-        assert result is not expected
+        assert result.shape == (2, 6)  # 2 embeddings, each (2,3) flattened to 6
 
     def test_zero_reducer_raises_on_size_mismatch(self) -> None:
         """Test that ZeroReducer raises an error if embeddings have mismatched sizes."""
@@ -56,7 +57,8 @@ class TestEmbeddingReducers:
         torch.manual_seed(0)
         reducer = ZeroReducer(n=1)
         result = reducer([emb.clone() for emb in embeddings])
-        assert result.shape[-1] == 1
+        # n=1 samples 1 column from last dim: (2,3) -> (2,1), flatten -> (2,), stack -> (N, 2)
+        assert result.shape == (2, 2)
 
     def test_mean_reducer_computes_correct_mean(
         self, embeddings: list[torch.Tensor]
@@ -76,7 +78,7 @@ class TestEmbeddingReducers:
         inputs = [emb.clone() for emb in embeddings]
         expected = []
         for emb in inputs:
-            indices = torch.randperm(emb.shape[0])[:1]
+            indices = torch.randperm(emb.shape[-1])[:1]
             sampled = emb[..., indices]
             expected.append(sampled.mean(dim=0))
         expected_tensor = torch.stack(expected, dim=0)
@@ -132,7 +134,7 @@ class TestEmbeddingReducers:
         inputs = [emb.clone() for emb in embeddings]
         expected = []
         for emb in inputs:
-            indices = torch.randperm(emb.shape[0])[:1]
+            indices = torch.randperm(emb.shape[-1])[:1]
             sampled = emb[..., indices]
             expected.append(sampled.sum(dim=0))
         expected_tensor = torch.stack(expected, dim=0)
@@ -157,6 +159,15 @@ class TestEmbeddingReducers:
 
 class TestExternalEmbeddings:
     """Tests for external embedding classes."""
+
+    class _GenerationTokenizerBatchStub:
+        """Tokenizer stub exposing batch_decode path."""
+
+        def batch_decode(
+            self, token_ids: list[list[int]], skip_special_tokens: bool = False
+        ) -> list[str]:
+            del skip_special_tokens
+            return [f"tok{ids[0]}" for ids in token_ids]
 
     class _GenerationTokenizerStub:
         """Tokenizer stub used to decode generated token ids."""
@@ -274,3 +285,65 @@ class TestExternalEmbeddings:
         out = emb(responses)
         assert len(out) == 1
         assert out[0].shape == (3, 4)
+
+    def test_custom_embedding_uses_batch_decode_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When generation tokenizer supports batch_decode, that path should work."""
+        monkeypatch.setattr(
+            "mllm_shap.shap.embeddings.AutoTokenizer.from_pretrained",
+            lambda *args, **kwargs: self._EmbeddingTokenizerStub(),
+        )
+        monkeypatch.setattr(
+            "mllm_shap.shap.embeddings.AutoModel.from_pretrained",
+            lambda *args, **kwargs: self._EmbeddingModelStub(),
+        )
+        emb = CustomEmbedding(
+            generation_tokenizer=self._GenerationTokenizerBatchStub(),
+            embed_model_id="stub/model",
+            embed_revision="c" * 40,
+            device=torch.device("cpu"),
+            l2_normalize=False,
+        )
+        responses = [
+            ModelResponse(
+                chat=None,
+                generated_text_tokens=torch.tensor([1, 2], dtype=torch.long),
+                generated_audio_tokens=torch.empty((0, 0), dtype=torch.long),
+                generated_modality_flag=torch.tensor([0, 0], dtype=torch.long),
+            )
+        ]
+        out = emb(responses)
+        assert len(out) == 1
+        assert out[0].shape == (2, 4)
+
+    def test_custom_embedding_l2_normalize_outputs_unit_vectors(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """l2_normalize=True should produce vectors with norm close to 1."""
+        monkeypatch.setattr(
+            "mllm_shap.shap.embeddings.AutoTokenizer.from_pretrained",
+            lambda *args, **kwargs: self._EmbeddingTokenizerStub(),
+        )
+        monkeypatch.setattr(
+            "mllm_shap.shap.embeddings.AutoModel.from_pretrained",
+            lambda *args, **kwargs: self._EmbeddingModelStub(),
+        )
+        emb = CustomEmbedding(
+            generation_tokenizer=self._GenerationTokenizerStub(),
+            embed_model_id="stub/model",
+            embed_revision="d" * 40,
+            device=torch.device("cpu"),
+            l2_normalize=True,
+        )
+        responses = [
+            ModelResponse(
+                chat=None,
+                generated_text_tokens=torch.tensor([8, 9], dtype=torch.long),
+                generated_audio_tokens=torch.empty((0, 0), dtype=torch.long),
+                generated_modality_flag=torch.tensor([0, 0], dtype=torch.long),
+            )
+        ]
+        out = emb(responses)[0]
+        norms = torch.linalg.norm(out, dim=1)
+        torch.testing.assert_close(norms, torch.ones_like(norms))

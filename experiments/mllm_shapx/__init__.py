@@ -1,11 +1,8 @@
-"""mllm_shapx - SHAP experiment runner."""
+"""mllm_shapx - SHAP experiment runner.
 
-__all__ = [
-    "config",
-    "data",
-    "factory",
-    "runner",
-    "serialization",
-    "storage",
-    "wandb_utils",
-]
+Package layout:
+    src/        — core library modules (config, data, factory, runner, etc.)
+    tests/      — test suite
+    configs/    — experiment configuration files
+    utils/      — standalone helper scripts (HF download, wandb sync, etc.)
+"""

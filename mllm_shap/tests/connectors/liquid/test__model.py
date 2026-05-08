@@ -1,8 +1,6 @@
 """Tests for the LiquidAudio model connector."""
 
-from __future__ import annotations
-
-from enum import IntEnum
+import json
 from functools import cached_property
 from types import SimpleNamespace
 from typing import Any
@@ -15,14 +13,7 @@ from mllm_shap.connectors.base.chat import BaseMllmChat
 from mllm_shap.connectors.enums import ModelHistoryTrackingMode, Role
 from mllm_shap.connectors.liquid import model as liquid_model
 from mllm_shap.connectors.base.model_response import ModelResponse
-
-
-class FakeLFMModality(IntEnum):
-    """Minimal replacement for liquid_audio.LFMModality."""
-
-    TEXT = 0
-    AUDIO_OUT = 1
-    AUDIO_IN = 2
+from .conftest import FakeLFMModality
 
 
 @pytest.fixture
@@ -95,7 +86,6 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
         def __init__(
             self,
-            *,
             device: torch.device,
             processor: Any | None = None,
             codebooks: int = 2,
@@ -129,7 +119,6 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
         def append(
             self,
-            *,
             text: Tensor,
             audio_out: Tensor,
             modality_flag: Tensor,
@@ -208,6 +197,26 @@ def test_patched_processor_device_property() -> None:
 
     processor.device = "cuda:0"
     assert processor.device == "cuda:0"
+
+
+def test_patch_liquid_audio_config_converts_int_multiplier(
+    tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Integer block_ffn_dim_multiplier should be normalized to float and written back."""
+    model_dir = tmp_path / "model-cache"
+    model_dir.mkdir()
+    config_path = model_dir / "config.json"
+    config_path.write_text('{"lfm": {"block_ffn_dim_multiplier": 2}}', encoding="utf-8")
+
+    monkeypatch.setattr(
+        liquid_model, "get_model_dir", lambda repo_id, revision: model_dir
+    )
+
+    liquid_model._patch_liquid_audio_config("repo", "rev")
+
+    loaded = json.loads(config_path.read_text(encoding="utf-8"))
+    assert isinstance(loaded["lfm"]["block_ffn_dim_multiplier"], float)
+    assert loaded["lfm"]["block_ffn_dim_multiplier"] == 2.0
 
 
 def test_init_sets_components_and_device(stubbed_liquid_audio: SimpleNamespace) -> None:
@@ -292,6 +301,28 @@ def test_generate_interleaved_keeps_history(
         torch.tensor([FakeLFMModality.TEXT, FakeLFMModality.AUDIO_OUT]),
     )
     assert response.generated_audio_tokens.shape == (1, 2)
+
+
+def test_generate_interleaved_with_no_text_tokens(
+    stubbed_liquid_audio: SimpleNamespace,
+) -> None:
+    """When generation emits only audio chunks, generated_text_tokens should be empty."""
+    model = stubbed_liquid_audio.factory()
+    model.history_tracking_mode = ModelHistoryTrackingMode.AUDIO
+    model.model.interleaved_output = [
+        torch.tensor([4, 5]),
+        torch.tensor([6, 7]),
+    ]
+
+    chat = stubbed_liquid_audio.chat_cls(device=model.device, processor=model.processor)
+    response = model.generate(chat, max_new_tokens=2, keep_history=False)
+
+    assert response.generated_text_tokens.shape == (0,)
+    assert response.generated_audio_tokens.shape == (2, 2)
+    assert torch.equal(
+        response.generated_modality_flag,
+        torch.tensor([FakeLFMModality.AUDIO_OUT, FakeLFMModality.AUDIO_OUT]),
+    )
 
 
 def test_get_static_embeddings_prefills_responses(

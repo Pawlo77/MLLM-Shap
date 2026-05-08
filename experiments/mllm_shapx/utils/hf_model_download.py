@@ -10,8 +10,6 @@ You can also restrict files via --allow-patterns to save space, e.g.:
     --allow-patterns tokenizer.* config.json *.safetensors
 """
 
-from __future__ import annotations
-
 import argparse
 import re
 from pathlib import Path
@@ -25,7 +23,6 @@ def _is_commit_sha(s: str) -> bool:
 
 
 def download_model(
-    *,
     repo_id: str,
     revision: str,
     allow_patterns: Optional[list[str] | str] = None,

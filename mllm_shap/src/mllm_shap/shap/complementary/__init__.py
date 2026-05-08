@@ -18,5 +18,10 @@ third-part-masks, where k-th pair (S, N \\ S) follows (k = 0...n-1):
 
 from .limited import LimitedComplementaryShapExplainer
 from .standard import StandardComplementaryShapExplainer
+from ._approximation import BaseComplementaryShapApproximation
 
-__all__ = ["LimitedComplementaryShapExplainer", "StandardComplementaryShapExplainer"]
+__all__ = [
+    "BaseComplementaryShapApproximation",
+    "LimitedComplementaryShapExplainer",
+    "StandardComplementaryShapExplainer",
+]

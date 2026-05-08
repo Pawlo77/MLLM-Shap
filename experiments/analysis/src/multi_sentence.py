@@ -7,8 +7,6 @@ collecting explainable units (tokens / audio segments) across all user turns.
 The analysis also compares two experiment runs: with SGPA and without SGPA.
 """
 
-from __future__ import annotations
-
 import os
 from typing import Any
 

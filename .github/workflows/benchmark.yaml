@@ -1,0 +1,131 @@
+name: Lightweight Benchmarking
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync deps
+        run: make install
+
+      - name: Run tests with lightweight benchmarking
+        run: make bench-light
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: .pytest_benchmark/lightweight.json
+          retention-days: 30
+
+      - name: Download previous benchmark
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          # Try to download the baseline from main branch
+          gh run list \
+            --workflow=benchmark.yaml \
+            --branch=main \
+            --json=databaseId \
+            --jq='.[0].databaseId' > /tmp/run_id.txt
+
+          if [ -s /tmp/run_id.txt ] && [ "$(cat /tmp/run_id.txt)" != "" ]; then
+            RUN_ID=$(cat /tmp/run_id.txt)
+            gh run download "$RUN_ID" \
+              --name benchmark-report \
+              --dir /tmp/baseline || true
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Compare benchmarks
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          python3 << 'EOF'
+          import json
+          from pathlib import Path
+
+          current = json.loads(Path(".pytest_benchmark/lightweight.json").read_text())
+
+          baseline_path = Path("/tmp/baseline/benchmark-report/lightweight.json")
+          if not baseline_path.exists():
+              print("⚠️  Baseline not found, skipping comparison")
+              exit(0)
+
+          baseline = json.loads(baseline_path.read_text())
+
+          print("\n📊 Performance Comparison (main vs PR)\n")
+          print("| Test | Baseline | Current | Change |")
+          print("|------|----------|---------|--------|")
+
+          regressions = []
+          improvements = []
+
+          for test_name in sorted(current.get("benchmarks", {}).keys()):
+              if test_name not in baseline.get("benchmarks", {}):
+                  print(f"| {test_name} | NEW | {current['benchmarks'][test_name]['median_s']*1000:.2f}ms | ➕ NEW |")
+                  improvements.append((test_name, "new"))
+                  continue
+
+              baseline_median = baseline["benchmarks"][test_name]["median_s"] * 1000
+              current_median = current["benchmarks"][test_name]["median_s"] * 1000
+              change_pct = ((current_median - baseline_median) / baseline_median) * 100
+
+              if change_pct > 5:  # >5% is a regression
+                  symbol = "🔴"
+                  regressions.append((test_name, change_pct))
+              elif change_pct < -5:  # <-5% is an improvement
+                  symbol = "🟢"
+                  improvements.append((test_name, -change_pct))
+              else:
+                  symbol = "⚪"
+
+              print(f"| {test_name} | {baseline_median:.2f}ms | {current_median:.2f}ms | {symbol} {change_pct:+.1f}% |")
+
+          if regressions:
+              print(f"\n❌ Performance Regressions: {len(regressions)}")
+              for test, pct in regressions:
+                  print(f"  - {test}: +{pct:.1f}%")
+
+          if improvements:
+              print(f"\n✅ Performance Improvements: {len(improvements)}")
+              for test, pct in improvements:
+                  print(f"  - {test}: -{pct:.1f}%")
+
+          # Exit with error if significant regressions found (>10%)
+          if any(pct > 10 for _, pct in regressions):
+              print("\n⚠️  Significant regressions detected (>10%)")
+              exit(1)
+          EOF
+
+      - name: Archive benchmark history
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-history
+          path: .pytest_benchmark/
+          retention-days: 90

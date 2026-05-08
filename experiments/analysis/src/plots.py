@@ -21,7 +21,7 @@ def plot_token_count_distribution(
     g = sns.histplot(
         data=plot_df,
         x=column,
-        bins=plot_df[column].nunique(),
+        discrete=True,
         palette="Set2",
         stat="percent",
         ax=plot_ax,
@@ -30,7 +30,10 @@ def plot_token_count_distribution(
         shrink=0.8,
         legend=legend,
     )
-    plot_ax.set_xlabel(f"Count of {column.replace('_', ' ').title()}", fontsize=12)
+
+    clean_col = column.replace("count_", "").replace("_", " ").title()
+    plot_ax.set_xlabel(f"Count of {clean_col}", fontsize=12)
+
     plot_ax.set_ylabel("Percentage", fontsize=12)
     plot_ax.set_title(
         "Distribution of Explainable Tokens (%) by Mode",
@@ -49,7 +52,6 @@ def plot_token_count_distribution(
     plot_ax.tick_params(axis="y", colors="black")
 
     sns.despine(ax=plot_ax)
-    plt.tight_layout()
 
 
 def plot_dist(

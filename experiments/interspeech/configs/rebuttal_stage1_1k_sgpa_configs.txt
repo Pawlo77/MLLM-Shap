@@ -1,0 +1,3 @@
+experiments/interspeech/configs/rebuttal_1k_sgpa_audio_male.json
+experiments/interspeech/configs/rebuttal_1k_sgpa_audio_female.json
+experiments/interspeech/configs/rebuttal_1k_sgpa_audio_original.json

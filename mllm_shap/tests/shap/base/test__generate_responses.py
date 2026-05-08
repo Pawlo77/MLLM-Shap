@@ -8,6 +8,7 @@ from mllm_shap.connectors.base.chat import AllTextTokensFilteredOutError
 from mllm_shap.connectors.base.model_response import ModelResponse
 from mllm_shap.shap.base._cache_manager import CacheManager
 from mllm_shap.shap.base._generate_responses import (
+    WorkerExecutionError,
     _process_mask,
     generate_responses,
 )
@@ -222,7 +223,7 @@ class TestGenerateResponses:
             generated_modality_flag=torch.ones(3, dtype=torch.bool),
         )
 
-        def side_effect(*, verbose: bool, **kwargs):
+        def side_effect(verbose: bool, **kwargs):
             if side_effect.calls == 0:
                 side_effect.calls += 1
                 raise AllTextTokensFilteredOutError()
@@ -284,6 +285,65 @@ class TestGenerateResponses:
         assert chats_skipped == 0
         assert history is None
 
+    def test_generate_responses_single_uses_external_tqdm_bar(
+        self,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+    ) -> None:
+        """When external tqdm_bar is provided, it should be updated per accepted mask."""
+        model, chat, cache_manager = setup_env
+        gen = iter(
+            [
+                (torch.tensor([True, True, True]), 1),
+                (torch.tensor([True, False, True]), 2),
+            ]
+        )
+        masks: list[Tensor] = []
+        responses: list[ModelResponse] = []
+        bar = MagicMock()
+
+        chats_skipped, history = generate_responses(
+            masks=masks,
+            responses=responses,
+            gen=gen,
+            source_chat=chat,
+            model=model,
+            cache_manager=cache_manager,
+            n_generator_jobs=1,
+            progress_bar=False,
+            verbose=False,
+            tqdm_bar=bar,
+        )
+
+        assert chats_skipped == 0
+        assert history is None
+        assert len(masks) == 2
+        assert bar.update.call_count == 2
+
+    @patch("mllm_shap.shap.base._generate_responses.tqdm")
+    def test_generate_responses_single_uses_internal_tqdm_when_enabled(
+        self,
+        mock_tqdm: MagicMock,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+    ) -> None:
+        """progress_bar=True should wrap the iterator with tqdm in single mode."""
+        model, chat, cache_manager = setup_env
+        seq = [(torch.tensor([True, True, True]), 1)]
+        mock_tqdm.side_effect = lambda iterable, desc: iterable
+
+        generate_responses(
+            masks=[],
+            responses=[],
+            gen=iter(seq),
+            source_chat=chat,
+            model=model,
+            cache_manager=cache_manager,
+            n_generator_jobs=1,
+            progress_bar=True,
+            verbose=False,
+        )
+
+        mock_tqdm.assert_called_once()
+
     @patch("mllm_shap.shap.base._generate_responses._process_mask")
     def test_generate_responses_multi_propagates_verbose_flag(
         self,
@@ -294,7 +354,7 @@ class TestGenerateResponses:
         model, chat, cache_manager = setup_env
         verbose_flags: list[bool] = []
 
-        def worker_side_effect(*, verbose: bool, **kwargs):
+        def worker_side_effect(verbose: bool, **kwargs):
             verbose_flags.append(verbose)
             return DummyChat(), ModelResponse(
                 chat=chat,
@@ -353,6 +413,144 @@ class TestGenerateResponses:
                 progress_bar=False,
                 verbose=True,
             )
+
+    @patch("mllm_shap.shap.base._generate_responses._process_mask")
+    def test_generate_responses_multi_counts_skipped_filtered_masks(
+        self,
+        mock_process: MagicMock,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+    ) -> None:
+        """Multi-worker path should increment chats_skipped on filtered masks."""
+        model, chat, cache_manager = setup_env
+
+        response = ModelResponse(
+            chat=chat,
+            generated_text_tokens=torch.tensor([1]),
+            generated_audio_tokens=torch.tensor([]),
+            generated_modality_flag=torch.ones(1, dtype=torch.bool),
+        )
+
+        def side_effect(mask, mask_hash, source_chat, model, cache_manager, verbose, i):
+            del mask, mask_hash, source_chat, model, cache_manager, verbose
+            if i == 0:
+                raise AllTextTokensFilteredOutError()
+            return DummyChat(), response
+
+        mock_process.side_effect = side_effect
+
+        chats_skipped, history = generate_responses(
+            masks=[],
+            responses=[],
+            gen=iter(
+                [
+                    (torch.tensor([True, False, True]), 1),
+                    (torch.tensor([False, True, True]), 2),
+                ]
+            ),
+            source_chat=chat,
+            model=model,
+            cache_manager=cache_manager,
+            n_generator_jobs=2,
+            progress_bar=False,
+            verbose=False,
+        )
+
+        assert chats_skipped == 1
+        assert history is None
+
+    @patch("mllm_shap.shap.base._generate_responses._process_mask")
+    def test_generate_responses_multi_error_flag_short_circuits_other_workers(
+        self,
+        mock_process: MagicMock,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """If one worker fails, next worker should return immediately via error_flag branch."""
+        model, chat, cache_manager = setup_env
+
+        class ImmediateThread:
+            def __init__(self, target):
+                self._target = target
+
+            def start(self):
+                self._target()
+
+            def join(self):
+                return None
+
+        monkeypatch.setattr(
+            "mllm_shap.shap.base._generate_responses.Thread", ImmediateThread
+        )
+        mock_process.side_effect = RuntimeError("boom")
+
+        with pytest.raises(WorkerExecutionError, match="worker"):
+            generate_responses(
+                masks=[],
+                responses=[],
+                gen=iter([(torch.tensor([True, False, True]), 1)]),
+                source_chat=chat,
+                model=model,
+                cache_manager=cache_manager,
+                n_generator_jobs=2,
+                progress_bar=False,
+                verbose=False,
+            )
+
+    def test_generate_responses_multi_uses_external_tqdm_bar(
+        self,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+    ) -> None:
+        """External tqdm_bar should be updated by multi-thread workers."""
+        model, chat, cache_manager = setup_env
+        gen = iter(
+            [
+                (torch.tensor([True, False, True]), 1),
+                (torch.tensor([False, True, True]), 2),
+            ]
+        )
+        bar = MagicMock()
+
+        chats_skipped, history = generate_responses(
+            masks=[],
+            responses=[],
+            gen=gen,
+            source_chat=chat,
+            model=model,
+            cache_manager=cache_manager,
+            n_generator_jobs=2,
+            progress_bar=False,
+            verbose=False,
+            tqdm_bar=bar,
+        )
+
+        assert chats_skipped == 0
+        assert history is None
+        assert bar.update.call_count == 2
+
+    @patch("mllm_shap.shap.base._generate_responses.standard_tqdm")
+    def test_generate_responses_multi_uses_internal_tqdm_when_enabled(
+        self,
+        mock_standard_tqdm: MagicMock,
+        setup_env: tuple[DummyModel, DummyChat, CacheManager],
+    ) -> None:
+        """progress_bar=True should wrap iterator with standard_tqdm in multi mode."""
+        model, chat, cache_manager = setup_env
+        seq = [(torch.tensor([True, False, True]), 1)]
+        mock_standard_tqdm.side_effect = lambda iterable, desc: iterable
+
+        generate_responses(
+            masks=[],
+            responses=[],
+            gen=iter(seq),
+            source_chat=chat,
+            model=model,
+            cache_manager=cache_manager,
+            n_generator_jobs=2,
+            progress_bar=True,
+            verbose=False,
+        )
+
+        mock_standard_tqdm.assert_called_once()
 
     @patch("mllm_shap.shap.base._generate_responses.CacheManager")
     def test_process_mask_uses_mask_when_hash_missing(

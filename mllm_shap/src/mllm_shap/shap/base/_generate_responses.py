@@ -1,7 +1,5 @@
 """Generate model responses for masked SHAP chats."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from logging import Logger
 from threading import Lock, Thread
@@ -36,10 +34,15 @@ class _GenerationContext:
     """
 
     source_chat: BaseMllmChat
+    """Chat used as the source for masked clones. This chat should contain the full conversation history and will be masked according to the generated masks to create the inputs for the model."""
     model: BaseMllmModel
+    """Connector model used to generate responses."""
     cache_manager: CacheManager
+    """Cache manager used for mask-hash lookups."""
     verbose: bool
+    """Flag that controls whether to keep chat history."""
     generate_kwargs: dict[str, Any]
+    """Keyword arguments forwarded to model generation."""
 
 
 @dataclass
@@ -53,12 +56,16 @@ class _GenerationAccumulator:
     """
 
     masks: list[Tensor]
+    """Output list collecting masks that were evaluated. This list is mutated in-place and returned as part of the final pipeline state."""
     responses: list[ModelResponse]
+    """Output list collecting model responses. This list is mutated in-place and returned as part of the final pipeline state."""
     history: list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
+    """Optional verbose history entries. If the verbose flag is set, this list will collect tuples of (mask, mask_hash, masked_chat, model_response)
+    for each processed mask. This can be used for debugging and analysis purposes, but may consume a large amount of memory
+    if the number of masks is large or if the model responses are large. If verbose is False, this will be set to None and no history will be collected."""
 
     def append(
         self,
-        *,
         mask: Tensor,
         mask_hash: int,
         masked_chat: BaseMllmChat | None,
@@ -82,10 +89,11 @@ class _MaskProcessor:
     """Cache-aware processor for one SHAP mask."""
 
     def __init__(self, context: _GenerationContext) -> None:
+        """Initialize the processor with immutable generation context."""
         self._context = context
 
     def process(
-        self, *, mask: Tensor, mask_hash: int, i: int
+        self, mask: Tensor, mask_hash: int, i: int
     ) -> tuple[BaseMllmChat | None, ModelResponse]:
         """Process one mask.
 
@@ -119,6 +127,8 @@ def generate_responses(
     n_generator_jobs: int = 1,
     progress_bar: bool = True,
     verbose: bool = False,
+    tqdm_bar: tqdm | None = None,
+    tqdm_desc: str = "Calculating SHAP values",
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """
@@ -134,6 +144,7 @@ def generate_responses(
         n_generator_jobs: Number of parallel jobs to use for generation.
         progress_bar: Whether to display a progress bar.
         verbose: Whether to keep full history in the chat.
+        tqdm_bar: Optional external tqdm bar to update instead of creating a new one.
         generate_kwargs: Additional arguments for the model's generate method.
     Returns:
         Number of chats skipped due to all text tokens being filtered out
@@ -150,6 +161,8 @@ def generate_responses(
             n_generator_jobs=n_generator_jobs,
             progress_bar=progress_bar,
             verbose=verbose,
+            tqdm_bar=tqdm_bar,
+            tqdm_desc=tqdm_desc,
             **generate_kwargs,
         )
     return _generate_responses_single(
@@ -161,6 +174,8 @@ def generate_responses(
         cache_manager=cache_manager,
         progress_bar=progress_bar,
         verbose=verbose,
+        tqdm_bar=tqdm_bar,
+        tqdm_desc=tqdm_desc,
         **generate_kwargs,
     )
 
@@ -217,18 +232,60 @@ def _process_mask(
 
         # generate response for masked chat
         t0 = time()
-        model_response = model.generate(
-            chat=masked_chat,
-            keep_history=verbose,
-            **generate_kwargs,
-        )
+        probe = cache_manager._probe
+        if probe is None:
+            model_response = model.generate(
+                chat=masked_chat,
+                keep_history=verbose,
+                **generate_kwargs,
+            )
+        else:
+            with probe.timing("model"):
+                model_response = model.generate(
+                    chat=masked_chat,
+                    keep_history=verbose,
+                    **generate_kwargs,
+                )
         logger.debug("%d: Generation took %.2f seconds", i, time() - t0)
 
     return masked_chat, model_response
 
 
+def _report_generation_metrics(
+    cache_hits: int,
+    cache_misses: int,
+    chats_skipped: int,
+    model_elapsed_ms: float,
+    cache_manager: CacheManager,
+) -> None:
+    """Log generation summary and emit probe metrics when available."""
+    total_processed = cache_hits + cache_misses
+    logger.info(
+        "Generation stats: processed=%d cache_hits=%d cache_misses=%d skipped_filtered=%d model_elapsed_ms=%.2f",
+        total_processed,
+        cache_hits,
+        cache_misses,
+        chats_skipped,
+        model_elapsed_ms,
+    )
+
+    probe = cache_manager._probe
+    if probe is None:
+        return
+
+    probe.custom_metric("generation_processed", total_processed)
+    probe.custom_metric("generation_cache_hits", cache_hits)
+    probe.custom_metric("generation_cache_misses", cache_misses)
+    probe.custom_metric("generation_skipped_filtered", chats_skipped)
+    probe.custom_metric("generation_model_elapsed_ms", model_elapsed_ms)
+    if total_processed > 0:
+        probe.custom_metric("generation_cache_hit_rate", cache_hits / total_processed)
+        probe.custom_metric(
+            "generation_cache_miss_rate", cache_misses / total_processed
+        )
+
+
 def _create_accumulator(
-    *,
     masks: list[Tensor],
     responses: list[ModelResponse],
     verbose: bool,
@@ -260,6 +317,8 @@ def _generate_responses_multi(
     n_generator_jobs: int = 1,
     progress_bar: bool = True,
     verbose: bool = False,
+    tqdm_bar: standard_tqdm | None = None,
+    tqdm_desc: str = "Calculating SHAP values",
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks in parallel using multiple threads."""
@@ -276,17 +335,24 @@ def _generate_responses_multi(
         responses=responses,
         verbose=verbose,
     )
-    iterable_gen = enumerate(
-        standard_tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
-    )
+
+    if tqdm_bar is not None:
+        iterable_gen = enumerate(gen)
+    else:
+        iterable_gen = enumerate(
+            standard_tqdm(gen, desc=tqdm_desc) if progress_bar else gen
+        )
 
     chats_skipped = 0
+    cache_hits = 0
+    cache_misses = 0
+    model_elapsed_ms = 0.0
     error_flag = False
     lock = Lock()
 
     def worker() -> None:
         """Worker function for generating masks in parallel."""
-        nonlocal chats_skipped, error_flag
+        nonlocal chats_skipped, cache_hits, cache_misses, model_elapsed_ms, error_flag
 
         while True:
             try:
@@ -300,6 +366,7 @@ def _generate_responses_multi(
                         return
 
                 try:
+                    t0 = time()
                     masked_chat, model_response = processor.process(
                         mask=mask, mask_hash=mask_hash, i=i
                     )
@@ -315,6 +382,13 @@ def _generate_responses_multi(
                         masked_chat=masked_chat,
                         model_response=model_response,
                     )
+                    if masked_chat is None:
+                        cache_hits += 1
+                    else:
+                        cache_misses += 1
+                        model_elapsed_ms += (time() - t0) * 1000.0
+                    if tqdm_bar is not None:
+                        tqdm_bar.update(1)
 
                 if not verbose:
                     # cleanup large refs; avoid forcing global GC in hot loop
@@ -336,6 +410,14 @@ def _generate_responses_multi(
     if error_flag:
         raise WorkerExecutionError("Error occurred in SHAP explainer worker thread.")
 
+    _report_generation_metrics(
+        cache_hits=cache_hits,
+        cache_misses=cache_misses,
+        chats_skipped=chats_skipped,
+        model_elapsed_ms=model_elapsed_ms,
+        cache_manager=cache_manager,
+    )
+
     return chats_skipped, accumulator.history
 
 
@@ -348,6 +430,8 @@ def _generate_responses_single(
     cache_manager: CacheManager,
     progress_bar: bool = True,
     verbose: bool = False,
+    tqdm_bar: tqdm | None = None,
+    tqdm_desc: str = "Calculating SHAP values",
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
     """Generate model responses for all masks sequentially."""
@@ -364,14 +448,20 @@ def _generate_responses_single(
         responses=responses,
         verbose=verbose,
     )
-    iterable_gen = enumerate(
-        tqdm(gen, desc="Calculating SHAP values") if progress_bar else gen
-    )
+
+    if tqdm_bar is not None:
+        iterable_gen = enumerate(gen)
+    else:
+        iterable_gen = enumerate(tqdm(gen, desc=tqdm_desc) if progress_bar else gen)
 
     chats_skipped = 0
+    cache_hits = 0
+    cache_misses = 0
+    model_elapsed_ms = 0.0
 
     for i, (mask, mask_hash) in iterable_gen:
         try:
+            t0 = time()
             masked_chat, model_response = processor.process(
                 mask=mask, mask_hash=mask_hash, i=i
             )
@@ -385,10 +475,25 @@ def _generate_responses_single(
             masked_chat=masked_chat,
             model_response=model_response,
         )
+        if masked_chat is None:
+            cache_hits += 1
+        else:
+            cache_misses += 1
+            model_elapsed_ms += (time() - t0) * 1000.0
+        if tqdm_bar is not None:
+            tqdm_bar.update(1)
 
         if not verbose:
             # cleanup large refs; avoid forcing global GC in hot loop
             del masked_chat
             del model_response
+
+    _report_generation_metrics(
+        cache_hits=cache_hits,
+        cache_misses=cache_misses,
+        chats_skipped=chats_skipped,
+        model_elapsed_ms=model_elapsed_ms,
+        cache_manager=cache_manager,
+    )
 
     return chats_skipped, accumulator.history

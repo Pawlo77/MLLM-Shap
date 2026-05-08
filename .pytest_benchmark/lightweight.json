@@ -1,0 +1,12 @@
+{
+  "benchmarks": {
+    "tests/benchmarks/test__lightweight_bench.py::test_benchmark_meter_context_manager": {
+      "min_s": 0.0003475839621387422,
+      "median_s": 0.0003475839621387422,
+      "max_s": 0.0003475839621387422,
+      "mean_s": 0.0003475839621387422,
+      "runs": 1
+    }
+  },
+  "total_tests_tracked": 1
+}

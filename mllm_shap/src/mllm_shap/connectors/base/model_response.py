@@ -23,9 +23,7 @@ class ModelResponse(BaseModel):
 
     generated_text_tokens: Tensor
     """The generated text tokens."""
-
     generated_audio_tokens: Tensor
     """The generated audio tokens."""
-
     generated_modality_flag: Tensor
     """The modality flag for the generated tokens."""

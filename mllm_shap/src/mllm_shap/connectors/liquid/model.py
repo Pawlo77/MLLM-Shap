@@ -1,12 +1,17 @@
 """LiquidAudio model connector."""
 
+import logging
+import json
 import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, cast
 from functools import partial
+from typing import Any, cast
 
 import torch
 from liquid_audio import ChatState, LFM2AudioModel, LFM2AudioProcessor, LFMModality
+from liquid_audio.model.lfm2_audio import get_model_dir
 from torch import Tensor
 
 from ..base.chat import BaseMllmChat
@@ -19,11 +24,85 @@ from ..base.model_response import ModelResponse
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
 
+logger = logging.getLogger(__name__)
+
+
+def _patch_liquid_audio_config(repo_id: str, revision: str | None) -> None:
+    """Normalize cached LFM2 config types for stricter liquid_audio validators."""
+    cache_path = get_model_dir(repo_id, revision=revision)
+    config_path = cache_path / "config.json"
+    with config_path.open(encoding="utf-8") as f:
+        config = json.load(f)
+
+    lfm = config.get("lfm", {})
+    value = lfm.get("block_ffn_dim_multiplier")
+    if isinstance(value, int):
+        lfm["block_ffn_dim_multiplier"] = float(value)
+        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
 
 class _PatchedLFM2AudioProcessor(LFM2AudioProcessor):
     """Patched LFM2AudioProcessor to handle device management."""
 
     __device: str | None
+    """The device the processor is set to. This is needed to ensure that
+    the processor's tensors are on the correct device, as the original
+    LFM2AudioProcessor does not have built-in device management.
+    The device should be set when initializing the LiquidAudio connector,
+    and can be accessed via the 'device' property. If the device is not set before
+    using the processor, a ValueError will be raised to prevent unintended behavior."""
+
+    @staticmethod
+    @contextmanager
+    def _rewrite_padding_log() -> Iterator[None]:
+        """Replace the dependency's cryptic root padding log with a contextual one."""
+        from liquid_audio.model.conformer import processor as conformer_processor
+
+        original_info = conformer_processor.logging.info
+
+        def _patched_info(message: object, *args: object, **kwargs: object) -> None:
+            rendered_message = str(message)
+            if args:
+                rendered_message = rendered_message % args
+
+            if rendered_message.startswith("PADDING:"):
+                pad_value = rendered_message.split(":", maxsplit=1)[1].strip()
+                logger.info(
+                    "LiquidAudio preprocessor frame padding multiple set to %s; 0 disables extra spectrogram time padding.",
+                    pad_value,
+                )
+                return
+
+            original_info(message, *args, **kwargs)
+
+        conformer_processor.logging.info = _patched_info
+        try:
+            yield
+        finally:
+            conformer_processor.logging.info = original_info
+
+    def __init__(
+        self,
+        text_tokenizer_path: str | None = None,
+        audio_processor_config: Any | None = None,
+        mimi_weights_path: str | None = None,
+        detokenizer_path: str | None = None,
+        name: str | None = None,
+    ) -> None:
+        with self._rewrite_padding_log():
+            # Some tests patch the base class with a lightweight stub whose
+            # `from_pretrained` constructs via `cls()` and then mutates fields.
+            # Support that pathway without affecting real model initialization.
+            if text_tokenizer_path is None or audio_processor_config is None:
+                super().__init__()
+                return
+            super().__init__(
+                text_tokenizer_path=text_tokenizer_path,
+                audio_processor_config=audio_processor_config,
+                mimi_weights_path=mimi_weights_path,
+                detokenizer_path=detokenizer_path,
+                name=name,
+            )
 
     @property
     def device(self) -> str:
@@ -71,6 +150,7 @@ class LiquidAudio(BaseMllmModel):
                 "Please do not provide 'config', 'model' or 'processor' arguments. They are set automatically."
             )
 
+        _patch_liquid_audio_config(CONFIG.repo_id, CONFIG.revision)
         super().__init__(
             *args,
             config=CONFIG,

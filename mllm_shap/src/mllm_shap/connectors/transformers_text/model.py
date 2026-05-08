@@ -1,7 +1,5 @@
 """Transformers text-only model connector."""
 
-from __future__ import annotations
-
 import warnings
 from copy import deepcopy
 from typing import Any, cast
@@ -35,9 +33,9 @@ class TransformersCausalText(BaseMllmModel):
     """
 
     processor: PreTrainedTokenizerBase
+    """Processor for tokenization and detokenization, initialized from the Hugging Face model configuration."""
     model: PreTrainedModel
-    _KW_HISTORY_TRACKING_MODE = "history_tracking_mode"
-    _TOKEN_EMB_RANK = 2
+    """The causal language model, loaded from the Hugging Face model configuration and set to eval mode on the specified device."""
 
     def __init__(self, device: torch.device, **kwargs: Any) -> None:
         # Disallow overriding these to keep parity with LiquidAudio pattern.
@@ -54,7 +52,6 @@ class TransformersCausalText(BaseMllmModel):
         _model = AutoModelForCausalLM.from_pretrained(
             CONFIG.repo_id,
             revision=CONFIG.revision,
-            load_in_4bit=True,
         )  # nosec: B615
         model = cast(PreTrainedModel, _model)
         cast(Any, model).to(device)
@@ -62,14 +59,14 @@ class TransformersCausalText(BaseMllmModel):
 
         # Force text-only history tracking
         if (
-            self._KW_HISTORY_TRACKING_MODE in kwargs
-            and kwargs[self._KW_HISTORY_TRACKING_MODE] != ModelHistoryTrackingMode.TEXT
+            "history_tracking_mode" in kwargs
+            and kwargs["history_tracking_mode"] != ModelHistoryTrackingMode.TEXT
         ):
             warnings.warn(
                 "Non-TEXT history tracking requested but this connector is text-only. Forcing TEXT mode.",
                 stacklevel=2,
             )
-            kwargs[self._KW_HISTORY_TRACKING_MODE] = ModelHistoryTrackingMode.TEXT
+            kwargs["history_tracking_mode"] = ModelHistoryTrackingMode.TEXT
 
         super().__init__(
             config=CONFIG,
@@ -77,7 +74,7 @@ class TransformersCausalText(BaseMllmModel):
             processor=tokenizer,
             model=model,
             history_tracking_mode=kwargs.pop(
-                self._KW_HISTORY_TRACKING_MODE, ModelHistoryTrackingMode.TEXT
+                "history_tracking_mode", ModelHistoryTrackingMode.TEXT
             ),
         )
 
@@ -236,7 +233,7 @@ class TransformersCausalText(BaseMllmModel):
     ) -> list[Tensor]:
         contextual: list[Tensor] = []
         for emb in static_embeddings:
-            if emb.dim() == self._TOKEN_EMB_RANK:
+            if emb.dim() == 2:
                 emb = emb.unsqueeze(0)  # [1, T, hidden]
             # Call base model to obtain last_hidden_state (see HF outputs contract)
             base = getattr(self.model, "base_model", self.model)

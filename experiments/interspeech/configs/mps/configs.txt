@@ -1,0 +1,9 @@
+experiments/interspeech/configs/mps/rebuttal_500_sgpa_audio_original_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_sgpa_audio_female_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_sgpa_audio_male_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_sgpa_audio_original_mps.json
+
+experiments/interspeech/configs/mps/rebuttal_500_raw_audio_original_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_raw_audio_female_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_raw_audio_male_mps.json
+experiments/interspeech/configs/mps/rebuttal_1k_raw_audio_original_mps.json

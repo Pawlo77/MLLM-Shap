@@ -1,1 +1,1 @@
-# TODO
+"""Liquid connector tests package."""

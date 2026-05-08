@@ -7,10 +7,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 from mllm_shap.connectors.base.audio import AudioSegment
-from mllm_shap.connectors.base.chat import BaseMllmChat, Role
+from mllm_shap.connectors.base.chat import (
+    AllTextTokensFilteredOutError,
+    BaseMllmChat,
+    Role,
+)
 from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.connectors.base.chat_entry import ChatEntry
-from mllm_shap.connectors.enums import ModalityFlag
+from mllm_shap.connectors.enums import ModalityFlag, SystemRolesSetup
 
 from ...dummy import DummyChat
 
@@ -18,7 +22,12 @@ from ...dummy import DummyChat
 class _BranchCoverageChat(BaseMllmChat):
     """Minimal chat implementation that allows explicit text/audio token splits."""
 
-    def __init__(self, input_tokens: torch.Tensor, text_mask: torch.Tensor) -> None:
+    def __init__(
+        self,
+        input_tokens: torch.Tensor,
+        text_mask: torch.Tensor,
+        system_roles_setup: SystemRolesSetup = SystemRolesSetup.SYSTEM,
+    ) -> None:
         super().__init__(
             device=torch.device("cpu"),
             empty_turn_sequences=set(),
@@ -26,6 +35,7 @@ class _BranchCoverageChat(BaseMllmChat):
                 input_tokens=torch.tensor([], dtype=torch.long),
                 text_mask=torch.tensor([], dtype=torch.bool),
             ),
+            system_roles_setup=system_roles_setup,
         )
         self._input_tokens = input_tokens.clone().to(torch.long)
         self._text_mask = text_mask.clone().to(torch.bool)
@@ -645,6 +655,398 @@ class TestDummyChat:
         chat.refresh(shap=True)
         with pytest.raises(RuntimeError, match="larger then number of audio tokens"):
             _ = chat.shap_values_mask
+
+    def test_detect_handles_empty_or_too_long_sequences(
+        self, chat: BaseMllmChat
+    ) -> None:
+        """_detect should early-return for empty or too-long patterns."""
+        tokens = torch.tensor([1, 2], dtype=torch.long)
+        mask = torch.tensor([True, True], dtype=torch.bool)
+
+        out_mark = chat._detect(
+            tokens=tokens,
+            seq_tensor=torch.tensor([1, 2, 3], dtype=torch.long),
+            mask=mask.clone(),
+            mark=True,
+        )
+        out_indices = chat._detect(
+            tokens=tokens,
+            seq_tensor=torch.tensor([], dtype=torch.long),
+            mark=False,
+        )
+
+        assert torch.equal(out_mark, mask)
+        assert out_indices.numel() == 0
+
+    def test_private_extend_tensor_noop_for_zero_tokens(
+        self, chat: BaseMllmChat
+    ) -> None:
+        """Private tensor extension helper should no-op on zero length."""
+        before = chat.token_roles.clone()
+        chat._BaseMllmChat__extend_tensor(0, 1, "token_roles")
+        assert torch.equal(chat.token_roles, before)
+
+    def test_deepcopy_with_explicit_none_cache_keeps_none(
+        self, chat: BaseMllmChat
+    ) -> None:
+        """Deepcopy should preserve None cache state."""
+        chat._BaseMllmChat__shap = None
+        copied = deepcopy(chat)
+        assert copied.cache is None
+
+    def test_text_tokens_no_system_mask_filtered_applies_exclusion_sequences(
+        self,
+    ) -> None:
+        """Exclusion sequences should be detected and masked out for text tokens."""
+        chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([1, 2, 3], dtype=torch.long),
+            text_mask=torch.tensor([True, True, True], dtype=torch.bool),
+        )
+        chat.text_tokens_no_system_mask = torch.tensor(
+            [True, True, True], dtype=torch.bool
+        )
+        chat.token_sequences_to_exclude = [torch.tensor([1, 2], dtype=torch.long)]
+        chat.refresh(full=True)
+
+        assert torch.equal(
+            chat.text_tokens_no_system_mask_filtered,
+            torch.tensor([False, False, True], dtype=torch.bool),
+        )
+
+    def test_external_group_ids_positive_mask_returns_boolean_mask(
+        self, chat: BaseMllmChat
+    ) -> None:
+        """external_group_ids_positive_mask should expose ids>0 mask."""
+        chat.external_group_ids = torch.tensor([0, 1, 2, 0, 3], dtype=torch.int32)
+        assert torch.equal(
+            chat.external_group_ids_positive_mask,
+            torch.tensor([False, True, True, False, True], dtype=torch.bool),
+        )
+
+    def test_refresh_without_full_keeps_full_only_cached_entries(
+        self, chat: BaseMllmChat
+    ) -> None:
+        """refresh(full=False) should not purge full-only cached properties."""
+        _ = chat.shap_values_mask
+        assert "shap_values_mask" in chat.__dict__
+        chat.refresh(full=False)
+        assert "shap_values_mask" in chat.__dict__
+
+    def test_shap_values_mask_marks_audio_segment_positions(self) -> None:
+        """shap_values_mask should mark first N audio tokens for N segments in each turn."""
+        chat = DummyChat(num_tokens=2)
+        chat.turn_number = 1
+        chat.token_turns = torch.tensor([1, 1], dtype=torch.int16)
+        chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        chat.text_tokens_mask = torch.tensor([False, False], dtype=torch.bool)
+        chat.audio_tokens_mask = torch.tensor([True, True], dtype=torch.bool)
+        chat.text_tokens_no_system_mask = torch.tensor([], dtype=torch.bool)
+        chat.audio_tokens_no_system_mask = torch.tensor([True, True], dtype=torch.bool)
+        chat._audio_segments = {
+            1: [AudioSegment(token="a", start_time=0.0, end_time=0.1, confidence=1.0)]
+        }
+        chat.refresh(shap=True)
+
+        assert torch.equal(chat.shap_values_mask, torch.tensor([True, False]))
+
+    def test_shap_values_mask_continues_for_turn_without_segments(self) -> None:
+        """shap_values_mask should skip turns absent from audio segment mapping."""
+        chat = DummyChat(num_tokens=1)
+        chat.turn_number = 1
+        chat.token_turns = torch.tensor([1], dtype=torch.int16)
+        chat.token_roles = torch.tensor([Role.USER.value], dtype=torch.int8)
+        chat.text_tokens_mask = torch.tensor([False], dtype=torch.bool)
+        chat.audio_tokens_mask = torch.tensor([True], dtype=torch.bool)
+        chat.text_tokens_no_system_mask = torch.tensor([], dtype=torch.bool)
+        chat.audio_tokens_no_system_mask = torch.tensor([True], dtype=torch.bool)
+        chat._audio_segments = {}
+        chat.refresh(shap=True)
+
+        assert chat.shap_values_mask.tolist() == [False]
+
+    def test_decode_audio_defaults_to_chat_audio_tokens(
+        self, chat: BaseMllmChat, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """decode_audio should use self.audio_tokens when tokens argument is omitted."""
+        monkeypatch.setattr(chat, "_decode_audio", lambda _: torch.zeros(1, 4))
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.to_bytes",
+            lambda *args, **kwargs: b"ok",
+        )
+
+        assert chat.decode_audio() == b"ok"
+
+    def test_from_chat_empty_turn_sequences_can_filter_all_text(self) -> None:
+        """from_chat should raise when empty-turn filtering removes all text tokens."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([1, 2], dtype=torch.long),
+            text_mask=torch.tensor([True, True], dtype=torch.bool),
+        )
+        base_chat.turn_number = 1
+        base_chat.token_turns = torch.tensor([1, 1], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat.empty_turn_sequences = [torch.tensor([1, 2], dtype=torch.long)]
+
+        with pytest.raises(AllTextTokensFilteredOutError):
+            _ = _BranchCoverageChat.from_chat(torch.tensor([True, True]), base_chat)
+
+    def test_from_chat_text_turn_skips_when_mask_filters_it_out(self) -> None:
+        """from_chat should skip text turns with no selected tokens."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([10, 20], dtype=torch.long),
+            text_mask=torch.tensor([True, True], dtype=torch.bool),
+        )
+        base_chat.turn_number = 2
+        base_chat.token_turns = torch.tensor([1, 2], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat._audio_segments = {}
+
+        new_chat = _BranchCoverageChat.from_chat(torch.tensor([False, True]), base_chat)
+        assert new_chat.input_tokens_num == 1
+
+    def test_from_chat_audio_turn_skips_when_no_audio_selected(self) -> None:
+        """from_chat should skip audio turns when no segment remains selected."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([7, 8], dtype=torch.long),
+            text_mask=torch.tensor([False, True], dtype=torch.bool),
+        )
+        base_chat.turn_number = 2
+        base_chat.token_turns = torch.tensor([1, 2], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat._audio_segments = {
+            1: [
+                AudioSegment(
+                    token="A",
+                    start_time=0.0,
+                    end_time=0.01,
+                    confidence=1.0,
+                    audio_format="wav",
+                )
+            ]
+        }
+
+        new_chat = _BranchCoverageChat.from_chat(torch.tensor([False, True]), base_chat)
+        assert new_chat.input_tokens_num == 1
+
+    def test_from_chat_raises_for_missing_segment_indices(self) -> None:
+        """from_chat should fail when aligned segment sample indices are missing."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([1, 2], dtype=torch.long),
+            text_mask=torch.tensor([True, False], dtype=torch.bool),
+        )
+        base_chat.turn_number = 2
+        base_chat.token_turns = torch.tensor([1, 2], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat._audio_segments = {
+            2: [
+                AudioSegment(
+                    token="A",
+                    start_time=0.0,
+                    end_time=0.01,
+                    confidence=1.0,
+                    audio_format="wav",
+                    sample_rate=16000,
+                )
+            ]
+        }
+        base_chat._audio_waveforms = {2: (torch.zeros(1, 8), 16000, "wav")}
+
+        with pytest.raises(RuntimeError, match="missing sample indices"):
+            _ = _BranchCoverageChat.from_chat(torch.tensor([True, True]), base_chat)
+
+    def test_from_chat_falls_back_to_combining_segment_bytes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """from_chat should use byte-combine fallback when source waveform cache is absent."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([1, 2], dtype=torch.long),
+            text_mask=torch.tensor([True, False], dtype=torch.bool),
+        )
+        base_chat.turn_number = 2
+        base_chat.token_turns = torch.tensor([1, 2], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat._audio_segments = {
+            2: [
+                AudioSegment(
+                    token="A",
+                    start_time=0.0,
+                    end_time=0.01,
+                    confidence=1.0,
+                    audio_format="wav",
+                )
+            ]
+        }
+        base_chat._audio_waveforms = None
+
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.combine",
+            lambda *args, **kwargs: b"audio-bytes",
+        )
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.from_bytes",
+            lambda *args, **kwargs: (torch.zeros(1, 8), 16000),
+        )
+
+        new_chat = _BranchCoverageChat.from_chat(torch.tensor([True, True]), base_chat)
+        assert new_chat.input_tokens_num == 2
+
+    def test_add_audio_with_transcript_success_stores_segments_and_waveform(
+        self, chat: BaseMllmChat, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Successful add_audio_with_transcript should persist segments and source waveform."""
+        chat.speaker = Role.USER
+
+        class _Aligner(SpectrogramGuidedAligner):
+            pass
+
+        aligner = object.__new__(_Aligner)
+        segments = [
+            AudioSegment(
+                token="a",
+                start_time=0.0,
+                end_time=0.1,
+                confidence=1.0,
+                audio_format="wav",
+                sample_rate=16000,
+                start_sample=0,
+                end_sample=4,
+            )
+        ]
+        monkeypatch.setattr(_Aligner, "__call__", lambda *args, **kwargs: segments)
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.from_bytes",
+            lambda *args, **kwargs: (torch.zeros(1, 8), 16000),
+        )
+        monkeypatch.setattr(chat, "add_audio", lambda *args, **kwargs: None)
+
+        chat.add_audio_with_transcript(
+            audio_content=b"abc",
+            transcript="hello",
+            aligner=aligner,
+        )
+
+        turn = chat.turn_number
+        assert chat._audio_segments is not None and turn in chat._audio_segments
+        assert chat._audio_segments[turn] == segments
+        assert chat._audio_waveforms is not None and turn in chat._audio_waveforms
+
+    def test_attach_audio_to_segments_success_path(
+        self, chat: BaseMllmChat, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """attach_audio_to_segments should decode bytes and forward to aligner attach call."""
+        chat.turn_number = 1
+        chat._audio_segments = {
+            1: [AudioSegment(token="a", start_time=0.0, end_time=0.1, confidence=1.0)]
+        }
+
+        class _Aligner(SpectrogramGuidedAligner):
+            pass
+
+        aligner = object.__new__(_Aligner)
+        attach_mock = MagicMock()
+        monkeypatch.setattr(aligner, "attach_audio_to_segments", attach_mock)
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.from_bytes",
+            lambda *args, **kwargs: (torch.zeros(1, 4), 16000),
+        )
+
+        chat.attach_audio_to_segments(aligner=aligner, audio_content=b"abc")
+
+        assert attach_mock.call_count == 1
+
+    def test_system_roles_setup_none_initializes_empty_system_role_set(self) -> None:
+        """SystemRolesSetup.NONE should produce an empty internal system-role set."""
+        chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([1], dtype=torch.long),
+            text_mask=torch.tensor([True], dtype=torch.bool),
+            system_roles_setup=SystemRolesSetup.NONE,
+        )
+        chat.speaker = Role.SYSTEM
+        assert chat.is_system_turn is False
+
+    def test_from_chat_empty_turn_filter_skips_when_audio_still_used(self) -> None:
+        """Empty-turn text filtering should skip when same turn still has selected audio."""
+        base_chat = _BranchCoverageChat(
+            input_tokens=torch.tensor([11, 22], dtype=torch.long),
+            text_mask=torch.tensor([True, False], dtype=torch.bool),
+        )
+        base_chat.turn_number = 1
+        base_chat.token_turns = torch.tensor([1, 1], dtype=torch.int16)
+        base_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.USER.value], dtype=torch.int8
+        )
+        base_chat.empty_turn_sequences = [torch.tensor([11], dtype=torch.long)]
+
+        new_chat = _BranchCoverageChat.from_chat(torch.tensor([True, True]), base_chat)
+        assert new_chat.input_tokens_num == 2
+
+    def test_shap_values_mask_handles_turn_with_zero_segments(self) -> None:
+        """shap_values_mask should handle explicit audio turns with zero segment entries."""
+        chat = DummyChat(num_tokens=1)
+        chat.turn_number = 1
+        chat.token_turns = torch.tensor([1], dtype=torch.int16)
+        chat.token_roles = torch.tensor([Role.USER.value], dtype=torch.int8)
+        chat.text_tokens_mask = torch.tensor([False], dtype=torch.bool)
+        chat.audio_tokens_mask = torch.tensor([True], dtype=torch.bool)
+        chat.text_tokens_no_system_mask = torch.tensor([], dtype=torch.bool)
+        chat.audio_tokens_no_system_mask = torch.tensor([True], dtype=torch.bool)
+        chat._audio_segments = {1: []}
+        chat.refresh(shap=True)
+
+        assert chat.shap_values_mask.tolist() == [False]
+
+    def test_add_audio_with_transcript_success_when_state_dicts_preexist(
+        self, chat: BaseMllmChat, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """add_audio_with_transcript should work when internal segment/waveform dicts already exist."""
+        chat.speaker = Role.USER
+        chat._audio_segments = {}
+        chat._audio_waveforms = {}
+
+        class _Aligner(SpectrogramGuidedAligner):
+            pass
+
+        aligner = object.__new__(_Aligner)
+        segments = [
+            AudioSegment(
+                token="b",
+                start_time=0.0,
+                end_time=0.1,
+                confidence=1.0,
+                audio_format="wav",
+                sample_rate=16000,
+                start_sample=0,
+                end_sample=4,
+            )
+        ]
+        monkeypatch.setattr(_Aligner, "__call__", lambda *args, **kwargs: segments)
+        monkeypatch.setattr(
+            "mllm_shap.connectors.base.chat.TorchAudioHandler.from_bytes",
+            lambda *args, **kwargs: (torch.zeros(1, 8), 16000),
+        )
+        monkeypatch.setattr(chat, "add_audio", lambda *args, **kwargs: None)
+
+        chat.add_audio_with_transcript(
+            audio_content=b"abc",
+            transcript="hello",
+            aligner=aligner,
+        )
+
+        turn = chat.turn_number
+        assert turn in chat._audio_segments
+        assert turn in chat._audio_waveforms
 
 
 class TestGetConversation:

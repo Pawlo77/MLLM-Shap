@@ -46,7 +46,7 @@ class BaseEmbeddingReducer(ABC):
             if self.n is None or self.n >= emb.shape[-1]:
                 continue
 
-            indices = torch.randperm(emb.shape[0])[: self.n]
+            indices = torch.randperm(emb.shape[-1])[: self.n]
             embeddings[i] = emb[..., indices]
 
         return embeddings

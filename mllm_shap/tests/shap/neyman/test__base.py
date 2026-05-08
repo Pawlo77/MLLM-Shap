@@ -1,10 +1,18 @@
 """Unit tests for BaseComplementaryNeymanShapExplainer class (updated)."""
 
+from unittest.mock import patch
+
 import pytest
 import torch
+from mllm_shap.connectors.base.model_response import ModelResponse
+from mllm_shap.connectors.enums import Role, SystemRolesSetup
 from mllm_shap.shap.base._masks_manager import MasksManager, NoTokensToExplainError
-from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer
+from mllm_shap.shap.complementary import BaseComplementaryShapApproximation
+from mllm_shap.shap.neyman._base import BaseComplementaryNeymanShapExplainer, _Step
 from torch import Tensor
+
+from ...dummy import DummyChat as BaseDummyChat
+from ...dummy import DummyModel
 
 
 class DummyChat:
@@ -123,6 +131,70 @@ class TestBaseComplementaryNeymanShapExplainerNumSplits:
         assert initial_splits >= 1
         assert num_splits >= initial_splits
 
+    def test_num_splits_wraps_total_budget_errors(self) -> None:
+        """Errors from parent total-budget calculation should be wrapped."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        with patch.object(
+            BaseComplementaryShapApproximation,
+            "_get_num_splits",
+            side_effect=ValueError("boom"),
+        ):
+            with pytest.raises(
+                ValueError, match="Total number of splits could not be determined"
+            ):
+                explainer._get_num_splits(n=4)
+
+    def test_num_splits_wraps_initial_budget_errors(self) -> None:
+        """Errors from initial-budget estimation should be wrapped."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(
+            initial_num_samples=2, initial_fraction=0.5
+        )
+        with (
+            patch.object(
+                BaseComplementaryShapApproximation,
+                "_get_num_splits",
+                return_value=10,
+            ),
+            patch.object(
+                BaseComplementaryShapApproximation,
+                "_get_num_splits_static",
+                side_effect=ValueError("boom"),
+            ),
+        ):
+            with pytest.raises(
+                ValueError, match="Initial number of splits could not be determined"
+            ):
+                explainer._get_num_splits(n=4)
+
+    def test_num_splits_warns_for_small_and_large_initial_budget(self) -> None:
+        """Small initial budget should clamp to 2 and emit warning paths."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(
+            initial_num_samples=2, initial_fraction=0.5
+        )
+        with (
+            patch.object(
+                BaseComplementaryShapApproximation,
+                "_get_num_splits",
+                return_value=5,
+            ),
+            patch.object(
+                BaseComplementaryShapApproximation,
+                "_get_num_splits_static",
+                return_value=1,
+            ),
+            patch("mllm_shap.shap.neyman._base.logger.warning") as mock_warning,
+        ):
+            result = explainer._get_num_splits(n=1)
+
+        assert result == 5
+        assert (
+            getattr(
+                explainer, "_BaseComplementaryNeymanShapExplainer__initial_num_splits"
+            )
+            == 2
+        )
+        assert mock_warning.call_count >= 2
+
 
 class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
     """Tests for mask generation behavior (complementary masks)."""
@@ -199,6 +271,114 @@ class TestBaseComplementaryNeymanShapExplainerMasksGeneration:
         assert manager.seen(mask_hash=h)
         # a new random mask hash should not be seen
         assert not manager.seen(mask_hash=h + 1)
+
+    def test_get_next_split_raises_without_M_matrix(self) -> None:
+        """Initial sampling requires M matrix to be present."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = None
+        with pytest.raises(RuntimeError, match="M matrix must be initialized"):
+            explainer._get_next_split(
+                n=4,
+                device=torch.device("cpu"),
+                generated_masks_num=0,
+            )
+
+    def test_get_next_split_switches_to_neyman_when_initial_sampling_completes(
+        self,
+    ) -> None:
+        """When initial sampling is done, next split should return None and advance step."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.full((2, 2), fill_value=2.0)
+        explainer._first_call = False
+        explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+
+        result = explainer._get_next_split(
+            n=2,
+            device=torch.device("cpu"),
+            generated_masks_num=0,
+        )
+
+        assert result is None
+        assert (
+            explainer._BaseComplementaryNeymanShapExplainer__step
+            == _Step.NEYMAN_ALLOCATION
+        )
+
+    def test_get_next_split_raises_if_required_position_not_updated(self) -> None:
+        """Modified initial sampler should fail if current M position already exhausted."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._first_call = False
+        explainer._M = torch.full((2, 2), fill_value=2.0)
+        explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+        explainer._BaseComplementaryNeymanShapExplainer__i = 0
+        explainer._BaseComplementaryNeymanShapExplainer__j = 0
+        with patch.object(
+            explainer,
+            "_BaseComplementaryNeymanShapExplainer__update_M_position",
+            return_value=False,
+        ):
+            with pytest.raises(RuntimeError, match="did not update position correctly"):
+                explainer._get_next_split(
+                    n=2,
+                    device=torch.device("cpu"),
+                    generated_masks_num=0,
+                )
+
+    def test_get_next_split_raises_if_required_token_missing(self) -> None:
+        """Modified initial sampler should validate include_token contract."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._first_call = False
+        explainer._M = torch.zeros((3, 3), dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+        explainer._BaseComplementaryNeymanShapExplainer__i = 1
+        explainer._BaseComplementaryNeymanShapExplainer__j = 1
+        with (
+            patch.object(
+                explainer,
+                "_BaseComplementaryNeymanShapExplainer__update_M_position",
+                return_value=False,
+            ),
+            patch.object(
+                explainer,
+                "_get_random_split",
+                return_value=torch.tensor([[True, False, False]], dtype=torch.bool),
+            ),
+        ):
+            with pytest.raises((ValueError, RuntimeError)):
+                explainer._get_next_split(
+                    n=3,
+                    device=torch.device("cpu"),
+                    generated_masks_num=0,
+                )
+
+    def test_get_next_split_neyman_requires_M_hat(self) -> None:
+        """Neyman stage requires M_hat to be initialized."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.ones((3, 3), dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__step = _Step.NEYMAN_ALLOCATION
+        explainer._BaseComplementaryNeymanShapExplainer__M_hat = None
+        with pytest.raises(RuntimeError, match="M_hat matrix must be initialized"):
+            explainer._get_next_split(
+                n=3,
+                device=torch.device("cpu"),
+                generated_masks_num=0,
+            )
+
+    def test_get_next_split_neyman_returns_none_at_end(self) -> None:
+        """Neyman stage should stop when j reached M_hat length."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.ones((3, 3), dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__step = _Step.NEYMAN_ALLOCATION
+        explainer._BaseComplementaryNeymanShapExplainer__M_hat = torch.zeros(3)
+        explainer._BaseComplementaryNeymanShapExplainer__j = 3
+        assert (
+            explainer._get_next_split(
+                n=3,
+                device=torch.device("cpu"),
+                generated_masks_num=0,
+            )
+            is None
+        )
 
 
 class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
@@ -349,3 +529,567 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
                 similarities=torch.tensor([1.0, 0.5], dtype=torch.float32),
                 device=torch.device("cpu"),
             )
+
+    def test_calculate_C_matrix_requires_M_matrix(self) -> None:
+        """Real C matrix updater should reject missing M matrix."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        with pytest.raises(RuntimeError, match="M matrix must be initialized"):
+            BaseComplementaryNeymanShapExplainer._calculate_C_matrix(
+                explainer,
+                masks=torch.tensor([[True, False], [False, True]], dtype=torch.bool),
+                similarities=torch.tensor([1.0, 0.5], dtype=torch.float32),
+                device=torch.device("cpu"),
+            )
+
+    def test_calculate_shap_values_requires_M_and_C(self) -> None:
+        """SHAP computation should reject missing M/C matrices."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        explainer._C = None
+        with pytest.raises(RuntimeError, match="M and C matrices must be initialized"):
+            explainer._calculate_shap_values(
+                masks=torch.tensor([[True, False]], dtype=torch.bool),
+                similarities=torch.tensor([1.0], dtype=torch.float32),
+                device=torch.device("cpu"),
+            )
+
+    def test_calculate_shap_values_neyman_stage_requires_positive_M_entries(
+        self,
+    ) -> None:
+        """Neyman stage should reject zero entries in M after initial sampling."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._zero_mask_skipped = True
+        explainer._M = torch.tensor([[1.0, 0.0], [1.0, 1.0]], dtype=torch.float32)
+        explainer._C = torch.ones_like(explainer._M)
+        explainer._BaseComplementaryNeymanShapExplainer__step = _Step.NEYMAN_ALLOCATION
+        with pytest.raises(RuntimeError, match="Some entries in M matrix are zero"):
+            explainer._calculate_shap_values(
+                masks=torch.tensor([[True]], dtype=torch.bool),
+                similarities=torch.tensor([1.0], dtype=torch.float32),
+                device=torch.device("cpu"),
+            )
+
+    def test_calculate_shap_values_neyman_stage_uses_direct_ratio(self) -> None:
+        """Neyman stage should use direct C/M ratio without zero masking."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._zero_mask_skipped = True
+        explainer._M = torch.tensor([[1.0, 2.0], [1.0, 4.0]], dtype=torch.float32)
+        explainer._C = torch.tensor([[0.0, 6.0], [0.0, 8.0]], dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__step = _Step.NEYMAN_ALLOCATION
+        result = explainer._calculate_shap_values(
+            masks=torch.tensor([[True]], dtype=torch.bool),
+            similarities=torch.tensor([1.0], dtype=torch.float32),
+            device=torch.device("cpu"),
+        )
+        torch.testing.assert_close(result, torch.tensor([1.5, 1.0]))
+
+    def test_update_M_position_wraps_to_next_pass(self) -> None:
+        """When no later slot exists, update position should wrap and find first pending slot."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.tensor([[0.0, 2.0], [2.0, 0.0]], dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+        explainer._BaseComplementaryNeymanShapExplainer__i = 1
+        explainer._BaseComplementaryNeymanShapExplainer__j = 1
+        done = explainer._BaseComplementaryNeymanShapExplainer__update_M_position()
+        assert done is False
+        assert (
+            explainer._BaseComplementaryNeymanShapExplainer__i,
+            explainer._BaseComplementaryNeymanShapExplainer__j,
+        ) == (0, 0)
+
+    def test_estimate_sigma_squared_clamps_negative_values(self) -> None:
+        """Negative variance estimates should be clamped to zero."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.tensor([[2.0, 2.0], [2.0, 2.0]], dtype=torch.float32)
+        explainer._C = torch.tensor([[10.0, 10.0], [10.0, 10.0]], dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__C_squared = torch.zeros_like(
+            explainer._C
+        )
+        with patch("mllm_shap.shap.neyman._base.logger.warning") as mock_warning:
+            sigma = explainer._BaseComplementaryNeymanShapExplainer__estimate_sigma_squared()
+        assert torch.all(sigma == 0)
+        mock_warning.assert_called_once()
+
+    def test_estimate_M_hat_requires_M_and_C(self) -> None:
+        """M_hat estimation should reject missing matrices."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        explainer._C = None
+        with pytest.raises(RuntimeError, match="M and C matrices must be initialized"):
+            explainer._BaseComplementaryNeymanShapExplainer__estimate_M_hat(n=4)
+
+    def test_estimate_M_hat_rejects_even_remaining_budget(self) -> None:
+        """Remaining samples formula must produce an integer half-budget."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.ones((4, 4), dtype=torch.float32)
+        explainer._C = torch.ones((4, 4), dtype=torch.float32)
+        explainer.total_n_calls = 1
+        with patch.object(explainer, "_get_num_splits", return_value=4):
+            with pytest.raises(RuntimeError, match="must be odd"):
+                explainer._BaseComplementaryNeymanShapExplainer__estimate_M_hat(n=4)
+
+    def test_get_start_returns_halfway_index(self) -> None:
+        """Private __get_start should return ceil(n/2) for the current M shape."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.ones((5, 5), dtype=torch.float32)
+        assert explainer._BaseComplementaryNeymanShapExplainer__get_start() == 3
+
+    def test_calculate_C_matrix_initializes_missing_C_squared(self) -> None:
+        """Real C matrix update should initialize C_squared even when C already exists."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.ones((2, 2), dtype=torch.float32)
+        explainer._C = torch.zeros_like(explainer._M)
+        explainer._BaseComplementaryNeymanShapExplainer__C_squared = None
+
+        BaseComplementaryNeymanShapExplainer._calculate_C_matrix(
+            explainer,
+            masks=torch.tensor([[True, False], [False, True]], dtype=torch.bool),
+            similarities=torch.tensor([1.0, 0.5], dtype=torch.float32),
+            device=torch.device("cpu"),
+        )
+
+        assert explainer._BaseComplementaryNeymanShapExplainer__C_squared is not None
+
+    def test_calculate_C_matrix_reuses_existing_C_and_C_squared(self) -> None:
+        """Real C matrix update should skip reinitialization when both matrices exist."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.ones((2, 2), dtype=torch.float32)
+        existing_c = torch.full((2, 2), 7.0, dtype=torch.float32)
+        existing_c_squared = torch.full((2, 2), 9.0, dtype=torch.float32)
+        explainer._C = existing_c.clone()
+        explainer._BaseComplementaryNeymanShapExplainer__C_squared = (
+            existing_c_squared.clone()
+        )
+        c_before = explainer._C
+        c_squared_before = explainer._BaseComplementaryNeymanShapExplainer__C_squared
+
+        BaseComplementaryNeymanShapExplainer._calculate_C_matrix(
+            explainer,
+            masks=torch.tensor([[True, False], [False, True]], dtype=torch.bool),
+            similarities=torch.tensor([1.0, 0.5], dtype=torch.float32),
+            device=torch.device("cpu"),
+        )
+
+        assert explainer._C is c_before
+        assert (
+            explainer._BaseComplementaryNeymanShapExplainer__C_squared
+            is c_squared_before
+        )
+
+    def test_estimate_sigma_squared_requires_all_matrices(self) -> None:
+        """Sigma estimation should reject missing state."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = None
+        explainer._C = None
+        explainer._BaseComplementaryNeymanShapExplainer__C_squared = None
+        with pytest.raises(RuntimeError, match="M, C and C_squared matrices"):
+            explainer._BaseComplementaryNeymanShapExplainer__estimate_sigma_squared()
+
+    def test_estimate_sigma_squared_without_negative_values_skips_warning(self) -> None:
+        """Stable sigma estimates should be returned without clamping warnings."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer()
+        explainer._M = torch.tensor([[2.0, 2.0], [2.0, 2.0]], dtype=torch.float32)
+        explainer._C = torch.tensor([[1.0, 1.0], [1.0, 1.0]], dtype=torch.float32)
+        explainer._BaseComplementaryNeymanShapExplainer__C_squared = torch.tensor(
+            [[1.0, 1.0], [1.0, 1.0]], dtype=torch.float32
+        )
+        with patch("mllm_shap.shap.neyman._base.logger.warning") as mock_warning:
+            sigma = explainer._BaseComplementaryNeymanShapExplainer__estimate_sigma_squared()
+        assert torch.all(sigma >= 0)
+        mock_warning.assert_not_called()
+
+    def test_estimate_M_hat_populates_right_half(self) -> None:
+        """Successful M_hat estimation should allocate only the right-half sizes."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        explainer._M = torch.ones((4, 4), dtype=torch.float32)
+        explainer._C = torch.ones((4, 4), dtype=torch.float32)
+        explainer.total_n_calls = 0
+        with (
+            patch.object(explainer, "_get_num_splits", return_value=8),
+            patch.object(
+                explainer,
+                "_BaseComplementaryNeymanShapExplainer__estimate_sigma_squared",
+                return_value=torch.ones((4, 4), dtype=torch.float32),
+            ),
+        ):
+            explainer._BaseComplementaryNeymanShapExplainer__estimate_M_hat(n=4)
+
+        m_hat = explainer._BaseComplementaryNeymanShapExplainer__M_hat
+        assert m_hat is not None
+        assert torch.equal(m_hat[:2], torch.zeros(2))
+        assert torch.all(m_hat[2:] > 0)
+
+    def test_call_requires_system_assistant_source_chat(self) -> None:
+        """Neyman call should reject chats without SYSTEM_ASSISTANT setup."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        model = DummyModel()
+        source_chat = BaseDummyChat(num_tokens=4)
+        source_chat.system_roles_setup = SystemRolesSetup.NONE
+        source_chat.token_roles = torch.tensor([Role.USER.value] * 4, dtype=torch.int8)
+        response = ModelResponse(
+            chat=source_chat,
+            generated_text_tokens=torch.zeros((1, 1)),
+            generated_audio_tokens=torch.zeros((1, 1)),
+            generated_modality_flag=torch.zeros((1, 1)),
+        )
+
+        with pytest.raises(ValueError, match="SYSTEM_ASSISTANT"):
+            explainer(
+                model=model,
+                source_chat=source_chat,
+                response=response,
+                progress_bar=False,
+            )
+
+    def test_call_stage_two_logs_empty_allocation_and_dedup(self) -> None:
+        """Stage two should warn on empty allocation, close progress bar, and log dedup stats."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        model = DummyModel()
+        source_chat = BaseDummyChat(num_tokens=4)
+        source_chat.system_roles_setup = SystemRolesSetup.SYSTEM_ASSISTANT
+        source_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.ASSISTANT.value, Role.USER.value, Role.USER.value],
+            dtype=torch.int8,
+        )
+        response = ModelResponse(
+            chat=source_chat,
+            generated_text_tokens=torch.zeros((1, 1)),
+            generated_audio_tokens=torch.zeros((1, 1)),
+            generated_modality_flag=torch.zeros((1, 1)),
+        )
+
+        def _fake_generate_step(
+            mask_manager: MasksManager,
+            masks: list[Tensor],
+            responses: list[ModelResponse],
+            device: torch.device,
+            **kwargs,
+        ) -> tuple[int, list[tuple[Tensor, int, BaseDummyChat | None, ModelResponse]]]:
+            del mask_manager, device, kwargs
+            if len(masks) == 1:
+                masks.extend(
+                    [
+                        torch.tensor([True, False, False, False]),
+                        torch.tensor([False, True, True, True]),
+                    ]
+                )
+                responses.extend([response, response])
+                explainer._BaseComplementaryNeymanShapExplainer__step = (
+                    _Step.NEYMAN_ALLOCATION
+                )
+            return 0, []
+
+        mock_cache_manager = type(
+            "MockCacheManager",
+            (),
+            {"extracted_num": 2, "__init__": lambda self, *args, **kwargs: None},
+        )
+
+        class _Pbar:
+            def __init__(self) -> None:
+                self.closed = False
+                self.descriptions: list[str] = []
+
+            def set_description(self, desc: str) -> None:
+                self.descriptions.append(desc)
+
+            def close(self) -> None:
+                self.closed = True
+
+        pbar = _Pbar()
+
+        def _fake_num_splits(n: int) -> int:
+            del n
+            explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+            explainer._M = torch.ones((4, 4), dtype=torch.float32)
+            explainer._C = torch.zeros((4, 4), dtype=torch.float32)
+            return 4
+
+        with (
+            patch("mllm_shap.shap.neyman._base.CacheManager", mock_cache_manager),
+            patch("mllm_shap.shap.neyman._base.tqdm", return_value=pbar),
+            patch.object(explainer, "_get_num_splits", side_effect=_fake_num_splits),
+            patch.object(explainer, "_generate_step", side_effect=_fake_generate_step),
+            patch.object(
+                explainer,
+                "_BaseComplementaryNeymanShapExplainer__estimate_M_hat",
+                side_effect=lambda n: setattr(
+                    explainer,
+                    "_BaseComplementaryNeymanShapExplainer__M_hat",
+                    torch.zeros(4),
+                ),
+            ),
+            patch.object(
+                explainer,
+                "_get_shap_values",
+                return_value=(torch.zeros(4), torch.zeros(4)),
+            ),
+            patch.object(explainer, "_save_to_cache"),
+            patch("mllm_shap.shap.neyman._base.logger.warning") as mock_warning,
+            patch("mllm_shap.shap.neyman._base.logger.info") as mock_info,
+        ):
+            explainer(
+                model=model,
+                source_chat=source_chat,
+                response=response,
+                progress_bar=True,
+                verbose=False,
+            )
+
+        assert "Neyman SHAP [stage 2/2]" in pbar.descriptions
+        assert pbar.closed is True
+        mock_warning.assert_any_call(
+            "Neyman allocation step produced no new masks; budget may have been exhausted during initial sampling."
+        )
+        mock_info.assert_any_call(
+            "Deduplicated %d/%d masks using existing cache.",
+            2,
+            2,
+        )
+
+    def test_call_warns_without_assistant_role(self) -> None:
+        """Neyman call should warn when no assistant token role is present."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        model = DummyModel()
+        source_chat = BaseDummyChat(num_tokens=4)
+        source_chat.system_roles_setup = SystemRolesSetup.SYSTEM_ASSISTANT
+        source_chat.token_roles = torch.tensor([Role.USER.value] * 4, dtype=torch.int8)
+        response = ModelResponse(
+            chat=source_chat,
+            generated_text_tokens=torch.zeros((1, 1)),
+            generated_audio_tokens=torch.zeros((1, 1)),
+            generated_modality_flag=torch.zeros((1, 1)),
+        )
+
+        def _fake_generate_step(
+            mask_manager: MasksManager,
+            masks: list[Tensor],
+            responses: list[ModelResponse],
+            device: torch.device,
+            **kwargs,
+        ) -> tuple[int, None]:
+            del mask_manager, device, kwargs
+            masks.append(torch.tensor([True, False, False, False]))
+            responses.append(response)
+            return 0, None
+
+        def _fake_num_splits(n: int) -> int:
+            del n
+            explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+            explainer._M = torch.ones((4, 4), dtype=torch.float32)
+            explainer._C = torch.zeros((4, 4), dtype=torch.float32)
+            return 1
+
+        with (
+            patch.object(explainer, "_get_num_splits", side_effect=_fake_num_splits),
+            patch.object(explainer, "_generate_step", side_effect=_fake_generate_step),
+            patch.object(
+                explainer,
+                "_get_shap_values",
+                return_value=(torch.zeros(4), torch.zeros(4)),
+            ),
+            patch.object(explainer, "_save_to_cache"),
+            patch("mllm_shap.shap.neyman._base.logger.warning") as mock_warning,
+        ):
+            explainer(
+                model=model,
+                source_chat=source_chat,
+                response=response,
+                progress_bar=False,
+                verbose=False,
+            )
+
+        mock_warning.assert_any_call(
+            "Source chat must have at least one non-user message for Neyman SHAP."
+            "No assistant role found, make sure that existing messages cover it."
+        )
+
+    def test_call_stage_two_merges_new_masks_and_history_without_progress_bar(
+        self,
+    ) -> None:
+        """Stage two should merge additional masks/history even when no tqdm bar exists."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        model = DummyModel()
+        source_chat = BaseDummyChat(num_tokens=4)
+        source_chat.system_roles_setup = SystemRolesSetup.SYSTEM_ASSISTANT
+        source_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.ASSISTANT.value, Role.USER.value, Role.USER.value],
+            dtype=torch.int8,
+        )
+        response = ModelResponse(
+            chat=source_chat,
+            generated_text_tokens=torch.zeros((1, 1)),
+            generated_audio_tokens=torch.zeros((1, 1)),
+            generated_modality_flag=torch.zeros((1, 1)),
+        )
+
+        history_stage_1 = [
+            (torch.tensor([True, False, False, False]), 0, None, response),
+        ]
+        history_stage_2 = [
+            (torch.tensor([False, True, False, False]), 0, None, response),
+        ]
+
+        def _fake_num_splits(n: int) -> int:
+            del n
+            explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+            explainer._M = torch.ones((4, 4), dtype=torch.float32)
+            explainer._C = torch.zeros((4, 4), dtype=torch.float32)
+            explainer._BaseComplementaryNeymanShapExplainer__C_squared = torch.zeros(
+                (4, 4), dtype=torch.float32
+            )
+            return 4
+
+        def _fake_generate_step(
+            mask_manager: MasksManager,
+            masks: list[Tensor],
+            responses: list[ModelResponse],
+            device: torch.device,
+            **kwargs,
+        ) -> tuple[int, list[tuple[Tensor, int, BaseDummyChat | None, ModelResponse]]]:
+            del mask_manager, device, kwargs
+            if len(masks) == 1:
+                masks.extend(
+                    [
+                        torch.tensor([True, False, False, False]),
+                        torch.tensor([False, True, True, True]),
+                    ]
+                )
+                responses.extend([response, response])
+                explainer._BaseComplementaryNeymanShapExplainer__step = (
+                    _Step.NEYMAN_ALLOCATION
+                )
+                return 1, history_stage_1.copy()
+
+            masks.extend(
+                [
+                    torch.tensor([False, True, False, False]),
+                    torch.tensor([True, False, True, True]),
+                ]
+            )
+            responses.extend([response, response])
+            return 2, history_stage_2.copy()
+
+        with (
+            patch.object(explainer, "_get_num_splits", side_effect=_fake_num_splits),
+            patch.object(explainer, "_generate_step", side_effect=_fake_generate_step),
+            patch.object(
+                explainer,
+                "_BaseComplementaryNeymanShapExplainer__estimate_M_hat",
+                side_effect=lambda n: setattr(
+                    explainer,
+                    "_BaseComplementaryNeymanShapExplainer__M_hat",
+                    torch.ones(4),
+                ),
+            ),
+            patch.object(
+                explainer,
+                "_get_shap_values",
+                return_value=(torch.zeros(4), torch.zeros(4)),
+            ),
+            patch.object(explainer, "_save_to_cache") as mock_save,
+        ):
+            result = explainer(
+                model=model,
+                source_chat=source_chat,
+                response=response,
+                progress_bar=False,
+                verbose=False,
+            )
+
+        assert result == history_stage_1 + history_stage_2
+        saved_masks = mock_save.call_args.kwargs["masks"]
+        saved_responses = mock_save.call_args.kwargs["responses"]
+        assert saved_masks.shape[0] == 5
+        assert len(saved_responses) == 5
+
+    def test_call_stage_two_skips_history_merge_when_initial_history_missing(
+        self,
+    ) -> None:
+        """Stage two should leave history as None when initial stage produced no history."""
+        explainer = DummyBaseComplementaryNeymanShapExplainer(initial_num_samples=2)
+        model = DummyModel()
+        source_chat = BaseDummyChat(num_tokens=4)
+        source_chat.system_roles_setup = SystemRolesSetup.SYSTEM_ASSISTANT
+        source_chat.token_roles = torch.tensor(
+            [Role.USER.value, Role.ASSISTANT.value, Role.USER.value, Role.USER.value],
+            dtype=torch.int8,
+        )
+        response = ModelResponse(
+            chat=source_chat,
+            generated_text_tokens=torch.zeros((1, 1)),
+            generated_audio_tokens=torch.zeros((1, 1)),
+            generated_modality_flag=torch.zeros((1, 1)),
+        )
+
+        def _fake_num_splits(n: int) -> int:
+            del n
+            explainer._BaseComplementaryNeymanShapExplainer__initial_num_splits = 2
+            explainer._M = torch.ones((4, 4), dtype=torch.float32)
+            explainer._C = torch.zeros((4, 4), dtype=torch.float32)
+            explainer._BaseComplementaryNeymanShapExplainer__C_squared = torch.zeros(
+                (4, 4), dtype=torch.float32
+            )
+            return 4
+
+        def _fake_generate_step(
+            mask_manager: MasksManager,
+            masks: list[Tensor],
+            responses: list[ModelResponse],
+            device: torch.device,
+            **kwargs,
+        ) -> tuple[
+            int, list[tuple[Tensor, int, BaseDummyChat | None, ModelResponse]] | None
+        ]:
+            del mask_manager, device, kwargs
+            if len(masks) == 1:
+                masks.extend(
+                    [
+                        torch.tensor([True, False, False, False]),
+                        torch.tensor([False, True, True, True]),
+                    ]
+                )
+                responses.extend([response, response])
+                explainer._BaseComplementaryNeymanShapExplainer__step = (
+                    _Step.NEYMAN_ALLOCATION
+                )
+                return 1, None
+
+            masks.extend(
+                [
+                    torch.tensor([False, True, False, False]),
+                    torch.tensor([True, False, True, True]),
+                ]
+            )
+            responses.extend([response, response])
+            return 2, [(torch.tensor([False, True, False, False]), 0, None, response)]
+
+        with (
+            patch.object(explainer, "_get_num_splits", side_effect=_fake_num_splits),
+            patch.object(explainer, "_generate_step", side_effect=_fake_generate_step),
+            patch.object(
+                explainer,
+                "_BaseComplementaryNeymanShapExplainer__estimate_M_hat",
+                side_effect=lambda n: setattr(
+                    explainer,
+                    "_BaseComplementaryNeymanShapExplainer__M_hat",
+                    torch.ones(4),
+                ),
+            ),
+            patch.object(
+                explainer,
+                "_get_shap_values",
+                return_value=(torch.zeros(4), torch.zeros(4)),
+            ),
+            patch.object(explainer, "_save_to_cache"),
+        ):
+            result = explainer(
+                model=model,
+                source_chat=source_chat,
+                response=response,
+                progress_bar=False,
+                verbose=False,
+            )
+
+        assert result is None

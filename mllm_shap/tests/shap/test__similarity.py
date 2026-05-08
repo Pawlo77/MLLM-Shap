@@ -14,6 +14,7 @@ class TestEuclideanSimilarity:
     """Tests for EuclideanSimilarity class."""
 
     def test_basic_similarity(self):
+        """Checks that basic similarity."""
         similarity = EuclideanSimilarity()
         base = torch.tensor([0.0, 0.0])
         others = torch.tensor([[0.0, 0.0], [1.0, 0.0], [0.0, 2.0]])
@@ -22,6 +23,7 @@ class TestEuclideanSimilarity:
         assert torch.allclose(out, expected, atol=1e-5)
 
     def test_nonzero_base(self):
+        """Checks that nonzero base."""
         similarity = EuclideanSimilarity()
         base = torch.tensor([1.0, 1.0])
         others = torch.tensor([[1.0, 1.0], [2.0, 1.0]])
@@ -30,6 +32,7 @@ class TestEuclideanSimilarity:
         assert torch.allclose(out, expected, atol=1e-5)
 
     def test_similarity_monotonic_with_distance(self):
+        """Checks that similarity monotonic with distance."""
         similarity = EuclideanSimilarity()
         base = torch.zeros(3)
         others = torch.tensor([[0.1, 0.0, 0.0], [1.0, 0.0, 0.0], [3.0, 0.0, 0.0]])
@@ -37,6 +40,7 @@ class TestEuclideanSimilarity:
         assert out[0] > out[1] > out[2]
 
     def test_preserves_dtype(self):
+        """Checks that preserves dtype."""
         similarity = EuclideanSimilarity()
         base = torch.tensor([0.0, 1.0], dtype=torch.float64)
         others = torch.tensor([[0.0, 1.0], [1.0, 1.0]], dtype=torch.float64)
@@ -48,6 +52,7 @@ class TestCosineSimilarity:
     """Tests for CosineSimilarity class."""
 
     def test_identical_vectors(self):
+        """Checks that identical vectors."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 0.0])
         others = torch.tensor(
@@ -62,6 +67,7 @@ class TestCosineSimilarity:
         assert torch.allclose(out, expected, atol=1e-5)
 
     def test_zero_vector_base(self):
+        """Checks that zero vector base."""
         similarity = CosineSimilarity()
         base = torch.tensor([0.0, 0.0])
         others = torch.tensor([[1.0, 0.0]])
@@ -70,6 +76,7 @@ class TestCosineSimilarity:
         assert torch.allclose(out[0], torch.tensor(0.0), atol=1e-5)
 
     def test_zero_vector_others(self):
+        """Checks that zero vector others."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 0.0])
         others = torch.tensor([[0.0, 0.0]])
@@ -78,6 +85,7 @@ class TestCosineSimilarity:
         assert torch.allclose(out[0], torch.tensor(0.0), atol=1e-5)
 
     def test_scaling_invariance(self):
+        """Checks that scaling invariance."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 2.0])
         others = torch.tensor([[2.0, 4.0], [0.5, 1.0]])
@@ -85,6 +93,7 @@ class TestCosineSimilarity:
         assert torch.allclose(out, torch.ones_like(out), atol=1e-6)
 
     def test_values_within_expected_range(self):
+        """Checks that values within expected range."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, -1.0])
         others = torch.tensor([[1.0, 1.0], [-1.0, 1.0]])
@@ -93,6 +102,7 @@ class TestCosineSimilarity:
         assert torch.all(out >= -1.0)
 
     def test_output_dtype_matches_input(self):
+        """Checks that output dtype matches input."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 0.0], dtype=torch.float64)
         others = torch.tensor([[1.0, 0.0]], dtype=torch.float64)
@@ -112,6 +122,7 @@ class TestTfIdfCosineSimilarity:
         )
 
     def test_basic_similarity(self):
+        """Checks that basic similarity."""
         similarity = TfIdfCosineSimilarity()
         base = self.make_model_response([[1, 0], [0, 1]], [[0, 1], [1, 0]])
         others = [
@@ -123,6 +134,7 @@ class TestTfIdfCosineSimilarity:
         assert torch.allclose(out.clamp(0, 1), out, atol=1e-6)
 
     def test_similarity_penalizes_token_changes(self):
+        """Checks that similarity penalizes token changes."""
         similarity = TfIdfCosineSimilarity()
         base = self.make_model_response([[1, 0]], [[0, 1]])
         altered = self.make_model_response([[1, 0], [0, 1]], [[0, 1]])
@@ -132,6 +144,7 @@ class TestTfIdfCosineSimilarity:
         assert out[1] < out[0]
 
     def test_output_device_matches_base(self):
+        """Checks that output device matches base."""
         similarity = TfIdfCosineSimilarity()
         base = self.make_model_response([[1, 0]], [[0, 1]])
         others = [base, self.make_model_response([[1, 0]], [[1, 0]])]
@@ -139,10 +152,12 @@ class TestTfIdfCosineSimilarity:
         assert out.device == base.generated_text_tokens.device
 
     def test_operates_on_embeddings_flag(self):
+        """Checks that operates on embeddings flag."""
         similarity = TfIdfCosineSimilarity()
         assert similarity.operates_on_embeddings is False
 
     def test_first_element_must_be_base(self):
+        """Checks that first element must be base."""
         similarity = TfIdfCosineSimilarity()
         base = self.make_model_response([[1, 0]], [[0, 1]])
         others = [self.make_model_response([[1, 0]], [[0, 1]])]  # not base object
@@ -152,6 +167,7 @@ class TestTfIdfCosineSimilarity:
             similarity(base, others)
 
     def test_tokenization_consistency(self):
+        """Checks that tokenization consistency."""
         similarity = TfIdfCosineSimilarity()
         resp = self.make_model_response([[1, 2], [3, 4]], [[5, 6]])
         token1 = similarity._TfIdfCosineSimilarity__tokenize(resp.generated_text_tokens)
@@ -159,6 +175,7 @@ class TestTfIdfCosineSimilarity:
         assert torch.equal(token1, token2)  # tokenization is consistent
 
     def test_tokenization_produces_unique_ids(self):
+        """Checks that tokenization produces unique ids."""
         similarity = TfIdfCosineSimilarity()
         tokens1 = similarity._TfIdfCosineSimilarity__tokenize(
             torch.tensor([[1, 2], [3, 4]])

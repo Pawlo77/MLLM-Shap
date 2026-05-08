@@ -1,9 +1,9 @@
 """Base class for SHAP-based explanations."""
 
-import gc
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any, Generator
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
 
 import torch
 from torch import Tensor
@@ -26,6 +26,16 @@ from ._masks_manager import MasksManager
 from ._mask_generator import MaskGenerator
 from ._cache_manager import CacheManager
 from ._generate_responses import generate_responses
+from ..pipeline import ExplainContext, ExplainState, PipelinePreset
+from ..pipeline.stages import InsufficientMasksError
+from ..pipeline.stages.sampling_adapter import (
+    build_masks_generator,
+    run_sampling_generation,
+)
+
+if TYPE_CHECKING:
+    from ..core.telemetry import TelemetryProbe
+    from ...observability.sink import ObservabilitySink
 
 logger: Logger = get_logger(__name__)
 
@@ -36,6 +46,9 @@ class NotEnoughTokensToExplainError(Exception):
 
 class BaseShapExplainer(ABC):
     """Base class for SHAP-based explanations."""
+
+    _tqdm_desc: str = "SHAP"
+    """Description displayed in the tqdm progress bar."""
 
     mode: Mode
     """The SHAP mode, either `STATIC` or `CONTEXTUAL`. Used if no :attr:`embedding_model` is provided."""
@@ -57,6 +70,9 @@ class BaseShapExplainer(ABC):
 
     total_n_calls: int = 0
     """Total number of MLLM calls made for last explanation."""
+
+    last_observability_sink: "ObservabilitySink | None" = None
+    """Sink used for the most recent call (if observability was enabled)."""
 
     _first_call: bool
     """Indicates if it's the first call to generate masks."""
@@ -164,12 +180,14 @@ class BaseShapExplainer(ABC):
         """
         self.total_n_calls = 0
         self._first_call = True
+        self.last_observability_sink = None
 
     def _get_masks_generator(
         self,
         mask_manager: MasksManager,
         device: torch.device,
         masks: list[Tensor],
+        allow_full_or_empty: bool = False,
     ) -> MaskGenerator:
         """
         Generator that yields masks one by one.
@@ -181,54 +199,23 @@ class BaseShapExplainer(ABC):
         Returns:
             A generator yielding tuples of (mask, mask_hash).
         """
-        num_splits = self._get_num_splits(mask_manager.n)
-        get_next_split = self._get_next_split
-        allow_mask_duplicates = self.allow_mask_duplicates
-
-        class _MasksGenerator(MaskGenerator):
-            """Generator class for masks."""
-
-            def _mask_iter(self) -> Generator[tuple[Tensor | None, int], None, None]:
-                while True:
-                    new_split = get_next_split(
-                        n=mask_manager.n,
-                        device=device,
-                        generated_masks_num=self.generated_masks,
-                        existing_masks=masks,
-                    )
-                    if new_split is None:
-                        break
-
-                    if not new_split.any() or new_split.all():
-                        logger.debug("Generated zero or all-ones mask, skipping.")
-                        continue
-
-                    new_mask = mask_manager.prepare_mask(split=new_split, device=device)
-                    if new_mask is None:
-                        logger.debug("Generated mask has no True values, skipping.")
-                        continue
-
-                    new_mask_hash = mask_manager.get_hash(new_mask)
-                    if not allow_mask_duplicates and mask_manager.seen(
-                        mask_hash=new_mask_hash
-                    ):
-                        logger.debug("Generated duplicate mask, skipping.")
-                        continue
-
-                    mask_manager.mark_seen(mask_hash=new_mask_hash)
-                    self.generated_masks += 1
-                    yield new_mask, new_mask_hash
-
-            def __len__(self) -> int | None:
-                return num_splits
-
-        return _MasksGenerator()
+        return build_masks_generator(
+            get_next_split=self._get_next_split,
+            get_num_splits=self._get_num_splits,
+            mask_manager=mask_manager,
+            device=device,
+            masks=masks,
+            allow_mask_duplicates=self.allow_mask_duplicates,
+            allow_full_or_empty=allow_full_or_empty,
+        )
 
     def _generate_step(
         self,
         mask_manager: MasksManager,
         device: torch.device,
         masks: list[Tensor],
+        tqdm_bar: Any | None = None,
+        tqdm_desc: str = "Calculating SHAP values",
         **generate_kwargs: Any,
     ) -> tuple[
         int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None
@@ -240,25 +227,31 @@ class BaseShapExplainer(ABC):
             mask_manager: The masks manager instance.
             device: The device to create the masks on.
             masks: List of existing masks.
+            tqdm_bar: Optional external tqdm bar to update instead of creating a new one.
+            tqdm_desc: Description to display in the tqdm progress bar.
             generate_kwargs: Additional keyword arguments for the model's generate method.
         Returns:
             A tuple containing:
             - Number of chats skipped due to being empty.
             - History of chats and masks used during explanation.
         """
-        gen = self._get_masks_generator(
-            mask_manager=mask_manager, device=device, masks=masks
-        )
-        r = generate_responses(
+        result, generated_masks = run_sampling_generation(
+            get_next_split=self._get_next_split,
+            get_num_splits=self._get_num_splits,
+            mask_manager=mask_manager,
+            device=device,
             masks=masks,
-            gen=gen,
+            allow_mask_duplicates=self.allow_mask_duplicates,
+            allow_full_or_empty=False,
+            logger=logger,
+            tqdm_bar=tqdm_bar,
+            tqdm_desc=tqdm_desc,
+            generate_responses_fn=generate_responses,
+            get_masks_generator=self._get_masks_generator,
             **generate_kwargs,
         )
-
-        # retrieve generated masks from the generator
-        self.total_n_calls = gen.generated_masks
-
-        return r
+        self.total_n_calls = generated_masks
+        return result
 
     def _get_similarities(
         self, responses: list[ModelResponse], model: BaseMllmModel
@@ -273,15 +266,12 @@ class BaseShapExplainer(ABC):
             A tensor containing the similarities.
         """
         if self.similarity_measure.operates_on_embeddings:
-            # get embeddings for the response
             embeddings = self.__get_embeddings(
                 responses=responses,
                 model=model,
             )
-            # calculate similarities between original response embeddings
             return self.similarity_measure(base=embeddings[0], other=embeddings)
 
-        # If not operating on embeddings, handle raw responses
         return self.similarity_measure(base=responses[0], other=responses)
 
     def _get_shap_values(
@@ -423,7 +413,6 @@ class BaseShapExplainer(ABC):
         )
 
     # keep the logic in one method for readability
-
     def __call__(
         self,
         model: BaseMllmModel,
@@ -432,6 +421,10 @@ class BaseShapExplainer(ABC):
         progress_bar: bool = True,
         verbose: bool = False,
         n_generator_jobs: int = 1,
+        probe: "TelemetryProbe | None" = None,
+        observability_enabled: bool = False,
+        observability_sink: "ObservabilitySink | None" = None,
+        observability_run_id: str | None = None,
         **generate_kwargs: Any,
     ) -> list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None:
         """
@@ -444,6 +437,13 @@ class BaseShapExplainer(ABC):
             progress_bar: Whether to display a progress bar during processing.
             verbose: Whether to save data generated during processing.
             n_generator_jobs: Number of parallel calls to the model's generate method.
+            probe: Optional telemetry probe for instrumenting mask generation and caching.
+                If None, no telemetry is collected (zero overhead). Defaults to None.
+            observability_enabled: If True and no sink is provided, auto-create
+                an in-memory observability sink for stage events/spans.
+            observability_sink: Optional structured observability sink. If provided,
+                pipeline events/spans are emitted to this sink.
+            observability_run_id: Optional run id used for emitted observability records.
             generate_kwargs: Additional keyword arguments for the model's generate method.
         Returns:
             If verbose is True, returns the history of chats and masks used during explanation.
@@ -469,71 +469,68 @@ class BaseShapExplainer(ABC):
         source_chat = __config.source_chat
         device = source_chat.torch_device
 
-        mask_manager = MasksManager(chat=source_chat, log_stats=True)
-        cache_manager = CacheManager(
-            chat=response_chat,
-            explainer_hash=hash(self),
-        )
+        active_observability_sink = observability_sink
+        if active_observability_sink is None and observability_enabled:
+            from ...observability.sink import InMemoryObservabilitySink
 
-        masks = [mask_manager.get_initial_mask(device=device)]
-        responses = [__config.response]
+            active_observability_sink = InMemoryObservabilitySink()
+        self.last_observability_sink = active_observability_sink
 
-        chats_skipped, history = self._generate_step(
-            mask_manager=mask_manager,
-            masks=masks,
-            device=device,
-            responses=responses,
-            source_chat=source_chat,
+        pipeline_params = dict(generate_kwargs)
+        if active_observability_sink is not None:
+            pipeline_params["observability_sink"] = active_observability_sink
+        if observability_run_id is not None:
+            pipeline_params["run_id"] = observability_run_id
+
+        pipeline_context = ExplainContext(
             model=__config.model,
-            cache_manager=cache_manager,
+            source_chat=source_chat,
+            response_chat=response_chat,
+            base_response=__config.response,
+            device=device,
+            params=MappingProxyType(pipeline_params),
+        )
+        pipeline_state = ExplainState()
+        pipeline_state.add_metadata("explainer_hash", hash(self))
+
+        pipeline = PipelinePreset(
+            get_next_split=self._get_next_split,
+            get_num_splits=self._get_num_splits,
+            get_similarities=self._get_similarities,
+            get_shap_values=self._get_shap_values,
+            save_to_cache=self._save_to_cache,
+            allow_mask_duplicates=self.allow_mask_duplicates,
+            allow_full_or_empty=False,
             n_generator_jobs=n_generator_jobs,
             progress_bar=__config.progress_bar,
             verbose=__config.verbose,
-            **generate_kwargs,
-        )
+            tqdm_desc=self._tqdm_desc,
+            generate_kwargs=dict(generate_kwargs),
+            masks_manager_factory=MasksManager,
+            cache_manager_factory=CacheManager,
+            generate_step=self._generate_step,
+            include_sampling=True,
+            include_attribution=True,
+            include_finalize=True,
+        ).build()
+        try:
+            pipeline.run(context=pipeline_context, state=pipeline_state, probe=probe)
+        except InsufficientMasksError as e:
+            raise NotEnoughTokensToExplainError(str(e)) from e
 
-        if cache_manager.extracted_num > 0:
+        masks = pipeline_state.masks
+        history = pipeline_state.history
+
+        cache_extracted = int(pipeline_state.metadata.get("cache_extracted", 0))
+        if cache_extracted > 0:
             logger.info(
                 "Deduplicated %d/%d masks using existing cache.",
-                cache_manager.extracted_num,
+                cache_extracted,
                 len(masks) - 1,  # exclude base mask
             )
 
-        # edge case - all chats were empty after filtering yet shap_values_mask had True values
-        # this can happen only if shap_values_mask has one True value
-        # for simplicity we just raise an error here.
-        # - 1 because masks will always have at least the base mask
-        if len(masks) - 1 <= chats_skipped:
-            raise NotEnoughTokensToExplainError(
-                "Not enough tokens to explain after filtering out empty chats. "
-                "Ensure that shap_values_mask has at least two True values.",
-            )
-
-        masks_tensor = torch.stack(masks, dim=0)
-
-        # clean up
-        del mask_manager
-        del cache_manager
-        del masks
-        gc.collect()
-
-        # calculate SHAP values (relative to source_chat)
-        shap_values, normalized_shap_values = self._get_shap_values(
-            model=__config.model,
-            masks=masks_tensor,
-            responses=responses,
-            source_chat=source_chat,
-            device=device,
-        )
-
-        # cache results
-        self._save_to_cache(
-            chat=response_chat,
-            source_chat=source_chat,
-            responses=responses,
-            masks=masks_tensor,
-            shap_values=shap_values,
-            normalized_shap_values=normalized_shap_values,
+        self.total_n_calls = int(
+            pipeline_state.metadata.get("generated_masks", self.total_n_calls)
         )
 
         return history

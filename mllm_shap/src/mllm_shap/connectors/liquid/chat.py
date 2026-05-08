@@ -1,6 +1,7 @@
 """LiquidAudio chat state."""
 
 import math
+import sys
 from collections.abc import Callable
 from copy import deepcopy
 from functools import cached_property
@@ -47,19 +48,26 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
     """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
     """Number of audio codebooks used for audio output tokens."""
-    _TWO_DIMS: int = 2
-    _SINGLE_BATCH: int = 1
     _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
         {
             "proc",  # processor - large, read-only
             "_logger",
         }
     )
+    """A set of attribute names that should be shared across chat instances created
+    from each other, to ensure consistency in SHAP calculations and token filtering a
+    cross derived chat instances. Includes the processor and logger, which are typically
+    large objects that should not be duplicated across chat instances. This is used
+    in the _set_new_instance method to copy these attributes from the original chat
+    instance to the new one, ensuring that derived chat instances have access to
+    the same processor and logger without needing to create new instances of
+    these potentially large objects."""
 
     # for each element x in _audio_map:
     #     x > 0 -> index in audio_out + 1
     #     x < 0 -> -(index in audio_in + 1)
     _audio_map: Tensor
+    """A tensor mapping audio token positions to their corresponding indices in audio_in and audio_out."""
     # relies on ChatState.text, ChatState.audio_in, ChatState.audio_out, ChatState.modality_flag
     # both audio are in  (K, T) format
 
@@ -195,7 +203,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
 
                 # How many frames does this token cover in this segment?
                 frames_for_token = min(chunk, seg_frame_count - seg_frame_start)
-                if frames_for_token > 0:
+                if frames_for_token > 0:  # pragma: no branch
                     frame_mask_list.append(
                         torch.full(
                             (frames_for_token,),
@@ -318,7 +326,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
     def _decode_text(self, text_tokens: Tensor) -> str:
         # Processor decode may return list[str] for batched inputs; normalize to str.
         tt = text_tokens
-        if tt.ndim == self._TWO_DIMS and tt.shape[0] == self._SINGLE_BATCH:
+        if tt.ndim == 2 and tt.shape[0] == 1:
             tt = tt[0]
         elif tt.ndim > 1:
             tt = tt.reshape(-1)
@@ -330,7 +338,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
 
     def _decode_audio(self, audio_tokens: Tensor) -> Tensor | None:
         if len(audio_tokens.shape) == 1:
-            logger.debug("Decoding audio tokens based on indices from _audio_map.")
+            logger.debug(
+                "Resolving 1D audio token indices from _audio_map: "
+                "positive indices map to audio_out, negative indices map to audio_in."
+            )
 
             sign = torch.sign(audio_tokens)
             if sign.all():  # audio in
@@ -344,12 +355,20 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
 
         # input tokens
         if audio_tokens.shape[0] == LiquidAudioChat.AUDIO_IN_SHAPE:
-            logger.debug("Decoding audio in...")
+            logger.debug(
+                "Skipping audio input (audio_in) decoding: codec inverse is not supported "
+                "for encoded input representations. Shape: %s",
+                audio_tokens.shape,
+            )
             # logger.warning("Decoding audio in tokens is not supported.")
             return None
         # audio out tokens
         if audio_tokens.shape[0] == LiquidAudioChat.AUDIO_OUT_SHAPE:
-            logger.debug("Decoding audio out...")
+            logger.debug(
+                "Decoding audio output tokens to waveform using MIMI codec. "
+                "Shape: %s (codebooks, time steps)",
+                audio_tokens.shape,
+            )
 
             mimi_codes = audio_tokens.unsqueeze(0)
 
@@ -379,9 +398,13 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
                     # conservative fallback: assume 2048 entries per codebook
                     sizes = [2048] * mimi_codes.shape[1]
             except Exception as e:
+                msg = (
+                    f"Could not introspect codebook sizes ({e}). Falling back to 2048."
+                )
                 logger.warning(
                     "Could not introspect codebook sizes (%s). Falling back to 2048.", e
                 )
+                print(msg, file=sys.stderr)
                 sizes = [2048] * mimi_codes.shape[1]
 
             num_codebooks = mimi_codes.shape[1]
@@ -392,6 +415,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
                 if (ck >= n).any() or (ck < 0).any():
                     mn = int(ck.min().item())
                     mx = int(ck.max().item())
+                    msg = (
+                        f"Audio code OOR on codebook {k}: min={mn} max={mx} "
+                        f"valid=[0,{n}). Clamping."
+                    )
                     logger.warning(
                         "Audio code OOR on codebook %d: min=%d max=%d valid=[0,%d). Clamping.",
                         k,
@@ -399,6 +426,7 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
                         mx,
                         n,
                     )
+                    print(msg, file=sys.stderr)
                     ck.clamp_(0, n - 1)
 
             return cast(Tensor, self.proc.mimi.decode(mimi_codes).squeeze(0))

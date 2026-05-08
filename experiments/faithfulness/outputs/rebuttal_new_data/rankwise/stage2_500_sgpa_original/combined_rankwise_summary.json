@@ -1,0 +1,70 @@
+{
+  "completed_deletions": 468,
+  "completed_samples": 100,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.5874715951772836,
+  "mean_top_rank_drop": 0.6288311767578125,
+  "mean_non_top_rank_drop": 0.5762325784434443,
+  "mean_top_minus_non_top_drop": 0.052598598314368195,
+  "spearman_abs_sv_vs_drop": null,
+  "spearman_negative_rank_vs_drop": 0.04271041565952402,
+  "mean_within_sample_spearman_abs_sv_vs_drop": null,
+  "median_within_sample_spearman_abs_sv_vs_drop": null,
+  "within_sample_spearman_n": 0,
+  "mean_top1_share": 0.2191190475699548,
+  "mean_top1_top2_gap": 0.0,
+  "mean_abs_sv_entropy_norm": 0.9999999999276592,
+  "per_rank": {
+    "1": {
+      "n": 100.0,
+      "mean_drop": 0.6288311767578125,
+      "median_drop": 0.66015625,
+      "mean_abs_sv_share": 0.2191190475699548,
+      "mean_abs_sv": 1.0
+    },
+    "2": {
+      "n": 100.0,
+      "mean_drop": 0.5962158203125,
+      "median_drop": 0.61328125,
+      "mean_abs_sv_share": 0.2191190475699548,
+      "mean_abs_sv": 1.0
+    },
+    "3": {
+      "n": 100.0,
+      "mean_drop": 0.535955810546875,
+      "median_drop": 0.529296875,
+      "mean_abs_sv_share": 0.2191190475699548,
+      "mean_abs_sv": 1.0
+    },
+    "4": {
+      "n": 100.0,
+      "mean_drop": 0.570400390625,
+      "median_drop": 0.5869140625,
+      "mean_abs_sv_share": 0.2191190475699548,
+      "mean_abs_sv": 1.0
+    },
+    "5": {
+      "n": 51.0,
+      "mean_drop": 0.6157418045343137,
+      "median_drop": 0.65234375,
+      "mean_abs_sv_share": 0.18944911294231334,
+      "mean_abs_sv": 1.0
+    },
+    "6": {
+      "n": 14.0,
+      "mean_drop": 0.6249302455357143,
+      "median_drop": 0.6708984375,
+      "mean_abs_sv_share": 0.1615646258241415,
+      "mean_abs_sv": 1.0
+    },
+    "7": {
+      "n": 3.0,
+      "mean_drop": 0.5481770833333334,
+      "median_drop": 0.673828125,
+      "mean_abs_sv_share": 0.1428571428367347,
+      "mean_abs_sv": 1.0
+    }
+  },
+  "mean_runtime_sec_per_deletion": 1.3309274532565156,
+  "results_csv": "experiments/faithfulness/outputs/rebuttal_new_data/rankwise/stage2_500_sgpa_original/combined_rankwise_results.csv"
+}

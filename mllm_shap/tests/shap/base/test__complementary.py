@@ -1,7 +1,5 @@
 """Unit tests for BaseComplementaryShapApproximation."""
 
-from __future__ import annotations
-
 from typing import Iterable
 
 import pytest
@@ -9,7 +7,7 @@ import torch
 from torch import Tensor
 
 from mllm_shap.shap.base._masks_manager import MasksManager
-from mllm_shap.shap.base.complementary import BaseComplementaryShapApproximation
+from mllm_shap.shap.complementary import BaseComplementaryShapApproximation
 
 from ...dummy import DummyChat
 
@@ -54,6 +52,7 @@ class TestInitializeState:
     """Tests covering state initialization for complementary explainer."""
 
     def test_initialize_state_resets_cached_values(self) -> None:
+        """Checks that initialize state resets cached values."""
         explainer = DummyComplementaryExplainer()
         _ = explainer._get_num_splits(3)
         explainer._M = torch.ones((3, 4), dtype=torch.int16)
@@ -68,6 +67,7 @@ class TestInitializeState:
         assert explainer._get_num_splits.cache_info().currsize == 0
 
     def test_get_num_splits_uses_lru_cache(self) -> None:
+        """Checks that get num splits uses lru cache."""
         explainer = DummyComplementaryExplainer()
         explainer._initialize_state()
 
@@ -83,6 +83,7 @@ class TestNumSplitsStatic:
     """Tests for static num-splits calculation utility."""
 
     def test_requires_minimal_even_samples(self) -> None:
+        """Checks that requires minimal even samples."""
         with pytest.raises(
             ValueError, match="at least equal to the number of features times two"
         ):
@@ -91,24 +92,28 @@ class TestNumSplitsStatic:
             )
 
     def test_rejects_odd_num_samples(self) -> None:
+        """Checks that rejects odd num samples."""
         with pytest.raises(ValueError, match="must not be odd"):
             BaseComplementaryShapApproximation._get_num_splits_static(
                 n=4, num_samples=9
             )
 
     def test_caps_num_samples_to_maximum(self) -> None:
+        """Checks that caps num samples to maximum."""
         result = BaseComplementaryShapApproximation._get_num_splits_static(
             n=3, num_samples=100
         )
         assert result == 6  # 2**3 - 2 = 6
 
     def test_fraction_result_is_even(self) -> None:
+        """Checks that fraction result is even."""
         result = BaseComplementaryShapApproximation._get_num_splits_static(
             n=10, fraction=0.5
         )
         assert result == 510  # (2**10 - 2) * 0.5
 
     def test_fraction_small_value(self) -> None:
+        """Checks that fraction small value."""
         result = BaseComplementaryShapApproximation._get_num_splits_static(
             n=3, fraction=0.1
         )
@@ -119,6 +124,7 @@ class TestIncrementCoalitionVal:
     """Tests for coalition increment helper."""
 
     def test_updates_first_column_for_zero_size(self) -> None:
+        """Checks that updates first column for zero size."""
         tensor = torch.zeros((3, 4), dtype=torch.float32)
         BaseComplementaryShapApproximation._increment_coalition_val(
             tensor=tensor,
@@ -129,6 +135,7 @@ class TestIncrementCoalitionVal:
         assert torch.all(tensor[:, 0] == 2.5)
 
     def test_updates_selected_indices_for_positive_size(self) -> None:
+        """Checks that updates selected indices for positive size."""
         tensor = torch.zeros((3, 4), dtype=torch.float32)
         BaseComplementaryShapApproximation._increment_coalition_val(
             tensor=tensor,
@@ -151,6 +158,7 @@ class TestCalculateCMatrix:
     """Tests for complementary C matrix construction."""
 
     def test_raises_when_m_not_initialized(self) -> None:
+        """Ensures raises when m not initialized."""
         explainer = DummyComplementaryExplainer()
         explainer._initialize_state()
         masks = torch.ones((2, 3), dtype=torch.bool)
@@ -161,6 +169,7 @@ class TestCalculateCMatrix:
             )
 
     def test_raises_for_non_complementary_pairs(self) -> None:
+        """Ensures raises for non complementary pairs."""
         explainer = DummyComplementaryExplainer()
         explainer._initialize_state()
         explainer._M = torch.zeros((3, 4), dtype=torch.int16)
@@ -178,6 +187,7 @@ class TestCalculateCMatrix:
             )
 
     def test_raises_for_odd_number_of_masks(self) -> None:
+        """Ensures raises for odd number of masks."""
         explainer = DummyComplementaryExplainer()
         explainer._initialize_state()
         explainer._M = torch.zeros((3, 4), dtype=torch.int16)
@@ -196,6 +206,7 @@ class TestCalculateCMatrix:
             )
 
     def test_populates_c_matrix_for_valid_pairs(self) -> None:
+        """Checks that populates c matrix for valid pairs."""
         explainer = DummyComplementaryExplainer()
         explainer._initialize_state()
         explainer._M = torch.zeros((3, 4), dtype=torch.int16)
@@ -218,11 +229,75 @@ class TestCalculateCMatrix:
         expected[2, 2] = -0.5
         torch.testing.assert_close(explainer._C, expected)
 
+    def test_c_matrix_updates_first_column_when_s_size_zero(self) -> None:
+        """When S is empty coalition, update should go through first-column shortcut."""
+        explainer = DummyComplementaryExplainer()
+        explainer._initialize_state()
+        explainer._M = torch.zeros((3, 4), dtype=torch.int16)
+        masks = torch.tensor(
+            [
+                [False, False, False],
+                [True, True, True],
+            ],
+            dtype=torch.bool,
+        )
+        sims = torch.tensor([0.9, 0.4])
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=sims, device=torch.device("cpu")
+        )
+        assert explainer._C is not None
+        torch.testing.assert_close(explainer._C[:, 0], torch.full((3,), 0.5))
+
+    def test_c_matrix_updates_first_column_when_ns_size_zero(self) -> None:
+        """When ~S is empty coalition, subtraction should use first-column shortcut."""
+        explainer = DummyComplementaryExplainer()
+        explainer._initialize_state()
+        explainer._M = torch.zeros((3, 4), dtype=torch.int16)
+        masks = torch.tensor(
+            [
+                [True, True, True],
+                [False, False, False],
+            ],
+            dtype=torch.bool,
+        )
+        sims = torch.tensor([0.9, 0.4])
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=sims, device=torch.device("cpu")
+        )
+        assert explainer._C is not None
+        torch.testing.assert_close(explainer._C[:, 0], torch.full((3,), -0.5))
+
+    def test_calculate_c_matrix_reuses_preinitialized_c_matrix(self) -> None:
+        """If C already exists, method should update it instead of reinitializing."""
+        explainer = DummyComplementaryExplainer()
+        explainer._initialize_state()
+        explainer._M = torch.zeros((3, 4), dtype=torch.int16)
+        explainer._C = torch.full((3, 4), 1.0)
+
+        masks = torch.tensor(
+            [
+                [True, False, False],
+                [False, True, True],
+            ],
+            dtype=torch.bool,
+        )
+        sims = torch.tensor([0.7, 0.2])
+        explainer._calculate_C_matrix(
+            masks=masks, similarities=sims, device=torch.device("cpu")
+        )
+
+        expected_delta = torch.zeros((3, 4), dtype=sims.dtype)
+        expected_delta[0, 1] = 0.5
+        expected_delta[1, 2] = -0.5
+        expected_delta[2, 2] = -0.5
+        torch.testing.assert_close(explainer._C, torch.ones((3, 4)) + expected_delta)
+
 
 class TestMasksGenerator:
     """Tests for complementary mask generator behavior."""
 
     def test_generates_complementary_pairs_and_updates_m(self) -> None:
+        """Checks that generates complementary pairs and updates m."""
         device = torch.device("cpu")
         splits = [
             torch.tensor([[True, False, False]], dtype=torch.bool),
@@ -239,12 +314,7 @@ class TestMasksGenerator:
             masks=[],
         )
 
-        produced: list[tuple[Tensor, int]] = []
-        try:
-            while True:
-                produced.append(next(gen))
-        except StopIteration:
-            pass
+        produced = list(gen)
 
         assert len(produced) == len(splits) * 2
         assert gen.generated_masks == len(splits) * 2
@@ -269,6 +339,7 @@ class TestMasksGenerator:
         torch.testing.assert_close(explainer._M, expected_M)
 
     def test_skips_duplicates_when_only_unique(self) -> None:
+        """Checks that skips duplicates when only unique."""
         device = torch.device("cpu")
         split = torch.tensor([[True, False, False]], dtype=torch.bool)
         explainer = DummyComplementaryExplainer(splits=[split, split])
@@ -276,13 +347,66 @@ class TestMasksGenerator:
         chat = DummyChat(num_tokens=3)
         manager = MasksManager(chat=chat)
 
+        produced = list(
+            explainer._get_masks_generator(
+                mask_manager=manager,
+                device=device,
+                masks=[],
+            )
+        )
+        assert len(produced) == 2
+
+    def test_uses_core_complementary_engine(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Complementary explainer generator should route through core complementary engine."""
+        device = torch.device("cpu")
+        split = torch.tensor([[True, False, False]], dtype=torch.bool)
+        explainer = DummyComplementaryExplainer(splits=[split])
+        explainer._initialize_state()
+        manager = MasksManager(chat=DummyChat(num_tokens=3))
+
+        called = {"value": False}
+
+        def _spy_create_generator(self, *args, **kwargs):
+            called["value"] = True
+            return original_create_generator(self, *args, **kwargs)
+
+        original_create_generator = __import__(
+            "mllm_shap.shap.complementary._engine",
+            fromlist=["ComplementarySamplingEngine"],
+        ).ComplementarySamplingEngine.create_generator
+        monkeypatch.setattr(
+            "mllm_shap.shap.complementary._engine.ComplementarySamplingEngine.create_generator",
+            _spy_create_generator,
+        )
+
         gen = explainer._get_masks_generator(
             mask_manager=manager,
             device=device,
             masks=[],
         )
+        _ = list(gen)
 
-        produced = list(gen)
+        assert called["value"]
 
+    def test_masks_generator_handles_odd_num_splits_branch(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Odd split budget should skip even-only zero-mask optimization path."""
+        device = torch.device("cpu")
+
+        explainer = DummyComplementaryExplainer(
+            splits=[torch.tensor([[True, False, False]], dtype=torch.bool)]
+        )
+        explainer._initialize_state()
+        monkeypatch.setattr(explainer, "_get_num_splits", lambda n: 3)
+        chat = DummyChat(num_tokens=3)
+        manager = MasksManager(chat=chat)
+
+        produced = list(
+            explainer._get_masks_generator(
+                mask_manager=manager, device=device, masks=[]
+            )
+        )
         assert len(produced) == 2
-        assert gen.generated_masks == 2

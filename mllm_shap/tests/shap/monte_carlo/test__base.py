@@ -4,6 +4,11 @@ import pytest
 import torch
 from torch import Tensor
 from mllm_shap.shap.monte_carlo._base import BaseMcShapExplainer
+from mllm_shap.shap.base._mask_generator import MaskGenerator
+from mllm_shap.shap.base._masks_manager import MasksManager
+from mllm_shap.shap.monte_carlo.limited import LimitedMcShapExplainer
+
+from ...dummy import DummyChat
 
 
 class DummyMcExplainer(BaseMcShapExplainer):
@@ -185,3 +190,51 @@ class TestBaseMcShapExplainer:
             masks=masks, similarities=similarities, device=device
         )
         assert torch.allclose(result, torch.zeros(masks.shape[1], device=device))
+
+    def test_get_masks_generator_uses_sampling_engine(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Monte Carlo generator should route through SamplingEngine."""
+        explainer = LimitedMcShapExplainer(num_samples=6)
+        manager = MasksManager(chat=DummyChat(num_tokens=4))
+        masks = [manager.get_initial_mask(device=torch.device("cpu"))]
+
+        called = {"value": False}
+
+        class _OneMask(MaskGenerator):
+            def _mask_iter(self):
+                yield torch.ones(4, dtype=torch.bool), 123
+
+        def _fake_create_generator(*args, **kwargs):
+            del args, kwargs
+            called["value"] = True
+            return _OneMask()
+
+        monkeypatch.setattr(
+            "mllm_shap.shap.monte_carlo._base.SamplingEngine.create_generator",
+            _fake_create_generator,
+        )
+
+        _ = explainer._get_masks_generator(
+            mask_manager=manager,
+            device=torch.device("cpu"),
+            masks=masks,
+        )
+
+        assert called["value"]
+
+    def test_get_masks_generator_returns_mask_generator(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Engine path should return a usable mask generator."""
+        explainer = LimitedMcShapExplainer(num_samples=6)
+        manager = MasksManager(chat=DummyChat(num_tokens=4))
+        masks = [manager.get_initial_mask(device=torch.device("cpu"))]
+
+        gen = explainer._get_masks_generator(
+            mask_manager=manager,
+            device=torch.device("cpu"),
+            masks=masks,
+        )
+
+        assert gen is not None

@@ -16,6 +16,8 @@ __pycache__/
 wandb/
 shared*
 neyman_runs/
+experiments/interspeech/outputs/alpha_search/masked_wavs/
+experiments/interspeech/outputs/alpha_search/auto_all/masked_wavs/
 
 # Distribution / packaging
 .Python

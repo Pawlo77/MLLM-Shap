@@ -1,7 +1,5 @@
 """Tests for TransformersCausalText model connector."""
 
-from __future__ import annotations
-
 from types import SimpleNamespace
 from typing import Any
 
@@ -12,29 +10,13 @@ from torch import Tensor
 from mllm_shap.connectors.config import ModelConfig
 from mllm_shap.connectors.enums import ModelHistoryTrackingMode
 from mllm_shap.connectors.transformers_text import model as text_model
-
-
-class _TokenizerStub:
-    """Tokenizer stub used by connector tests."""
-
-    pad_token_id: int | None = 0
-    eos_token_id: int | None = 2
-    eos_token: str | None = "</s>"
-    pad_token: str | None = None
-
-    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
-        del add_special_tokens
-        return [ord(ch) % 19 for ch in text]
-
-    def decode(self, ids: list[int], skip_special_tokens: bool = False) -> str:
-        del skip_special_tokens
-        return ",".join(str(i) for i in ids)
+from .conftest import _TokenizerStub
 
 
 class _BaseModelStub:
     """Base model stub for contextual embeddings."""
 
-    def __call__(self, *, inputs_embeds: Tensor, use_cache: bool) -> SimpleNamespace:
+    def __call__(self, inputs_embeds: Tensor, use_cache: bool) -> SimpleNamespace:
         del use_cache
         return SimpleNamespace(last_hidden_state=inputs_embeds + 1)
 
@@ -66,6 +48,23 @@ class _ModelStub:
             return ids.to(dtype=torch.float32).unsqueeze(-1)
 
         return embed
+
+
+class _TokenizerPadFallbackStub(_TokenizerStub):
+    """Tokenizer stub with missing pad token id to trigger pad fallback path."""
+
+    pad_token_id: int | None = None
+    eos_token_id: int | None = 2
+    eos_token: str | None = "</s>"
+    pad_token: str | None = None
+
+
+class _ModelNonGenerationConfigStub(_ModelStub):
+    """Model stub with non-GenerationConfig object to trigger fallback creation."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.generation_config = SimpleNamespace(pad_token_id=None, eos_token_id=None)
 
 
 @pytest.fixture
@@ -127,7 +126,10 @@ def test_generate_text_response_and_history(
     chat = patched_connector.get_new_chat()
     chat._add_text("ab")
     response = patched_connector.generate(
-        chat=chat, max_new_tokens=2, model_config=ModelConfig(), keep_history=True
+        chat=chat,
+        max_new_tokens=2,
+        model_config=ModelConfig(audio_temperature=None, audio_top_k=None),
+        keep_history=True,
     )
     assert response.generated_text_tokens.tolist() == [5, 6]
     assert response.generated_audio_tokens.shape == (0, 0)
@@ -164,3 +166,83 @@ def test_embeddings_api(
     contextual = patched_connector.get_contextual_embeddings(static_embeddings=static)
     assert len(static) == 1 and static[0].shape[:1] == (3,)
     assert len(contextual) == 1 and contextual[0].shape[:1] == (3,)
+
+
+def test_init_sets_pad_token_from_eos_when_pad_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Missing tokenizer pad token id should fall back to EOS token."""
+    tokenizer = _TokenizerPadFallbackStub()
+
+    monkeypatch.setattr(
+        text_model.AutoTokenizer,
+        "from_pretrained",
+        lambda *args, **kwargs: tokenizer,
+    )
+    monkeypatch.setattr(
+        text_model.AutoModelForCausalLM,
+        "from_pretrained",
+        lambda *args, **kwargs: _ModelStub(),
+    )
+
+    _ = text_model.TransformersCausalText(device=torch.device("cpu"))
+    assert tokenizer.pad_token == tokenizer.eos_token
+
+
+def test_init_builds_generation_config_when_model_has_non_standard_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Non-GenerationConfig model config should be replaced and ids initialized."""
+    tokenizer = _TokenizerStub()
+    model = _ModelNonGenerationConfigStub()
+
+    monkeypatch.setattr(
+        text_model.AutoTokenizer,
+        "from_pretrained",
+        lambda *args, **kwargs: tokenizer,
+    )
+    monkeypatch.setattr(
+        text_model.AutoModelForCausalLM,
+        "from_pretrained",
+        lambda *args, **kwargs: model,
+    )
+
+    connector = text_model.TransformersCausalText(device=torch.device("cpu"))
+    assert isinstance(connector.model.generation_config, text_model.GenerationConfig)
+    assert connector.model.generation_config.pad_token_id == tokenizer.pad_token_id
+    assert connector.model.generation_config.eos_token_id == tokenizer.eos_token_id
+
+
+def test_init_keeps_existing_generation_config_ids_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Existing generation config ids should not be overwritten."""
+    tokenizer = _TokenizerStub()
+    model = _ModelStub()
+    model.generation_config.pad_token_id = 123
+    model.generation_config.eos_token_id = 456
+
+    monkeypatch.setattr(
+        text_model.AutoTokenizer,
+        "from_pretrained",
+        lambda *args, **kwargs: tokenizer,
+    )
+    monkeypatch.setattr(
+        text_model.AutoModelForCausalLM,
+        "from_pretrained",
+        lambda *args, **kwargs: model,
+    )
+
+    connector = text_model.TransformersCausalText(device=torch.device("cpu"))
+    assert connector.model.generation_config.pad_token_id == 123
+    assert connector.model.generation_config.eos_token_id == 456
+
+
+def test_contextual_embeddings_accept_rank3_static_embeddings(
+    patched_connector: text_model.TransformersCausalText,
+) -> None:
+    """Rank-3 static embeddings should bypass unsqueeze branch and still work."""
+    static = [torch.ones((1, 3, 2), dtype=torch.float32)]
+    contextual = patched_connector.get_contextual_embeddings(static_embeddings=static)
+    assert len(contextual) == 1
+    assert contextual[0].shape == (3, 2)
