@@ -1,0 +1,40 @@
+* text=auto eol=lf
+
+*.ipynb linguist-detectable=false
+
+# Source and documentation
+*.py text eol=lf
+*.md text eol=lf
+*.rst text eol=lf
+*.txt text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.ipynb text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.wav binary
+*.mp3 binary
+*.flac binary
+*.ogg binary
+*.mp4 binary
+*.avi binary
+*.mkv binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.sqlite binary
+*.db binary
+*.pkl binary
+*.pickle binary
+*.bin binary
