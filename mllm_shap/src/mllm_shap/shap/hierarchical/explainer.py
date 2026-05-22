@@ -804,18 +804,20 @@ class HierarchicalExplainer(BaseExplainer):
 
         # Previous token info
         prev_mask = torch.cat([torch.tensor([False], device=device), mask[:-1]])
-        prev_modality = torch.cat(
-            [torch.tensor([modality_flag[0]], device=device), modality_flag[:-1]]
-        )
+        prev_modality = torch.cat([
+            torch.tensor([modality_flag[0]], device=device),
+            modality_flag[:-1],
+        ])
 
         # Start new group if:
         # - token is explainable
         # - AND (previous not explainable OR modality changed OR role changed (if `include_role`))
         group_mask = ~prev_mask | (modality_flag != prev_modality)
         if include_role:
-            prev_role = torch.cat(
-                [torch.tensor([token_roles[0]], device=device), token_roles[:-1]]
-            )
+            prev_role = torch.cat([
+                torch.tensor([token_roles[0]], device=device),
+                token_roles[:-1],
+            ])
             group_mask |= token_roles != prev_role
         group_start = mask & group_mask
 

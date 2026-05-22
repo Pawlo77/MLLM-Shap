@@ -29,12 +29,10 @@ class MockChat(BaseMllmChat):
     """Tokenizer used for encoding and decoding text tokens."""
     _text_ids: Tensor
     """Tensor storing the current text token IDs in the chat history."""
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
-        {
-            "tokenizer",
-            "_logger",
-        }
-    )
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "tokenizer",
+        "_logger",
+    })
     """Shared attributes for deepcopy operations."""
 
     def __init__(

@@ -39,20 +39,18 @@ def perform_ttest(comparison_data: pd.DataFrame) -> pd.DataFrame:
             sd_diff = np.std(diffs, ddof=1)
             cohens_dz = mean_diff / sd_diff
 
-            ttest_results.append(
-                {
-                    "Mode_1": mode_a,
-                    "Mode_2": mode_b,
-                    "T_Statistic": t_stat,
-                    "P_Value": p_val,
-                    "Degrees_of_Freedom": len(valid_pair) - 1,
-                    "Sample_Size": len(valid_pair),
-                    "Mean_Diff": (valid_pair[mode_a] - valid_pair[mode_b]).mean(),
-                    "Kurtosis_Diff": kurtosis,
-                    "Shapiro_P": p_norm,
-                    "Cohens_dz": cohens_dz.round(2),
-                }
-            )
+            ttest_results.append({
+                "Mode_1": mode_a,
+                "Mode_2": mode_b,
+                "T_Statistic": t_stat,
+                "P_Value": p_val,
+                "Degrees_of_Freedom": len(valid_pair) - 1,
+                "Sample_Size": len(valid_pair),
+                "Mean_Diff": (valid_pair[mode_a] - valid_pair[mode_b]).mean(),
+                "Kurtosis_Diff": kurtosis,
+                "Shapiro_P": p_norm,
+                "Cohens_dz": cohens_dz.round(2),
+            })
         else:
             continue
             # print(

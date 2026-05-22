@@ -48,12 +48,10 @@ class LiquidAudioChat(BaseMllmChat, _ChatState):
     """Number of audio codebooks used for audio input tokens."""
     AUDIO_OUT_SHAPE: int = 8
     """Number of audio codebooks used for audio output tokens."""
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
-        {
-            "proc",  # processor - large, read-only
-            "_logger",
-        }
-    )
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "proc",  # processor - large, read-only
+        "_logger",
+    })
     """A set of attribute names that should be shared across chat instances created
     from each other, to ensure consistency in SHAP calculations and token filtering a
     cross derived chat instances. Includes the processor and logger, which are typically

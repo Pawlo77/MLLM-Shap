@@ -36,9 +36,18 @@ class DummyChat:
 
     def __init__(self) -> None:
         # True = explainable token
-        self.shap_values_mask = torch.tensor(
-            [True, True, False, True, True, True, False, False, True, True]
-        )
+        self.shap_values_mask = torch.tensor([
+            True,
+            True,
+            False,
+            True,
+            True,
+            True,
+            False,
+            False,
+            True,
+            True,
+        ])
         # Modalities: 0=text, 1=image, etc.
         self.tokens_modality_flag = torch.tensor([0, 0, 0, 1, 1, 1, 0, 0, 0, 0])
         # Roles: e.g., 0=system/user, 1=model

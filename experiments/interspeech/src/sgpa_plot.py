@@ -485,12 +485,12 @@ def generate_real_sgpa_figure(
         alignment_path, aligner.blank_id
     )
 
-    w1_len = len(
-        [c for c in aligner.normalize_text(target_segments[0]) if c in aligner.vocab]
-    )
-    w2_len = len(
-        [c for c in aligner.normalize_text(target_segments[1]) if c in aligner.vocab]
-    )
+    w1_len = len([
+        c for c in aligner.normalize_text(target_segments[0]) if c in aligner.vocab
+    ])
+    w2_len = len([
+        c for c in aligner.normalize_text(target_segments[1]) if c in aligner.vocab
+    ])
 
     ratio = waveform.size(1) / emissions_gpu.size(0)
     t_W1_start = (token_spans[0][1] * ratio) / sr

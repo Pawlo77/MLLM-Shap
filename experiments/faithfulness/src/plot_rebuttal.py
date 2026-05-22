@@ -76,13 +76,11 @@ def _within_sample_spearmans(df: pd.DataFrame, drop_col: str) -> pd.DataFrame:
             continue
         rho = stats.spearmanr(grp["segment_abs_sv"], grp[drop_col]).statistic
         if np.isfinite(rho):
-            rows.append(
-                {
-                    "condition": condition,
-                    "sample_id": int(sample_id),
-                    "spearman_abs_sv_vs_drop": float(rho),
-                }
-            )
+            rows.append({
+                "condition": condition,
+                "sample_id": int(sample_id),
+                "spearman_abs_sv_vs_drop": float(rho),
+            })
     return pd.DataFrame(rows)
 
 
@@ -93,16 +91,14 @@ def _per_sample_top_minus_rest(df: pd.DataFrame, drop_col: str) -> pd.DataFrame:
         rest = grp.loc[grp["segment_rank_abs_sv"] > 1, drop_col]
         if top.empty or rest.empty:
             continue
-        rows.append(
-            {
-                "condition": condition,
-                "sample_id": int(sample_id),
-                "top_drop": float(top.iloc[0]),
-                "rest_mean_drop": float(rest.mean()),
-                "top_minus_rest": float(top.iloc[0] - rest.mean()),
-                "n_segments": int(grp["n_segments"].iloc[0]),
-            }
-        )
+        rows.append({
+            "condition": condition,
+            "sample_id": int(sample_id),
+            "top_drop": float(top.iloc[0]),
+            "rest_mean_drop": float(rest.mean()),
+            "top_minus_rest": float(top.iloc[0] - rest.mean()),
+            "n_segments": int(grp["n_segments"].iloc[0]),
+        })
     return pd.DataFrame(rows)
 
 
@@ -113,30 +109,24 @@ def _rank_informativeness(df: pd.DataFrame) -> pd.DataFrame:
         for sample_id, sample_grp in grp.groupby("sample_id"):
             unique_abs = int(sample_grp["segment_abs_sv"].nunique(dropna=True))
             top_gap = sample_grp["top1_top2_gap"].dropna()
-            samples.append(
-                {
-                    "sample_id": int(sample_id),
-                    "unique_abs_sv": unique_abs,
-                    "is_tied": unique_abs <= 1,
-                    "top1_top2_gap": float(top_gap.iloc[0])
-                    if not top_gap.empty
-                    else 0.0,
-                    "top1_share": float(sample_grp["top1_share"].iloc[0]),
-                    "entropy": float(sample_grp["abs_sv_entropy_norm"].iloc[0]),
-                }
-            )
+            samples.append({
+                "sample_id": int(sample_id),
+                "unique_abs_sv": unique_abs,
+                "is_tied": unique_abs <= 1,
+                "top1_top2_gap": float(top_gap.iloc[0]) if not top_gap.empty else 0.0,
+                "top1_share": float(sample_grp["top1_share"].iloc[0]),
+                "entropy": float(sample_grp["abs_sv_entropy_norm"].iloc[0]),
+            })
         sample_df = pd.DataFrame(samples)
-        rows.append(
-            {
-                "condition": condition,
-                "samples": int(len(sample_df)),
-                "tied_abs_sv_rate": float(sample_df["is_tied"].mean()),
-                "mean_unique_abs_sv": float(sample_df["unique_abs_sv"].mean()),
-                "mean_top1_top2_gap": float(sample_df["top1_top2_gap"].mean()),
-                "mean_top1_share": float(sample_df["top1_share"].mean()),
-                "mean_entropy": float(sample_df["entropy"].mean()),
-            }
-        )
+        rows.append({
+            "condition": condition,
+            "samples": int(len(sample_df)),
+            "tied_abs_sv_rate": float(sample_df["is_tied"].mean()),
+            "mean_unique_abs_sv": float(sample_df["unique_abs_sv"].mean()),
+            "mean_top1_top2_gap": float(sample_df["top1_top2_gap"].mean()),
+            "mean_top1_share": float(sample_df["top1_share"].mean()),
+            "mean_entropy": float(sample_df["entropy"].mean()),
+        })
     return pd.DataFrame(rows)
 
 
@@ -146,9 +136,9 @@ def _bootstrap_ci(values: pd.Series, seed: int = 20260501) -> tuple[float, float
         val = float(arr[0]) if len(arr) else float("nan")
         return val, val
     rng = np.random.default_rng(seed)
-    boot = np.asarray(
-        [rng.choice(arr, size=len(arr), replace=True).mean() for _ in range(5000)]
-    )
+    boot = np.asarray([
+        rng.choice(arr, size=len(arr), replace=True).mean() for _ in range(5000)
+    ])
     return float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))
 
 
@@ -173,17 +163,15 @@ def plot_sv_sanity(root: Path, output_dir: Path, metric: str = "tfidf") -> Path:
             continue
         ci_low, ci_high = _bootstrap_ci(vals)
         info = info_df.loc[condition]
-        summary_rows.append(
-            {
-                "condition": condition,
-                "n": int(vals.size),
-                "mean": float(vals.mean()),
-                "median": float(vals.median()),
-                "ci_low": ci_low,
-                "ci_high": ci_high,
-                "tied_abs_sv_rate": float(info["tied_abs_sv_rate"]),
-            }
-        )
+        summary_rows.append({
+            "condition": condition,
+            "n": int(vals.size),
+            "mean": float(vals.mean()),
+            "median": float(vals.median()),
+            "ci_low": ci_low,
+            "ci_high": ci_high,
+            "tied_abs_sv_rate": float(info["tied_abs_sv_rate"]),
+        })
     summary = pd.DataFrame(summary_rows)
     order = summary["condition"].tolist()
 
@@ -492,9 +480,10 @@ def plot_aggregate(root: Path, output_dir: Path, metric: str = "tfidf") -> Path:
         var_name="condition_type",
         value_name="drop",
     )
-    long_df["condition_type"] = long_df["condition_type"].map(
-        {top_col: "Top-SV deletion", rand_col: "Uniform random"}
-    )
+    long_df["condition_type"] = long_df["condition_type"].map({
+        top_col: "Top-SV deletion",
+        rand_col: "Uniform random",
+    })
 
     sns.set_theme(style="whitegrid")
     fig, axes = plt.subplots(1, 2, figsize=(13.0, 4.8))

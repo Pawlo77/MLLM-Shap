@@ -138,30 +138,26 @@ def _sacct_rows(job_ids: list[str]) -> list[dict[str, str]]:
     """Get sacct rows for the given job IDs, or return an empty list if no job IDs are provided."""
     if not job_ids:
         return []
-    output = _run_command(
-        [
-            "sacct",
-            "-P",
-            "-n",
-            "-j",
-            ",".join(job_ids),
-            "--format=JobID,JobName,State,Elapsed,ExitCode",
-        ]
-    )
+    output = _run_command([
+        "sacct",
+        "-P",
+        "-n",
+        "-j",
+        ",".join(job_ids),
+        "--format=JobID,JobName,State,Elapsed,ExitCode",
+    ])
     rows: list[dict[str, str]] = []
     for line in output.splitlines():
         parts = line.split("|")
         if len(parts) < 5:
             continue
-        rows.append(
-            {
-                "job_id": parts[0],
-                "job_name": parts[1],
-                "state": parts[2],
-                "elapsed": parts[3],
-                "exit_code": parts[4],
-            }
-        )
+        rows.append({
+            "job_id": parts[0],
+            "job_name": parts[1],
+            "state": parts[2],
+            "elapsed": parts[3],
+            "exit_code": parts[4],
+        })
     return rows
 
 
@@ -328,17 +324,15 @@ def _write_csv(statuses: list[ConfigStatus], output_path: Path) -> None:
         )
         writer.writeheader()
         for status in statuses:
-            writer.writerow(
-                {
-                    "stage": status.stage,
-                    "dataset_subset": status.dataset_subset,
-                    "input_modality": status.input_modality,
-                    "segmentation": status.segmentation,
-                    "expected_samples": status.expected_samples,
-                    "completed_samples": status.completed_samples,
-                    "run_dir": status.run_dir,
-                }
-            )
+            writer.writerow({
+                "stage": status.stage,
+                "dataset_subset": status.dataset_subset,
+                "input_modality": status.input_modality,
+                "segmentation": status.segmentation,
+                "expected_samples": status.expected_samples,
+                "completed_samples": status.completed_samples,
+                "run_dir": status.run_dir,
+            })
 
 
 def build_argparser() -> argparse.ArgumentParser:

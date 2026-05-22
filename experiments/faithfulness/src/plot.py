@@ -100,9 +100,10 @@ def plot_deletion(
         var_name="condition",
         value_name="similarity_drop",
     )
-    long_df["condition"] = long_df["condition"].map(
-        {top_col: "Top-SV deletion", random_col: "Random deletion"}
-    )
+    long_df["condition"] = long_df["condition"].map({
+        top_col: "Top-SV deletion",
+        random_col: "Random deletion",
+    })
 
     fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.8))
     fig.subplots_adjust(

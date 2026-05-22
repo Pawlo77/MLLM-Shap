@@ -129,15 +129,13 @@ def log_audio_artifacts(
 
     # Log metadata
     if metadata:
-        log_fn(
-            {
-                f"audio_metadata/{sample_id}": {
-                    "input_modality": input_modality.value,
-                    "output_modality": output_modality.value,
-                    **metadata,
-                }
+        log_fn({
+            f"audio_metadata/{sample_id}": {
+                "input_modality": input_modality.value,
+                "output_modality": output_modality.value,
+                **metadata,
             }
-        )
+        })
 
 
 def log_audio_files(

@@ -124,14 +124,12 @@ def stubbed_liquid_audio(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             modality_flag: Tensor,
             history_tracking_mode: ModelHistoryTrackingMode,
         ) -> None:
-            self.append_calls.append(
-                (
-                    text.clone(),
-                    audio_out.clone(),
-                    modality_flag.clone(),
-                    history_tracking_mode,
-                )
-            )
+            self.append_calls.append((
+                text.clone(),
+                audio_out.clone(),
+                modality_flag.clone(),
+                history_tracking_mode,
+            ))
 
         def end_turn(self) -> None:
             self.end_turn_calls += 1

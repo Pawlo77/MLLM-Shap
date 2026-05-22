@@ -478,15 +478,13 @@ class SpectrogramGuidedAligner:
             boundary_refined = start_refined and end_refined
 
             char = cast(str, self.tokenizer.convert_ids_to_tokens(sp_token))
-            refined_chars.append(
-                {
-                    "char": char,
-                    "start": start_time,
-                    "end": end_time,
-                    "confidence": confs[i],
-                    "boundary_refined": boundary_refined,
-                }
-            )
+            refined_chars.append({
+                "char": char,
+                "start": start_time,
+                "end": end_time,
+                "confidence": confs[i],
+                "boundary_refined": boundary_refined,
+            })
 
         return refined_chars
 

@@ -134,25 +134,23 @@ def _standardize_row(row: pd.Series) -> pd.Series:
 
     assistant_msg = conv[-1][0] if conv and conv[-1] else {}
 
-    return pd.Series(
-        {
-            "row_index": row["row_index"],
-            "tokens": tokens,
-            "sv": sv,
-            "inputs": "".join(tokens),
-            "count_explainable_tokens": len(tokens),
-            "mode": row["mode"],
-            "sgpa": row.get("sgpa", None),
-            "neyman_steps": row.get("neyman_steps", None),
-            "n_calls": row.get("n_calls", None),
-            "runtime_sec": row.get("runtime_sec", None),
-            "raw_model_response": _safe_join_content(assistant_msg.get("content")),
-            "language": language,
-            "prompt_texts": row.get("prompt_texts", None),
-            "input_modality": row.get("input_modality", None),
-            "output_modality": row.get("output_modality", None),
-        }
-    )
+    return pd.Series({
+        "row_index": row["row_index"],
+        "tokens": tokens,
+        "sv": sv,
+        "inputs": "".join(tokens),
+        "count_explainable_tokens": len(tokens),
+        "mode": row["mode"],
+        "sgpa": row.get("sgpa", None),
+        "neyman_steps": row.get("neyman_steps", None),
+        "n_calls": row.get("n_calls", None),
+        "runtime_sec": row.get("runtime_sec", None),
+        "raw_model_response": _safe_join_content(assistant_msg.get("content")),
+        "language": language,
+        "prompt_texts": row.get("prompt_texts", None),
+        "input_modality": row.get("input_modality", None),
+        "output_modality": row.get("output_modality", None),
+    })
 
 
 def get_multi_sentence_df(cases: list[str] | None = None) -> pd.DataFrame:

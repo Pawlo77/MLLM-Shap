@@ -14,21 +14,19 @@ def _filter_valid_sv(row: pd.Series) -> pd.Series:
     sv = np.asarray(row["sv"])
     valid_mask = ~pd.isna(sv)
     tokens = np.asarray(row["raw_prompt_text_tokens"])[valid_mask]
-    return pd.Series(
-        {
-            "sv": sv[valid_mask],
-            "tokens": tokens,
-            "inputs": "".join(tokens),
-            "row_index": row["row_index"],
-            "count_explainable_tokens": len(tokens),
-            "neyman_steps": row["neyman_steps"],
-            "n_calls": row["n_calls"],
-            "runtime_sec": row["runtime_sec"],
-            "raw_model_response": row["raw_model_response"],
-            "mode": row["mode"],
-            "language": row.get("language", None),
-        }
-    )
+    return pd.Series({
+        "sv": sv[valid_mask],
+        "tokens": tokens,
+        "inputs": "".join(tokens),
+        "row_index": row["row_index"],
+        "count_explainable_tokens": len(tokens),
+        "neyman_steps": row["neyman_steps"],
+        "n_calls": row["n_calls"],
+        "runtime_sec": row["runtime_sec"],
+        "raw_model_response": row["raw_model_response"],
+        "mode": row["mode"],
+        "language": row.get("language", None),
+    })
 
 
 def get_text_df(

@@ -542,11 +542,9 @@ class BaseShapExplainer(ABC):
         Returns:
             The hash value.
         """
-        return hash(
-            (
-                self.mode,
-                self.embedding_reducer,
-                self.similarity_measure,
-                self.normalizer,
-            )
-        )
+        return hash((
+            self.mode,
+            self.embedding_reducer,
+            self.similarity_measure,
+            self.normalizer,
+        ))

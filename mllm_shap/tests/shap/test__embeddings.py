@@ -242,16 +242,14 @@ class TestExternalEmbeddings:
             embed_revision="a" * 40,
             device=torch.device("cpu"),
         )
-        out = emb(
-            [
-                ModelResponse(
-                    chat=None,
-                    generated_text_tokens=torch.tensor([], dtype=torch.long),
-                    generated_audio_tokens=torch.empty((0, 0), dtype=torch.long),
-                    generated_modality_flag=torch.empty((0,), dtype=torch.long),
-                )
-            ]
-        )
+        out = emb([
+            ModelResponse(
+                chat=None,
+                generated_text_tokens=torch.tensor([], dtype=torch.long),
+                generated_audio_tokens=torch.empty((0, 0), dtype=torch.long),
+                generated_modality_flag=torch.empty((0,), dtype=torch.long),
+            )
+        ])
         assert len(out) == 1
         assert out[0].shape == (0, 4)
 

@@ -88,16 +88,14 @@ class BaseMllmChat(ABC):
     """An optional external SHAP values mask that can be set to further filter which tokens are considered for SHAP value calculations."""
     __external_group_ids: Tensor | None = None
     """An optional external group IDs tensor that can be set to specify custom token groupings for SHAP value calculations."""
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
-        {
-            "system_roles_setup",
-            "_system_roles",
-            "empty_turn_sequences",
-            "get_new_chat_callable",
-            "token_filter",
-            "token_sequences_to_exclude",
-        }
-    )
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "system_roles_setup",
+        "_system_roles",
+        "empty_turn_sequences",
+        "get_new_chat_callable",
+        "token_filter",
+        "token_sequences_to_exclude",
+    })
     """A set of attribute names that should be shared across chat instances created from each other,
     to ensure consistency in SHAP calculations and token filtering across derived chat instances."""
 
@@ -537,9 +535,10 @@ class BaseMllmChat(ABC):
         unique_ids, counts = torch.unique_consecutive(ids, return_counts=True)
 
         # Compute start indices for each run
-        start_positions = torch.cat(
-            [torch.tensor([0], device=ids.device), counts.cumsum(0)[:-1]]
-        )
+        start_positions = torch.cat([
+            torch.tensor([0], device=ids.device),
+            counts.cumsum(0)[:-1],
+        ])
 
         # Filter out group ID == 0
         mask = unique_ids != 0

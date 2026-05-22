@@ -32,9 +32,11 @@ def test_display_shap_colors_df_audio_applies_html(
 ) -> None:
     """display_shap_colors_df_audio should convert audio bytes to html strings."""
     monkeypatch.setattr(jupyter_utils, "audio_html", lambda _: "<audio>x</audio>")
-    df = pd.DataFrame(
-        {"Audio": [b"a1", b"a2"], "Shapley Value": [0.5, -0.1], "Token": ["x", "y"]}
-    )
+    df = pd.DataFrame({
+        "Audio": [b"a1", b"a2"],
+        "Shapley Value": [0.5, -0.1],
+        "Token": ["x", "y"],
+    })
     styled = jupyter_utils.display_shap_colors_df_audio(df, audio_column_name="Audio")
     assert isinstance(styled, Styler)
     assert df["Audio"].tolist() == ["<audio>x</audio>", "<audio>x</audio>"]
