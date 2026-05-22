@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "mllm_shap/**"
   pull_request:
     branches:
       - main
+    paths:
+      - "mllm_shap/**"
 
 jobs:
   benchmark:

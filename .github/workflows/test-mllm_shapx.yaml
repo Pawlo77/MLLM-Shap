@@ -1,19 +1,19 @@
-name: Pytest
+name: Pytest mllm_shapx
 
 on:
   push:
     branches:
       - main
     paths:
-      - "mllm_shap/**"
+      - "experiments/mllm_shapx/**"
   pull_request:
     branches:
       - main
     paths:
-      - "mllm_shap/**"
+      - "experiments/mllm_shapx/**"
 
 jobs:
-  pre-commit:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,5 +35,5 @@ jobs:
       - name: Sync deps
         run: make install
 
-      - name: Run Pytest
-        run: make tests
+      - name: Run mllm_shapx tests
+        run: make tests-mllm-shapx

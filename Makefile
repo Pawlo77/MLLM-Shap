@@ -1,4 +1,4 @@
-.PHONY: install update clean activate pre-commit pre-commit-all benchmarks bench-light coverage tests
+.PHONY: install update clean activate pre-commit pre-commit-all benchmarks bench-light coverage tests tests-mllm-shapx
 
 help:
 	@echo "Available targets:"
@@ -41,6 +41,9 @@ pre-commit-all:
 
 tests:
 	uv run pytest mllm_shap/tests/
+
+tests-mllm-shapx:
+	uv run pytest experiments/mllm_shapx/tests/
 
 bench-light:
 	uv run pytest mllm_shap/tests/ --benchmark-light

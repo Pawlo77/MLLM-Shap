@@ -4,6 +4,8 @@ on:
     branches:
       - main
       - feature/auto-package-docs # for development testing
+    paths:
+      - "mllm_shap/**"
 permissions:
   contents: write
 
