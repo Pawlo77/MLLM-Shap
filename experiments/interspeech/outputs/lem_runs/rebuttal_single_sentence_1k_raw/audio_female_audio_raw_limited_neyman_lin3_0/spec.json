@@ -1,5 +1,5 @@
 {
-  "experiment_set_id": "rebuttal_single_sentence_1k_raw",
+  "experiment_set_id": "rebuttal_single_sentence__voice_bench_raw",
   "run_slug": "audio_female_audio_raw_limited_neyman_lin3_0",
   "connector": "liquid_audio",
   "modality": {
@@ -26,7 +26,7 @@
   },
   "dataset": {
     "source": "hf_parquet",
-    "subset": "single_sentence_1k",
+    "subset": "single_sentence__voice_bench",
     "split": "test",
     "revision": "6c046d6c94a76ddb2bb9e5577fd51e7fb77bb691",
     "repo_id": "Pawlo77/mllm-shap",

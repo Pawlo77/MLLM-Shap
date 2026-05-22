@@ -17,7 +17,7 @@ from scipy import stats
 from tqdm.auto import tqdm
 
 DEFAULT_DATASET_NAME: str = "Pawlo77/mllm-swap"
-DEFAULT_DATASET_CONFIG: str = "single_sentence_1k"
+DEFAULT_DATASET_CONFIG: str = "single_sentence__voice_bench"
 DEFAULT_DATASET_REVISION: str = "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e"
 DEFAULT_OUTPUT_DIR: Path = Path("outputs/stage3_ablation")
 EPS: float = 1e-9
@@ -133,15 +133,13 @@ def _aggregate_raw_ctc_segments(
             if sp_end > sp_start
             else 0.0
         )
-        raw_chars.append(
-            {
-                "char": char,
-                "start": float((sp_start * ratio) / original_sr),
-                "end": float((sp_end * ratio) / original_sr),
-                "confidence": confidence,
-                "boundary_refined": False,
-            }
-        )
+        raw_chars.append({
+            "char": char,
+            "start": float((sp_start * ratio) / original_sr),
+            "end": float((sp_end * ratio) / original_sr),
+            "confidence": confidence,
+            "boundary_refined": False,
+        })
 
     aggregate = getattr(
         aligner, "_SpectrogramGuidedAligner__aggregate_chars_to_segments"
