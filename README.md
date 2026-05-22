@@ -5,7 +5,7 @@
     <a href="https://pypi.org/project/mllm-shap/"><img src="https://img.shields.io/pypi/v/mllm-shap.svg" alt="PyPI Version"></a>
     <a href="https://pypi.org/project/mllm-shap/"><img src="https://img.shields.io/pypi/pyversions/mllm-shap.svg" alt="Python Version"></a>
     <a href="https://pawlo77.github.io/MLLM-Shap/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Documentation"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
     <a href="https://github.com/pre-commit/pre-commit"><img src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit" alt="pre-commit"></a>
   </p>
 </div>
@@ -57,4 +57,4 @@ make install
 
 # 📄 License
 
-MIT License. See `LICENSE`.
+Apache License 2.0. See `LICENSE`.
