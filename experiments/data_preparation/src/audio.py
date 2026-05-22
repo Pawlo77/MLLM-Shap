@@ -1,16 +1,28 @@
-"""Audio processing and synthesis helpers."""
+"""Audio processing and synthesis helpers.
 
-from __future__ import annotations
+This module contains helpers to convert, normalise and synthesise audio
+representations used by the data preparation pipeline. Functions return
+bytes and duration metadata suitable for storage in the dataset DataFrame.
+"""
 
 import io
 
 import numpy as np
 import pandas as pd
 import soundfile as sf
+from pydub import AudioSegment
 
-from ..audio import calculate_audio_duration
-from ..constants import TTSConfig
-from ..nlp import TTS
+from .constants import TTS_CONFIGS, TTSConfig
+from .nlp import TTS
+
+
+def calculate_audio_duration(audio_bytes_list: list[bytes]) -> list[float]:
+    """Return duration in seconds for each MP3 blob in ``audio_bytes_list``."""
+    durations = []
+    for audio_bytes in audio_bytes_list:
+        audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="mp3")
+        durations.append(audio.duration_seconds)
+    return durations
 
 
 def normalize_original_audio_entry(
@@ -44,20 +56,7 @@ async def synthesize_voices(
     female_config: TTSConfig,
     column_to_synthesize: str = "sentences",
 ) -> pd.DataFrame:
-    """Synthesize male and female audio columns and compute durations.
-
-    Parameters
-    ----------
-    df                   : DataFrame containing the text to synthesize.
-    tts                  : Initialized TTS instance.
-    male_config          : TTS configuration for male voice.
-    female_config        : TTS configuration for female voice.
-    column_to_synthesize : Column with text/sentences to synthesize.
-
-    Returns
-    -------
-    DataFrame with added audio__male, audio__female, and duration columns.
-    """
+    """Synthesize male and female audio columns and compute durations."""
     for name, config in (("male", male_config), ("female", female_config)):
         df = await tts.synthesize_df_from_config(
             df,
@@ -69,3 +68,18 @@ async def synthesize_voices(
             calculate_audio_duration
         )
     return df
+
+
+async def synthesize_en_voices(
+    df: pd.DataFrame,
+    tts: TTS,
+    column_to_synthesize: str = "sentences",
+) -> pd.DataFrame:
+    """Synthesize English male/female TTS using ``TTS_CONFIGS['en']``."""
+    return await synthesize_voices(
+        df,
+        tts,
+        TTS_CONFIGS["en"]["male"],
+        TTS_CONFIGS["en"]["female"],
+        column_to_synthesize=column_to_synthesize,
+    )

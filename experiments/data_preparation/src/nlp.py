@@ -1,4 +1,9 @@
-"""NLP related utilities."""
+"""NLP related utilities.
+
+Utilities for sentence splitting, sentence-counting and text-to-speech
+integration used by the data-preparation pipeline. The module exposes a
+``TTS`` helper for Google Cloud Text-to-Speech based synthesis.
+"""
 
 import asyncio
 import os
@@ -21,10 +26,11 @@ from tqdm.asyncio import tqdm_asyncio
 
 from .constants import TTSConfig
 
-_ = load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+_ = load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 
 NO_WORD_CHARS: str = ".,!?:;\"'()[]{}—–-\n\t "
+"""Characters that are not considered part of words when splitting text into sentences or counting sentences. This set includes common punctuation marks, whitespace characters, and other symbols that typically do not contribute to the meaning of sentences. When splitting text into sentences, these characters are stripped from the beginning and end of sentences to ensure cleaner sentence boundaries. When counting sentences, these characters are ignored to provide a more accurate count of actual sentences in the text."""
 
 
 def split_into_sentences(text: str) -> list[str]:

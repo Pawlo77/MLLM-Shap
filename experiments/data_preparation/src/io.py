@@ -1,4 +1,8 @@
-"""Utilities for file and dataset I/O operations."""
+"""Utilities for file and dataset I/O operations.
+
+Small helpers to load HF datasets safely and persist DataFrames to JSON
+or Parquet with lightweight validation used by the builder notebooks.
+"""
 
 import re
 from pathlib import Path
