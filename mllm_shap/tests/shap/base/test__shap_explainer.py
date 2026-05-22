@@ -138,9 +138,11 @@ class TestBaseShapExplainer:
         """Test that NotEnoughTokensToExplainError is raised when all chats are skipped."""
         mock_masks_manager.return_value.n = 3
         mock_masks_manager.return_value.max_masks_number = 2
-        mock_masks_manager.return_value.get_initial_mask.return_value = torch.tensor(
-            [True, True, True]
-        )
+        mock_masks_manager.return_value.get_initial_mask.return_value = torch.tensor([
+            True,
+            True,
+            True,
+        ])
         mock_cache_manager.return_value.extracted_num = 0
         # simulate all chats skipped
         mock_generate_responses.return_value = (2, [])

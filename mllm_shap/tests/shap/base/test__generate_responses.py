@@ -233,12 +233,10 @@ class TestGenerateResponses:
         side_effect.calls = 0
         mock_process.side_effect = side_effect
 
-        gen = iter(
-            [
-                (torch.tensor([True, False, False]), 1),
-                (torch.tensor([True, True, False]), 2),
-            ]
-        )
+        gen = iter([
+            (torch.tensor([True, False, False]), 1),
+            (torch.tensor([True, True, False]), 2),
+        ])
         masks: list[Tensor] = []
         responses: list[ModelResponse] = []
 
@@ -291,12 +289,10 @@ class TestGenerateResponses:
     ) -> None:
         """When external tqdm_bar is provided, it should be updated per accepted mask."""
         model, chat, cache_manager = setup_env
-        gen = iter(
-            [
-                (torch.tensor([True, True, True]), 1),
-                (torch.tensor([True, False, True]), 2),
-            ]
-        )
+        gen = iter([
+            (torch.tensor([True, True, True]), 1),
+            (torch.tensor([True, False, True]), 2),
+        ])
         masks: list[Tensor] = []
         responses: list[ModelResponse] = []
         bar = MagicMock()
@@ -365,12 +361,10 @@ class TestGenerateResponses:
 
         mock_process.side_effect = worker_side_effect
 
-        gen = iter(
-            [
-                (torch.tensor([True, False, True]), 1),
-                (torch.tensor([False, True, True]), 2),
-            ]
-        )
+        gen = iter([
+            (torch.tensor([True, False, True]), 1),
+            (torch.tensor([False, True, True]), 2),
+        ])
         masks: list[Tensor] = []
         responses: list[ModelResponse] = []
 
@@ -441,12 +435,10 @@ class TestGenerateResponses:
         chats_skipped, history = generate_responses(
             masks=[],
             responses=[],
-            gen=iter(
-                [
-                    (torch.tensor([True, False, True]), 1),
-                    (torch.tensor([False, True, True]), 2),
-                ]
-            ),
+            gen=iter([
+                (torch.tensor([True, False, True]), 1),
+                (torch.tensor([False, True, True]), 2),
+            ]),
             source_chat=chat,
             model=model,
             cache_manager=cache_manager,
@@ -502,12 +494,10 @@ class TestGenerateResponses:
     ) -> None:
         """External tqdm_bar should be updated by multi-thread workers."""
         model, chat, cache_manager = setup_env
-        gen = iter(
-            [
-                (torch.tensor([True, False, True]), 1),
-                (torch.tensor([False, True, True]), 2),
-            ]
-        )
+        gen = iter([
+            (torch.tensor([True, False, True]), 1),
+            (torch.tensor([False, True, True]), 2),
+        ])
         bar = MagicMock()
 
         chats_skipped, history = generate_responses(

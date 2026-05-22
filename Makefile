@@ -45,6 +45,9 @@ tests:
 tests-mllm-shapx:
 	uv run pytest experiments/mllm_shapx/tests/
 
+tests-datasets:
+	uv run pytest experiments/data_preparation/tests/
+
 bench-light:
 	uv run pytest mllm_shap/tests/ --benchmark-light
 

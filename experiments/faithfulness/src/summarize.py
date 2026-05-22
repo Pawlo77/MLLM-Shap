@@ -349,13 +349,11 @@ def combine_partition_outputs(
     tag = "rankwise_results" if all_rank_deletions else "results"
     summary_tag = "rankwise_summary" if all_rank_deletions else "summary"
 
-    audio_columns = sorted(
-        {
-            path.name.split("_part", 1)[0]
-            for path in output_dir.glob(f"*_part*-of*_{tag}.csv")
-            if "_part" in path.name
-        }
-    )
+    audio_columns = sorted({
+        path.name.split("_part", 1)[0]
+        for path in output_dir.glob(f"*_part*-of*_{tag}.csv")
+        if "_part" in path.name
+    })
 
     for audio_column in audio_columns:
         paths = sorted(output_dir.glob(f"{audio_column}_part*-of*_{tag}.csv"))

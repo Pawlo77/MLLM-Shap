@@ -33,7 +33,7 @@ class AlphaSearchConfig:
     masks_per_utterance: int = 3
     rng_seed: int = 77
     dataset_name: str = "Pawlo77/mllm-swap"
-    dataset_config: str = "single_sentence"
+    dataset_config: str = "single_sentence__voice_bench"
     dataset_revision: str = "3a8e7fbe8da0b3caaf865978e92c86ee670bda65"
     output_dir: Path = Path("outputs/alpha_search")
     manual_subset_seed: int = 11
@@ -314,9 +314,11 @@ def generate_stimuli(
                     )
                 )
 
-    stimuli_df = pd.DataFrame([asdict(s) for s in stimuli]).sort_values(
-        ["alpha", "utterance_id", "mask_id"]
-    )
+    stimuli_df = pd.DataFrame([asdict(s) for s in stimuli]).sort_values([
+        "alpha",
+        "utterance_id",
+        "mask_id",
+    ])
     stimuli_df.to_csv(output_dir / "stimuli_manifest.csv", index=False)
     return stimuli_df.reset_index(drop=True)
 
@@ -389,15 +391,13 @@ def _alpha_summary_from_stats(
             std = float(np.sqrt(var))
         else:
             std = float("nan")
-        rows.append(
-            {
-                "alpha": float(alpha),
-                "beta": float(bucket["beta"]),
-                mean_col: mean,
-                std_col: std,
-                "n_stimuli": count,
-            }
-        )
+        rows.append({
+            "alpha": float(alpha),
+            "beta": float(bucket["beta"]),
+            mean_col: mean,
+            std_col: std,
+            "n_stimuli": count,
+        })
 
     summary = pd.DataFrame(rows)
     if summary.empty:

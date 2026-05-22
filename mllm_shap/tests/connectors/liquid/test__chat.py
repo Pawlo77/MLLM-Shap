@@ -152,9 +152,11 @@ def patched_liquid_audio_chat(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespac
                 [self.modality_flag, modality_flag.to(self.modality_flag.device)], dim=1
             )
 
-            self.append_calls.append(
-                (text.clone(), audio_out.clone(), modality_flag.clone())
-            )
+            self.append_calls.append((
+                text.clone(),
+                audio_out.clone(),
+                modality_flag.clone(),
+            ))
 
         def new_turn(self, role: str) -> None:
             self.new_turn_log.append(role)

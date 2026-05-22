@@ -1,4 +1,10 @@
-"""Utility functions for language detection and filtering."""
+"""Utilities for language detection and translation.
+
+This module provides a lightweight wrapper around Lingua and transformer
+models for language detection and a thin asynchronous wrapper for
+translation via Google Translate. Intended for dataset language filtering
+and optional translation of dataset fields.
+"""
 
 import pandas as pd
 from googletrans import Translator
@@ -12,7 +18,9 @@ class LanguageClassifier:
     """A language classifier that uses Lingua and a transformer model for detection."""
 
     _english_detector: LanguageDetector | None = None
+    """A lazy-loaded Lingua language detector optimized for English detection. This is used as a fast first check for English text, as Lingua is very efficient for this purpose. If the Lingua detector does not confidently classify the text as English, the classifier falls back to the transformer-based language detector for a more robust classification across multiple languages."""
     _lang_detector: TextClassificationPipeline | None = None
+    """A lazy-loaded transformer-based language detection pipeline. This uses the "papluca/xlm-roberta-base-language-detection" model, which is a multilingual model fine-tuned for language classification. It provides more robust detection across a wide range of languages compared to the Lingua detector, but is slower. The classifier uses this as a fallback when the Lingua detector does not confidently classify text as English, allowing for accurate language classification while optimizing for speed in common cases where English text is expected."""
 
     @property
     def english_detector(self) -> LanguageDetector:
@@ -104,6 +112,7 @@ class LanguageTranslator:
     """A placeholder for a language translator class."""
 
     _translator: Translator = Translator()
+    """A Google Translate API client from the googletrans library. This is used to perform translations of text between languages. The Translator class provides a simple interface for translating text, and the LanguageTranslator class wraps this functionality to provide asynchronous translation methods that can be used in the dataset preparation pipeline for translating dataset fields as needed."""
 
     async def translate(self, text: str, target_language: str) -> str:
         """

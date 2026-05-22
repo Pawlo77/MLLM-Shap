@@ -1,12 +1,18 @@
-"""Dataset saving utilities."""
+"""Dataset saving utilities for builder notebooks.
 
-from __future__ import annotations
+Helpers to prepare DataFrames for persistence and write both Parquet
+artifacts and human-readable JSON text samples used for quick inspection.
+"""
 
 from pathlib import Path
 
 import pandas as pd
 
-from ..io import save_json, save_parquet
+from .constants import (
+    MULTI_SENTENCE__VOICE_BENCH,
+    SINGLE_SENTENCE__VOICE_BENCH,
+)
+from .io import save_json, save_parquet
 
 from .statistics import get_sample_df
 
@@ -55,3 +61,25 @@ def save_dataset_and_sample(
     sample_df = get_sample_df(df, group_col=group_col, text_col=text_col)
     save_json(sample_df, data_dir / f"{name}__text__sample.json")
     return sample_df
+
+
+def save_single_sentence(
+    df: pd.DataFrame,
+    data_dir: Path,
+    name: str = SINGLE_SENTENCE__VOICE_BENCH,
+) -> pd.DataFrame:
+    """Prepare NLP-filtered single-sentence data and save (prompt → sentence list)."""
+    to_save = prepare_for_save(df)
+    to_save["sentences"] = to_save["prompt"].progress_apply(lambda x: [x])
+    to_save.drop(columns=["prompt"], inplace=True)
+    return save_dataset_and_sample(to_save, data_dir, name)
+
+
+def save_multi_sentence(
+    df: pd.DataFrame,
+    data_dir: Path,
+    name: str = MULTI_SENTENCE__VOICE_BENCH,
+) -> pd.DataFrame:
+    """Save multi-sentence split without the raw prompt column."""
+    to_save = df.drop(columns=["prompt"])
+    return save_dataset_and_sample(to_save, data_dir, name)

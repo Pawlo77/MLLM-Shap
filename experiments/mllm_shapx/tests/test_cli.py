@@ -41,17 +41,15 @@ class TestBuildArgparser:
 
     def test_run_with_sharding(self) -> None:
         ap = build_argparser()
-        args = ap.parse_args(
-            [
-                "run",
-                "--config",
-                "r.json",
-                "--shard-index",
-                "2",
-                "--num-shards",
-                "8",
-            ]
-        )
+        args = ap.parse_args([
+            "run",
+            "--config",
+            "r.json",
+            "--shard-index",
+            "2",
+            "--num-shards",
+            "8",
+        ])
         assert args.shard_index == 2
         assert args.num_shards == 8
 

@@ -11,50 +11,48 @@ ROOT_DEP: str = "ROOT"
 """Dependency label for the root of the sentence."""
 
 
-LINGUISTIC_FEATURES_DF: pd.DataFrame = pd.DataFrame(
-    [
-        # --- Core meaning (highest importance) ---
-        {"dep": ROOT_DEP, "importance": 1, "group": "core_structure"},
-        {"dep": "nsubj", "importance": 1, "group": "core_structure"},
-        {"dep": "nsubjpass", "importance": 1, "group": "core_structure"},
-        {"dep": "dobj", "importance": 1, "group": "core_structure"},
-        {"dep": "agent", "importance": 1, "group": "core_structure"},
-        # --- Clause structure (very important) ---
-        {"dep": "ccomp", "importance": 2, "group": "clausal_structure"},
-        {"dep": "xcomp", "importance": 2, "group": "clausal_structure"},
-        {"dep": "advcl", "importance": 2, "group": "clausal_structure"},
-        {"dep": "relcl", "importance": 2, "group": "clausal_structure"},
-        {"dep": "acl", "importance": 2, "group": "clausal_structure"},
-        {"dep": "pcomp", "importance": 2, "group": "clausal_structure"},
-        # --- Nominal / verbal complements ---
-        {"dep": "attr", "importance": 3, "group": "arguments"},
-        {"dep": "acomp", "importance": 3, "group": "arguments"},
-        {"dep": "dative", "importance": 3, "group": "arguments"},
-        {"dep": "pobj", "importance": 3, "group": "arguments"},
-        {"dep": "oprd", "importance": 3, "group": "arguments"},
-        # --- Modifiers (less critical, descriptive) ---
-        {"dep": "amod", "importance": 4, "group": "modifiers"},
-        {"dep": "advmod", "importance": 4, "group": "modifiers"},
-        {"dep": "npadvmod", "importance": 4, "group": "modifiers"},
-        {"dep": "nmod", "importance": 4, "group": "modifiers"},
-        {"dep": "compound", "importance": 4, "group": "modifiers"},
-        {"dep": "poss", "importance": 4, "group": "modifiers"},
-        {"dep": "appos", "importance": 4, "group": "modifiers"},
-        # --- Coordination / structure helpers ---
-        {"dep": "conj", "importance": 4, "group": "coordination"},
-        {"dep": "cc", "importance": 5, "group": "coordination"},
-        # --- Function / grammar glue (lowest importance) ---
-        {"dep": "det", "importance": 5, "group": "function_words"},
-        {"dep": "case", "importance": 5, "group": "function_words"},
-        {"dep": "aux", "importance": 5, "group": "function_words"},
-        {"dep": "auxpass", "importance": 5, "group": "function_words"},
-        {"dep": "mark", "importance": 5, "group": "function_words"},
-        {"dep": "prep", "importance": 5, "group": "function_words"},
-        {"dep": "punct", "importance": 6, "group": "punctuation"},
-        # --- Generic / unknown ---
-        {"dep": "dep", "importance": 4, "group": "generic"},
-    ]
-).set_index("dep")
+LINGUISTIC_FEATURES_DF: pd.DataFrame = pd.DataFrame([
+    # --- Core meaning (highest importance) ---
+    {"dep": ROOT_DEP, "importance": 1, "group": "core_structure"},
+    {"dep": "nsubj", "importance": 1, "group": "core_structure"},
+    {"dep": "nsubjpass", "importance": 1, "group": "core_structure"},
+    {"dep": "dobj", "importance": 1, "group": "core_structure"},
+    {"dep": "agent", "importance": 1, "group": "core_structure"},
+    # --- Clause structure (very important) ---
+    {"dep": "ccomp", "importance": 2, "group": "clausal_structure"},
+    {"dep": "xcomp", "importance": 2, "group": "clausal_structure"},
+    {"dep": "advcl", "importance": 2, "group": "clausal_structure"},
+    {"dep": "relcl", "importance": 2, "group": "clausal_structure"},
+    {"dep": "acl", "importance": 2, "group": "clausal_structure"},
+    {"dep": "pcomp", "importance": 2, "group": "clausal_structure"},
+    # --- Nominal / verbal complements ---
+    {"dep": "attr", "importance": 3, "group": "arguments"},
+    {"dep": "acomp", "importance": 3, "group": "arguments"},
+    {"dep": "dative", "importance": 3, "group": "arguments"},
+    {"dep": "pobj", "importance": 3, "group": "arguments"},
+    {"dep": "oprd", "importance": 3, "group": "arguments"},
+    # --- Modifiers (less critical, descriptive) ---
+    {"dep": "amod", "importance": 4, "group": "modifiers"},
+    {"dep": "advmod", "importance": 4, "group": "modifiers"},
+    {"dep": "npadvmod", "importance": 4, "group": "modifiers"},
+    {"dep": "nmod", "importance": 4, "group": "modifiers"},
+    {"dep": "compound", "importance": 4, "group": "modifiers"},
+    {"dep": "poss", "importance": 4, "group": "modifiers"},
+    {"dep": "appos", "importance": 4, "group": "modifiers"},
+    # --- Coordination / structure helpers ---
+    {"dep": "conj", "importance": 4, "group": "coordination"},
+    {"dep": "cc", "importance": 5, "group": "coordination"},
+    # --- Function / grammar glue (lowest importance) ---
+    {"dep": "det", "importance": 5, "group": "function_words"},
+    {"dep": "case", "importance": 5, "group": "function_words"},
+    {"dep": "aux", "importance": 5, "group": "function_words"},
+    {"dep": "auxpass", "importance": 5, "group": "function_words"},
+    {"dep": "mark", "importance": 5, "group": "function_words"},
+    {"dep": "prep", "importance": 5, "group": "function_words"},
+    {"dep": "punct", "importance": 6, "group": "punctuation"},
+    # --- Generic / unknown ---
+    {"dep": "dep", "importance": 4, "group": "generic"},
+]).set_index("dep")
 """DataFrame defining linguistic features with their importance levels and groups."""
 
 
@@ -93,19 +91,15 @@ def map_subwords_to_tokens(
 
     # Compute embeddings
     processed_tokens = [nlp(t.strip()) for t in tokens_text]
-    token_vecs = np.array(
-        [
-            pt.vector if pt.vector.shape[0] > 0 else np.zeros(96) + 1e-9
-            for pt in processed_tokens
-        ]
-    )
+    token_vecs = np.array([
+        pt.vector if pt.vector.shape[0] > 0 else np.zeros(96) + 1e-9
+        for pt in processed_tokens
+    ])
     processed_subwords = [nlp(s.strip()) for s in subwords]
-    subword_vecs = np.array(
-        [
-            ps.vector if ps.vector.shape[0] > 0 else np.zeros(96) + 1e-9
-            for ps in processed_subwords
-        ]
-    )
+    subword_vecs = np.array([
+        ps.vector if ps.vector.shape[0] > 0 else np.zeros(96) + 1e-9
+        for ps in processed_subwords
+    ])
 
     # Normalize for cosine similarity
     token_vecs_norm = token_vecs / np.linalg.norm(token_vecs, axis=1, keepdims=True)

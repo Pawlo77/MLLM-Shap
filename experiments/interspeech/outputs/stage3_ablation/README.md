@@ -23,7 +23,7 @@ It executes the ablation and generates figures in a single pass.
 Configuration is at the top of the notebook:
 
 ```python
-DATASET_CONFIG = "single_sentence_1k"
+DATASET_CONFIG = "single_sentence__voice_bench"
 AUDIO_COLUMNS = ["audio__male", "audio__female"]
 MAX_SAMPLES = 1000
 ```

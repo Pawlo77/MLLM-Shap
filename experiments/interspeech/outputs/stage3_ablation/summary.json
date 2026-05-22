@@ -1,6 +1,6 @@
 {
   "dataset_name": "Pawlo77/mllm-swap",
-  "dataset_config": "single_sentence_1k",
+  "dataset_config": "single_sentence__voice_bench",
   "dataset_revision": "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e",
   "max_samples": 1000,
   "audio_columns": [
@@ -13,7 +13,7 @@
     "audio__male": {
       "audio_column": "audio__male",
       "dataset_name": "Pawlo77/mllm-swap",
-      "dataset_config": "single_sentence_1k",
+      "dataset_config": "single_sentence__voice_bench",
       "dataset_revision": "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e",
       "requested_samples": 1000,
       "completed_samples": 854,
@@ -33,7 +33,7 @@
     "audio__female": {
       "audio_column": "audio__female",
       "dataset_name": "Pawlo77/mllm-swap",
-      "dataset_config": "single_sentence_1k",
+      "dataset_config": "single_sentence__voice_bench",
       "dataset_revision": "25b57f3a5ec82573e8a68ac7ecc0d9bd4418b66e",
       "requested_samples": 1000,
       "completed_samples": 854,

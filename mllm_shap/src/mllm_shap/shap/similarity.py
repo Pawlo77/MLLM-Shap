@@ -110,9 +110,9 @@ class TfIdfCosineSimilarity(BaseEmbeddingSimilarity):
         ]
 
         tf_idfs = Tensor(
-            self.__vectorizer.fit_transform(
-                [o.numpy() for o in token_hashes_tensors]
-            ).toarray(),
+            self.__vectorizer.fit_transform([
+                o.numpy() for o in token_hashes_tensors
+            ]).toarray(),
         ).to(base.generated_text_tokens.device)
 
         return CosineSimilarity()(base=tf_idfs[0], other=tf_idfs)

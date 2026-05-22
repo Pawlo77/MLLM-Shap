@@ -159,37 +159,31 @@ class TestExpandHierarchical:
 
 class TestExpandVariants:
     def test_exact(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "test",
-                "experiments": [{"explainer_type": "exact"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "test",
+            "experiments": [{"explainer_type": "exact"}],
+        })
         variants = expand_variants(cfg)
         assert len(variants) == 1
 
     def test_mc_with_samples(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "test",
-                "experiments": [
-                    {"explainer_type": "limited_mc", "num_samples": [10, 20]},
-                ],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "test",
+            "experiments": [
+                {"explainer_type": "limited_mc", "num_samples": [10, 20]},
+            ],
+        })
         variants = expand_variants(cfg)
         assert len(variants) == 2
 
     def test_multiple_experiments(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "test",
-                "experiments": [
-                    {"explainer_type": "exact"},
-                    {"explainer_type": "limited_mc", "num_samples": [10]},
-                ],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "test",
+            "experiments": [
+                {"explainer_type": "exact"},
+                {"explainer_type": "limited_mc", "num_samples": [10]},
+            ],
+        })
         variants = expand_variants(cfg)
         assert len(variants) == 2
 
@@ -210,13 +204,11 @@ class TestPickDevice:
 
 class TestRowSelector:
     def test_basic_iteration(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "test",
-                "selection": {"max_samples": 3},
-                "experiments": [{"explainer_type": "exact"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "test",
+            "selection": {"max_samples": 3},
+            "experiments": [{"explainer_type": "exact"}],
+        })
         df = pd.DataFrame({"prompt": [f"text_{i}" for i in range(10)]})
         selector = RowSelector(cfg, df)
         rows = list(selector.iterate())
@@ -224,15 +216,11 @@ class TestRowSelector:
         assert len(rows) >= 3
 
     def test_with_filters(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "test",
-                "selection": {
-                    "filters": [{"column": "lang", "op": "==", "value": "en"}]
-                },
-                "experiments": [{"explainer_type": "exact"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "test",
+            "selection": {"filters": [{"column": "lang", "op": "==", "value": "en"}]},
+            "experiments": [{"explainer_type": "exact"}],
+        })
         df = pd.DataFrame({"prompt": ["a", "b", "c"], "lang": ["en", "de", "en"]})
         selector = RowSelector(cfg, df)
         rows = list(selector.iterate())

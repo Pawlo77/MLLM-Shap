@@ -15,13 +15,6 @@
 `MLLM-SHAP` combines production-grade package engineering with research-grade experiment tooling.
 Repository designed for teams that need explainability across text/audio model pipelines without losing reproducibility.
 
-## 📊 At a Glance
-
-- **1 core package**: `mllm_shap`
-- **4 major workstreams**: package, examples, experiments, paper artifacts
-- **9 focused README guides** across repo for fast onboarding
-- **Python target**: 3.12
-
 # ⚡ Quick Start
 
 ```bash

@@ -240,21 +240,19 @@ def run_faithfulness(
             final_results, final_failures, target_effect_size_dz=target_effect_size_dz
         )
     )
-    summary_data.update(
-        {
-            "run_dir": str(run_dir),
-            "audio_column": audio_column,
-            "all_rank_deletions": all_rank_deletions,
-            "results_csv": str(results_path),
-            "failures_csv": str(failures_path),
-            "random_draws": int(random_draws),
-            "strat_duration_bins": int(strat_duration_bins),
-            "strat_position_bins": int(strat_position_bins),
-            "comprehensiveness_k": int(comprehensiveness_k),
-            "sufficiency_k": int(sufficiency_k),
-            "target_effect_size_dz": float(target_effect_size_dz),
-        }
-    )
+    summary_data.update({
+        "run_dir": str(run_dir),
+        "audio_column": audio_column,
+        "all_rank_deletions": all_rank_deletions,
+        "results_csv": str(results_path),
+        "failures_csv": str(failures_path),
+        "random_draws": int(random_draws),
+        "strat_duration_bins": int(strat_duration_bins),
+        "strat_position_bins": int(strat_position_bins),
+        "comprehensiveness_k": int(comprehensiveness_k),
+        "sufficiency_k": int(sufficiency_k),
+        "target_effect_size_dz": float(target_effect_size_dz),
+    })
     summary_path.write_text(json.dumps(summary_data, indent=2))
     return summary_data
 

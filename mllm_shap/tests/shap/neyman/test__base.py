@@ -768,12 +768,10 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         ) -> tuple[int, list[tuple[Tensor, int, BaseDummyChat | None, ModelResponse]]]:
             del mask_manager, device, kwargs
             if len(masks) == 1:
-                masks.extend(
-                    [
-                        torch.tensor([True, False, False, False]),
-                        torch.tensor([False, True, True, True]),
-                    ]
-                )
+                masks.extend([
+                    torch.tensor([True, False, False, False]),
+                    torch.tensor([False, True, True, True]),
+                ])
                 responses.extend([response, response])
                 explainer._BaseComplementaryNeymanShapExplainer__step = (
                     _Step.NEYMAN_ALLOCATION
@@ -950,24 +948,20 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         ) -> tuple[int, list[tuple[Tensor, int, BaseDummyChat | None, ModelResponse]]]:
             del mask_manager, device, kwargs
             if len(masks) == 1:
-                masks.extend(
-                    [
-                        torch.tensor([True, False, False, False]),
-                        torch.tensor([False, True, True, True]),
-                    ]
-                )
+                masks.extend([
+                    torch.tensor([True, False, False, False]),
+                    torch.tensor([False, True, True, True]),
+                ])
                 responses.extend([response, response])
                 explainer._BaseComplementaryNeymanShapExplainer__step = (
                     _Step.NEYMAN_ALLOCATION
                 )
                 return 1, history_stage_1.copy()
 
-            masks.extend(
-                [
-                    torch.tensor([False, True, False, False]),
-                    torch.tensor([True, False, True, True]),
-                ]
-            )
+            masks.extend([
+                torch.tensor([False, True, False, False]),
+                torch.tensor([True, False, True, True]),
+            ])
             responses.extend([response, response])
             return 2, history_stage_2.copy()
 
@@ -1044,24 +1038,20 @@ class TestBaseComplementaryNeymanShapExplainerCalculateShapValues:
         ]:
             del mask_manager, device, kwargs
             if len(masks) == 1:
-                masks.extend(
-                    [
-                        torch.tensor([True, False, False, False]),
-                        torch.tensor([False, True, True, True]),
-                    ]
-                )
+                masks.extend([
+                    torch.tensor([True, False, False, False]),
+                    torch.tensor([False, True, True, True]),
+                ])
                 responses.extend([response, response])
                 explainer._BaseComplementaryNeymanShapExplainer__step = (
                     _Step.NEYMAN_ALLOCATION
                 )
                 return 1, None
 
-            masks.extend(
-                [
-                    torch.tensor([False, True, False, False]),
-                    torch.tensor([True, False, True, True]),
-                ]
-            )
+            masks.extend([
+                torch.tensor([False, True, False, False]),
+                torch.tensor([True, False, True, True]),
+            ])
             responses.extend([response, response])
             return 2, [(torch.tensor([False, True, False, False]), 0, None, response)]
 

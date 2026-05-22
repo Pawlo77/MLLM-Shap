@@ -29,11 +29,9 @@ class TransformersTextChat(BaseMllmChat):
     """Tensor of shape [T] containing the token IDs for all text tokens in the chat, in order.
     This is the main source of truth for the text tokens in the chat.
     The input_tokens property is derived from this tensor, and all text token manipulations should update this tensor accordingly."""
-    _SHARED_ATTRIBUTES: frozenset[str] = frozenset(
-        {
-            "tokenizer",  # Large read-only object, safe to share across copies
-        }
-    )
+    _SHARED_ATTRIBUTES: frozenset[str] = frozenset({
+        "tokenizer",  # Large read-only object, safe to share across copies
+    })
 
     def __init__(
         self,

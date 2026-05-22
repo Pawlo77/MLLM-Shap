@@ -68,9 +68,10 @@ def load_ablation_samples(
         var_name="condition",
         value_name="mean_boundary_flux",
     )
-    long_df["condition"] = long_df["condition"].map(
-        {"raw_mean_flux": "Raw CTC", "refined_mean_flux": "SGPA Refined"}
-    )
+    long_df["condition"] = long_df["condition"].map({
+        "raw_mean_flux": "Raw CTC",
+        "refined_mean_flux": "SGPA Refined",
+    })
     return df, long_df
 
 

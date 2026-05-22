@@ -55,13 +55,11 @@ class TestCosineSimilarity:
         """Checks that identical vectors."""
         similarity = CosineSimilarity()
         base = torch.tensor([1.0, 0.0])
-        others = torch.tensor(
-            [
-                [1.0, 0.0],  # identical
-                [0.0, 1.0],  # orthogonal
-                [1.0, 1.0],  # 45 degree
-            ]
-        )
+        others = torch.tensor([
+            [1.0, 0.0],  # identical
+            [0.0, 1.0],  # orthogonal
+            [1.0, 1.0],  # 45 degree
+        ])
         out = similarity(base, others)
         expected = torch.tensor([1.0, 0.0, 1 / (2**0.5)])
         assert torch.allclose(out, expected, atol=1e-5)

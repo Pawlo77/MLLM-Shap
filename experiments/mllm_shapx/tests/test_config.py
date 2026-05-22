@@ -241,41 +241,36 @@ class TestExperimentSet:
 
 class TestValidateConfig:
     def test_empty_experiments_error(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {"experiment_set_id": "x", "experiments": []}
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "x",
+            "experiments": [],
+        })
         errs = validate_config(cfg)
         assert any("at least one variant" in e for e in errs)
 
     def test_mc_without_samples_error(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "x",
-                "experiments": [{"explainer_type": "limited_mc"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "x",
+            "experiments": [{"explainer_type": "limited_mc"}],
+        })
         errs = validate_config(cfg)
         assert any("num_samples" in e for e in errs)
 
     def test_valid_config_no_errors(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "x",
-                "experiments": [{"explainer_type": "exact"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "x",
+            "experiments": [{"explainer_type": "exact"}],
+        })
         errs = validate_config(cfg)
         assert errs == []
 
     def test_hf_text_with_audio_output_error(self) -> None:
-        cfg = ExperimentSet.model_validate(
-            {
-                "experiment_set_id": "x",
-                "connector": "hf_text",
-                "modality": {"output_modality": "audio"},
-                "experiments": [{"explainer_type": "exact"}],
-            }
-        )
+        cfg = ExperimentSet.model_validate({
+            "experiment_set_id": "x",
+            "connector": "hf_text",
+            "modality": {"output_modality": "audio"},
+            "experiments": [{"explainer_type": "exact"}],
+        })
         errs = validate_config(cfg)
         assert any("audio output" in e for e in errs)
 

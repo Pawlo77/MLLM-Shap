@@ -200,12 +200,10 @@ class TestIterRowsForSelection:
 
 class TestIterBalancedTokenCountRows:
     def test_basic_balanced(self) -> None:
-        df = pd.DataFrame(
-            {
-                "text": ["a", "bb", "ccc", "dd", "e", "fff"],
-                "token_count": [1, 2, 3, 2, 1, 3],
-            }
-        )
+        df = pd.DataFrame({
+            "text": ["a", "bb", "ccc", "dd", "e", "fff"],
+            "token_count": [1, 2, 3, 2, 1, 3],
+        })
         rows = iter_balanced_token_count_rows(
             df,
             token_counts=[1, 2],

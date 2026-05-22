@@ -36,16 +36,12 @@ def serialize_conversation(conv: Any) -> List[List[Dict[str, Any]]]:
                     else float(v)
                     for v in shap_vals
                 ]
-            out_turn.append(
-                {
-                    "content_type": _safe_primitive(
-                        getattr(entry, "content_type", None)
-                    ),
-                    "roles": _safe_primitive(getattr(entry, "roles", None)),
-                    "content": content,
-                    "shap_values": shap_vals,
-                }
-            )
+            out_turn.append({
+                "content_type": _safe_primitive(getattr(entry, "content_type", None)),
+                "roles": _safe_primitive(getattr(entry, "roles", None)),
+                "content": content,
+                "shap_values": shap_vals,
+            })
         result.append(out_turn)
     return result
 

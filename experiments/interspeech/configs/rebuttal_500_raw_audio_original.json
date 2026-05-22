@@ -8,7 +8,7 @@
     "repo_id": "Pawlo77/mllm-shap",
     "use_parquet": true,
     "trust_remote_code": true,
-    "subset": "single_sentence_500"
+    "subset": "single_sentence__librispeech_asr"
   },
   "selection": {
     "max_samples": 100,
@@ -34,7 +34,7 @@
     "tags": [
       "interspeech",
       "rebuttal",
-      "single_sentence_500",
+      "single_sentence__librispeech_asr",
       "audio__original",
       "raw"
     ]
@@ -57,7 +57,7 @@
     "l2_normalize": true,
     "local_files_only": false
   },
-  "experiment_set_id": "rebuttal_single_sentence_500_original",
+  "experiment_set_id": "rebuttal_single_sentence__librispeech_asr_original",
   "modality": {
     "input_modality": "audio__original",
     "output_modality": "audio"
