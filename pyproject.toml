@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Workspace for mllm-shap."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-license = { text = "MIT License" }
+license = { text = "Apache-2.0" }
 keywords = [
   "audio",
   "bachelor-thesis",
@@ -18,7 +18,7 @@ keywords = [
 classifiers = [
   "Intended Audience :: Information Technology",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3.12",
 ]
