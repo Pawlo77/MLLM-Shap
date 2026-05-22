@@ -1,6 +1,8 @@
-"""DataFrame statistics helpers."""
+"""Helpers for computing and plotting dataset statistics.
 
-from __future__ import annotations
+This module provides utilities for sampling, summarising, and visualising
+properties of dataset DataFrames used in the experiments pipeline.
+"""
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,17 +14,21 @@ def get_sample_df(
     group_col: str = "datasets",
     text_col: str = "sentences",
 ) -> pd.DataFrame:
-    """For each group, get the sample with the longest text (in sentences).
+    """Select, for each group, the row with the longest text.
 
-    Parameters
-    ----------
-    df_to_sample : DataFrame with *group_col* and *text_col* columns.
-    group_col    : Column to explode/group on.
-    text_col     : Column whose list-length determines "longest".
+    For every distinct value in ``group_col`` this function explodes the
+    grouping column, computes the length of ``text_col`` (expected to be a
+    sequence), and returns the row that has the maximal length.
 
-    Returns
-    -------
-    DataFrame with one row per group containing the longest entry.
+    Args:
+        df_to_sample (pd.DataFrame): DataFrame containing the grouping and
+            text columns.
+        group_col (str): Column name to explode and group on.
+        text_col (str): Column containing a sequence (e.g. list of sentences)
+            whose length determines the "longest" entry.
+
+    Returns:
+        pd.DataFrame: One row per group containing the longest entry.
     """
     select_cols = [group_col, text_col]
     return (
@@ -42,12 +48,21 @@ def get_df_stats(
 ) -> dict[str, float]:
     """Compute summary statistics for a dataset DataFrame.
 
-    Parameters
-    ----------
-    df_to_analyze : DataFrame with at least *text_col* and *sentences_col*.
-    text_col      : Column with raw text strings.
-    sentences_col : Column with lists of sentences.
-    include_audio : Whether to include audio duration statistics.
+    The returned dictionary contains row- and text-level summaries such as
+    character counts, sentence statistics and unique entry counts. When
+    ``include_audio`` is True the function will also attempt to compute
+    duration aggregates for columns named ``audio__female__duration``,
+    ``audio__male__duration`` and ``audio__original__duration`` if present.
+
+    Args:
+        df_to_analyze (pd.DataFrame): DataFrame containing the dataset.
+        text_col (str): Column name with raw text strings.
+        sentences_col (str): Column name with lists of sentences.
+        include_audio (bool): If True, include audio duration statistics when
+            the expected duration columns are available.
+
+    Returns:
+        dict[str, float]: Summary statistics keyed by descriptive names.
     """
     characters_num = df_to_analyze[text_col].apply(len)
     sentences_num = df_to_analyze[sentences_col].apply(len)
@@ -92,17 +107,37 @@ def get_df_stats__by_source(
     text_col: str = "prompt",
     sentences_num_col: str = "sentences__num",
 ) -> pd.DataFrame:
-    """Statistics grouped by source dataset.
+    """Compute dataset-level statistics grouped by source.
 
-    Parameters
-    ----------
-    df_to_analyze    : DataFrame with *group_col *text_col and *sentences_num_col*.
-    group_col        : Column to explode and group on.
-    text_col         : Column with raw text strings.
-    sentences_num_col: Column with sentence counts.
+    The function explodes the grouping column and aggregates per-source
+    statistics such as number of rows, total characters and average
+    sentence counts.
+
+    Args:
+        df_to_analyze (pd.DataFrame): Input DataFrame.
+        group_col (str): Column name to explode and group on.
+        text_col (str): Column containing raw text strings.
+        sentences_num_col (str): Column with per-row sentence counts.
+
+    Returns:
+        pd.DataFrame: Aggregated statistics per source.
     """
+    # Ensure the grouping column exists and is list-like for explode().
+    if group_col not in df_to_analyze.columns:
+        df = df_to_analyze.copy()
+        # If a single-source column exists, wrap scalars into single-item lists.
+        if "dataset" in df.columns:
+            df[group_col] = df["dataset"].apply(
+                lambda x: [x] if not isinstance(x, list) else x
+            )
+        else:
+            # Fallback: create a single synthetic group so the aggregation still runs.
+            df[group_col] = [["unknown"] for _ in range(len(df))]
+    else:
+        df = df_to_analyze
+
     return (
-        df_to_analyze.explode(group_col)
+        df.explode(group_col)
         .groupby(group_col)
         .agg(
             num_rows=(text_col, "count"),
@@ -117,7 +152,19 @@ def get_df_stats__by_source(
 
 
 def compute_budgets(token_counts: pd.Series) -> dict[str, float]:
-    """Compute Shapley-value budget estimates for different strategies."""
+    """Compute Shapley-value budget estimates for different strategies.
+
+    This helper computes approximate model-evaluation budgets for several
+    sampling strategies given a series of token counts. Each returned value
+    represents the sum of per-example estimated costs under the corresponding
+    strategy.
+
+    Args:
+        token_counts (pd.Series): Series of integer token counts.
+
+    Returns:
+        dict[str, float]: Mapping from budget description to estimated cost.
+    """
     return {
         "n^2": sum(min(2**t, t**2) for t in token_counts),
         "2n^2": sum(min(2**t, 2 * t**2) for t in token_counts),
@@ -134,7 +181,17 @@ def plot_token_count_comparison(
     n_label: int | str,
     token_col: str = "token_count",
 ) -> None:
-    """Side-by-side histogram of token counts: candidate pool vs final sample."""
+    """Plot side-by-side histograms comparing token counts.
+
+    Displays two histograms (candidate pool and final sample) and prints a
+    summary description for the final dataset.
+
+    Args:
+        pool_df (pd.DataFrame): DataFrame representing the full candidate pool.
+        final_df (pd.DataFrame): DataFrame representing the final sampled set.
+        n_label (int | str): Label for the sample size displayed in the title.
+        token_col (str): Column name containing token counts.
+    """
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     sns.histplot(pool_df[token_col], bins=30, kde=False, ax=axes[0])
