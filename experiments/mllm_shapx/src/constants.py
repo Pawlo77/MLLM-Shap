@@ -17,16 +17,14 @@ class ExplainerType(StrEnum):
     HIERARCHICAL = "hierarchical"
 
 
-MC_LIKE_EXPLAINERS = frozenset(
-    {
-        ExplainerType.LIMITED_MC,
-        ExplainerType.STANDARD_MC,
-        ExplainerType.LIMITED_CC,
-        ExplainerType.STANDARD_CC,
-        ExplainerType.LIMITED_NEYMAN,
-        ExplainerType.STANDARD_NEYMAN,
-    }
-)
+MC_LIKE_EXPLAINERS = frozenset({
+    ExplainerType.LIMITED_MC,
+    ExplainerType.STANDARD_MC,
+    ExplainerType.LIMITED_CC,
+    ExplainerType.STANDARD_CC,
+    ExplainerType.LIMITED_NEYMAN,
+    ExplainerType.STANDARD_NEYMAN,
+})
 
 
 class ConnectorType(StrEnum):
@@ -95,11 +93,11 @@ class WandbMode(StrEnum):
 class DatasetType(StrEnum):
     """Known dataset subset options (non-exhaustive, used for documentation)."""
 
-    SINGLE_SENTENCE = "single_sentence"
-    SINGLE_SENTENCE_1K = "single_sentence_1k"
-    SINGLE_SENTENCE_500 = "single_sentence_500"
-    MULTILINGUAL = "multi_lingual"
-    MULTI_SENTENCE = "multi_sentence"
+    SINGLE_SENTENCE__VOICE_BENCH = "single_sentence__voice_bench"
+    SINGLE_SENTENCE__LIBRISPEECH_ASR = "single_sentence__librispeech_asr"
+    MULTILINGUAL__INFINITY_INSTRUCT = "multi_lingual__infinity_instruct"
+    MULTI_SENTENCE__VOICE_BENCH = "multi_sentence__voice_bench"
+    MULTI_TURN = "multi_turn"
 
 
 class TokenFilterType(StrEnum):
@@ -126,27 +124,21 @@ class DatasetSource(StrEnum):
 
 # ---- Modality helper constants ----
 
-AUDIO_MODALITIES = frozenset(
-    {
-        InputModality.AUDIO_ORIGINAL,
-        InputModality.AUDIO_MALE,
-        InputModality.AUDIO_FEMALE,
-    }
-)
+AUDIO_MODALITIES = frozenset({
+    InputModality.AUDIO_ORIGINAL,
+    InputModality.AUDIO_MALE,
+    InputModality.AUDIO_FEMALE,
+})
 
-INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset(
-    {
-        InputModality.INTERLEAVED_TEXT_FIRST_MALE,
-        InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
-    }
-)
+INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset({
+    InputModality.INTERLEAVED_TEXT_FIRST_MALE,
+    InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
+})
 
-INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset(
-    {
-        InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
-        InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
-    }
-)
+INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset({
+    InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
+    InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
+})
 
 INTERLEAVED_MODALITIES = (
     INTERLEAVED_TEXT_FIRST_MODALITIES | INTERLEAVED_AUDIO_FIRST_MODALITIES
@@ -187,7 +179,7 @@ def audio_column_for(modality: InputModality) -> Optional[AudioCol]:
 
 # ---- Defaults ----
 
-DEFAULT_SUBSET = DatasetType.SINGLE_SENTENCE.value
+DEFAULT_SUBSET = DatasetType.SINGLE_SENTENCE__VOICE_BENCH.value
 DEFAULT_SPLIT = "test"
 DEFAULT_SIMILARITY = "CosineSimilarity"
 TRUE_JSON = "1"
