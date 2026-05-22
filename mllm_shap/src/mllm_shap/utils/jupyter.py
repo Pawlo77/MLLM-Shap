@@ -19,8 +19,14 @@ def audio_html(content: bytes) -> str:
     Returns:
         str: HTML representation of the audio.
     """
-    a = display_audio(content)
-    return str(a._repr_html_())
+    # Handle missing or empty content gracefully to avoid notebook errors
+    if not content:
+        return "<em>No audio</em>"
+    try:
+        a = display_audio(content)
+        return str(a._repr_html_())
+    except Exception as e:  # defensive: return readable placeholder instead of raising
+        return f"<em>Audio error: {e}</em>"
 
 
 def display_shap_colors_df(
