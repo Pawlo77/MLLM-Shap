@@ -324,7 +324,7 @@ class TestGenerateResponses:
         """progress_bar=True should wrap the iterator with tqdm in single mode."""
         model, chat, cache_manager = setup_env
         seq = [(torch.tensor([True, True, True]), 1)]
-        mock_tqdm.side_effect = lambda iterable, desc: iterable
+        mock_tqdm.side_effect = lambda iterable, desc, **kwargs: iterable
 
         generate_responses(
             masks=[],
