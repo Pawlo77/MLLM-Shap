@@ -9,7 +9,6 @@ from ..src.config import (
     ExplainerVariant,
     HierarchicalConfig,
 )
-from ..src.constants import ExplainerType
 from ..src.runner import (
     RowSelector,
     _LinearSampleScaler,
@@ -63,7 +62,7 @@ class TestTrySetNumSamples:
 
 class TestExpandExact:
     def test_single_variant(self) -> None:
-        v = ExplainerVariant(explainer_type=ExplainerType.EXACT)
+        v = ExplainerVariant(explainer_type="exact")
         result = _expand_exact(v)
         assert len(result) == 1
         assert result[0].run_slug == "exact"
@@ -71,16 +70,14 @@ class TestExpandExact:
         assert result[0].fraction is None
 
     def test_named_variant(self) -> None:
-        v = ExplainerVariant(explainer_type=ExplainerType.EXACT, name="my_exact")
+        v = ExplainerVariant(explainer_type="exact", name="my_exact")
         result = _expand_exact(v)
         assert result[0].run_slug == "my_exact"
 
 
 class TestExpandMcLike:
     def test_num_samples_expansion(self) -> None:
-        v = ExplainerVariant(
-            explainer_type=ExplainerType.LIMITED_MC, num_samples=[10, 20, 30]
-        )
+        v = ExplainerVariant(explainer_type="limited_mc", num_samples=[10, 20, 30])
         result = _expand_mc_like(v)
         assert len(result) == 3
         assert result[0].num_samples == 10
@@ -88,18 +85,14 @@ class TestExpandMcLike:
         assert result[2].num_samples == 30
 
     def test_fractions_expansion(self) -> None:
-        v = ExplainerVariant(
-            explainer_type=ExplainerType.LIMITED_CC, fractions=[0.5, 0.8]
-        )
+        v = ExplainerVariant(explainer_type="limited_cc", fractions=[0.5, 0.8])
         result = _expand_mc_like(v)
         assert len(result) == 2
         assert result[0].fraction == 0.5
         assert result[1].fraction == 0.8
 
     def test_linear_expansion(self) -> None:
-        v = ExplainerVariant(
-            explainer_type=ExplainerType.STANDARD_MC, linear=[0.1, 0.2]
-        )
+        v = ExplainerVariant(explainer_type="standard_mc", linear=[0.1, 0.2])
         result = _expand_mc_like(v)
         assert len(result) == 2
         assert result[0].linear == 0.1
@@ -107,7 +100,7 @@ class TestExpandMcLike:
 
     def test_combined_expansion(self) -> None:
         v = ExplainerVariant(
-            explainer_type=ExplainerType.LIMITED_MC,
+            explainer_type="limited_mc",
             num_samples=[10],
             fractions=[0.5],
             linear=[0.1],
@@ -117,7 +110,7 @@ class TestExpandMcLike:
 
     def test_named_variant_slug(self) -> None:
         v = ExplainerVariant(
-            explainer_type=ExplainerType.LIMITED_MC, num_samples=[10], name="custom"
+            explainer_type="limited_mc", num_samples=[10], name="custom"
         )
         result = _expand_mc_like(v)
         assert "custom" in result[0].run_slug
@@ -126,7 +119,7 @@ class TestExpandMcLike:
 class TestExpandHierarchical:
     def test_default_config(self) -> None:
         v = ExplainerVariant(
-            explainer_type=ExplainerType.HIERARCHICAL,
+            explainer_type="hierarchical",
             hierarchical=HierarchicalConfig(),
         )
         result = _expand_hierarchical(v)
@@ -136,7 +129,7 @@ class TestExpandHierarchical:
 
     def test_multiple_ks(self) -> None:
         v = ExplainerVariant(
-            explainer_type=ExplainerType.HIERARCHICAL,
+            explainer_type="hierarchical",
             hierarchical=HierarchicalConfig(ks=[5, 10, 15]),
         )
         result = _expand_hierarchical(v)
@@ -147,7 +140,7 @@ class TestExpandHierarchical:
 
     def test_with_first_layer(self) -> None:
         v = ExplainerVariant(
-            explainer_type=ExplainerType.HIERARCHICAL,
+            explainer_type="hierarchical",
             hierarchical=HierarchicalConfig(
                 ks=[10],
                 first_layer_type="precise",

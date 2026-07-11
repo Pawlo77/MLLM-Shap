@@ -2,39 +2,16 @@
 
 from ..src.constants import (
     AUDIO_MODALITIES,
-    CHECKPOINT_VERSION,
     INTERLEAVED_AUDIO_FIRST_MODALITIES,
     INTERLEAVED_MODALITIES,
     INTERLEAVED_TEXT_FIRST_MODALITIES,
-    MC_LIKE_EXPLAINERS,
     AudioCol,
     DatasetSource,
-    ExplainerType,
     InputModality,
     audio_column_for,
     is_text_only_modality,
     needs_audio,
 )
-
-
-class TestExplainerType:
-    def test_all_values_are_strings(self) -> None:
-        for et in ExplainerType:
-            assert isinstance(et, str)
-
-    def test_mc_like_contains_expected(self) -> None:
-        assert ExplainerType.LIMITED_MC in MC_LIKE_EXPLAINERS
-        assert ExplainerType.STANDARD_MC in MC_LIKE_EXPLAINERS
-        assert ExplainerType.LIMITED_CC in MC_LIKE_EXPLAINERS
-        assert ExplainerType.STANDARD_CC in MC_LIKE_EXPLAINERS
-        assert ExplainerType.LIMITED_NEYMAN in MC_LIKE_EXPLAINERS
-        assert ExplainerType.STANDARD_NEYMAN in MC_LIKE_EXPLAINERS
-
-    def test_exact_not_mc_like(self) -> None:
-        assert ExplainerType.EXACT not in MC_LIKE_EXPLAINERS
-
-    def test_hierarchical_not_mc_like(self) -> None:
-        assert ExplainerType.HIERARCHICAL not in MC_LIKE_EXPLAINERS
 
 
 class TestInputModality:
@@ -117,9 +94,3 @@ class TestDatasetSource:
         assert DatasetSource.HF_DATASETS == "hf_datasets"
         assert DatasetSource.LOCAL_PARQUET == "local_parquet"
         assert DatasetSource.LOCAL_CSV == "local_csv"
-
-
-class TestCheckpointVersion:
-    def test_version_is_int(self) -> None:
-        assert isinstance(CHECKPOINT_VERSION, int)
-        assert CHECKPOINT_VERSION >= 1

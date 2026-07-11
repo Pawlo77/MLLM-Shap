@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 
 from ..src.config import GenerationConfig
-from ..src.constants import ConnectorType, TokenFilterType
+from ..src.constants import TokenFilterType
 from ..src.factory import (
     CONNECTOR_REGISTRY,
     build_generation_kwargs,
@@ -57,8 +57,8 @@ class TestBuildTokenFilter:
 
 class TestConnectorRegistry:
     def test_known_connectors(self) -> None:
-        assert ConnectorType.LIQUID_AUDIO in CONNECTOR_REGISTRY
-        assert ConnectorType.TRANSFORMERS_TEXT in CONNECTOR_REGISTRY
+        assert "liquid_audio" in CONNECTOR_REGISTRY
+        assert "hf_text" in CONNECTOR_REGISTRY
 
     def test_register_custom_connector(self) -> None:
         def custom_factory(device, tracking_mode, **kwargs):

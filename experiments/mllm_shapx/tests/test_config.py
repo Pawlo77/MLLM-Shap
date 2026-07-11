@@ -22,7 +22,6 @@ from ..src.config import (
 )
 from ..src.constants import (
     DatasetSource,
-    ExplainerType,
     TokenFilterType,
 )
 
@@ -57,17 +56,6 @@ class TestDatasetConfig:
             source=DatasetSource.LOCAL_PARQUET, path="/tmp/data.parquet"
         )
         assert cfg.path == "/tmp/data.parquet"
-
-    def test_use_parquet_backward_compat_true(self) -> None:
-        # Simulating JSON deserialization with use_parquet field
-        raw = {"use_parquet": True, "repo_id": "test/repo"}
-        cfg = DatasetConfig.model_validate(raw)
-        assert cfg.source == DatasetSource.HF_PARQUET
-
-    def test_use_parquet_backward_compat_false(self) -> None:
-        raw = {"use_parquet": False, "repo_id": "test/repo"}
-        cfg = DatasetConfig.model_validate(raw)
-        assert cfg.source == DatasetSource.HF_DATASETS
 
 
 class TestColumnMapping:
@@ -136,25 +124,13 @@ class TestShapConfig:
 
 
 class TestExplainerVariant:
-    def test_shorthand_mc(self) -> None:
-        v = ExplainerVariant(explainer_type="mc", num_samples=[10])
-        assert v.explainer_type == ExplainerType.LIMITED_MC
-
-    def test_shorthand_cc(self) -> None:
-        v = ExplainerVariant(explainer_type="cc", num_samples=[10])
-        assert v.explainer_type == ExplainerType.LIMITED_CC
-
-    def test_shorthand_neyman(self) -> None:
-        v = ExplainerVariant(explainer_type="neyman", num_samples=[10])
-        assert v.explainer_type == ExplainerType.LIMITED_NEYMAN
-
-    def test_shorthand_complementary(self) -> None:
-        v = ExplainerVariant(explainer_type="complementary", num_samples=[10])
-        assert v.explainer_type == ExplainerType.LIMITED_CC
+    def test_noncanonical_name_raises(self) -> None:
+        with pytest.raises(ValueError):
+            ExplainerVariant(explainer_type="not_a_real_explainer", num_samples=[10])
 
     def test_full_name(self) -> None:
         v = ExplainerVariant(explainer_type="limited_mc", num_samples=[10])
-        assert v.explainer_type == ExplainerType.LIMITED_MC
+        assert v.explainer_type == "limited_mc"
 
 
 class TestHierarchicalConfig:
