@@ -698,6 +698,149 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="TransformersCausalText.generate_batch">
+<a class="viewcode-back" href="../../../../mllm_shap.connectors.transformers_text.html#mllm_shap.connectors.TransformersCausalText.generate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">chats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMllmChat</span><span class="p">],</span>
+        <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span> <span class="o">=</span> <span class="n">ModelConfig</span><span class="p">(),</span>
+        <span class="n">keep_history</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate responses for multiple chats in a single batched forward pass.</span>
+
+<span class="sd">        Pads inputs to equal length and runs one ``model.generate()`` call,</span>
+<span class="sd">        giving much higher GPU utilization than sequential single-item calls.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chats</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chats</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+                    <span class="n">chat</span><span class="o">=</span><span class="n">chats</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
+                    <span class="n">model_config</span><span class="o">=</span><span class="n">model_config</span><span class="p">,</span>
+                    <span class="n">keep_history</span><span class="o">=</span><span class="n">keep_history</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+
+        <span class="n">model_config</span> <span class="o">=</span> <span class="n">model_config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">model_config</span><span class="o">.</span><span class="n">audio_temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">model_config</span><span class="o">.</span><span class="n">audio_top_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Audio generation parameters were provided but this connector is text-only; &quot;</span>
+                <span class="s2">&quot;audio settings are ignored.&quot;</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Prepare individual chats (deep copy + mark assistant turn)</span>
+        <span class="n">prepared_chats</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMllmChat</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">prompt_lengths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">chat</span> <span class="ow">in</span> <span class="n">chats</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">chat</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">new_turn</span><span class="p">(</span><span class="n">Role</span><span class="o">.</span><span class="n">ASSISTANT</span><span class="p">)</span>
+            <span class="n">prepared_chats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">prompt_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">text_tokens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># Left-pad to max length and build batched tensors</span>
+        <span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">prompt_lengths</span><span class="p">)</span>
+        <span class="n">pad_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">pad_token_id</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">eos_token_id</span> <span class="ow">or</span> <span class="mi">0</span>
+
+        <span class="n">input_ids_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">attention_mask_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">p_len</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">prepared_chats</span><span class="p">,</span> <span class="n">prompt_lengths</span><span class="p">):</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">text_tokens</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">pad_len</span> <span class="o">=</span> <span class="n">max_len</span> <span class="o">-</span> <span class="n">p_len</span>
+            <span class="k">if</span> <span class="n">pad_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">padding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">pad_len</span><span class="p">,),</span> <span class="n">pad_id</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+                <span class="p">)</span>
+                <span class="n">tokens</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">padding</span><span class="p">,</span> <span class="n">tokens</span><span class="p">])</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pad_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                        <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">p_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">p_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">input_ids_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+            <span class="n">attention_mask_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">input_ids_list</span><span class="p">)</span>  <span class="c1"># [B, max_len]</span>
+        <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">attention_mask_list</span><span class="p">)</span>  <span class="c1"># [B, max_len]</span>
+
+        <span class="n">do_sample</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">model_config</span><span class="o">.</span><span class="n">text_temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">model_config</span><span class="o">.</span><span class="n">text_temperature</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">model_config</span><span class="o">.</span><span class="n">text_temperature</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">do_sample</span> <span class="ow">and</span> <span class="n">model_config</span><span class="o">.</span><span class="n">text_temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">model_config</span><span class="o">.</span><span class="n">text_top_k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">do_sample</span> <span class="ow">and</span> <span class="n">model_config</span><span class="o">.</span><span class="n">text_top_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">gen_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
+            <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
+            <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
+            <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
+            <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
+            <span class="n">return_dict_in_generate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">pad_token_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
+            <span class="n">eos_token_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">eos_token_id</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">sequences</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">gen_out</span><span class="o">.</span><span class="n">sequences</span>  <span class="c1"># [B, max_len + gen_len]</span>
+
+        <span class="c1"># Unpack per-sample responses</span>
+        <span class="n">responses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelResponse</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">chat_out</span><span class="p">,</span> <span class="n">p_len</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">prepared_chats</span><span class="p">,</span> <span class="n">prompt_lengths</span><span class="p">)):</span>
+            <span class="n">gen_start</span> <span class="o">=</span> <span class="n">max_len</span>  <span class="c1"># generation starts after padded prompt</span>
+            <span class="n">generated</span> <span class="o">=</span> <span class="n">sequences</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">gen_start</span><span class="p">:]</span>
+            <span class="c1"># Strip pad tokens from generated output</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">pad_token_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">non_pad</span> <span class="o">=</span> <span class="n">generated</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">pad_token_id</span>
+                <span class="n">generated</span> <span class="o">=</span> <span class="n">generated</span><span class="p">[</span><span class="n">non_pad</span><span class="p">]</span>
+            <span class="n">generated</span> <span class="o">=</span> <span class="n">generated</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="n">modality_flag</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">generated</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],),</span>
+                <span class="n">ModalityFlag</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">keep_history</span><span class="p">:</span>
+                <span class="n">text_tokens_2d</span> <span class="o">=</span> <span class="n">generated</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">empty_audio</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_set_chat_history</span><span class="p">(</span>
+                    <span class="n">chat_out</span><span class="p">,</span> <span class="n">text_tokens_2d</span><span class="p">,</span> <span class="n">empty_audio</span><span class="p">,</span> <span class="n">modality_flag</span>
+                <span class="p">)</span>
+
+            <span class="n">responses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ModelResponse</span><span class="p">(</span>
+                    <span class="n">chat</span><span class="o">=</span><span class="n">chat_out</span> <span class="k">if</span> <span class="n">keep_history</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">generated_text_tokens</span><span class="o">=</span><span class="n">generated</span><span class="p">,</span>
+                    <span class="n">generated_audio_tokens</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+                        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+                    <span class="p">),</span>
+                    <span class="n">generated_modality_flag</span><span class="o">=</span><span class="n">modality_flag</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">responses</span></div>
+
+
     <span class="c1"># -- embeddings API --</span>
 
 <div class="viewcode-block" id="TransformersCausalText.get_static_embeddings">

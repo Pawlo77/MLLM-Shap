@@ -514,7 +514,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Testing/debug sink storing all events in memory.&quot;&quot;&quot;</span>
 
     <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TraceEvent</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collected trace events in emission order.&quot;&quot;&quot;</span>
     <span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StageSpan</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collected stage spans in emission order.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="InMemoryObservabilitySink.emit_event">
 <a class="viewcode-back" href="../../../mllm_shap.observability.html#mllm_shap.observability.sink.InMemoryObservabilitySink.emit_event">[docs]</a>

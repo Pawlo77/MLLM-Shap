@@ -1134,6 +1134,28 @@ actual model inference. Useful for testing and debugging the SHAP pipeline.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.connectors.mock.model.Mock.generate_batch">
+<span class="sig-name descname"><span class="pre">generate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.config.ModelConfig" title="mllm_shap.connectors.config.ModelConfig"><span class="pre">ModelConfig</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ModelConfig(text_temperature=0.0,</span> <span class="pre">text_top_k=1,</span> <span class="pre">audio_temperature=0.0,</span> <span class="pre">audio_top_k=1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#mllm_shap.connectors.mock.model.Mock.generate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Generate responses for multiple chats in a single batched forward pass.</p>
+<p>The default implementation loops over individual <code class="docutils literal notranslate"><span class="pre">generate</span></code> calls.
+Connectors that support true batched inference (e.g. HuggingFace
+Transformers) should override this for higher GPU throughput.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chats</strong> – List of chat objects to generate from.</p></li>
+<li><p><strong>max_new_tokens</strong> – Maximum new tokens per generation.</p></li>
+<li><p><strong>model_config</strong> – Generation configuration.</p></li>
+<li><p><strong>keep_history</strong> – Whether to keep full chat history in responses.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of ModelResponse objects, one per input chat.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="mllm_shap.connectors.mock.model.Mock.get_contextual_embeddings">
 <span class="sig-name descname"><span class="pre">get_contextual_embeddings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">static_embeddings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#mllm_shap.connectors.mock.model.Mock.get_contextual_embeddings" title="Link to this definition">#</a></dt>
 <dd><p>Get contextual embeddings for the current chat state.</p>
@@ -1244,6 +1266,28 @@ actual model inference. Useful for testing and debugging the SHAP pipeline.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse">ModelResponse</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mllm_shap.connectors.mock.Mock.generate_batch">
+<span class="sig-name descname"><span class="pre">generate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.chat.BaseMllmChat" title="mllm_shap.connectors.base.chat.BaseMllmChat"><span class="pre">BaseMllmChat</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mllm_shap.connectors.html#mllm_shap.connectors.config.ModelConfig" title="mllm_shap.connectors.config.ModelConfig"><span class="pre">ModelConfig</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ModelConfig(text_temperature=0.0,</span> <span class="pre">text_top_k=1,</span> <span class="pre">audio_temperature=0.0,</span> <span class="pre">audio_top_k=1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mllm_shap.connectors.base.html#mllm_shap.connectors.base.model_response.ModelResponse" title="mllm_shap.connectors.base.model_response.ModelResponse"><span class="pre">ModelResponse</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#mllm_shap.connectors.mock.Mock.generate_batch" title="Link to this definition">#</a></dt>
+<dd><p>Generate responses for multiple chats in a single batched forward pass.</p>
+<p>The default implementation loops over individual <code class="docutils literal notranslate"><span class="pre">generate</span></code> calls.
+Connectors that support true batched inference (e.g. HuggingFace
+Transformers) should override this for higher GPU throughput.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chats</strong> – List of chat objects to generate from.</p></li>
+<li><p><strong>max_new_tokens</strong> – Maximum new tokens per generation.</p></li>
+<li><p><strong>model_config</strong> – Generation configuration.</p></li>
+<li><p><strong>keep_history</strong> – Whether to keep full chat history in responses.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of ModelResponse objects, one per input chat.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1966,6 +2010,7 @@ Relative to <a class="reference internal" href="#mllm_shap.connectors.mock.MockC
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.config"><code class="docutils literal notranslate"><span class="pre">Mock.config</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.device"><code class="docutils literal notranslate"><span class="pre">Mock.device</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.generate"><code class="docutils literal notranslate"><span class="pre">Mock.generate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.generate_batch"><code class="docutils literal notranslate"><span class="pre">Mock.generate_batch()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.get_contextual_embeddings"><code class="docutils literal notranslate"><span class="pre">Mock.get_contextual_embeddings()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.get_new_chat"><code class="docutils literal notranslate"><span class="pre">Mock.get_new_chat()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.model.Mock.get_static_embeddings"><code class="docutils literal notranslate"><span class="pre">Mock.get_static_embeddings()</span></code></a></li>
@@ -1981,6 +2026,7 @@ Relative to <a class="reference internal" href="#mllm_shap.connectors.mock.MockC
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.config"><code class="docutils literal notranslate"><span class="pre">Mock.config</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.device"><code class="docutils literal notranslate"><span class="pre">Mock.device</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.generate"><code class="docutils literal notranslate"><span class="pre">Mock.generate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.generate_batch"><code class="docutils literal notranslate"><span class="pre">Mock.generate_batch()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.get_contextual_embeddings"><code class="docutils literal notranslate"><span class="pre">Mock.get_contextual_embeddings()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.get_new_chat"><code class="docutils literal notranslate"><span class="pre">Mock.get_new_chat()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#mllm_shap.connectors.mock.Mock.get_static_embeddings"><code class="docutils literal notranslate"><span class="pre">Mock.get_static_embeddings()</span></code></a></li>

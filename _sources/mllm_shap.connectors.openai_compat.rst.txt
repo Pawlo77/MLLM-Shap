@@ -1,0 +1,21 @@
+mllm\_shap.connectors.openai\_compat package
+============================================
+
+Submodules
+----------
+
+mllm\_shap.connectors.openai\_compat.model module
+-------------------------------------------------
+
+.. automodule:: mllm_shap.connectors.openai_compat.model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mllm_shap.connectors.openai_compat
+   :members:
+   :show-inheritance:
+   :undoc-members:

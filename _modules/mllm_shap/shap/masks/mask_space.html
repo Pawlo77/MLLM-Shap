@@ -493,7 +493,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Describes explainable feature subset inside full token mask.&quot;&quot;&quot;</span>
 
     <span class="n">shap_values_mask</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Boolean mask selecting explainable feature positions from full chat.&quot;&quot;&quot;</span>
     <span class="n">target_length</span><span class="p">:</span> <span class="nb">int</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total length of the full token mask (including non-explainable tokens).&quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_features</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
