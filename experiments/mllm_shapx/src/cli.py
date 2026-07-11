@@ -57,7 +57,7 @@ def _emit_json(event: str, payload: dict[str, object]) -> None:
 
 
 def _print_line(
-    output: OutputOptions, message: str,  quiet_sensitive: bool = True
+    output: OutputOptions, message: str, quiet_sensitive: bool = True
 ) -> None:
     """Print one plain-text line respecting output mode flags."""
     if output.as_json:

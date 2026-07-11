@@ -19,13 +19,11 @@ def plot_metric_history(
         hist = client.get_metric_history(run_id, key)
         if not hist:
             continue
-        df = pd.DataFrame(
-            {
-                "step": [h.step for h in hist],
-                "value": [h.value for h in hist],
-                "metric": key,
-            }
-        )
+        df = pd.DataFrame({
+            "step": [h.step for h in hist],
+            "value": [h.value for h in hist],
+            "metric": key,
+        })
         frames.append(df)
 
     if not frames:
@@ -65,13 +63,11 @@ def compare_metrics_chart(
         if not hist:
             continue
         label = (run_labels or {}).get(rid, rid[:8])
-        df = pd.DataFrame(
-            {
-                "step": [h.step for h in hist],
-                "value": [h.value for h in hist],
-                "run": label,
-            }
-        )
+        df = pd.DataFrame({
+            "step": [h.step for h in hist],
+            "value": [h.value for h in hist],
+            "run": label,
+        })
         frames.append(df)
 
     if not frames:

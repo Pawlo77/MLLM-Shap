@@ -17,15 +17,13 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 # Known dataset subset names used for warning-level typo detection.
-KNOWN_DATASET_SUBSETS = frozenset(
-    {
-        "single_sentence",
-        "single_sentence_1k",
-        "single_sentence_500",
-        "multi_lingual",
-        "multi_sentence",
-    }
-)
+KNOWN_DATASET_SUBSETS = frozenset({
+    "single_sentence",
+    "single_sentence_1k",
+    "single_sentence_500",
+    "multi_lingual",
+    "multi_sentence",
+})
 
 
 def validate_config(cfg: "ExperimentSet") -> List[str]:

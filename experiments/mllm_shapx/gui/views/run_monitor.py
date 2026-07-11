@@ -190,9 +190,10 @@ def _render_run_card(stats: Dict[str, Any]) -> None:
     # Per-sample timing chart
     if stats["runtimes"]:
         with st.expander("📈 Per-sample timing", expanded=False):
-            timing_df = pd.DataFrame(
-                {"sample": range(len(stats["runtimes"])), "seconds": stats["runtimes"]}
-            )
+            timing_df = pd.DataFrame({
+                "sample": range(len(stats["runtimes"])),
+                "seconds": stats["runtimes"],
+            })
             st.line_chart(timing_df, x="sample", y="seconds")
 
             # Distribution
@@ -220,12 +221,10 @@ def _render_system_metrics(client: MlflowClient, run_id: str) -> None:
             hist = client.get_metric_history(run_id, key)
             if hist:
                 short_name = key.split("/")[-1].replace("_", " ").title()
-                df = pd.DataFrame(
-                    {
-                        "step": [h.step for h in hist],
-                        short_name: [h.value for h in hist],
-                    }
-                ).set_index("step")
+                df = pd.DataFrame({
+                    "step": [h.step for h in hist],
+                    short_name: [h.value for h in hist],
+                }).set_index("step")
                 frames.append(df)
         except Exception:  # noqa: BLE001
             continue

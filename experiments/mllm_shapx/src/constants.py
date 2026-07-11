@@ -56,29 +56,23 @@ class DatasetSource(StrEnum):
     LOCAL_CSV = "local_csv"
 
 
-AUDIO_MODALITIES = frozenset(
-    {
-        InputModality.AUDIO_ORIGINAL,
-        InputModality.AUDIO_MALE,
-        InputModality.AUDIO_FEMALE,
-    }
-)
+AUDIO_MODALITIES = frozenset({
+    InputModality.AUDIO_ORIGINAL,
+    InputModality.AUDIO_MALE,
+    InputModality.AUDIO_FEMALE,
+})
 """Modalities that require audio input."""
 
-INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset(
-    {
-        InputModality.INTERLEAVED_TEXT_FIRST_MALE,
-        InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
-    }
-)
+INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset({
+    InputModality.INTERLEAVED_TEXT_FIRST_MALE,
+    InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
+})
 """Modalities where text comes first, but still require audio input."""
 
-INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset(
-    {
-        InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
-        InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
-    }
-)
+INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset({
+    InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
+    InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
+})
 """Modalities where audio comes first, and also require audio input."""
 
 INTERLEAVED_MODALITIES = (

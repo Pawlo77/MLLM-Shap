@@ -269,12 +269,10 @@ class TransformersCausalText(BaseMllmModel):
                     (pad_len,), pad_id, dtype=torch.long, device=self.device
                 )
                 tokens = torch.cat([padding, tokens])
-                mask = torch.cat(
-                    [
-                        torch.zeros(pad_len, dtype=torch.long, device=self.device),
-                        torch.ones(p_len, dtype=torch.long, device=self.device),
-                    ]
-                )
+                mask = torch.cat([
+                    torch.zeros(pad_len, dtype=torch.long, device=self.device),
+                    torch.ones(p_len, dtype=torch.long, device=self.device),
+                ])
             else:
                 mask = torch.ones(p_len, dtype=torch.long, device=self.device)
             input_ids_list.append(tokens)

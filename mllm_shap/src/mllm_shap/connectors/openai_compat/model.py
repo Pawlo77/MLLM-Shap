@@ -55,7 +55,6 @@ class OpenAICompatCausalText(BaseMllmModel):
     def __init__(
         self,
         device: torch.device,
-        
         base_url: str | None = None,
         chat_model: str | None = None,
         api_key: str | None = None,

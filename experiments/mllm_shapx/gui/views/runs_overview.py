@@ -52,17 +52,15 @@ def render() -> None:
             if r.info.end_time and r.info.start_time
             else None
         )
-        rows.append(
-            {
-                "Run Name": r.info.run_name or "—",
-                "Run ID": r.info.run_id[:12],
-                "Status": r.info.status,
-                "Started": start_dt,
-                "Duration (s)": f"{duration_s:.1f}" if duration_s else "—",
-                "Metrics": len(r.data.metrics),
-                "Params": len(r.data.params),
-            }
-        )
+        rows.append({
+            "Run Name": r.info.run_name or "—",
+            "Run ID": r.info.run_id[:12],
+            "Status": r.info.status,
+            "Started": start_dt,
+            "Duration (s)": f"{duration_s:.1f}" if duration_s else "—",
+            "Metrics": len(r.data.metrics),
+            "Params": len(r.data.params),
+        })
 
     df = pd.DataFrame(rows)
 

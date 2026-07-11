@@ -18,16 +18,14 @@ ALLOWED_SHAP_MODES = frozenset(mode.name for mode in ShapMode)
 ALLOWED_HIERARCHICAL_MODES = frozenset(mode.name for mode in HierarchicalMode)
 
 # Allowed inner explainer ids for hierarchical composition.
-ALLOWED_HIERARCHICAL_INNER_TYPES = frozenset(
-    {
-        "precise",
-        "limited_mc",
-        "limited_cc",
-        "standard_cc",
-        "limited_neyman",
-        "standard_neyman",
-    }
-)
+ALLOWED_HIERARCHICAL_INNER_TYPES = frozenset({
+    "precise",
+    "limited_mc",
+    "limited_cc",
+    "standard_cc",
+    "limited_neyman",
+    "standard_neyman",
+})
 
 
 def _is_default_constructible(cls: type[Any]) -> bool:
@@ -50,7 +48,6 @@ def _is_default_constructible(cls: type[Any]) -> bool:
 
 def _discover_module_classes(
     module: Any,
-    
     base_cls: type[Any],
     include_name: Callable[[str], bool] | None = None,
     exclude_names: set[str] | None = None,

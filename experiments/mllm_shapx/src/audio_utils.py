@@ -104,14 +104,12 @@ def serialize_result_with_audio(
                         f"{sample_id}_input_{i:02d}.wav",
                         artifact_path=f"audio/{sample_id}",
                     )
-                    input_infos.append(
-                        {
-                            "input_modality": input_modality.value,
-                            "has_audio": True,
-                            "size_bytes": len(audio),
-                            "sample_rate": sample_rate,
-                        }
-                    )
+                    input_infos.append({
+                        "input_modality": input_modality.value,
+                        "has_audio": True,
+                        "size_bytes": len(audio),
+                        "sample_rate": sample_rate,
+                    })
             serialized["input_audios"] = input_infos
 
     # Extract and log output audio if output modality is audio
