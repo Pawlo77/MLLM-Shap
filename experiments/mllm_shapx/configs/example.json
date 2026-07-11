@@ -1,0 +1,65 @@
+{
+  "experiment_set_id": "example_run",
+  "output_root": "experiments_output/example",
+  "device": "cuda",
+  "connector": "liquid_audio",
+
+  "dataset": {
+    "source": "hf_parquet",
+    "repo_id": "Pawlo77/mllm-shap",
+    "subset": "default",
+    "split": "train",
+    "column_mapping": {
+      "text": null,
+      "audio": null
+    }
+  },
+
+  "selection": {
+    "max_samples": 10,
+    "shuffle_seed": 42,
+    "start_index": 0
+  },
+
+  "modality": {
+    "input_modality": "text",
+    "output_modality": "text"
+  },
+
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.2
+  },
+
+  "chat": {
+    "system_roles_setup": "SYSTEM_ASSISTANT",
+    "system_prompt": "You are a helpful assistant."
+  },
+
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "AbsSumNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "TfIdfCosineSimilarity",
+    "token_filter": "exclude_punctuation",
+    "allow_mask_duplicates": false
+  },
+
+  "runtime": {
+    "verbose": true,
+    "progress_bar": true,
+    "gc_after_each_sample": true,
+    "cuda_empty_cache": true
+  },
+
+  "mlflow": {
+    "experiment_name": "example"
+  },
+
+  "experiments": [
+    {
+      "explainer_type": "limited_mc",
+      "num_samples": [100]
+    }
+  ]
+}
