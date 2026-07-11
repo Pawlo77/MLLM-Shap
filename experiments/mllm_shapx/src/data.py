@@ -1,12 +1,11 @@
 """Dataset loading, row selection, filtering, and prompt extraction utilities."""
 
-import importlib
 import logging
 import operator
 import os
 import re
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 import numpy
 import pandas as pd
@@ -14,26 +13,23 @@ from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 
 from .config import DatasetConfig, FilterPredicate
-from .constants import (
-    TRUE_JSON,
-    DatasetSource,
-    TextCol,
-)
+from .constants import TRUE_JSON, DatasetSource
 
 LOGGER = logging.getLogger(__name__)
 
-
-# ---------------------------
-# DATASET LOADING
-# ---------------------------
+_OP_MAP: Dict[str, Callable[[Any, Any], bool]] = {
+    "==": operator.eq,
+    "!=": operator.ne,
+    "<": operator.lt,
+    "<=": operator.le,
+    ">": operator.gt,
+    ">=": operator.ge,
+}
+"""Mapping of supported filter operators to their corresponding functions."""
 
 
 def load_df(cfg: DatasetConfig) -> pd.DataFrame:
-    """
-    Load dataset as DataFrame using the configured source strategy.
-
-    Supports: hf_parquet, hf_datasets, local_parquet, local_csv.
-    """
+    """Load dataset as DataFrame using the configured source strategy."""
     if cfg.source == DatasetSource.HF_PARQUET:
         return _load_hf_parquet(cfg.repo_id, cfg.subset, cfg.split, cfg.revision)
     if cfg.source == DatasetSource.HF_DATASETS:
@@ -71,7 +67,7 @@ def _load_hf_parquet(
 
 def _load_hf_datasets(
     repo_id: str,
-    subset: Optional[str],
+    subset: str | None,
     split: str,
     revision: str = "main",
     trust_remote_code: bool = True,
@@ -96,7 +92,7 @@ def _load_hf_datasets(
     return dataset.to_pandas()
 
 
-def _load_local_parquet(path: Optional[str]) -> pd.DataFrame:
+def _load_local_parquet(path: str | None) -> pd.DataFrame:
     """Load a local parquet file."""
     if not path:
         raise ValueError("dataset.path is required for local_parquet source.")
@@ -107,7 +103,7 @@ def _load_local_parquet(path: Optional[str]) -> pd.DataFrame:
     return pd.read_parquet(resolved)
 
 
-def _load_local_csv(path: Optional[str]) -> pd.DataFrame:
+def _load_local_csv(path: str | None) -> pd.DataFrame:
     """Load a local CSV file."""
     if not path:
         raise ValueError("dataset.path is required for local_csv source.")
@@ -116,39 +112,6 @@ def _load_local_csv(path: Optional[str]) -> pd.DataFrame:
         raise FileNotFoundError(f"Local CSV file not found: {resolved}")
     LOGGER.info("Loading dataset from local CSV file: %s", resolved)
     return pd.read_csv(resolved)
-
-
-# Legacy aliases for backward compatibility
-def load_single_sentence_df(
-    repo_id: str, subset: str, split: str, revision: str
-) -> pd.DataFrame:
-    """Legacy: load HF parquet shard."""
-    return _load_hf_parquet(repo_id, subset, split, revision)
-
-
-def load_dataset_from_main(
-    repo_id: str,
-    subset: Optional[str],
-    split: str,
-    revision: str = "main",
-    trust_remote_code: bool = True,
-) -> pd.DataFrame:
-    """Legacy: load via datasets library."""
-    return _load_hf_datasets(repo_id, subset, split, revision, trust_remote_code)
-
-
-# ---------------------------
-# ROW FILTERING
-# ---------------------------
-
-_OP_MAP: Dict[str, Callable[[Any, Any], bool]] = {
-    "==": operator.eq,
-    "!=": operator.ne,
-    "<": operator.lt,
-    "<=": operator.le,
-    ">": operator.gt,
-    ">=": operator.ge,
-}
 
 
 def apply_filters(df: pd.DataFrame, filters: List[FilterPredicate]) -> pd.DataFrame:
@@ -186,31 +149,21 @@ def apply_filters(df: pd.DataFrame, filters: List[FilterPredicate]) -> pd.DataFr
     return df.reset_index(drop=True)
 
 
-# ---------------------------
-# TEXT EXTRACTION
-# ---------------------------
-
-
-def choose_prompt_text_column(df: pd.DataFrame, override: Optional[str] = None) -> str:
+def choose_prompt_text_column(df: pd.DataFrame, override: str | None = None) -> str:
     """Pick the correct text column. Uses override if provided, else auto-detect."""
     if override:
         if override in df.columns:
             return override
         raise KeyError(f"Configured text column '{override}' not found in dataframe.")
-    if TextCol.SENTENCES.value in df.columns:
-        return TextCol.SENTENCES.value
-    if TextCol.PROMPT.value in df.columns:
-        return TextCol.PROMPT.value
+    if "sentences" in df.columns:
+        return "sentences"
+    if "prompt" in df.columns:
+        return "prompt"
     raise KeyError("Neither 'prompt' nor 'sentences' column found in dataframe.")
 
 
 def extract_texts_from_row(value: Any) -> List[str]:
-    """
-    Extract texts from a row value as a list, handling single strings and lists.
-
-    Returns:
-        List of text strings (never empty - returns [""] for None/empty input).
-    """
+    """Extract texts from a row value as a list."""
     if value is None:
         return [""]
     if isinstance(value, (list, numpy.ndarray)):
@@ -227,16 +180,11 @@ def extract_text_from_row(value: Any, separator: str = " ") -> str:
     return separator.join(texts)
 
 
-# ---------------------------
-# ROW ITERATION / SELECTION
-# ---------------------------
-
-
 def iter_rows_for_selection(
     df: pd.DataFrame,
     start_index: int,
-    max_samples: Optional[int],
-    shuffle_seed: Optional[int],
+    max_samples: int | None,
+    shuffle_seed: int | None,
 ) -> Iterable[Tuple[int, Dict[str, Any]]]:
     """Yield (row_index, row_dict) with optional deterministic shuffling and slicing."""
     if shuffle_seed is not None:
@@ -254,8 +202,8 @@ def iter_balanced_token_count_rows(
     token_counts: List[int],
     samples_per_token_count: int,
     start_index: int,
-    max_samples: Optional[int],
-    shuffle_seed: Optional[int],
+    max_samples: int | None,
+    shuffle_seed: int | None,
     allow_partial_buckets: bool,
     token_count_col: str = "token_count",
 ) -> List[Tuple[int, Dict[str, Any]]]:
@@ -294,50 +242,6 @@ def iter_balanced_token_count_rows(
         else min(len(selected), start + max_samples)
     )
     return selected[start:end]
-
-
-# ---------------------------
-# UTILITIES
-# ---------------------------
-
-
-def get_hf_text_tokenizer() -> Any:
-    """Lazily construct the HF tokenizer used by the Transformers text-only connector."""
-    cfg_mod = importlib.import_module("mllm_shap.connectors.transformers_text.config")
-    transformers = importlib.import_module("transformers")
-    repo_id = getattr(cfg_mod, "CONFIG").repo_id
-    revision = getattr(cfg_mod, "CONFIG").revision
-    return getattr(transformers, "AutoTokenizer").from_pretrained(
-        repo_id, revision=revision
-    )  # nosec B615
-
-
-def filter_df_by_max_prompt_tokens(
-    df: pd.DataFrame, text_col: str, tokenizer: Any, max_tokens: int
-) -> Tuple[pd.DataFrame, int]:
-    """Return (filtered_df, total_matching_count) where rows have <= max_tokens."""
-    lengths = []
-    for _, row in df.iterrows():
-        text = extract_text_from_row(row[text_col])
-        ids = tokenizer.encode(text, add_special_tokens=True)
-        lengths.append(len(ids))
-    mask = pd.Series(lengths) <= int(max_tokens + 2)
-    filtered = df[mask.values].reset_index(drop=True)
-    return filtered, int(mask.sum())
-
-
-def filter_df_by_min_prompt_tokens(
-    df: pd.DataFrame, text_col: str, tokenizer: Any, min_tokens: int
-) -> Tuple[pd.DataFrame, int]:
-    """Return (filtered_df, total_matching_count) where rows have >= min_tokens."""
-    lengths = []
-    for _, row in df.iterrows():
-        text = extract_text_from_row(row[text_col])
-        ids = tokenizer.encode(text, add_special_tokens=True)
-        lengths.append(len(ids))
-    mask = pd.Series(lengths) >= int(min_tokens - 2)
-    filtered = df[mask.values].reset_index(drop=True)
-    return filtered, int(mask.sum())
 
 
 def _ensure_pinned_revision(revision: str) -> None:

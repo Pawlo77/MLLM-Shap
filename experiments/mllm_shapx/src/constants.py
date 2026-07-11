@@ -1,37 +1,15 @@
 """Central constants, enums, and modality helpers."""
 
 from enum import StrEnum
-from typing import Optional
 
+DEFAULT_SUBSET: str = "single_sentence"
+"""Default dataset subset name."""
 
-class ExplainerType(StrEnum):
-    """Explainer type strings."""
+DEFAULT_SPLIT: str = "test"
+"""Default dataset split name."""
 
-    EXACT = "exact"
-    LIMITED_MC = "limited_mc"
-    STANDARD_MC = "standard_mc"
-    LIMITED_CC = "limited_cc"
-    STANDARD_CC = "standard_cc"
-    LIMITED_NEYMAN = "limited_neyman"
-    STANDARD_NEYMAN = "standard_neyman"
-    HIERARCHICAL = "hierarchical"
-
-
-MC_LIKE_EXPLAINERS = frozenset({
-    ExplainerType.LIMITED_MC,
-    ExplainerType.STANDARD_MC,
-    ExplainerType.LIMITED_CC,
-    ExplainerType.STANDARD_CC,
-    ExplainerType.LIMITED_NEYMAN,
-    ExplainerType.STANDARD_NEYMAN,
-})
-
-
-class ConnectorType(StrEnum):
-    """Available model backends/connectors."""
-
-    LIQUID_AUDIO = "liquid_audio"
-    TRANSFORMERS_TEXT = "hf_text"
+TRUE_JSON: str = "1"
+"""String representation of a true boolean value in JSON."""
 
 
 class InputModality(StrEnum):
@@ -54,28 +32,6 @@ class OutputModality(StrEnum):
     AUDIO = "audio"
 
 
-class SimilarityType(StrEnum):
-    """Similarity metric options."""
-
-    COSINE = "CosineSimilarity"
-    TFIDF_COSINE = "TfIdfCosineSimilarity"
-    EUCLIDEAN = "EuclideanSimilarity"
-
-
-class ModeType(StrEnum):
-    """Explanation modes."""
-
-    CONTEXTUAL = "CONTEXTUAL"
-    STATIC = "STATIC"
-
-
-class TextCol(StrEnum):
-    """Text column options in dataset."""
-
-    PROMPT = "prompt"
-    SENTENCES = "sentences"
-
-
 class AudioCol(StrEnum):
     """Audio column options in dataset."""
 
@@ -84,33 +40,11 @@ class AudioCol(StrEnum):
     FEMALE = "audio__female"
 
 
-class WandbMode(StrEnum):
-    """Weights & Biases operation modes."""
-
-    DISABLED = "disabled"
-
-
-class DatasetType(StrEnum):
-    """Known dataset subset options (non-exhaustive, used for documentation)."""
-
-    SINGLE_SENTENCE__VOICE_BENCH = "single_sentence__voice_bench"
-    SINGLE_SENTENCE__LIBRISPEECH_ASR = "single_sentence__librispeech_asr"
-    MULTILINGUAL__INFINITY_INSTRUCT = "multi_lingual__infinity_instruct"
-    MULTI_SENTENCE__VOICE_BENCH = "multi_sentence__voice_bench"
-    MULTI_TURN = "multi_turn"
-
-
 class TokenFilterType(StrEnum):
     """Token filter options."""
 
     EXCLUDE_PUNCTUATION = "exclude_punctuation"
     NONE = "none"
-
-
-class HierarchicalModeType(StrEnum):
-    """Hierarchical explainer mode options."""
-
-    MULTI_MODAL_MULTI_USER = "MULTI_MODAL_MULTI_USER"
 
 
 class DatasetSource(StrEnum):
@@ -122,30 +56,35 @@ class DatasetSource(StrEnum):
     LOCAL_CSV = "local_csv"
 
 
-# ---- Modality helper constants ----
+AUDIO_MODALITIES = frozenset(
+    {
+        InputModality.AUDIO_ORIGINAL,
+        InputModality.AUDIO_MALE,
+        InputModality.AUDIO_FEMALE,
+    }
+)
+"""Modalities that require audio input."""
 
-AUDIO_MODALITIES = frozenset({
-    InputModality.AUDIO_ORIGINAL,
-    InputModality.AUDIO_MALE,
-    InputModality.AUDIO_FEMALE,
-})
+INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset(
+    {
+        InputModality.INTERLEAVED_TEXT_FIRST_MALE,
+        InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
+    }
+)
+"""Modalities where text comes first, but still require audio input."""
 
-INTERLEAVED_TEXT_FIRST_MODALITIES = frozenset({
-    InputModality.INTERLEAVED_TEXT_FIRST_MALE,
-    InputModality.INTERLEAVED_TEXT_FIRST_FEMALE,
-})
-
-INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset({
-    InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
-    InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
-})
+INTERLEAVED_AUDIO_FIRST_MODALITIES = frozenset(
+    {
+        InputModality.INTERLEAVED_AUDIO_FIRST_MALE,
+        InputModality.INTERLEAVED_AUDIO_FIRST_FEMALE,
+    }
+)
+"""Modalities where audio comes first, and also require audio input."""
 
 INTERLEAVED_MODALITIES = (
     INTERLEAVED_TEXT_FIRST_MODALITIES | INTERLEAVED_AUDIO_FIRST_MODALITIES
 )
-
-
-# ---- Modality helper predicates ----
+"""All interleaved modalities."""
 
 
 def needs_audio(modality: InputModality) -> bool:
@@ -158,7 +97,7 @@ def is_text_only_modality(modality: InputModality) -> bool:
     return modality == InputModality.TEXT
 
 
-def audio_column_for(modality: InputModality) -> Optional[AudioCol]:
+def audio_column_for(modality: InputModality) -> AudioCol | None:
     """Return the audio column name needed for the given modality, or None for text-only."""
     if modality == InputModality.AUDIO_ORIGINAL:
         return AudioCol.ORIGINAL
@@ -175,13 +114,3 @@ def audio_column_for(modality: InputModality) -> Optional[AudioCol]:
     ):
         return AudioCol.FEMALE
     return None
-
-
-# ---- Defaults ----
-
-DEFAULT_SUBSET = DatasetType.SINGLE_SENTENCE__VOICE_BENCH.value
-DEFAULT_SPLIT = "test"
-DEFAULT_SIMILARITY = "CosineSimilarity"
-TRUE_JSON = "1"
-
-CHECKPOINT_VERSION = 2

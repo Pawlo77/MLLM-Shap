@@ -2,10 +2,13 @@
 
 import argparse
 import glob
+import json
 import logging
 import os
 import sys
 import warnings
+from dataclasses import dataclass
+from typing import Any, Iterable
 
 import pandas as pd
 
@@ -24,6 +27,102 @@ logging.getLogger("torch.distributed.elastic.multiprocessing.redirects").setLeve
 _MLLM_SHAP_SRC = os.environ.get("MLLM_SHAP_SRC")
 if _MLLM_SHAP_SRC and _MLLM_SHAP_SRC not in sys.path:
     sys.path.insert(0, _MLLM_SHAP_SRC)
+
+
+@dataclass(frozen=True)
+class OutputOptions:
+    """Output mode flags for CLI rendering."""
+
+    as_json: bool = False
+    """Emit machine-readable JSON lines instead of human-readable text."""
+    quiet: bool = False
+    """Reduce console output to errors and summaries."""
+    verbose: bool = False
+    """Enable additional progress diagnostics."""
+
+
+def _output_options_from_args(args: argparse.Namespace) -> OutputOptions:
+    """Build output options from parsed CLI args."""
+    return OutputOptions(
+        as_json=bool(getattr(args, "json", False)),
+        quiet=bool(getattr(args, "quiet", False)),
+        verbose=bool(getattr(args, "verbose", False)),
+    )
+
+
+def _emit_json(event: str, payload: dict[str, object]) -> None:
+    """Emit one JSON-line event for machine-readable output."""
+    out = {"event": event, **payload}
+    print(json.dumps(out, ensure_ascii=False))
+
+
+def _print_line(
+    output: OutputOptions, message: str,  quiet_sensitive: bool = True
+) -> None:
+    """Print one plain-text line respecting output mode flags."""
+    if output.as_json:
+        return
+    if output.quiet and quiet_sensitive:
+        return
+    print(message)
+
+
+def _plural(count: int, singular: str, plural: str | None = None) -> str:
+    """Return a grammatically correct noun form for a count."""
+    if count == 1:
+        return singular
+    return plural or f"{singular}s"
+
+
+def _print_status(output: OutputOptions, level: str, message: str) -> None:
+    """Print a compact status line with a normalized level prefix."""
+    if output.as_json:
+        _emit_json(
+            "status",
+            {
+                "level": level.lower(),
+                "message": message,
+            },
+        )
+        return
+    if output.quiet and level not in {"ERROR"}:
+        return
+    if level == "DEBUG" and not output.verbose:
+        return
+    print(f"[{level}] {message}")
+
+
+def _print_header(output: OutputOptions, title: str) -> None:
+    """Print a simple ASCII section header."""
+    if output.as_json:
+        return
+    if output.quiet:
+        return
+    line = "=" * max(20, min(80, len(title) + 8))
+    print(f"\n{line}\n{title}\n{line}")
+
+
+def _print_config_errors(
+    output: OutputOptions,
+    errors: Iterable[str],
+    config_path: str | None = None,
+) -> None:
+    """Print config validation errors in a compact, scan-friendly list."""
+    error_list = list(errors)
+    target = f" ({config_path})" if config_path else ""
+    if output.as_json:
+        _emit_json(
+            "config_error",
+            {
+                "ok": False,
+                "config": config_path,
+                "errors": error_list,
+            },
+        )
+        return
+    _print_status(output, "ERROR", f"Config validation failed{target}.")
+    for error in error_list:
+        print(f"  - {error}")
 
 
 def _setup_logging() -> None:
@@ -53,23 +152,37 @@ def cmd_validate(args: argparse.Namespace) -> None:
     from .config import ExperimentSet, validate_config
     from .data import load_df
 
+    output = _output_options_from_args(args)
+
     cfg = ExperimentSet.from_json(args.config)
     errs = validate_config(cfg)
     if errs:
-        print("❌ Config problems:")
-        for e in errs:
-            print("  -", e)
+        _print_config_errors(output, errs, args.config)
         sys.exit(2)
 
+    dataset_ok = None
     if args.check_dataset:
         try:
             _ = load_df(cfg.dataset)
-            print("✅ Dataset reachable & readable.")
+            dataset_ok = True
+            _print_status(output, "OK", "Dataset is reachable and readable.")
         except Exception as ex:
-            print("❌ Dataset fetch failed:", ex)
+            dataset_ok = False
+            _print_status(output, "ERROR", f"Dataset fetch failed: {ex}")
             sys.exit(2)
 
-    print("✅ Config looks good.")
+    if output.as_json:
+        _emit_json(
+            "validate",
+            {
+                "ok": True,
+                "config": args.config,
+                "check_dataset": bool(args.check_dataset),
+                "dataset_ok": dataset_ok,
+            },
+        )
+
+    _print_status(output, "OK", "Configuration looks valid.")
 
 
 def cmd_plan(args: argparse.Namespace) -> None:
@@ -78,21 +191,102 @@ def cmd_plan(args: argparse.Namespace) -> None:
     from .data import apply_filters, choose_prompt_text_column, load_df
     from .runner import expand_variants
 
+    output = _output_options_from_args(args)
+
     cfg = ExperimentSet.from_json(args.config)
     errs = validate_config(cfg)
     if errs:
-        print("❌ Config problems:")
-        for e in errs:
-            print("  -", e)
+        _print_config_errors(output, errs, args.config)
         sys.exit(2)
 
     variants = expand_variants(cfg)
-    print(f"\n{'=' * 60}")
-    print(f"Experiment set: {cfg.experiment_set_id}")
-    print(f"Connector:      {cfg.connector}")
-    print(f"Device:         {cfg.device or 'auto'}")
-    print(f"{'=' * 60}")
-    print(f"\nVariants to run: {len(variants)}")
+
+    dataset_rows: int | None = None
+    text_col: str | None = None
+    dataset_error: str | None = None
+
+    if output.as_json:
+        if not args.skip_data:
+            try:
+                df = load_df(cfg.dataset)
+                if cfg.selection.filters:
+                    df = apply_filters(df, cfg.selection.filters)
+                dataset_rows = len(df)
+                text_col = choose_prompt_text_column(
+                    df, cfg.dataset.column_mapping.text
+                )
+            except Exception as ex:
+                dataset_error = str(ex)
+
+        variant_payload: list[dict[str, object]] = []
+        for v in variants:
+            entry: dict[str, object] = {
+                "run_slug": v.run_slug,
+                "explainer_type": v.variant.explainer_type,
+            }
+            if v.num_samples is not None:
+                entry["num_samples"] = v.num_samples
+            if v.fraction is not None:
+                entry["fraction"] = v.fraction
+            if v.linear is not None:
+                entry["linear"] = v.linear
+            if v.hier_k is not None:
+                entry["hier_k"] = v.hier_k
+            variant_payload.append(entry)
+
+        payload: dict[str, object] = {
+            "ok": True,
+            "config": args.config,
+            "experiment_set_id": cfg.experiment_set_id,
+            "connector": cfg.connector,
+            "device": cfg.device or "auto",
+            "variant_count": len(variants),
+            "variants": variant_payload,
+            "dataset": {
+                "source": cfg.dataset.source,
+                "path": cfg.dataset.path,
+                "repo_id": cfg.dataset.repo_id,
+                "subset": cfg.dataset.subset,
+                "split": cfg.dataset.split,
+            },
+            "selection": {
+                "max_samples": cfg.selection.max_samples,
+            },
+            "shap": {
+                "mode": cfg.shap.mode,
+                "normalizer": cfg.shap.normalizer,
+                "reducer": cfg.shap.reducer,
+                "similarity": cfg.shap.similarity,
+                "token_filter": cfg.shap.token_filter,
+                "allow_mask_duplicates": cfg.shap.allow_mask_duplicates,
+            },
+            "generation": {
+                "max_new_tokens": cfg.generation.max_new_tokens,
+                "text_temperature": cfg.generation.text_temperature,
+                "text_top_k": cfg.generation.text_top_k,
+                "audio_temperature": cfg.generation.audio_temperature,
+                "audio_top_k": cfg.generation.audio_top_k,
+            },
+        }
+        if dataset_rows is not None:
+            payload["dataset_rows"] = dataset_rows
+        if text_col is not None:
+            payload["text_column"] = text_col
+        if dataset_error is not None:
+            payload["dataset_error"] = dataset_error
+        _emit_json("plan", payload)
+        return
+
+    _print_header(output, "Execution Plan")
+    plan_header_fields = [
+        ("set_id", cfg.experiment_set_id),
+        ("connector", cfg.connector),
+        ("device", cfg.device or "auto"),
+        ("variants", f"{len(variants)} {_plural(len(variants), 'variant')}"),
+    ]
+    for key, value in plan_header_fields:
+        _print_line(output, f"{key:<12}: {value}")
+    _print_line(output, "\nPlanned variants:")
     for i, v in enumerate(variants, 1):
         parts = [f"type={v.variant.explainer_type}"]
         if v.num_samples is not None:
@@ -103,69 +297,111 @@ def cmd_plan(args: argparse.Namespace) -> None:
             parts.append(f"lin={v.linear}")
         if v.hier_k is not None:
             parts.append(f"k={v.hier_k}")
-        print(f"  {i:3d}. {v.run_slug} ({', '.join(parts)})")
+        _print_line(output, f"  {i:3d}. {v.run_slug}  [{', '.join(parts)}]")
 
     # Dataset info
-    print("\nDataset:")
-    print(f"  Source: {cfg.dataset.source}")
+    _print_line(output, "\nDataset:")
+    _print_line(output, f"  {'source':<12}: {cfg.dataset.source}")
     if cfg.dataset.source.startswith("hf"):
-        print(
-            f"  Repo:   {cfg.dataset.repo_id} / {cfg.dataset.subset} / {cfg.dataset.split}"
+        _print_line(
+            output,
+            f"  {'repo/split':<12}: {cfg.dataset.repo_id} / {cfg.dataset.subset} / {cfg.dataset.split}",
         )
     else:
-        print(f"  Path:   {cfg.dataset.path}")
+        _print_line(output, f"  {'path':<12}: {cfg.dataset.path}")
 
     if not args.skip_data:
         try:
             df = load_df(cfg.dataset)
             if cfg.selection.filters:
                 df = apply_filters(df, cfg.selection.filters)
-            print(f"  Rows:   {len(df)} total")
+            _print_line(output, f"  {'rows':<12}: {len(df)}")
             text_col = choose_prompt_text_column(df, cfg.dataset.column_mapping.text)
-            print(f"  Text column: '{text_col}'")
+            _print_line(output, f"  {'text_column':<12}: {text_col}")
             if cfg.selection.max_samples:
-                print(f"  Max samples: {cfg.selection.max_samples}")
+                _print_line(
+                    output, f"  {'max_samples':<12}: {cfg.selection.max_samples}"
+                )
         except Exception as ex:
-            print(f"  ⚠️ Could not load dataset: {ex}")
+            _print_status(
+                output, "WARN", f"Could not inspect dataset during plan: {ex}"
+            )
 
     # Shap config summary
-    print("\nSHAP config:")
-    print(f"  Mode:       {cfg.shap.mode}")
-    print(f"  Normalizer: {cfg.shap.normalizer}")
-    print(f"  Reducer:    {cfg.shap.reducer}")
-    print(f"  Similarity: {cfg.shap.similarity}")
-    print(f"  Filter:     {cfg.shap.token_filter}")
-    print(f"  Duplicates: {cfg.shap.allow_mask_duplicates}")
+    _print_line(output, "\nSHAP config:")
+    shap_fields = [
+        ("mode", cfg.shap.mode),
+        ("normalizer", cfg.shap.normalizer),
+        ("reducer", cfg.shap.reducer),
+        ("similarity", cfg.shap.similarity),
+        ("token_filter", cfg.shap.token_filter),
+        ("duplicates", cfg.shap.allow_mask_duplicates),
+    ]
+    for key, value in shap_fields:
+        _print_line(output, f"  {key:<12}: {value}")
 
     # Generation config
-    print("\nGeneration:")
-    print(f"  max_new_tokens:    {cfg.generation.max_new_tokens}")
-    print(f"  text_temperature:  {cfg.generation.text_temperature}")
+    _print_line(output, "\nGeneration:")
+    generation_fields: list[tuple[str, object]] = [
+        ("max_new_tokens", cfg.generation.max_new_tokens),
+        ("text_temp", cfg.generation.text_temperature),
+    ]
     if cfg.generation.text_top_k is not None:
-        print(f"  text_top_k:        {cfg.generation.text_top_k}")
+        generation_fields.append(("text_top_k", cfg.generation.text_top_k))
     if cfg.generation.audio_temperature is not None:
-        print(f"  audio_temperature: {cfg.generation.audio_temperature}")
+        generation_fields.append(("audio_temp", cfg.generation.audio_temperature))
     if cfg.generation.audio_top_k is not None:
-        print(f"  audio_top_k:       {cfg.generation.audio_top_k}")
-    print()
+        generation_fields.append(("audio_top_k", cfg.generation.audio_top_k))
+    for key, value in generation_fields:
+        _print_line(output, f"  {key:<14}: {value}")
+    _print_line(output, "")
 
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Execute all configured variants, with optional sharding."""
-    from pathlib import Path
-
     from .config import ExperimentSet, validate_config
     from .data import load_df
     from .runner import expand_variants, run_single_sentence_variant
-    from .storage import existing_completed_from_disk
 
-    configs = _resolve_configs(args)
+    output = _output_options_from_args(args)
+
+    configs = _resolve_configs(args, output)
+    total_variants = 0
+    variants_skipped = 0
+    variants_executed = 0
+
+    _print_status(
+        output,
+        "INFO",
+        f"Starting run for {len(configs)} {_plural(len(configs), 'config')}.",
+    )
 
     for cfg_idx, config_path in enumerate(configs, 1):
-        print(f"\n[Config {cfg_idx}/{len(configs)}] {os.path.basename(config_path)}")
+        _print_line(
+            output,
+            f"\n[Config {cfg_idx}/{len(configs)}] {os.path.basename(config_path)}",
+        )
         cfg = ExperimentSet.from_json(config_path)
         if args.max_samples is not None:
             cfg.selection.max_samples = int(args.max_samples)
+
+        # n_generator_jobs: CLI > env > config
+        n_jobs = (
+            args.n_generator_jobs
+            if args.n_generator_jobs is not None
+            else os.environ.get("MLLM_SHAP_N_GENERATOR_JOBS")
+        )
+        if n_jobs is not None:
+            cfg.runtime.n_generator_jobs = int(n_jobs)
+
+        # LM Studio host: CLI > env > config
+        lms_host = (
+            args.lm_studio_host
+            if args.lm_studio_host is not None
+            else os.environ.get("MLLM_SHAP_LM_STUDIO_HOST")
+        )
+        if lms_host is not None:
+            cfg.lm_studio.api_host = lms_host
 
         # Apply sharding to selection
         if args.shard_index is not None and args.num_shards is not None:
@@ -178,56 +414,122 @@ def cmd_run(args: argparse.Namespace) -> None:
                 shard_size, total - cfg.selection.start_index
             )
             if cfg.selection.max_samples <= 0:
-                print(
-                    f"Shard {shard_idx} has no work (total={total}, shards={num_shards})."
+                _print_status(
+                    output,
+                    "INFO",
+                    (
+                        f"Shard {shard_idx} has no work "
+                        f"(total={total}, num_shards={num_shards})."
+                    ),
                 )
                 continue
 
         errs = validate_config(cfg)
         if errs:
-            print(f"❌ Config problems ({config_path}):")
-            for e in errs:
-                print("  -", e)
+            _print_config_errors(output, errs, config_path)
             sys.exit(2)
 
         variants = expand_variants(cfg)
+        total_variants += len(variants)
         if not variants:
-            print(f"Nothing to run for {config_path}.")
+            _print_status(output, "INFO", f"No variants to run for {config_path}.")
             continue
 
-        df: pd.DataFrame | None = None
-        for var_idx, run in enumerate(variants, 1):
-            # Check how many samples are already done for this variant
-            run_dir = Path(cfg.output_root) / cfg.experiment_set_id / run.run_slug
-            already_done = (
-                len(existing_completed_from_disk(run_dir))
-                if args.resume and run_dir.exists()
-                else 0
-            )
-            desired = cfg.selection.max_samples
-            status = f"{already_done}/{desired}" if desired else f"{already_done}/?"
+        # LM Studio lifecycle: download + load before variants, unload after
+        lm_studio_mgr = None
+        if cfg.lm_studio.enabled:
+            from .lm_studio import LmStudioManager, build_lm_studio_config
 
-            if desired and already_done >= desired:
-                print(
-                    f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} "
-                    f"[{status} done] — skipped"
+            max_prompt_tokens = cfg.selection.max_prompt_tokens
+            lms_cfg = build_lm_studio_config(cfg, max_prompt_tokens=max_prompt_tokens)
+            lm_studio_mgr = LmStudioManager(lms_cfg)
+            _print_status(output, "INFO", "LM Studio: ensuring model is downloaded...")
+            lm_studio_mgr.ensure_downloaded()
+            _print_status(output, "INFO", "LM Studio: loading model...")
+            lm_studio_mgr.load()
+            _print_status(output, "INFO", "LM Studio: model ready.")
+
+            # Inject OpenAI-compat connector kwargs so the connector uses LM Studio
+            if cfg.connector in ("openai_compat_text", "lm_studio_text"):
+                cfg.connector_kwargs.setdefault("base_url", lm_studio_mgr.api_base_url)
+                cfg.connector_kwargs.setdefault(
+                    "chat_model", lm_studio_mgr.model_identifier
                 )
-                continue
 
-            print(
-                f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} [{status} done]"
-            )
-            if df is None:
-                df = load_df(cfg.dataset)
-            run_single_sentence_variant(cfg, run, df, resume=args.resume)
+        try:
+            df: pd.DataFrame | None = None
+            for var_idx, run in enumerate(variants, 1):
+                # Check how many samples are already done for this variant
+                already_done = (
+                    _get_completed_count_from_mlflow(cfg, run.run_slug)
+                    if args.resume
+                    else 0
+                )
+                desired = cfg.selection.max_samples
+                status = f"{already_done}/{desired}" if desired else f"{already_done}/?"
 
-    print("\nAll variants complete.")
+                if desired and already_done >= desired:
+                    variants_skipped += 1
+                    _print_line(
+                        output,
+                        f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} "
+                        f"[{status} done] skipped",
+                    )
+                    continue
+
+                _print_line(
+                    output,
+                    f"  [Variant {var_idx}/{len(variants)}] {run.run_slug} [{status} done]",
+                )
+                if df is None:
+                    _print_status(
+                        output, "INFO", "Loading dataset once for this config."
+                    )
+                    df = load_df(cfg.dataset)
+                run_single_sentence_variant(cfg, run, df, resume=args.resume)
+                variants_executed += 1
+        finally:
+            if lm_studio_mgr is not None:
+                _print_status(output, "INFO", "LM Studio: unloading model...")
+                lm_studio_mgr.close()
+                _print_status(output, "INFO", "LM Studio: model unloaded.")
+
+    if output.as_json:
+        _emit_json(
+            "run_summary",
+            {
+                "ok": True,
+                "configs": len(configs),
+                "variants_total": total_variants,
+                "variants_run": variants_executed,
+                "variants_skip": variants_skipped,
+            },
+        )
+        return
+
+    _print_header(output, "Run Summary")
+    _print_line(output, f"configs       : {len(configs)}", quiet_sensitive=False)
+    _print_line(output, f"variants_total: {total_variants}", quiet_sensitive=False)
+    _print_line(output, f"variants_run  : {variants_executed}", quiet_sensitive=False)
+    _print_line(output, f"variants_skip : {variants_skipped}", quiet_sensitive=False)
+    _print_status(output, "OK", "All variants complete.")
 
 
-def _resolve_configs(args: argparse.Namespace) -> list[str]:
+def _get_completed_count_from_mlflow(cfg: Any, run_slug: str) -> int:
+    """Query MLflow to find how many samples are completed for a run."""
+    from .mlflow_tracker import _find_existing_run, _get_completed_indices_from_run
+
+    run_name = f"{cfg.experiment_set_id}__{run_slug}"
+    run_id = _find_existing_run(cfg.mlflow.experiment_name, run_name)
+    if run_id is None:
+        return 0
+    return len(_get_completed_indices_from_run(run_id))
+
+
+def _resolve_configs(args: argparse.Namespace, output: OutputOptions) -> list[str]:
     """Resolve config paths from --config (glob) or --config-list."""
     if args.config_list:
-        with open(args.config_list, "r") as f:
+        with open(args.config_list, "r", encoding="utf-8") as f:
             return [
                 line.strip() for line in f if line.strip() and not line.startswith("#")
             ]
@@ -237,7 +539,7 @@ def _resolve_configs(args: argparse.Namespace) -> list[str]:
     if "*" in config_arg or "?" in config_arg:
         paths = sorted(glob.glob(config_arg, recursive=True))
         if not paths:
-            print(f"❌ No configs matched pattern: {config_arg}")
+            _print_status(output, "ERROR", f"No configs matched pattern: {config_arg}")
             sys.exit(2)
         return paths
     return [config_arg]
@@ -248,6 +550,24 @@ def build_argparser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description="mllm_shap experiment runner (validate, plan, run)"
     )
+
+    output_group = p.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Reduce console output to errors and summaries.",
+    )
+    output_group.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable additional progress diagnostics.",
+    )
+    p.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON lines instead of human-readable text.",
+    )
+
     sub = p.add_subparsers(dest="cmd", required=True)
 
     # ---- validate
@@ -289,6 +609,24 @@ def build_argparser() -> argparse.ArgumentParser:
     )
     r.add_argument(
         "--max-samples", type=int, default=None, help="Override selection.max_samples."
+    )
+    r.add_argument(
+        "--n-generator-jobs",
+        type=int,
+        default=None,
+        help=(
+            "Number of parallel model calls. "
+            "Env: MLLM_SHAP_N_GENERATOR_JOBS (default: from config or 1)."
+        ),
+    )
+    r.add_argument(
+        "--lm-studio-host",
+        type=str,
+        default=None,
+        help=(
+            "LM Studio API host (e.g. 127.0.0.1:1234). "
+            "Env: MLLM_SHAP_LM_STUDIO_HOST (default: from config)."
+        ),
     )
     r.add_argument(
         "--shard-index",

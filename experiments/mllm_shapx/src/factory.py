@@ -1,9 +1,14 @@
 """Factory: build models, explainers, and chats via a pluggable registry."""
 
-from typing import Any, Callable, Dict, Optional, Type, cast
+from typing import Any, Callable, Dict, Type, cast
 
 import torch
-from mllm_shap.connectors import LiquidAudio, TransformersCausalText, ModelConfig
+from mllm_shap.connectors import (
+    LiquidAudio,
+    OpenAICompatCausalText,
+    TransformersCausalText,
+)
+from mllm_shap.connectors import ModelConfig
 from mllm_shap.connectors.base.audio import SpectrogramGuidedAligner
 from mllm_shap.connectors.base.model import BaseMllmModel
 from mllm_shap.connectors.enums import (
@@ -28,7 +33,6 @@ from mllm_shap.shap.neyman import (
     StandardComplementaryNeymanShapExplainer,
 )
 from mllm_shap.shap.precise import PreciseShapExplainer
-from mllm_shap.shap.similarity import TfIdfCosineSimilarity
 
 from .config import (
     NORMALIZER_MAP,
@@ -44,29 +48,57 @@ from .constants import (
     AUDIO_MODALITIES,
     INTERLEAVED_MODALITIES,
     INTERLEAVED_TEXT_FIRST_MODALITIES,
-    ConnectorType,
-    ExplainerType,
     InputModality,
     OutputModality,
     TokenFilterType,
 )
 
 
-# ---------------------------
-# CONNECTOR REGISTRY
-# ---------------------------
+_INNER_SHAP_MAP: Dict[str, Type[BaseShapExplainer]] = {
+    "precise": PreciseShapExplainer,
+    "limited_mc": LimitedMcShapExplainer,
+    "limited_cc": LimitedComplementaryShapExplainer,
+    "standard_cc": StandardComplementaryShapExplainer,
+    "limited_neyman": LimitedComplementaryNeymanShapExplainer,
+    "standard_neyman": StandardComplementaryNeymanShapExplainer,
+}
+"""Mapping of inner SHAP explainer types to their corresponding classes."""
 
 
 def _build_liquid_audio(
     device: torch.device, tracking_mode: ModelHistoryTrackingMode, **kwargs: Any
 ) -> Any:
+    """Build a LiquidAudio connector with the given device and tracking mode."""
     return LiquidAudio(device=device, history_tracking_mode=tracking_mode, **kwargs)
 
 
 def _build_hf_text(
     device: torch.device, tracking_mode: ModelHistoryTrackingMode, **kwargs: Any
 ) -> Any:
+    """Build a TransformersCausalText connector with the given device and tracking mode."""
     return TransformersCausalText(
+        device=device, history_tracking_mode=tracking_mode, **kwargs
+    )
+
+
+def _build_openai_compat_text(
+    device: torch.device, tracking_mode: ModelHistoryTrackingMode, **kwargs: Any
+) -> Any:
+    """Build an OpenAICompatCausalText connector with the given device and tracking mode."""
+    return OpenAICompatCausalText(
+        device=device, history_tracking_mode=tracking_mode, **kwargs
+    )
+
+
+def _build_lm_studio_text(
+    device: torch.device, tracking_mode: ModelHistoryTrackingMode, **kwargs: Any
+) -> Any:
+    """Build an OpenAICompatCausalText connector pre-configured for LM Studio.
+
+    Defaults base_url to local LM Studio server if not provided.
+    """
+    kwargs.setdefault("base_url", "http://127.0.0.1:1234/v1")
+    return OpenAICompatCausalText(
         device=device, history_tracking_mode=tracking_mode, **kwargs
     )
 
@@ -74,9 +106,12 @@ def _build_hf_text(
 ConnectorFactory = Callable[..., BaseMllmModel]
 
 CONNECTOR_REGISTRY: Dict[str, ConnectorFactory] = {
-    ConnectorType.LIQUID_AUDIO: _build_liquid_audio,
-    ConnectorType.TRANSFORMERS_TEXT: _build_hf_text,
+    "liquid_audio": _build_liquid_audio,
+    "hf_text": _build_hf_text,
+    "openai_compat_text": _build_openai_compat_text,
+    "lm_studio_text": _build_lm_studio_text,
 }
+"""Registry mapping connector names to their factory functions for dynamic construction."""
 
 
 def register_connector(name: str, factory: ConnectorFactory) -> None:
@@ -88,7 +123,7 @@ def build_model(
     device: torch.device,
     connector: str,
     output_modality: OutputModality = OutputModality.TEXT,
-    connector_kwargs: Optional[Dict[str, Any]] = None,
+    connector_kwargs: Dict[str, Any] | None = None,
 ) -> Any:
     """Construct the selected connector using the registry."""
     if output_modality == OutputModality.AUDIO:
@@ -96,12 +131,13 @@ def build_model(
     else:
         tracking_mode = ModelHistoryTrackingMode.TEXT
 
-    if (
-        connector == ConnectorType.TRANSFORMERS_TEXT
-        and output_modality == OutputModality.AUDIO
-    ):
+    if connector == "hf_text" and output_modality == OutputModality.AUDIO:
         raise ValueError(
             "TransformersCausalText connector does not support audio output."
+        )
+    if connector == "openai_compat_text" and output_modality == OutputModality.AUDIO:
+        raise ValueError(
+            "OpenAICompatCausalText connector does not support audio output."
         )
 
     factory = CONNECTOR_REGISTRY.get(connector)
@@ -113,11 +149,6 @@ def build_model(
     return factory(device=device, tracking_mode=tracking_mode, **extra)
 
 
-# ---------------------------
-# TOKEN FILTER
-# ---------------------------
-
-
 def build_token_filter(filter_type: TokenFilterType) -> Any:
     """Build a token filter based on the configured type."""
     if filter_type == TokenFilterType.EXCLUDE_PUNCTUATION:
@@ -125,16 +156,11 @@ def build_token_filter(filter_type: TokenFilterType) -> Any:
     return None  # TokenFilterType.NONE
 
 
-# ---------------------------
-# EXTERNAL EMBEDDING
-# ---------------------------
-
-
 def build_external_embedding(
     model: Any,
     embedding_cfg: EmbeddingConfig,
     device: torch.device,
-) -> Optional[CustomEmbedding]:
+) -> CustomEmbedding | None:
     """Build CustomEmbedding if configured; returns None otherwise."""
     if not embedding_cfg.model_id:
         return None
@@ -158,28 +184,11 @@ def build_external_embedding(
     )
 
 
-# ---------------------------
-# INNER SHAP BUILDER
-# ---------------------------
-
-_INNER_SHAP_MAP: Dict[str, Type[BaseShapExplainer]] = {
-    "precise": PreciseShapExplainer,
-    "limited_mc": LimitedMcShapExplainer,
-    "mc": LimitedMcShapExplainer,  # shorthand alias
-    "limited_cc": LimitedComplementaryShapExplainer,
-    "cc": LimitedComplementaryShapExplainer,  # shorthand alias
-    "standard_cc": StandardComplementaryShapExplainer,
-    "limited_neyman": LimitedComplementaryNeymanShapExplainer,
-    "neyman": LimitedComplementaryNeymanShapExplainer,  # shorthand alias
-    "standard_neyman": StandardComplementaryNeymanShapExplainer,
-}
-
-
 def _build_inner_shap(
     which: str,
     common: Dict[str, Any],
-    num_samples: Optional[int],
-    fraction: Optional[float],
+    num_samples: int | None,
+    fraction: float | None,
 ) -> BaseShapExplainer:
     """Build an inner SHAP explainer by name."""
     w = which.lower()
@@ -200,11 +209,6 @@ def _build_inner_shap(
     return cls(**kw)
 
 
-# ---------------------------
-# EXPLAINER BUILDER
-# ---------------------------
-
-
 def build_explainer_for_variant(
     device: torch.device,
     shap_cfg: ShapConfig,
@@ -212,24 +216,24 @@ def build_explainer_for_variant(
     connector: str,
     embedding_cfg: EmbeddingConfig,
     output_modality: OutputModality = OutputModality.TEXT,
-    connector_kwargs: Optional[Dict[str, Any]] = None,
-    concrete_num_samples: Optional[int] = None,
-    concrete_fraction: Optional[float] = None,
+    connector_kwargs: Dict[str, Any] | None = None,
+    concrete_num_samples: int | None = None,
+    concrete_fraction: float | None = None,
     # Hierarchical params (from ExpandedVariant)
-    hier_k: Optional[int] = None,
-    hier_shap_type: Optional[str] = None,
-    hier_shap_num_samples: Optional[int] = None,
-    hier_shap_fraction: Optional[float] = None,
-    hier_first_layer_type: Optional[str] = None,
-    hier_first_layer_num_samples: Optional[int] = None,
-    hier_first_layer_fraction: Optional[float] = None,
-    hier_importance_min_fraction: Optional[float] = None,
-    hier_mode: Optional[str] = None,
+    hier_k: int | None = None,
+    hier_shap_type: str | None = None,
+    hier_shap_num_samples: int | None = None,
+    hier_shap_fraction: float | None = None,
+    hier_first_layer_type: str | None = None,
+    hier_first_layer_num_samples: int | None = None,
+    hier_first_layer_fraction: float | None = None,
+    hier_importance_min_fraction: float | None = None,
+    hier_mode: str | None = None,
 ) -> Explainer:
     """Create (model + shap_explainer) wrapped in Explainer."""
     mode = Mode[shap_cfg.mode]
     normalizer_cls = NORMALIZER_MAP[shap_cfg.normalizer]
-    similarity_cls = SIMILARITY_MAP.get(shap_cfg.similarity, TfIdfCosineSimilarity)
+    similarity_cls = SIMILARITY_MAP[shap_cfg.similarity]
 
     normalizer = normalizer_cls()
     reducer = REDUCER_MAP[shap_cfg.reducer]()
@@ -255,18 +259,16 @@ def build_explainer_for_variant(
             kw["embedding_model"] = external_emb
         return kw
 
-    t = variant.explainer_type
+    t = str(variant.explainer_type).lower()
 
-    if t == ExplainerType.EXACT:
+    if t == "exact":
         return Explainer(
             model=model, shap_explainer=PreciseShapExplainer(**_common_kwargs())
         )
 
-    if t in (ExplainerType.LIMITED_MC, ExplainerType.STANDARD_MC):
+    if t in ("limited_mc", "standard_mc"):
         mc_ctor: Type[Any] = (
-            LimitedMcShapExplainer
-            if t == ExplainerType.LIMITED_MC
-            else StandardMcShapExplainer
+            LimitedMcShapExplainer if t == "limited_mc" else StandardMcShapExplainer
         )
         kw = _common_kwargs()
         if concrete_num_samples is not None:
@@ -275,10 +277,10 @@ def build_explainer_for_variant(
             kw["fraction"] = float(concrete_fraction)
         return Explainer(model=model, shap_explainer=mc_ctor(**kw))
 
-    if t in (ExplainerType.LIMITED_CC, ExplainerType.STANDARD_CC):
+    if t in ("limited_cc", "standard_cc"):
         ctor: Type[Any] = (
             LimitedComplementaryShapExplainer
-            if t == ExplainerType.LIMITED_CC
+            if t == "limited_cc"
             else StandardComplementaryShapExplainer
         )
         kw = _common_kwargs()
@@ -288,7 +290,7 @@ def build_explainer_for_variant(
             kw["fraction"] = float(concrete_fraction)
         return Explainer(model=model, shap_explainer=ctor(**kw))
 
-    if t == ExplainerType.LIMITED_NEYMAN:
+    if t == "limited_neyman":
         kw = _common_kwargs()
         if concrete_num_samples is not None:
             kw["num_samples"] = int(concrete_num_samples)
@@ -298,7 +300,7 @@ def build_explainer_for_variant(
             model=model, shap_explainer=LimitedComplementaryNeymanShapExplainer(**kw)
         )
 
-    if t == ExplainerType.STANDARD_NEYMAN:
+    if t == "standard_neyman":
         kw = _common_kwargs()
         if concrete_num_samples is not None:
             kw["num_samples"] = int(concrete_num_samples)
@@ -308,7 +310,7 @@ def build_explainer_for_variant(
             model=model, shap_explainer=StandardComplementaryNeymanShapExplainer(**kw)
         )
 
-    if t == ExplainerType.HIERARCHICAL:
+    if t == "hierarchical":
         inner_type = (hier_shap_type or "limited_neyman").lower()
         inner = _build_inner_shap(
             which=inner_type,
@@ -317,7 +319,7 @@ def build_explainer_for_variant(
             fraction=hier_shap_fraction,
         )
 
-        first_layer: Optional[BaseShapExplainer] = None
+        first_layer: BaseShapExplainer | None = None
         if hier_first_layer_type is not None:
             first_layer = _build_inner_shap(
                 which=hier_first_layer_type.lower(),
@@ -349,11 +351,6 @@ def build_explainer_for_variant(
     raise ValueError(f"Unsupported explainer_type: {variant.explainer_type}")
 
 
-# ---------------------------
-# GENERATION KWARGS BUILDER
-# ---------------------------
-
-
 def build_generation_kwargs(gen_cfg: GenerationConfig) -> Dict[str, Any]:
     """Build the generation_kwargs dict for model.generate(), passing all exposed params."""
     model_config_kwargs: Dict[str, Any] = {}
@@ -370,11 +367,6 @@ def build_generation_kwargs(gen_cfg: GenerationConfig) -> Dict[str, Any]:
         "max_new_tokens": gen_cfg.max_new_tokens,
         "model_config": ModelConfig(**model_config_kwargs),
     }
-
-
-# ---------------------------
-# CHAT BUILDER
-# ---------------------------
 
 
 def infer_audio_format(audio: bytes) -> str:
@@ -394,7 +386,7 @@ def build_chat(
     token_filter: Any | None = None,
     audio_segmentation_method: str = "raw",
     aligner: SpectrogramGuidedAligner | None = None,
-    chat_cfg: Optional[ChatConfig] = None,
+    chat_cfg: ChatConfig | None = None,
 ) -> Any:
     """
     Prepare chat turns with the given input modality.

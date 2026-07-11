@@ -13,8 +13,6 @@ You can also restrict files via --allow-patterns to save space, e.g.:
 import argparse
 import re
 from pathlib import Path
-from typing import Optional
-
 from huggingface_hub import snapshot_download
 
 
@@ -25,7 +23,7 @@ def _is_commit_sha(s: str) -> bool:
 def download_model(
     repo_id: str,
     revision: str,
-    allow_patterns: Optional[list[str] | str] = None,
+    allow_patterns: (list[str] | str) | None = None,
     local_files_only: bool = False,
 ) -> str:
     """Download a pinned HF snapshot and return the local path."""
