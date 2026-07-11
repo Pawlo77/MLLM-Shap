@@ -1,2 +1,3 @@
 credentials.json
 experiments_output/
+.run_completed*/

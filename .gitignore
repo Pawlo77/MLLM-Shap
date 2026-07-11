@@ -1,5 +1,6 @@
 # data directories
 data/
+mlruns/
 
 *.DS_Store
 *.vscode/
@@ -14,6 +15,7 @@ __pycache__/
 
 # Experiments
 wandb/
+mlflow.db
 shared*
 neyman_runs/
 experiments/interspeech/outputs/alpha_search/masked_wavs/

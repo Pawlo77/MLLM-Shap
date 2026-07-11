@@ -43,7 +43,7 @@ MLLM-Shap/
 ├─ mllm_shap/              # package, docs, tests
 ├─ examples/               # usage notebooks
 ├─ experiments/            # research pipelines and outputs
-├─ paper/                  # publication assets
+├─ papers/                 # publication assets
 ├─ pyproject.toml          # workspace dependencies/groups
 ├─ uv.lock                 # locked dependency set
 └─ Makefile                # primary developer interface

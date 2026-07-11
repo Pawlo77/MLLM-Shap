@@ -32,7 +32,7 @@ make install
 - `mllm_shap/` - package source, tests, docs
 - `examples/` - end-to-end notebooks for explainability workflows
 - `experiments/` - dataset prep, config runner, analytics
-- `paper/` - publication assets and figure pipeline
+- `papers/` - publication assets and figure pipeline
 
 # 🧰 Tooling Standards
 
