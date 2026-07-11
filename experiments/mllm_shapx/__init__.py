@@ -4,5 +4,5 @@ Package layout:
     src/        — core library modules (config, data, factory, runner, etc.)
     tests/      — test suite
     configs/    — experiment configuration files
-    utils/      — standalone helper scripts (HF download, wandb sync, etc.)
+    utils/      — standalone helper scripts (HF download, etc.)
 """

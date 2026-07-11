@@ -7,6 +7,8 @@
 #   ./run_configs.sh -c configs/package_grid -l ./logs --max-retries 5
 #   ./run_configs.sh -c "configs/package_grid/*.json" --dry-run
 #   ./run_configs.sh -c configs/package_grid --no-resume --no-repeat
+#   ./run_configs.sh -c configs/package_grid --max-samples 100 --verbose
+#   ./run_configs.sh -c configs/package_grid --shard-index 0 --num-shards 4
 
 set -uo pipefail
 
@@ -15,8 +17,8 @@ SCRIPT_NAME=$(basename "$0")
 # ─── Colors (disabled if not a terminal) ───────────────────────────────────────
 
 if [[ -t 1 ]]; then
-  RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
-  CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
+  RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'
+  CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
 else
   RED=''; GREEN=''; YELLOW=''; CYAN=''; BOLD=''; RESET=''
 fi
@@ -37,29 +39,53 @@ print_usage() {
 Usage: $SCRIPT_NAME -c <configs> [options]
 
 Options:
-  -c, --configs      Directory or glob pattern for JSON configs (required)
-  -l, --logdir       Base directory for logs (default: ./logs)
-  --resume           Pass --resume to the CLI (default: enabled)
-  --no-resume        Do not pass --resume
-  --repeat           Retry failed runs (default: enabled)
-  --no-repeat        Skip retries on failure
-  --max-retries N    Maximum retry attempts per config (default: unlimited, 0=no limit)
-  --retry-delay N    Seconds to wait between retries (default: 5)
-  --dry-run          Print commands without executing
-  -h, --help         Show this help message
+  -c, --configs        Directory or glob pattern for JSON configs (required)
+  -l, --logdir         Base directory for logs (default: ./logs)
+  --resume             Pass --resume to the CLI (default: enabled)
+  --no-resume          Do not pass --resume
+  --max-samples N      Override selection.max_samples per config
+  --n-generator-jobs N Number of parallel model calls (env: MLLM_SHAP_N_GENERATOR_JOBS)
+  --lm-studio-host H   LM Studio API host (env: MLLM_SHAP_LM_STUDIO_HOST)
+  --shard-index I      Shard index (0-based) passed to each config run
+  --num-shards N       Total number of shards
+  --verbose            Enable verbose CLI output
+  --quiet              Suppress CLI output
+  --repeat             Retry failed runs (default: enabled)
+  --no-repeat          Skip retries on failure
+  --max-retries N      Maximum retry attempts per config (default: unlimited, 0=no limit)
+  --retry-delay N      Seconds to wait between retries (default: 5)
+  --dry-run            Print commands without executing
+  -h, --help           Show this help message
 
 Examples:
   $SCRIPT_NAME -c configs/package_grid
   $SCRIPT_NAME -c "configs/**/*.json" --max-retries 3
+  $SCRIPT_NAME -c configs/package_grid --max-samples 100 --verbose
+  $SCRIPT_NAME -c configs/package_grid --shard-index 0 --num-shards 4
   $SCRIPT_NAME -c configs/package_grid --dry-run
 USAGE
 }
 
 # ─── Defaults ──────────────────────────────────────────────────────────────────
 
+# Load .env if present (sibling to this script)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/.env" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$SCRIPT_DIR/.env"
+  set +a
+fi
+
 CONFIGS_INPUT=""
 LOG_DIR="./logs"
 RESUME=true
+MAX_SAMPLES=""
+N_GENERATOR_JOBS=""  # env: MLLM_SHAP_N_GENERATOR_JOBS
+LM_STUDIO_HOST=""    # env: MLLM_SHAP_LM_STUDIO_HOST
+SHARD_INDEX=""
+NUM_SHARDS=""
+VERBOSITY=""  # "--verbose" or "--quiet" or empty
 REPEAT_ON_FAIL=true
 MAX_RETRIES=0  # 0 = unlimited
 RETRY_DELAY=5
@@ -78,6 +104,13 @@ while [[ $# -gt 0 ]]; do
     -l|--logdir)      LOG_DIR="$2"; shift 2 ;;
     --resume)         RESUME=true; shift ;;
     --no-resume)      RESUME=false; shift ;;
+    --max-samples)    MAX_SAMPLES="$2"; shift 2 ;;
+    --n-generator-jobs) N_GENERATOR_JOBS="$2"; shift 2 ;;
+    --lm-studio-host) LM_STUDIO_HOST="$2"; shift 2 ;;
+    --shard-index)    SHARD_INDEX="$2"; shift 2 ;;
+    --num-shards)     NUM_SHARDS="$2"; shift 2 ;;
+    --verbose)        VERBOSITY="--verbose"; shift ;;
+    --quiet)          VERBOSITY="--quiet"; shift ;;
     --repeat)         REPEAT_ON_FAIL=true; shift ;;
     --no-repeat)      REPEAT_ON_FAIL=false; shift ;;
     --max-retries)    MAX_RETRIES="$2"; shift 2 ;;
@@ -87,6 +120,12 @@ while [[ $# -gt 0 ]]; do
     *)                err "Unknown argument: $1"; print_usage; exit 2 ;;
   esac
 done
+
+# Validate shard args
+if [[ -n "$SHARD_INDEX" && -z "$NUM_SHARDS" ]] || [[ -z "$SHARD_INDEX" && -n "$NUM_SHARDS" ]]; then
+  err "--shard-index and --num-shards must be used together."
+  exit 2
+fi
 
 if [[ -z "$CONFIGS_INPUT" ]]; then
   err "Configs directory or pattern is required (-c)."
@@ -157,8 +196,14 @@ for cfg in "${CONFIG_FILES[@]}"; do
   log "Start:  $(iso_now)"
 
   # Build command
-  CMD=(uv run python -m mllm_shapx.src.cli run --config "$cfg")
+  CMD=(uv run python -m experiments.mllm_shapx.src.cli)
+  [[ -n "$VERBOSITY" ]] && CMD+=("$VERBOSITY")
+  CMD+=(run --config "$cfg")
   [[ "$RESUME" = true ]] && CMD+=(--resume)
+  [[ -n "$MAX_SAMPLES" ]] && CMD+=(--max-samples "$MAX_SAMPLES")
+  [[ -n "$N_GENERATOR_JOBS" ]] && CMD+=(--n-generator-jobs "$N_GENERATOR_JOBS")
+  [[ -n "$LM_STUDIO_HOST" ]] && CMD+=(--lm-studio-host "$LM_STUDIO_HOST")
+  [[ -n "$SHARD_INDEX" ]] && CMD+=(--shard-index "$SHARD_INDEX" --num-shards "$NUM_SHARDS")
 
   if [[ "$DRY_RUN" = true ]]; then
     log "${YELLOW}[dry-run]${RESET} ${CMD[*]}"

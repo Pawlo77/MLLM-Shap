@@ -3,14 +3,14 @@
   <p><strong>Configuration-first CLI for reproducible SHAP sweeps at research scale.</strong></p>
 </div>
 
-`mllm_shapx` runs reproducible SHAP experiments with resume support and optional Weights & Biases tracking.
+`mllm_shapx` runs reproducible SHAP experiments with resume support, **MLflow** tracking, and optional LM Studio / OpenAI-compatible servers via the `openai_compat_text` connector.
 
 # 📊 Runner Snapshot
 
 - **Execution model**: config-driven variant expansion with per-variant overrides
 - **Checkpointing**: built-in resume flow with versioned checkpoints
 - **Output granularity**: per-sample + aggregate metrics
-- **Supported connectors**: `liquid_audio`, `hf_text` (extensible via registry)
+- **Supported connectors**: `liquid_audio`, `hf_text`, `openai_compat_text` (extensible via registry)
 - **Dataset sources**: HuggingFace Parquet, HuggingFace Datasets, local Parquet, local CSV
 - **Sharding**: native `--shard-index` / `--num-shards` for SLURM parallelism
 
@@ -22,34 +22,47 @@ mllm_shapx/
 ├── src/                 # core library modules
 │   ├── __init__.py      # public API exports
 │   ├── cli.py           # CLI: validate, plan, run subcommands
-│   ├── config.py        # Pydantic config models, inheritance, validation
+│   ├── config/          # configuration subsystem
+│   │   ├── models.py    # Pydantic config models, inheritance
+│   │   ├── registry.py  # normalizer/reducer/similarity maps
+│   │   └── validation.py
+│   ├── runner/          # execution engine
+│   │   ├── types.py     # ExpandedVariant dataclass
+│   │   ├── variants.py  # expand_variants() logic
+│   │   ├── execution.py # run_single_sentence_variant orchestrator
+│   │   ├── stages.py    # RowSelector, ChatBuilder, ExplainerRunner, ResultWriter
+│   │   ├── helpers.py   # _LinearSampleScaler, _try_set_num_samples
+│   │   └── io_utils.py  # checkpoint load/save, result serialization
 │   ├── constants.py     # enums, frozensets, modality helpers
 │   ├── data.py          # dataset loading, filtering, row selection
 │   ├── factory.py       # connector registry, explainer/chat builders
-│   ├── runner.py        # variant expansion, composable stages, orchestration
-│   ├── storage.py       # filesystem helpers, checkpoints, JSON I/O
-│   ├── serialization.py # conversation serialization
+│   ├── discovery.py     # runtime explainer/connector discovery
+│   ├── mlflow_tracker.py
+│   ├── analysis_snapshot.py
 │   ├── audio_utils.py   # audio artifact helpers
-│   └── wandb_utils.py   # Weights & Biases integration
-├── tests/               # test suite (169 tests)
+│   ├── lm_studio.py     # LM Studio lifecycle (download/load/unload)
+│   └── hf_model_download.py  # standalone model download helper
+├── tests/               # test suite
 │   ├── test_cli.py
 │   ├── test_config.py
 │   ├── test_constants.py
 │   ├── test_data.py
+│   ├── test_discovery.py
 │   ├── test_factory.py
 │   ├── test_runner.py
 │   ├── test_runner_helpers.py
-│   ├── test_serialization.py
-│   └── test_storage.py
+│   └── test_result_writer_mlflow.py
 ├── configs/             # experiment configuration files
-│   ├── single_sentence/
-│   ├── multi_lingual/
-│   ├── package_grid/
-│   └── ...
-└── utils/               # standalone helper scripts
-    ├── hf_model_download.py
-    ├── sync_wandb_results.py
-    └── upload_past_artifacts.py
+│   └── example.json     # annotated example config
+├── sbatchs/             # SLURM submission scripts
+│   └── example.sbatch   # annotated example sbatch
+├── gui/                 # Streamlit MLflow monitor
+│   ├── app.py           # main entry point
+│   ├── state.py         # session state management
+│   ├── components/      # reusable UI components
+│   └── views/           # page views
+├── launch_shards_ssh.sh # cluster helper for SSH sharding
+└── run_configs.sh       # local batch runner with retry logic
 ```
 
 # Prerequisites
@@ -65,7 +78,7 @@ export MLLM_SHAP_SRC=/path/to/mllm_shap/src
 export LOG_LEVEL=INFO
 ```
 
-See `.env.example` for defaults.
+See `.example.env` for defaults.
 
 # CLI Entry Point
 
@@ -88,10 +101,27 @@ Preview experiment plan (dry run):
 python -m experiments.mllm_shapx.src.cli plan --config path/to/config.json
 ```
 
-Run experiments:
+Run with MLflow (set a tracking URI in the environment or in JSON `mlflow.tracking_uri`):
 
 ```bash
+export MLFLOW_TRACKING_URI="http://127.0.0.1:5050"
 python -m experiments.mllm_shapx.src.cli run --config path/to/config.json --resume
+```
+
+### Streamlit monitor
+
+```bash
+uv run streamlit run experiments/mllm_shapx/gui/app.py
+```
+
+### SSH shard launcher
+
+Use `launch_shards_ssh.sh` to run `--shard-index` / `--num-shards` across hosts (see script header). All workers should share the same `MLFLOW_TRACKING_URI`. Supports `--resume` (default), `--no-resume`, and `--max-samples`.
+
+```bash
+export MLFLOW_TRACKING_URI="http://mlflow.internal:5050"
+./experiments/mllm_shapx/launch_shards_ssh.sh hosts.txt configs/mc_minimal.json
+./experiments/mllm_shapx/launch_shards_ssh.sh --no-resume --max-samples 50 hosts.txt configs/mc_minimal.json
 ```
 
 Run with sharding (SLURM):
@@ -111,10 +141,9 @@ Use `--resume` to continue interrupted runs using checkpoints.
 
 # Configuration
 
-Start from templates in `configs/`, especially:
+Start from the annotated example:
 
-- `configs/mc_minimal.json`
-- `configs/single_sentence_grid.json`
+- `configs/example.json`
 
 ## Key Features
 
@@ -132,6 +161,7 @@ Start from templates in `configs/`, especially:
 |-----------|-------|-------------|
 | Liquid Audio | `liquid_audio` | Multi-modal audio+text model |
 | Transformers Text | `hf_text` | Text-only HuggingFace causal LM |
+| OpenAI-compatible | `openai_compat_text` | LM Studio / vLLM / any OpenAI-API server |
 
 ## Explainer Types
 
