@@ -1,28 +1,31 @@
-"""Conversation serialization and summarization helpers."""
+"""Runner serialization and telemetry utility functions."""
 
+import logging
 from typing import Any, Dict, List
 
 import numpy as np
 import torch
 
+from mllm_shap.shap.core.telemetry import TelemetryData
 
-def _safe_primitive(x: Any) -> Any:
-    """Convert x to a JSON-safe primitive, handling special cases."""
-    if isinstance(x, (bytes, bytearray, memoryview)):
-        return {"_binary": True, "num_bytes": len(x)}
-    if isinstance(x, np.generic):
-        return x.item()
-    if isinstance(x, torch.Tensor):
-        return x.detach().cpu().tolist()
-    if isinstance(x, float) and (np.isnan(x) or np.isinf(x)):
+LOGGER = logging.getLogger(__name__)
+
+
+def _safe_primitive(value: Any) -> Any:
+    """Convert values into JSON-safe primitives for run artifacts."""
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return {"_binary": True, "num_bytes": len(value)}
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, torch.Tensor):
+        return value.detach().cpu().tolist()
+    if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
         return None
-    return x
+    return value
 
 
 def serialize_conversation(conv: Any) -> List[List[Dict[str, Any]]]:
-    """
-    Convert model conversation to JSON-safe nested lists with sanitized SHAP values.
-    """
+    """Serialize model conversation turns into JSON-safe nested structures."""
     result: List[List[Dict[str, Any]]] = []
     for turn in conv:
         out_turn: List[Dict[str, Any]] = []
@@ -47,9 +50,7 @@ def serialize_conversation(conv: Any) -> List[List[Dict[str, Any]]]:
 
 
 def compute_modality_summary(conv: Any) -> Dict[str, Any]:
-    """
-    Aggregate absolute contribution per modality + element counts.
-    """
+    """Compute modality attribution aggregates from serialized SHAP values."""
     modality_abs_sum = {"text": 0.0, "audio": 0.0}
     modality_counts = {"text": 0, "audio": 0}
 
@@ -75,3 +76,20 @@ def compute_modality_summary(conv: Any) -> Dict[str, Any]:
         "count_text_tokens": modality_counts["text"],
         "count_audio_segments": modality_counts["audio"],
     }
+
+
+def flatten_telemetry_metrics(data: TelemetryData | None) -> Dict[str, float]:
+    """Flatten structured telemetry into metric keys suitable for MLflow."""
+    if data is None:
+        return {}
+    raw = data.to_dict()
+    out: Dict[str, float] = {}
+    for section in ("cache", "masks", "timing"):
+        block = raw.get(section) or {}
+        for key, value in block.items():
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                out[f"shap/{section}/{key}"] = float(value)
+    for key, value in (raw.get("custom") or {}).items():
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            out[f"shap/custom/{key}"] = float(value)
+    return out
