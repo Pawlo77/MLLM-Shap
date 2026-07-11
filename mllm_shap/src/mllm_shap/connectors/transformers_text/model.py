@@ -210,6 +210,146 @@ class TransformersCausalText(BaseMllmModel):
             generated_modality_flag=modality_flag,  # [seq_len]
         )
 
+    def generate_batch(
+        self,
+        chats: list[BaseMllmChat],
+        max_new_tokens: int = 128,
+        model_config: ModelConfig = ModelConfig(),
+        keep_history: bool = False,
+    ) -> list[ModelResponse]:
+        """Generate responses for multiple chats in a single batched forward pass.
+
+        Pads inputs to equal length and runs one ``model.generate()`` call,
+        giving much higher GPU utilization than sequential single-item calls.
+        """
+        if not chats:
+            return []
+        if len(chats) == 1:
+            return [
+                self.generate(
+                    chat=chats[0],
+                    max_new_tokens=max_new_tokens,
+                    model_config=model_config,
+                    keep_history=keep_history,
+                )
+            ]
+
+        model_config = model_config.model_copy(deep=True)
+
+        if (
+            model_config.audio_temperature is not None
+            or model_config.audio_top_k is not None
+        ):
+            warnings.warn(
+                "Audio generation parameters were provided but this connector is text-only; "
+                "audio settings are ignored.",
+                stacklevel=2,
+            )
+
+        # Prepare individual chats (deep copy + mark assistant turn)
+        prepared_chats: list[BaseMllmChat] = []
+        prompt_lengths: list[int] = []
+        for chat in chats:
+            c = deepcopy(chat)
+            c.new_turn(Role.ASSISTANT)
+            prepared_chats.append(c)
+            prompt_lengths.append(int(c.text_tokens.shape[0]))
+
+        # Left-pad to max length and build batched tensors
+        max_len = max(prompt_lengths)
+        pad_id = self.processor.pad_token_id or self.processor.eos_token_id or 0
+
+        input_ids_list: list[Tensor] = []
+        attention_mask_list: list[Tensor] = []
+        for c, p_len in zip(prepared_chats, prompt_lengths):
+            tokens = c.text_tokens.to(dtype=torch.long, device=self.device)
+            pad_len = max_len - p_len
+            if pad_len > 0:
+                padding = torch.full(
+                    (pad_len,), pad_id, dtype=torch.long, device=self.device
+                )
+                tokens = torch.cat([padding, tokens])
+                mask = torch.cat(
+                    [
+                        torch.zeros(pad_len, dtype=torch.long, device=self.device),
+                        torch.ones(p_len, dtype=torch.long, device=self.device),
+                    ]
+                )
+            else:
+                mask = torch.ones(p_len, dtype=torch.long, device=self.device)
+            input_ids_list.append(tokens)
+            attention_mask_list.append(mask)
+
+        input_ids = torch.stack(input_ids_list)  # [B, max_len]
+        attention_mask = torch.stack(attention_mask_list)  # [B, max_len]
+
+        do_sample = (
+            model_config.text_temperature is not None
+            and model_config.text_temperature > 0.0
+        )
+        temperature: float | None = (
+            float(model_config.text_temperature)
+            if do_sample and model_config.text_temperature is not None
+            else None
+        )
+        top_k: int | None = (
+            int(model_config.text_top_k)
+            if do_sample and model_config.text_top_k is not None
+            else None
+        )
+
+        gen_out = self.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_k=top_k,
+            return_dict_in_generate=True,
+            pad_token_id=self.processor.pad_token_id,
+            eos_token_id=self.processor.eos_token_id,
+        )
+
+        sequences: Tensor = gen_out.sequences  # [B, max_len + gen_len]
+
+        # Unpack per-sample responses
+        responses: list[ModelResponse] = []
+        for i, (chat_out, p_len) in enumerate(zip(prepared_chats, prompt_lengths)):
+            gen_start = max_len  # generation starts after padded prompt
+            generated = sequences[i, gen_start:]
+            # Strip pad tokens from generated output
+            if self.processor.pad_token_id is not None:
+                non_pad = generated != self.processor.pad_token_id
+                generated = generated[non_pad]
+            generated = generated.to(dtype=torch.long, device=self.device)
+
+            modality_flag = torch.full(
+                (generated.shape[0],),
+                ModalityFlag.TEXT,
+                dtype=torch.long,
+                device=self.device,
+            )
+
+            if keep_history:
+                text_tokens_2d = generated.unsqueeze(0)
+                empty_audio = torch.empty((0, 0), dtype=torch.long, device=self.device)
+                self._set_chat_history(
+                    chat_out, text_tokens_2d, empty_audio, modality_flag
+                )
+
+            responses.append(
+                ModelResponse(
+                    chat=chat_out if keep_history else None,
+                    generated_text_tokens=generated,
+                    generated_audio_tokens=torch.empty(
+                        (0, 0), dtype=torch.long, device=self.device
+                    ),
+                    generated_modality_flag=modality_flag,
+                )
+            )
+
+        return responses
+
     # -- embeddings API --
 
     def get_static_embeddings(self, responses: list[ModelResponse]) -> list[Tensor]:

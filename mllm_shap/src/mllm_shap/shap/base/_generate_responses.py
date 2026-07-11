@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from logging import Logger
+from queue import Empty, Queue
 from threading import Lock, Thread
 from time import time
 from typing import Any
@@ -321,92 +322,274 @@ def _generate_responses_multi(
     tqdm_desc: str = "Calculating SHAP values",
     **generate_kwargs: dict[str, Any],
 ) -> tuple[int, list[tuple[Tensor, int, BaseMllmChat | None, ModelResponse]] | None]:
-    """Generate model responses for all masks in parallel using multiple threads."""
-    context = _GenerationContext(
-        source_chat=source_chat,
-        model=model,
-        cache_manager=cache_manager,
-        verbose=verbose,
-        generate_kwargs=generate_kwargs,
-    )
-    processor = _MaskProcessor(context=context)
+    """Generate model responses using a prep/infer pipeline.
+
+    CPU-bound mask preparation (from_chat) runs in dedicated prep threads
+    and feeds a bounded queue consumed by GPU/inference threads. This hides
+    prep latency behind inference and keeps the GPU continuously busy.
+
+    If the model overrides ``generate_batch``, a single GPU thread collects
+    micro-batches for higher tensor-core utilization.
+    """
     accumulator = _create_accumulator(
         masks=masks,
         responses=responses,
         verbose=verbose,
     )
 
-    if tqdm_bar is not None:
-        iterable_gen = enumerate(gen)
-    else:
-        iterable_gen = enumerate(
-            standard_tqdm(gen, desc=tqdm_desc) if progress_bar else gen
-        )
+    # Progress bar setup — track completions, not fetches
+    owns_bar = False
+    if tqdm_bar is None and progress_bar:
+        tqdm_bar = standard_tqdm(desc=tqdm_desc, leave=False)
+        owns_bar = True
 
+    iterable_gen = enumerate(gen)
+
+    # Shared state
     chats_skipped = 0
     cache_hits = 0
     cache_misses = 0
     model_elapsed_ms = 0.0
     error_flag = False
-    lock = Lock()
+    iter_lock = Lock()
+    stats_lock = Lock()
 
-    def worker() -> None:
-        """Worker function for generating masks in parallel."""
-        nonlocal chats_skipped, cache_hits, cache_misses, model_elapsed_ms, error_flag
+    # Detect if model has true batch support
+    _supports_batch = type(model).generate_batch is not BaseMllmModel.generate_batch
+
+    # Bounded queue connecting prep → GPU stages.
+    # Each item is (i, mask, mask_hash, masked_chat | None, cached_response | None).
+    _DONE = object()
+    prefetch_queue: Queue = Queue(maxsize=n_generator_jobs * 2)
+
+    # --- Prep workers: fetch masks, check cache, build masked chats (CPU) ---
+
+    def prep_worker() -> None:
+        nonlocal chats_skipped, error_flag
 
         while True:
             try:
-                with lock:
+                with iter_lock:
                     if error_flag:
                         return
-
                     try:
                         i, (mask, mask_hash) = next(iterable_gen)
                     except StopIteration:
                         return
 
+                # Cache check (thread-safe by contract)
+                if cache_manager.contains(mask_hash=mask_hash):
+                    cached_response = cache_manager.extract(mask_hash=mask_hash)
+                    prefetch_queue.put((i, mask, mask_hash, None, cached_response))
+                else:
+                    # CPU-intensive: construct masked chat
+                    try:
+                        masked_chat = type(source_chat).from_chat(
+                            mask=mask, chat=source_chat
+                        )
+                    except AllTextTokensFilteredOutError:
+                        with stats_lock:
+                            chats_skipped += 1
+                        if tqdm_bar is not None:
+                            tqdm_bar.update(1)
+                        continue
+                    prefetch_queue.put((i, mask, mask_hash, masked_chat, None))
+
+            except Exception as e:
+                logger.error("Error in prep worker: %s", e, exc_info=True)
+                with stats_lock:
+                    error_flag = True
+                return
+
+    # --- GPU/inference worker (single-item mode) ---
+
+    def gpu_worker() -> None:
+        nonlocal cache_hits, cache_misses, model_elapsed_ms, error_flag
+
+        while True:
+            item = prefetch_queue.get()
+            if item is _DONE:
+                prefetch_queue.put(_DONE)
+                return
+
+            i, mask, mask_hash, masked_chat, cached_response = item
+
+            if error_flag:
+                continue
+
+            if cached_response is not None:
+                with stats_lock:
+                    accumulator.append(
+                        mask=mask,
+                        mask_hash=mask_hash,
+                        masked_chat=None,
+                        model_response=cached_response,
+                    )
+                    cache_hits += 1
+                    if tqdm_bar is not None:
+                        tqdm_bar.update(1)
+            else:
                 try:
                     t0 = time()
-                    masked_chat, model_response = processor.process(
-                        mask=mask, mask_hash=mask_hash, i=i
-                    )
-                except AllTextTokensFilteredOutError:
-                    with lock:
-                        chats_skipped += 1
-                    continue
+                    probe = cache_manager._probe
+                    if probe is None:
+                        model_response = model.generate(
+                            chat=masked_chat,
+                            keep_history=verbose,
+                            **generate_kwargs,
+                        )
+                    else:
+                        with probe.timing("model"):
+                            model_response = model.generate(
+                                chat=masked_chat,
+                                keep_history=verbose,
+                                **generate_kwargs,
+                            )
+                    elapsed = (time() - t0) * 1000.0
+                except Exception as e:
+                    logger.error("Error in GPU worker: %s", e, exc_info=True)
+                    with stats_lock:
+                        error_flag = True
+                    return
 
-                with lock:
+                with stats_lock:
                     accumulator.append(
                         mask=mask,
                         mask_hash=mask_hash,
                         masked_chat=masked_chat,
                         model_response=model_response,
                     )
-                    if masked_chat is None:
-                        cache_hits += 1
-                    else:
-                        cache_misses += 1
-                        model_elapsed_ms += (time() - t0) * 1000.0
+                    cache_misses += 1
+                    model_elapsed_ms += elapsed
                     if tqdm_bar is not None:
                         tqdm_bar.update(1)
 
                 if not verbose:
-                    # cleanup large refs; avoid forcing global GC in hot loop
                     del masked_chat
                     del model_response
 
-            except Exception as e:
-                logger.error("Error in SHAP explainer worker: %s", e, exc_info=True)
-                with lock:
-                    error_flag = True
+    # --- GPU/inference worker (batched mode) ---
+
+    def gpu_worker_batched() -> None:
+        """Collect micro-batches from queue and call generate_batch."""
+        nonlocal cache_hits, cache_misses, model_elapsed_ms, error_flag
+        batch_size = n_generator_jobs
+
+        while True:
+            # Collect up to batch_size items needing inference
+            batch_items: list[tuple] = []
+            done = False
+
+            while len(batch_items) < batch_size:
+                # Block on first item, non-blocking drain for rest
+                if not batch_items:
+                    item = prefetch_queue.get()
+                else:
+                    try:
+                        item = prefetch_queue.get_nowait()
+                    except Empty:
+                        break  # queue empty, process what we have
+
+                if item is _DONE:
+                    done = True
+                    break
+
+                if error_flag:
+                    continue
+
+                i, mask, mask_hash, masked_chat, cached_response = item
+
+                if cached_response is not None:
+                    # Cache hit — accumulate immediately
+                    with stats_lock:
+                        accumulator.append(
+                            mask=mask,
+                            mask_hash=mask_hash,
+                            masked_chat=None,
+                            model_response=cached_response,
+                        )
+                        cache_hits += 1
+                        if tqdm_bar is not None:
+                            tqdm_bar.update(1)
+                else:
+                    batch_items.append((i, mask, mask_hash, masked_chat))
+
+            # Run batched inference
+            if batch_items and not error_flag:
+                chats_for_batch = [item[3] for item in batch_items]
+                try:
+                    t0 = time()
+                    probe = cache_manager._probe
+                    if probe is None:
+                        batch_responses = model.generate_batch(
+                            chats=chats_for_batch,
+                            keep_history=verbose,
+                            **generate_kwargs,
+                        )
+                    else:
+                        with probe.timing("model"):
+                            batch_responses = model.generate_batch(
+                                chats=chats_for_batch,
+                                keep_history=verbose,
+                                **generate_kwargs,
+                            )
+                    elapsed = (time() - t0) * 1000.0
+                except Exception as e:
+                    logger.error("Error in batched GPU worker: %s", e, exc_info=True)
+                    with stats_lock:
+                        error_flag = True
+                    return
+
+                with stats_lock:
+                    for (bi, b_mask, b_hash, b_chat), resp in zip(
+                        batch_items, batch_responses
+                    ):
+                        accumulator.append(
+                            mask=b_mask,
+                            mask_hash=b_hash,
+                            masked_chat=b_chat,
+                            model_response=resp,
+                        )
+                    cache_misses += len(batch_items)
+                    model_elapsed_ms += elapsed
+                    if tqdm_bar is not None:
+                        tqdm_bar.update(len(batch_items))
+
+                if not verbose:
+                    del chats_for_batch
+                    del batch_responses
+
+            if done:
+                prefetch_queue.put(_DONE)
                 return
 
-    # run workers
-    workers = [Thread(target=worker) for _ in range(n_generator_jobs)]
-    for worker_thread in workers:
-        worker_thread.start()
-    for worker_thread in workers:
-        worker_thread.join()
+    # Launch pipeline: prep threads feed GPU threads
+    n_prep = min(2, n_generator_jobs)
+    prep_threads = [Thread(target=prep_worker) for _ in range(n_prep)]
+
+    if _supports_batch:
+        # True batching: 1 GPU thread collects micro-batches
+        gpu_threads = [Thread(target=gpu_worker_batched)]
+    else:
+        # Threaded parallelism: N workers with individual generate() calls
+        gpu_threads = [Thread(target=gpu_worker) for _ in range(n_generator_jobs)]
+
+    for t in prep_threads:
+        t.start()
+    for t in gpu_threads:
+        t.start()
+
+    # Wait for prep to exhaust all masks, then signal GPU workers
+    for t in prep_threads:
+        t.join()
+    prefetch_queue.put(_DONE)
+
+    for t in gpu_threads:
+        t.join()
+
+    if owns_bar and tqdm_bar is not None:
+        tqdm_bar.close()
+
     if error_flag:
         raise WorkerExecutionError("Error occurred in SHAP explainer worker thread.")
 
@@ -452,7 +635,9 @@ def _generate_responses_single(
     if tqdm_bar is not None:
         iterable_gen = enumerate(gen)
     else:
-        iterable_gen = enumerate(tqdm(gen, desc=tqdm_desc) if progress_bar else gen)
+        iterable_gen = enumerate(
+            tqdm(gen, desc=tqdm_desc, leave=False) if progress_bar else gen
+        )
 
     chats_skipped = 0
     cache_hits = 0

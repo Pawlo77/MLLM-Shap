@@ -340,26 +340,27 @@ class TestGenerateResponses:
 
         mock_tqdm.assert_called_once()
 
-    @patch("mllm_shap.shap.base._generate_responses._process_mask")
     def test_generate_responses_multi_propagates_verbose_flag(
         self,
-        mock_process: MagicMock,
         setup_env: tuple[DummyModel, DummyChat, CacheManager],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """All worker invocations should inherit verbose parameter."""
         model, chat, cache_manager = setup_env
         verbose_flags: list[bool] = []
 
-        def worker_side_effect(verbose: bool, **kwargs):
-            verbose_flags.append(verbose)
-            return DummyChat(), ModelResponse(
+        def capturing_generate(
+            self, chat, keep_history: bool = False, **kwargs
+        ) -> ModelResponse:
+            verbose_flags.append(keep_history)
+            return ModelResponse(
                 chat=chat,
                 generated_text_tokens=torch.tensor([1]),
                 generated_audio_tokens=torch.tensor([]),
                 generated_modality_flag=torch.ones(1, dtype=torch.bool),
             )
 
-        mock_process.side_effect = worker_side_effect
+        monkeypatch.setattr(DummyModel, "generate", capturing_generate)
 
         gen = iter([
             (torch.tensor([True, False, True]), 1),
@@ -383,15 +384,18 @@ class TestGenerateResponses:
         assert verbose_flags == [True, True]
         assert history is not None and len(history) == 2
 
-    @patch("mllm_shap.shap.base._generate_responses._process_mask")
     def test_generate_responses_multi_raises_on_worker_error(
         self,
-        mock_process: MagicMock,
         setup_env: tuple[DummyModel, DummyChat, CacheManager],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Unhandled worker exception should surface as RuntimeError."""
         model, chat, cache_manager = setup_env
-        mock_process.side_effect = RuntimeError("boom")
+
+        def exploding_generate(self, chat, **kwargs):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(DummyModel, "generate", exploding_generate)
 
         gen = iter([(torch.tensor([True, False, True]), 1)])
 
@@ -408,29 +412,24 @@ class TestGenerateResponses:
                 verbose=True,
             )
 
-    @patch("mllm_shap.shap.base._generate_responses._process_mask")
     def test_generate_responses_multi_counts_skipped_filtered_masks(
         self,
-        mock_process: MagicMock,
         setup_env: tuple[DummyModel, DummyChat, CacheManager],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Multi-worker path should increment chats_skipped on filtered masks."""
         model, chat, cache_manager = setup_env
 
-        response = ModelResponse(
-            chat=chat,
-            generated_text_tokens=torch.tensor([1]),
-            generated_audio_tokens=torch.tensor([]),
-            generated_modality_flag=torch.ones(1, dtype=torch.bool),
-        )
+        call_count = {"n": 0}
 
-        def side_effect(mask, mask_hash, source_chat, model, cache_manager, verbose, i):
-            del mask, mask_hash, source_chat, model, cache_manager, verbose
-            if i == 0:
+        @classmethod
+        def selective_from_chat(cls, mask, chat):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
                 raise AllTextTokensFilteredOutError()
-            return DummyChat(), response
+            return DummyChat(num_tokens=int(mask.sum().item()))
 
-        mock_process.side_effect = side_effect
+        monkeypatch.setattr(DummyChat, "from_chat", selective_from_chat)
 
         chats_skipped, history = generate_responses(
             masks=[],
@@ -450,30 +449,18 @@ class TestGenerateResponses:
         assert chats_skipped == 1
         assert history is None
 
-    @patch("mllm_shap.shap.base._generate_responses._process_mask")
     def test_generate_responses_multi_error_flag_short_circuits_other_workers(
         self,
-        mock_process: MagicMock,
         setup_env: tuple[DummyModel, DummyChat, CacheManager],
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """If one worker fails, next worker should return immediately via error_flag branch."""
+        """If one worker fails, the error should propagate as WorkerExecutionError."""
         model, chat, cache_manager = setup_env
 
-        class ImmediateThread:
-            def __init__(self, target):
-                self._target = target
+        def exploding_generate(self, chat, **kwargs):
+            raise RuntimeError("boom")
 
-            def start(self):
-                self._target()
-
-            def join(self):
-                return None
-
-        monkeypatch.setattr(
-            "mllm_shap.shap.base._generate_responses.Thread", ImmediateThread
-        )
-        mock_process.side_effect = RuntimeError("boom")
+        monkeypatch.setattr(DummyModel, "generate", exploding_generate)
 
         with pytest.raises(WorkerExecutionError, match="worker"):
             generate_responses(
@@ -523,10 +510,13 @@ class TestGenerateResponses:
         mock_standard_tqdm: MagicMock,
         setup_env: tuple[DummyModel, DummyChat, CacheManager],
     ) -> None:
-        """progress_bar=True should wrap iterator with standard_tqdm in multi mode."""
+        """progress_bar=True should create standard_tqdm bar in multi mode."""
         model, chat, cache_manager = setup_env
         seq = [(torch.tensor([True, False, True]), 1)]
-        mock_standard_tqdm.side_effect = lambda iterable, desc: iterable
+
+        # Mock returns a bar-like object with update/close methods
+        mock_bar = MagicMock()
+        mock_standard_tqdm.return_value = mock_bar
 
         generate_responses(
             masks=[],
@@ -541,6 +531,7 @@ class TestGenerateResponses:
         )
 
         mock_standard_tqdm.assert_called_once()
+        mock_bar.close.assert_called_once()
 
     @patch("mllm_shap.shap.base._generate_responses.CacheManager")
     def test_process_mask_uses_mask_when_hash_missing(

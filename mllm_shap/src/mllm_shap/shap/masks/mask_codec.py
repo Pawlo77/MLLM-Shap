@@ -12,7 +12,9 @@ class PackedMask:
     """Packed bit representation of one boolean mask."""
 
     words: bytes
+    """Little-endian packed bytes encoding the boolean mask."""
     n_bits: int
+    """Original number of bits (mask length) before packing."""
 
 
 class MaskCodec:

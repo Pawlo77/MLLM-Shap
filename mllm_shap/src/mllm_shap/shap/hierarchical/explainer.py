@@ -680,6 +680,7 @@ class HierarchicalExplainer(BaseExplainer):
         if progress_bar:
             self._progress_bar = tqdm(
                 desc="Hierarchical SHAP",
+                leave=False,
             )
         t0 = time()
 

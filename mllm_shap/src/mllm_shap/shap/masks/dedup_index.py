@@ -8,6 +8,7 @@ class MaskDedupIndex:
     """Exact deduplication index for mask hashes."""
 
     _seen: set[int] = field(default_factory=set)
+    """Set of previously observed mask hashes."""
 
     def contains(self, mask_hash: int) -> bool:
         """Check hash membership."""

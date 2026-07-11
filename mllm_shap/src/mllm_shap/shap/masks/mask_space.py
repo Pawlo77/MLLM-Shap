@@ -11,7 +11,9 @@ class MaskSpace:
     """Describes explainable feature subset inside full token mask."""
 
     shap_values_mask: Tensor
+    """Boolean mask selecting explainable feature positions from full chat."""
     target_length: int
+    """Total length of the full token mask (including non-explainable tokens)."""
 
     @property
     def n_features(self) -> int:

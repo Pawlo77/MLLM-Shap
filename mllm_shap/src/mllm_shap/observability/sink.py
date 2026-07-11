@@ -23,7 +23,9 @@ class InMemoryObservabilitySink(ObservabilitySink):
     """Testing/debug sink storing all events in memory."""
 
     events: list[TraceEvent] = field(default_factory=list)
+    """Collected trace events in emission order."""
     spans: list[StageSpan] = field(default_factory=list)
+    """Collected stage spans in emission order."""
 
     def emit_event(self, event: TraceEvent) -> None:
         self.events.append(event)

@@ -27,7 +27,9 @@ class _ExplainerConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     shap_explainer: BaseShapExplainer
+    """SHAP explainer instance to validate."""
     model: BaseMllmModel
+    """Model connector instance to validate."""
 
 
 class BaseExplainer(ABC):
