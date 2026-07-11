@@ -1,0 +1,10 @@
+{
+  "base": "_base.json",
+  "lm_studio": {
+    "enabled": true,
+    "model_key": "mlx-community/gemma-3-4b-it-4bit",
+    "flash_attention": true,
+    "keep_model_in_memory": true,
+    "ttl": 3600
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "base": "_model_gemma3.json",
+  "experiment_set_id": "t2t_08_determinism_gemma3",
+  "output_root": "experiments/text/outputs/t2t_08",
+  "selection": {
+    "max_samples": 30,
+    "shuffle_seed": 42
+  },
+  "experiments": [
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_deterministic_seed42",
+      "generation_override": {"text_temperature": 0.0}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_deterministic_seed123",
+      "generation_override": {"text_temperature": 0.0},
+      "shap_override": {"seed": 123}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_deterministic_seed7",
+      "generation_override": {"text_temperature": 0.0},
+      "shap_override": {"seed": 7}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_deterministic_seed999",
+      "generation_override": {"text_temperature": 0.0},
+      "shap_override": {"seed": 999}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_deterministic_seed2024",
+      "generation_override": {"text_temperature": 0.0},
+      "shap_override": {"seed": 2024}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_stochastic_seed42",
+      "generation_override": {"text_temperature": 0.2}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_stochastic_seed123",
+      "generation_override": {"text_temperature": 0.2},
+      "shap_override": {"seed": 123}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_stochastic_seed7",
+      "generation_override": {"text_temperature": 0.2},
+      "shap_override": {"seed": 7}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_stochastic_seed999",
+      "generation_override": {"text_temperature": 0.2},
+      "shap_override": {"seed": 999}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_stochastic_seed2024",
+      "generation_override": {"text_temperature": 0.2},
+      "shap_override": {"seed": 2024}
+    }
+  ]
+}

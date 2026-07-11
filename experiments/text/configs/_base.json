@@ -1,0 +1,50 @@
+{
+  "device": "mps",
+  "connector": "lm_studio_text",
+  "output_root": "experiments/text/outputs",
+  "modality": {
+    "input_modality": "text",
+    "output_modality": "text"
+  },
+  "dataset": {
+    "source": "hf_parquet",
+    "repo_id": "Pawlo77/mllm-shap",
+    "subset": "single_sentence_1k",
+    "split": "test"
+  },
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.0
+  },
+  "chat": {
+    "system_roles_setup": "SYSTEM_ASSISTANT",
+    "system_prompt": "You are a helpful assistant.",
+    "assistant_prefill": null
+  },
+  "embedding": {
+    "model_id": "intfloat/e5-small-v2",
+    "revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+    "max_length": 64,
+    "batch_size": 64,
+    "l2_normalize": true,
+    "device": "mps"
+  },
+  "shap": {
+    "mode": "CONTEXTUAL",
+    "normalizer": "IdentityNormalizer",
+    "reducer": "MeanReducer",
+    "similarity": "TfIdfCosineSimilarity",
+    "token_filter": "exclude_punctuation",
+    "allow_mask_duplicates": false
+  },
+  "runtime": {
+    "verbose": true,
+    "progress_bar": true,
+    "gc_after_each_sample": true,
+    "cuda_empty_cache": false
+  },
+  "mlflow": {
+    "experiment_name": "t2t_text_experiments",
+    "nested_per_variant": true
+  }
+}

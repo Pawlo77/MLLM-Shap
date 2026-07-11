@@ -1,0 +1,60 @@
+{
+  "base": "_model_qwen25.json",
+  "experiment_set_id": "t2t_04_utility_ablation_qwen25",
+  "output_root": "experiments/text/outputs/t2t_04",
+  "selection": {
+    "max_samples": 300,
+    "shuffle_seed": 42
+  },
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.0
+  },
+  "experiments": [
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_tfidf_seed42",
+      "shap_override": {
+        "similarity": "TfIdfCosineSimilarity",
+        "normalizer": "IdentityNormalizer"
+      }
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_cosine_seed42",
+      "shap_override": {
+        "similarity": "CosineSimilarity",
+        "normalizer": "IdentityNormalizer"
+      }
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_euclidean_seed42",
+      "shap_override": {
+        "similarity": "EuclideanSimilarity",
+        "normalizer": "IdentityNormalizer"
+      }
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_tfidf_abssum_seed42",
+      "shap_override": {
+        "similarity": "TfIdfCosineSimilarity",
+        "normalizer": "AbsSumNormalizer"
+      }
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_cosine_abssum_seed42",
+      "shap_override": {
+        "similarity": "CosineSimilarity",
+        "normalizer": "AbsSumNormalizer"
+      }
+    }
+  ]
+}

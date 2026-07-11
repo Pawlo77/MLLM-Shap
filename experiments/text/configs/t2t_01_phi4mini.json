@@ -1,0 +1,42 @@
+{
+  "base": "_model_phi4mini.json",
+  "experiment_set_id": "t2t_01_toy_game_phi4mini",
+  "output_root": "experiments/text/outputs/t2t_01",
+  "dataset": {
+    "source": "hf_parquet",
+    "repo_id": "Pawlo77/mllm-shap",
+    "subset": "single_sentence_1k",
+    "split": "test"
+  },
+  "selection": {
+    "max_samples": 20,
+    "shuffle_seed": 42,
+    "max_prompt_tokens": 5,
+    "min_prompt_tokens": 1
+  },
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.0
+  },
+  "experiments": [
+    {
+      "explainer_type": "precise",
+      "name": "precise_seed42"
+    },
+    {
+      "explainer_type": "limited_mc",
+      "num_samples": [500],
+      "name": "mc500_seed42"
+    },
+    {
+      "explainer_type": "limited_cc",
+      "num_samples": [500],
+      "name": "cc500_seed42"
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_lin3_seed42"
+    }
+  ]
+}

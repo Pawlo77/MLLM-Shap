@@ -1,0 +1,38 @@
+{
+  "base": "_model_phi4mini.json",
+  "experiment_set_id": "t2t_06_multi_turn_phi4mini",
+  "output_root": "experiments/text/outputs/t2t_06",
+  "dataset": {
+    "source": "hf_parquet",
+    "repo_id": "Pawlo77/mllm-shap",
+    "subset": "multi_turn",
+    "split": "test"
+  },
+  "selection": {
+    "max_samples": 100,
+    "shuffle_seed": 42
+  },
+  "generation": {
+    "max_new_tokens": 64,
+    "text_temperature": 0.0
+  },
+  "experiments": [
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_lin3_seed42"
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_lin3_seed123",
+      "shap_override": {"seed": 123}
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [3.0],
+      "name": "neyman_lin3_seed7",
+      "shap_override": {"seed": 7}
+    }
+  ]
+}

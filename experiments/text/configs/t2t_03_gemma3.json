@@ -1,0 +1,30 @@
+{
+  "base": "_model_gemma3.json",
+  "experiment_set_id": "t2t_03_budget_sweep_gemma3",
+  "output_root": "experiments/text/outputs/t2t_03",
+  "selection": {
+    "max_samples": 200,
+    "shuffle_seed": 42
+  },
+  "generation": {
+    "max_new_tokens": 32,
+    "text_temperature": 0.0
+  },
+  "experiments": [
+    {
+      "explainer_type": "limited_mc",
+      "num_samples": [50, 100, 200, 500, 1000],
+      "name": "mc_budget_seed42"
+    },
+    {
+      "explainer_type": "limited_cc",
+      "num_samples": [50, 100, 200, 500],
+      "name": "cc_budget_seed42"
+    },
+    {
+      "explainer_type": "limited_neyman",
+      "linear": [1.0, 2.0, 3.0, 5.0, 8.0],
+      "name": "neyman_budget_seed42"
+    }
+  ]
+}
