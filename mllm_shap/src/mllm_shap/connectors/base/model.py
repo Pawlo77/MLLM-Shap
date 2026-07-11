@@ -122,6 +122,38 @@ class BaseMllmModel(ABC):
                 f"responses must be a list of ModelResponse, got {type(responses)}"
             )
 
+    def generate_batch(
+        self,
+        chats: list[BaseMllmChat],
+        max_new_tokens: int = 128,
+        model_config: ModelConfig = ModelConfig(),
+        keep_history: bool = False,
+    ) -> list[ModelResponse]:
+        """Generate responses for multiple chats in a single batched forward pass.
+
+        The default implementation loops over individual ``generate`` calls.
+        Connectors that support true batched inference (e.g. HuggingFace
+        Transformers) should override this for higher GPU throughput.
+
+        Args:
+            chats: List of chat objects to generate from.
+            max_new_tokens: Maximum new tokens per generation.
+            model_config: Generation configuration.
+            keep_history: Whether to keep full chat history in responses.
+
+        Returns:
+            List of ModelResponse objects, one per input chat.
+        """
+        return [
+            self.generate(
+                chat=chat,
+                max_new_tokens=max_new_tokens,
+                model_config=model_config,
+                keep_history=keep_history,
+            )
+            for chat in chats
+        ]
+
     def get_contextual_embeddings(
         self, *args: Any, static_embeddings: list[Tensor] | None = None, **kwargs: Any
     ) -> list[Tensor]:
