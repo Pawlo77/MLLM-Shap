@@ -26,7 +26,7 @@ def experiment_set_from_spec(spec: dict[str, Any]) -> ExperimentSet:
     """Build an ``ExperimentSet`` from a persisted run spec.
 
     The faithfulness experiment consumes only the subset required for replay,
-    and explicitly disables W&B side effects.
+    and explicitly disables MLflow side effects.
     """
     raw = {
         "experiment_set_id": spec["experiment_set_id"],
@@ -41,7 +41,7 @@ def experiment_set_from_spec(spec: dict[str, Any]) -> ExperimentSet:
         "shap": spec["shap"],
         "embedding": spec.get("embedding") or {},
         "experiments": [],
-        "wandb": {"enabled": False},
+        "mlflow": {"enabled": False},
     }
     return ExperimentSet.model_validate(raw)
 
