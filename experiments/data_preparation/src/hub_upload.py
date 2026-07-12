@@ -94,7 +94,6 @@ def build_upload_plan(
 
 def format_upload_plan(
     plan: list[UploadPlanItem],
-    *,
     repo_id: str = HUB_REPO_ID,
     readme_path: Path | None = None,
 ) -> str:
