@@ -1,0 +1,79 @@
+{
+  "per_condition": {
+    "Male TTS": {
+      "n_boundaries": 4944,
+      "fallback_rate": 0.5962783171521036,
+      "flux_raw": 23.04767764654577,
+      "flux_mid": 21.847996070607294,
+      "flux_refined": 15.569259635407134,
+      "reduction_total_pct": 32.447598954766924,
+      "reduction_midpoint_pct": 5.205216743901631,
+      "reduction_search_over_mid_pct": 28.73827153258745,
+      "refined_only_flux_mid": 11.89835873124754,
+      "refined_only_flux_refined": 6.264950328760152,
+      "refined_only_search_gain_pct": 47.346096463648365,
+      "share_from_midpoint": 0.160419165410602,
+      "share_from_search": 0.839580834589398
+    },
+    "Female TTS": {
+      "n_boundaries": 4944,
+      "fallback_rate": 0.6158980582524272,
+      "flux_raw": 13.061700403955674,
+      "flux_mid": 9.943902881995779,
+      "flux_refined": 8.784566800352186,
+      "reduction_total_pct": 32.74561099493737,
+      "reduction_midpoint_pct": 23.86976753054055,
+      "reduction_search_over_mid_pct": 11.658763117474352,
+      "refined_only_flux_mid": 8.249550102156753,
+      "refined_only_flux_refined": 6.002284785065553,
+      "refined_only_search_gain_pct": 27.241065140069605,
+      "share_from_midpoint": 0.7289455534737443,
+      "share_from_search": 0.27105444652625565
+    },
+    "Original TTS": {
+      "n_boundaries": 4944,
+      "fallback_rate": 0.6395631067961165,
+      "flux_raw": 17.560331115318142,
+      "flux_mid": 13.578985811895722,
+      "flux_refined": 12.868728412979381,
+      "reduction_total_pct": 26.71705146975392,
+      "reduction_midpoint_pct": 22.672381729461996,
+      "reduction_search_over_mid_pct": 5.230562935665837,
+      "refined_only_flux_mid": 10.590675919307829,
+      "refined_only_flux_refined": 9.448420448977046,
+      "refined_only_search_gain_pct": 10.785482239602292,
+      "share_from_midpoint": 0.8486109238187886,
+      "share_from_search": 0.15138907618121147
+    },
+    "Natural (LibriSpeech)": {
+      "n_boundaries": 1769,
+      "fallback_rate": 0.6054267947993217,
+      "flux_raw": 22.989940653935626,
+      "flux_mid": 17.423559391023527,
+      "flux_refined": 15.127303466567014,
+      "reduction_total_pct": 34.20033703315635,
+      "reduction_midpoint_pct": 24.212247202818226,
+      "reduction_search_over_mid_pct": 13.179028882235885,
+      "refined_only_flux_mid": 15.78622731195272,
+      "refined_only_flux_refined": 12.280000576478425,
+      "refined_only_search_gain_pct": 22.210669251034513,
+      "share_from_midpoint": 0.7079534678077902,
+      "share_from_search": 0.29204653219220983
+    }
+  },
+  "combined": {
+    "n_boundaries": 16601,
+    "fallback_rate": 0.6159869887356184,
+    "flux_raw": 18.433362275322217,
+    "flux_mid": 15.368708562038593,
+    "flux_refined": 12.697338172671596,
+    "reduction_total_pct": 31.117622585488704,
+    "reduction_midpoint_pct": 16.625581744175065,
+    "reduction_search_over_mid_pct": 17.381879411555783,
+    "refined_only_flux_mid": 10.871590717414167,
+    "refined_only_flux_refined": 7.735169459686868,
+    "refined_only_search_gain_pct": 28.84969954491907,
+    "share_from_midpoint": 0.534281875117548,
+    "share_from_search": 0.46571812488245207
+  }
+}

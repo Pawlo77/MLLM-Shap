@@ -1,0 +1,49 @@
+{
+  "per_condition": [
+    {
+      "label": "Male TTS",
+      "dataset_config": "single_sentence_1k",
+      "audio_column": "audio__male",
+      "n": 854,
+      "raw": 31.256221493712044,
+      "refined": 17.48869101729375,
+      "reduction_pct": 44.047328238917075
+    },
+    {
+      "label": "Female TTS",
+      "dataset_config": "single_sentence_1k",
+      "audio_column": "audio__female",
+      "n": 854,
+      "raw": 17.567358891511144,
+      "refined": 9.633797889048424,
+      "reduction_pct": 45.16080676359584
+    },
+    {
+      "label": "Original TTS",
+      "dataset_config": "single_sentence_1k",
+      "audio_column": "audio__original",
+      "n": 854,
+      "raw": 22.173210709488902,
+      "refined": 12.909947315638455,
+      "reduction_pct": 41.776824814487895
+    },
+    {
+      "label": "Natural (LibriSpeech)",
+      "dataset_config": "single_sentence_500",
+      "audio_column": "audio__original",
+      "n": 448,
+      "raw": 30.216740166753578,
+      "refined": 13.48694626467125,
+      "reduction_pct": 55.36597862561474
+    }
+  ],
+  "combined": {
+    "n": 3010,
+    "raw": 24.640650893551403,
+    "refined": 13.365399488419992,
+    "reduction_pct": 45.75874011543342,
+    "paired_t": 50.56889675403816,
+    "paired_p": 0.0,
+    "cohen_dz": 0.9217225889951632
+  }
+}

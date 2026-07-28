@@ -115,6 +115,7 @@ class SpectrogramGuidedAligner:
         ctc_separator: str = "|",
         boundary_energy_weight: float = 0.8,
         boundary_flux_weight: float = 0.2,
+        refine_boundaries: bool = True,
     ):
         if boundary_energy_weight < 0 or boundary_flux_weight < 0:
             raise ValueError("Boundary refinement weights must be non-negative.")
@@ -128,6 +129,10 @@ class SpectrogramGuidedAligner:
         self.ctc_separator = ctc_separator
         self.boundary_energy_weight = float(boundary_energy_weight)
         self.boundary_flux_weight = float(boundary_flux_weight)
+        # Stage-3 (spectrogram boundary refinement) toggle. When False, raw CTC
+        # boundary estimates are used unchanged -- used for the Stage-3-off
+        # ablation (raw CTC vs SGPA-refined at a fixed word-player count).
+        self.refine_boundaries = bool(refine_boundaries)
 
         logger.debug("Loading alignment model: %s on %s...", model_name, device)
         try:
@@ -215,6 +220,10 @@ class SpectrogramGuidedAligner:
         Returns:
             (refined_time_seconds, was_refined)
         """
+        # Stage-3-off ablation: skip spectral refinement, keep raw CTC boundary.
+        if not self.refine_boundaries:
+            return candidate_time, False
+
         # use gap midpoint as centre when gap endpoints are known.
         if left_time is not None and right_time is not None:
             center_time = (left_time + right_time) / 2.0

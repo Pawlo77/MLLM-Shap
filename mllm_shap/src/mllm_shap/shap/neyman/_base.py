@@ -590,33 +590,47 @@ class BaseComplementaryNeymanShapExplainer(BaseComplementaryShapApproximation):
                 **generate_kwargs,
             )
 
-            new_masks_tensor = torch.stack(masks[existing_masks_num:], dim=0)
-            # pass initial mask response as well, but don't store its similarity
-            new_similarities = self._get_similarities(
-                responses=[responses[0]] + responses[existing_masks_num:], model=model
-            )[1:]
-            # update C matrix with new masks
-            self._calculate_C_matrix(
-                masks=new_masks_tensor[..., source_chat.shap_values_mask],
-                similarities=new_similarities,
-                device=device,
-            )
+            # The Neyman allocation phase may add no new masks when the initial
+            # phase already exhausted (and cached) every distinct coalition for
+            # small games. In that case ``masks[existing_masks_num:]`` is empty
+            # and ``torch.stack`` would raise; fall back to the initial-phase
+            # estimates instead.
+            if len(masks) > existing_masks_num:
+                new_masks_tensor = torch.stack(masks[existing_masks_num:], dim=0)
+                # pass initial mask response as well, but don't store its similarity
+                new_similarities = self._get_similarities(
+                    responses=[responses[0]] + responses[existing_masks_num:],
+                    model=model,
+                )[1:]
+                # update C matrix with new masks
+                self._calculate_C_matrix(
+                    masks=new_masks_tensor[..., source_chat.shap_values_mask],
+                    similarities=new_similarities,
+                    device=device,
+                )
 
-            # edge case from :class:`BaseShapExplainer` does not apply here
-            # as we have :attr:`_initial_num_splits` >= 1
+                # edge case from :class:`BaseShapExplainer` does not apply here
+                # as we have :attr:`_initial_num_splits` >= 1
+
+                masks_tensor = torch.cat((masks_tensor, new_masks_tensor), dim=0)
+                similarities = torch.cat((similarities, new_similarities), dim=0)
+
+                del new_masks_tensor
+                del new_similarities
+            else:
+                logger.info(
+                    "Neyman allocation step added no new masks (all coalitions "
+                    "were already cached); using initial-phase estimates."
+                )
 
             # merge results
             chats_skipped += new_chats_skipped
             if history is not None and new_history is not None:
                 history += new_history
-            masks_tensor = torch.cat((masks_tensor, new_masks_tensor), dim=0)
-            similarities = torch.cat((similarities, new_similarities), dim=0)
 
             # clean up
             del new_chats_skipped
             del new_history
-            del new_masks_tensor
-            del new_similarities
 
         if cache_manager.extracted_num > 0:
             logger.info(

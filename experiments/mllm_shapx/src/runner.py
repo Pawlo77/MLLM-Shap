@@ -807,7 +807,21 @@ def run_single_sentence_variant(
                 )
                 explainer_runner = ExplainerRunner(explainer, cfg.runtime)
 
-        result, runtime_sec, n_calls = explainer_runner.run(chat, generation_kwargs)
+        try:
+            result, runtime_sec, n_calls = explainer_runner.run(chat, generation_kwargs)
+        except Exception:
+            LOGGER.exception(
+                "Sample index %d failed during explanation; skipping. Text: %s",
+                row_idx,
+                " | ".join(user_texts),
+            )
+            try:
+                import torch as _torch
+
+                _torch.cuda.empty_cache()
+            except Exception:  # noqa: BLE001
+                pass
+            continue
 
         # Parity check
         n_post = int(MasksManager(getattr(result, "base_chat", chat)).n)

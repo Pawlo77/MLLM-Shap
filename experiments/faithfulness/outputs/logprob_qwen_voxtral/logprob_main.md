@@ -1,0 +1,6 @@
+| model | condition | top_drop | nontop_drop | dz | pos_rate | pooled_rho | within_median_rho | wilcoxon_p |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2-Audio-7B | LibriSpeech | 0.431 | 0.134 | 0.51 | 0.71 | 0.6 | 0.7 | 5.148928163764255e-07 |
+| Qwen2-Audio-7B | TTS orig. | 0.587 | 0.192 | 0.63 | 0.81 | 0.62 | 0.68 | 4.1938895559339774e-10 |
+| Voxtral-Mini-3B | LibriSpeech | 1.144 | 0.432 | 0.48 | 0.71 | 0.64 | 0.7 | 1.562954204555634e-06 |
+| Voxtral-Mini-3B | TTS orig. | 1.047 | 0.298 | 0.68 | 0.77 | 0.66 | 0.68 | 8.693589987933083e-10 |

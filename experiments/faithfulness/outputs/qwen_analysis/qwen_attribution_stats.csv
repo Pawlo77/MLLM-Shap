@@ -1,0 +1,8 @@
+condition,n_samples,mean_players,gini_mean,entropy_mean,top20pct_share_mean
+librispeech_original,100,4.68,0.398,1.185,0.521
+tts_male,100,5.79,0.412,1.394,0.568
+tts_female,100,5.79,0.408,1.411,0.558
+tts_original,100,5.79,0.42,1.385,0.573
+stage3_off,100,4.68,0.419,1.139,0.532
+mask_noise,60,4.72,0.395,1.222,0.522
+mask_concat,60,4.72,0.372,1.244,0.487

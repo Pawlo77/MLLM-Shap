@@ -1,0 +1,3 @@
+condition,n,top_drop_emb,dz_emb,within_spearman_median_emb,boundaries
+librispeech_original,100,0.0838,1.131,0.7999999999999999,refined
+stage3_off,100,0.0794,1.365,0.7745966692414834,raw_ctc

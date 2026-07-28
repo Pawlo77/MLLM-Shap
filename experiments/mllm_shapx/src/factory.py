@@ -443,9 +443,17 @@ def build_chat(
                     raise ValueError("SGPA audio segmentation requires an aligner.")
                 if len(audios) != 1:
                     raise ValueError("SGPA audio segmentation expects one audio clip.")
+                # The aligner treats each element of a list as one target
+                # segment, so a single-element list like ["a dangerous age well"]
+                # collapses the whole utterance into one player. Join to a plain
+                # sentence string so the aligner splits it into word players.
+                if isinstance(user_texts, str):
+                    transcript_text = user_texts
+                else:
+                    transcript_text = " ".join(t for t in (user_texts or []) if t)
                 chat.add_audio_with_transcript(
                     audios[0],
-                    transcript=user_texts or "",
+                    transcript=transcript_text,
                     aligner=aligner,
                     audio_format=infer_audio_format(audios[0]),
                     attach_audio=False,

@@ -1,0 +1,15 @@
+model,condition,n,top_drop,nontop_drop,dz,wilcoxon_p,pooled_spearman,aopc_gap
+Qwen2-Audio-7B,librispeech_original,100,0.065,0.0157,0.941,5.6e-13,0.627,0.0306
+Qwen2-Audio-7B,tts_male,100,0.1004,0.0344,1.04,4.1e-15,0.678,0.0428
+Qwen2-Audio-7B,tts_female,100,0.1015,0.0383,0.966,2.0e-13,0.696,0.041
+Qwen2-Audio-7B,tts_original,100,0.0911,0.0295,1.048,4.6e-14,0.645,0.0377
+Qwen2-Audio-7B,stage3_off,100,0.0595,0.0112,1.004,9.8e-14,0.541,0.0299
+Qwen2-Audio-7B,mask_noise,60,0.0756,0.0206,1.024,3.9e-09,0.658,0.0354
+Qwen2-Audio-7B,mask_concat,60,0.0762,0.0234,0.882,3.3e-08,0.753,0.0343
+Voxtral-Mini-3B,librispeech_original,100,0.0838,0.0203,1.131,3.5e-15,0.687,0.0446
+Voxtral-Mini-3B,tts_male,100,0.1341,0.0666,1.058,3.6e-14,0.541,0.0464
+Voxtral-Mini-3B,tts_female,100,0.111,0.0333,1.051,1.5e-14,0.659,0.0534
+Voxtral-Mini-3B,tts_original,100,0.1086,0.0277,1.107,4.4e-15,0.61,0.0587
+Voxtral-Mini-3B,stage3_off,100,0.0794,0.0147,1.365,2.0e-16,0.625,0.0411
+Voxtral-Mini-3B,mask_noise,60,0.0901,0.0235,1.17,2.4e-10,0.751,0.0421
+Voxtral-Mini-3B,mask_concat,60,0.096,0.0263,1.224,2.7e-10,0.764,0.0445

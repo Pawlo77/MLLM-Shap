@@ -1,0 +1,20 @@
+{
+  "completed_samples": 100,
+  "mean_top_drop": 0.5870471895858645,
+  "mean_nontop_drop": 0.1916171146988371,
+  "pooled_spearman": 0.6166718082413157,
+  "within_sample_spearman_median": 0.6785714285714287,
+  "n_pairs": 100,
+  "mean_delta": 0.32645323008298877,
+  "dz": 0.6257663490736749,
+  "pos_rate": 0.81,
+  "wilcoxon_p_greater": 4.1938895559339774e-10,
+  "model": "qwen",
+  "condition": "tts_original",
+  "endpoint": "mean per-token logprob",
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/rebuttal_single_sentence_1k_sgpa/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "n_selected": 100,
+  "n_skipped": 0,
+  "results_csv": "experiments/faithfulness/outputs/logprob_qwen_voxtral/qwen_tts_original_logprob.csv"
+}

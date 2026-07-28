@@ -1,0 +1,5 @@
+voice,n,top_drop_emb,dz_emb,within_spearman_median_emb
+librispeech_original,100,0.065,0.941,0.7378647873726218
+tts_male,100,0.1004,1.04,0.7999999999999999
+tts_female,100,0.1015,0.966,0.796412483586046
+tts_original,100,0.0911,1.048,0.7714726606195155

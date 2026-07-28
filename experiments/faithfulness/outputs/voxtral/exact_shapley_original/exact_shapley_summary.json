@@ -1,0 +1,82 @@
+{
+  "completed_samples": 100,
+  "completed_deletions": 468,
+  "mean_top_drop_emb": 0.08381071507930753,
+  "mean_non_top_drop_emb": 0.020292763638755526,
+  "top_minus_nontop_emb": 0.063517951440552,
+  "pooled_spearman_emb": 0.6866103999744715,
+  "within_sample_spearman_mean_emb": 0.6948657464246178,
+  "within_sample_spearman_median_emb": 0.7999999999999999,
+  "within_sample_n_emb": 99,
+  "per_rank_mean_drop_emb": {
+    "1": 0.0838,
+    "2": 0.037,
+    "3": 0.0213,
+    "4": 0.0116,
+    "5": 0.0081,
+    "6": 0.0017,
+    "7": 0.0114
+  },
+  "top_vs_matched_random_emb": {
+    "n": 100,
+    "mean": 0.054368122816085815,
+    "std": 0.048056323445881864,
+    "median": 0.05580812692642209,
+    "positive_rate": 0.83,
+    "cohen_dz": 1.1313416796432678,
+    "wilcoxon_stat": 4297.0,
+    "wilcoxon_p_value": 3.4830619571920306e-15,
+    "paired_t_stat": 11.31341703185262,
+    "paired_t_p_value": 7.663541794653002e-20
+  },
+  "mean_top_drop_tfidf": 0.20589424663657355,
+  "mean_non_top_drop_tfidf": 0.08021664092797107,
+  "top_minus_nontop_tfidf": 0.12567760570860248,
+  "pooled_spearman_tfidf": 0.557298864541744,
+  "within_sample_spearman_mean_tfidf": 0.6042027054673151,
+  "within_sample_spearman_median_tfidf": 0.7378647873726218,
+  "within_sample_n_tfidf": 98,
+  "per_rank_mean_drop_tfidf": {
+    "1": 0.2059,
+    "2": 0.1279,
+    "3": 0.0876,
+    "4": 0.0578,
+    "5": 0.0326,
+    "6": 0.0214,
+    "7": 0.0735
+  },
+  "top_vs_matched_random_tfidf": {
+    "n": 100,
+    "mean": 0.10197482862194654,
+    "std": 0.15074595554378845,
+    "median": 0.10557280900008423,
+    "positive_rate": 0.61,
+    "cohen_dz": 0.676468085512629,
+    "wilcoxon_stat": 2650.0,
+    "wilcoxon_p_value": 2.684863582184983e-09,
+    "paired_t_stat": 6.764680900000999,
+    "paired_t_p_value": 4.730616710026739e-10
+  },
+  "backend": "voxtral",
+  "instruction": "Repeat the exact words that the speaker said.",
+  "utility": "E5 embedding cosine (exact Shapley)",
+  "mask_mode": "silence",
+  "stage3_off": false,
+  "audio_column": "audio__original",
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/aaai27_fixed_500_original/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "word_band": [
+    4,
+    7
+  ],
+  "full_pool": false,
+  "n_selected": 100,
+  "word_count_histogram": {
+    "4": 49,
+    "5": 37,
+    "6": 11,
+    "7": 3
+  },
+  "n_skipped": 0,
+  "results_csv": "experiments/faithfulness/outputs/voxtral/exact_shapley_original/exact_shapley_results.csv",
+  "coalitions_csv": "experiments/faithfulness/outputs/voxtral/exact_shapley_original/exact_shapley_coalitions.csv"
+}

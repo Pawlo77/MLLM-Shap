@@ -1,0 +1,80 @@
+{
+  "completed_deletions": 468,
+  "completed_samples": 100,
+  "failed_samples": 0,
+  "mean_deletion_drop": 0.5866435776408921,
+  "mean_top_rank_drop": 0.5999462890625,
+  "mean_non_top_rank_drop": 0.5830287104067595,
+  "mean_top_minus_non_top_drop": 0.016917578655740506,
+  "spearman_abs_sv_vs_drop": 0.043250702334168854,
+  "spearman_negative_rank_vs_drop": 0.0155820451579243,
+  "mean_within_sample_spearman_abs_sv_vs_drop": 0.04994286453099018,
+  "median_within_sample_spearman_abs_sv_vs_drop": 0.0,
+  "within_sample_spearman_n": 77,
+  "mean_top1_share": 0.4494113020278789,
+  "mean_top1_top2_gap": 0.18672829948365688,
+  "mean_abs_sv_entropy_norm": 0.7487574477070339,
+  "per_rank": {
+    "1": {
+      "n": 100.0,
+      "mean_drop": 0.5999462890625,
+      "median_drop": 0.6162109375,
+      "mean_abs_sv_share": 0.4494113020278789,
+      "mean_abs_sv": 0.4494112966954708
+    },
+    "2": {
+      "n": 100.0,
+      "mean_drop": 0.581353759765625,
+      "median_drop": 0.57421875,
+      "mean_abs_sv_share": 0.2626829981812513,
+      "mean_abs_sv": 0.2626829972118139
+    },
+    "3": {
+      "n": 100.0,
+      "mean_drop": 0.58642822265625,
+      "median_drop": 0.642578125,
+      "mean_abs_sv_share": 0.1662302132486259,
+      "mean_abs_sv": 0.16623021299019453
+    },
+    "4": {
+      "n": 100.0,
+      "mean_drop": 0.5738232421875,
+      "median_drop": 0.5966796875,
+      "mean_abs_sv_share": 0.08718108392309352,
+      "mean_abs_sv": 0.08718108420260248
+    },
+    "5": {
+      "n": 51.0,
+      "mean_drop": 0.5979147518382353,
+      "median_drop": 0.638671875,
+      "mean_abs_sv_share": 0.05946030906074101,
+      "mean_abs_sv": 0.05946030952584216
+    },
+    "6": {
+      "n": 14.0,
+      "mean_drop": 0.5985630580357143,
+      "median_drop": 0.6162109375,
+      "mean_abs_sv_share": 0.029783171415516622,
+      "mean_abs_sv": 0.02978317093636308
+    },
+    "7": {
+      "n": 3.0,
+      "mean_drop": 0.5068359375,
+      "median_drop": 0.609375,
+      "mean_abs_sv_share": 0.0,
+      "mean_abs_sv": 0.0
+    }
+  },
+  "mean_runtime_sec_per_deletion": 1.2411065948931577,
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/aaai27_fixed_500_original/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "all_rank_deletions": true,
+  "results_csv": "experiments/faithfulness/outputs/aaai27_fixed_500_original/audio__original_rankwise_results.csv",
+  "failures_csv": "experiments/faithfulness/outputs/aaai27_fixed_500_original/audio__original_failures.csv",
+  "random_draws": 20,
+  "strat_duration_bins": 4,
+  "strat_position_bins": 4,
+  "comprehensiveness_k": 3,
+  "sufficiency_k": 3,
+  "target_effect_size_dz": 0.5
+}

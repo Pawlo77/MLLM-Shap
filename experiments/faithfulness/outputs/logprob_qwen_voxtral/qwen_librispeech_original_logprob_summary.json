@@ -1,0 +1,20 @@
+{
+  "completed_samples": 100,
+  "mean_top_drop": 0.4314652294199914,
+  "mean_nontop_drop": 0.13420549028998482,
+  "pooled_spearman": 0.5999436359303169,
+  "within_sample_spearman_median": 0.7,
+  "n_pairs": 100,
+  "mean_delta": 0.23220588422380387,
+  "dz": 0.5061944789456772,
+  "pos_rate": 0.71,
+  "wilcoxon_p_greater": 5.148928163764255e-07,
+  "model": "qwen",
+  "condition": "librispeech_original",
+  "endpoint": "mean per-token logprob",
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/aaai27_fixed_500_original/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "n_selected": 100,
+  "n_skipped": 0,
+  "results_csv": "experiments/faithfulness/outputs/logprob_qwen_voxtral/qwen_librispeech_original_logprob.csv"
+}

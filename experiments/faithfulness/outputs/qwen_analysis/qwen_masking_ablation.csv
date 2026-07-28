@@ -1,0 +1,4 @@
+condition,n,top_drop_emb,dz_emb,within_spearman_median_emb,mask_mode
+librispeech_original,100,0.065,0.941,0.7378647873726218,librispeech_original
+mask_noise,60,0.0756,1.024,0.7999999999999999,mask_noise
+mask_concat,60,0.0762,0.882,0.8250000000000002,mask_concat

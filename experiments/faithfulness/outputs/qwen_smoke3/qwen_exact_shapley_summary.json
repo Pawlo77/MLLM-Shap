@@ -1,0 +1,36 @@
+{
+  "completed_samples": 3,
+  "completed_deletions": 12,
+  "mean_top_drop_emb": 0.07686191797256466,
+  "mean_non_top_drop_emb": 0.013211521837446404,
+  "top_minus_nontop_emb": 0.06365039613511825,
+  "pooled_spearman_emb": 0.7880922768806397,
+  "within_sample_spearman_mean_emb": 0.8108185106778919,
+  "within_sample_spearman_median_emb": 0.7999999999999999,
+  "within_sample_n_emb": 3,
+  "per_rank_mean_drop_emb": {
+    "1": 0.0769,
+    "2": 0.0134,
+    "3": 0.0263,
+    "4": -0.0
+  },
+  "mean_top_drop_tfidf": 0.24484500655026928,
+  "mean_non_top_drop_tfidf": 0.09568990737099088,
+  "top_minus_nontop_tfidf": 0.14915509917927838,
+  "pooled_spearman_tfidf": 0.4694666327467328,
+  "within_sample_spearman_mean_tfidf": 0.5828944326835046,
+  "within_sample_spearman_median_tfidf": 0.7378647873726218,
+  "within_sample_n_tfidf": 3,
+  "per_rank_mean_drop_tfidf": {
+    "1": 0.2448,
+    "2": 0.0458,
+    "3": 0.2413,
+    "4": -0.0
+  },
+  "model": "Qwen2-Audio-7B-Instruct (4bit)",
+  "instruction": "Repeat the exact words that the speaker said.",
+  "utility": "E5 embedding cosine (exact Shapley)",
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/aaai27_fixed_500_original/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "n_skipped": 0,
+  "results_csv": "experiments/faithfulness/outputs/qwen_smoke3/qwen_exact_shapley_results.csv"
+}

@@ -1,0 +1,5 @@
+condition,speech,n_samples,flat_abs_sv_sample_share,mean_abs_sv_entropy_norm,saturation_frac_drop_ge_0_8
+SM2S-1k (male TTS),TTS,94,1.0,0.9999999999351119,0.11854103343465046
+SM2F-1k (female TTS),TTS,100,1.0,0.9999999999352172,0.1115819209039548
+SO2S-1k (orig TTS),TTS,99,1.0,0.9999999999353277,0.11948790896159317
+SO2S-500 (LibriSpeech),natural,100,1.0,0.9999999999276592,0.2264957264957265

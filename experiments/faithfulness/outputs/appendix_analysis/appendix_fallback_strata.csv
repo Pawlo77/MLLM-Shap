@@ -1,0 +1,7 @@
+model,fallback_bin,n,mean_top_drop,mean_nontop_drop,mean_faith,cohen_dz
+Qwen2-Audio-7B,0%,5,0.0852,0.0042,0.081,2.461
+Qwen2-Audio-7B,1-25%,12,0.0641,0.0269,0.0371,0.726
+Qwen2-Audio-7B,>25%,83,0.0639,0.0154,0.0485,1.155
+Voxtral-Mini-3B,0%,5,0.1188,0.0073,0.1115,1.636
+Voxtral-Mini-3B,1-25%,12,0.08,0.0359,0.0441,1.102
+Voxtral-Mini-3B,>25%,83,0.0823,0.0196,0.0627,1.557

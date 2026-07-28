@@ -1,0 +1,34 @@
+{
+  "conditions": [
+    {
+      "condition": "Male TTS",
+      "audio_column": "audio__male",
+      "n_samples": 100,
+      "n_segments": 615,
+      "segment_fallback_rate": 0.6097560975609756,
+      "sample_fallback_rate": 1.0,
+      "mean_per_sample_fallback_frac": 0.6094801587301587,
+      "errors": 0
+    },
+    {
+      "condition": "Female TTS",
+      "audio_column": "audio__female",
+      "n_samples": 100,
+      "n_segments": 615,
+      "segment_fallback_rate": 0.6682926829268293,
+      "sample_fallback_rate": 0.99,
+      "mean_per_sample_fallback_frac": 0.6669722222222222,
+      "errors": 0
+    },
+    {
+      "condition": "LibriSpeech natural",
+      "audio_column": "audio__original",
+      "n_samples": 100,
+      "n_segments": 468,
+      "segment_fallback_rate": 0.6068376068376068,
+      "sample_fallback_rate": 0.95,
+      "mean_per_sample_fallback_frac": 0.6040714285714286,
+      "errors": 0
+    }
+  ]
+}

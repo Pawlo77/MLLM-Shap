@@ -1,9 +1,13 @@
 """Similarity computation and model inference utilities for faithfulness evaluation."""
 
 import difflib
-from typing import Any
+from copy import deepcopy
+from typing import Any, cast
 
+import torch
+import torch.nn.functional as F
 from mllm_shap.connectors.config import ModelConfig
+from mllm_shap.connectors.enums import Role
 from mllm_shap.shap.embeddings import MeanReducer
 from mllm_shap.shap.similarity import CosineSimilarity
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -92,3 +96,53 @@ def generate_response(
         model_config=ModelConfig(text_temperature=float(text_temperature)),
         keep_history=False,
     )
+
+
+@torch.no_grad()
+def text_logprob_score(
+    model: Any,
+    audio_bytes: bytes,
+    input_modality: InputModality,
+    target_text_tokens: torch.Tensor,
+    user_texts: list[str] | None = None,
+) -> float:
+    """Mean per-token log-probability of a fixed reference text response,
+    conditioned on the provided (possibly perturbed) audio prompt.
+
+    This is a *graded*, non-saturating utility for faithfulness: it teacher-forces
+    the reference response's text tokens through the LFM2 backbone (mirroring
+    ``generate_sequential``) and returns ``logP(reference_text | audio)`` averaged
+    over tokens (in nats). Removing salient audio should lower this score.
+    """
+    target = target_text_tokens.detach().reshape(-1)
+    if target.numel() == 0:
+        raise ValueError("Reference response has no text tokens to score.")
+
+    chat = build_chat(
+        model,
+        user_texts=user_texts,
+        audio_bytes_list=[audio_bytes],
+        input_modality=input_modality,
+    )
+    chat = deepcopy(chat)
+    chat.new_turn(Role.ASSISTANT)
+
+    backbone = model.model  # LFM2AudioModel
+    device = model.device
+    in_emb = backbone._prefill(**cast(dict[str, Any], chat))
+    cache = None
+    total_logprob = 0.0
+    for tok in target.tolist():
+        lfm_out = backbone.lfm(
+            inputs_embeds=in_emb, past_key_values=cache, use_cache=True
+        )
+        cache = lfm_out.past_key_values
+        logits = F.linear(
+            lfm_out.last_hidden_state[0, -1], backbone.lfm.embed_tokens.weight
+        )
+        log_probs = torch.log_softmax(logits.float(), dim=-1)
+        total_logprob += float(log_probs[int(tok)])
+        next_token = torch.tensor([int(tok)], device=device)
+        in_emb = backbone.lfm.embed_tokens(next_token)[None, :]
+
+    return total_logprob / int(target.numel())

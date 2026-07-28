@@ -1,0 +1,82 @@
+{
+  "completed_samples": 100,
+  "completed_deletions": 579,
+  "mean_top_drop_emb": 0.10150898396968838,
+  "mean_non_top_drop_emb": 0.038340270643692144,
+  "top_minus_nontop_emb": 0.06316871332599625,
+  "pooled_spearman_emb": 0.695886400159366,
+  "within_sample_spearman_mean_emb": 0.7146965997919956,
+  "within_sample_spearman_median_emb": 0.796412483586046,
+  "within_sample_n_emb": 100,
+  "per_rank_mean_drop_emb": {
+    "1": 0.1015,
+    "2": 0.0724,
+    "3": 0.0521,
+    "4": 0.032,
+    "5": 0.0195,
+    "6": 0.012,
+    "7": 0.0109
+  },
+  "top_vs_matched_random_emb": {
+    "n": 100,
+    "mean": 0.05537505567073822,
+    "std": 0.05729499175960572,
+    "median": 0.05131208896636964,
+    "positive_rate": 0.88,
+    "cohen_dz": 0.966490316231943,
+    "wilcoxon_stat": 4636.0,
+    "wilcoxon_p_value": 1.9598728736584508e-13,
+    "paired_t_stat": 9.66490333100613,
+    "paired_t_p_value": 2.945104739858115e-16
+  },
+  "mean_top_drop_tfidf": 0.30416227527743833,
+  "mean_non_top_drop_tfidf": 0.15869449336935268,
+  "top_minus_nontop_tfidf": 0.14546778190808565,
+  "pooled_spearman_tfidf": 0.5495182800670004,
+  "within_sample_spearman_mean_tfidf": 0.5872373911514513,
+  "within_sample_spearman_median_tfidf": 0.666811309927833,
+  "within_sample_n_tfidf": 100,
+  "per_rank_mean_drop_tfidf": {
+    "1": 0.3042,
+    "2": 0.2632,
+    "3": 0.2223,
+    "4": 0.1533,
+    "5": 0.088,
+    "6": 0.0574,
+    "7": 0.0411
+  },
+  "top_vs_matched_random_tfidf": {
+    "n": 100,
+    "mean": 0.1097283874393116,
+    "std": 0.23091227020939578,
+    "median": 0.06854577984333654,
+    "positive_rate": 0.68,
+    "cohen_dz": 0.47519513304603783,
+    "wilcoxon_stat": 3377.0,
+    "wilcoxon_p_value": 7.949914358153392e-06,
+    "paired_t_stat": 4.751951351039412,
+    "paired_t_p_value": 3.415574292947885e-06
+  },
+  "model": "Qwen2-Audio-7B-Instruct (4bit)",
+  "instruction": "Repeat the exact words that the speaker said.",
+  "utility": "E5 embedding cosine (exact Shapley)",
+  "mask_mode": "silence",
+  "stage3_off": false,
+  "audio_column": "audio__female",
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/rebuttal_single_sentence_1k_sgpa/audio_female_audio_sgpa_limited_neyman_lin3_0",
+  "word_band": [
+    4,
+    7
+  ],
+  "full_pool": true,
+  "n_selected": 100,
+  "word_count_histogram": {
+    "4": 13,
+    "5": 22,
+    "6": 28,
+    "7": 37
+  },
+  "n_skipped": 0,
+  "results_csv": "experiments/faithfulness/outputs/qwen_exact_shapley_female/qwen_exact_shapley_results.csv",
+  "coalitions_csv": "experiments/faithfulness/outputs/qwen_exact_shapley_female/qwen_coalitions.csv"
+}

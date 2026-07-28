@@ -1,0 +1,33 @@
+{
+  "completed_samples": 2,
+  "completed_deletions": 8,
+  "mean_top_rank_logprob_drop": -0.0007081172443577505,
+  "mean_non_top_logprob_drop": 0.7362298177822595,
+  "mean_top_minus_non_top_drop": -0.7369379350266172,
+  "pooled_spearman_abs_sv_vs_drop": -0.21562217300853245,
+  "mean_within_sample_spearman": -0.39999999999999997,
+  "median_within_sample_spearman": -0.39999999999999997,
+  "within_sample_spearman_n": 1,
+  "per_rank_mean_logprob_drop": {
+    "1": {
+      "mean_drop": -0.0007081172443577505,
+      "n": 2
+    },
+    "2": {
+      "mean_drop": 0.3144000343551548,
+      "n": 2
+    },
+    "3": {
+      "mean_drop": 1.1866758945883096,
+      "n": 2
+    },
+    "4": {
+      "mean_drop": 0.7076135244033139,
+      "n": 2
+    }
+  },
+  "run_dir": "/home/mvishiu11/Desktop/thesis-code/mllm-shap/experiments/experiments_output/aaai27_fixed_500_original/audio_original_audio_sgpa_limited_neyman_lin3_0",
+  "audio_column": "audio__original",
+  "results_csv": "experiments/faithfulness/outputs/aaai27_fixed_500_logprob_smoke/audio__original_logprob_results.csv",
+  "n_failures": 0
+}
